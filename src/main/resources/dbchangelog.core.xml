@@ -1,0 +1,385 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.4.xsd">
+    <property name="now" value="sysdate" dbms="oracle"/>
+    <property name="now" value="getDate()" dbms="mssql"/>
+    <property name="now" value="now()" dbms="mysql"/>
+    <property name="now" value="now()" dbms="postgresql"/>
+
+    <changeSet id="1" author="zamborsky">
+        <createTable tableName="uas_file">
+            <column name="id" type="varchar(255)">
+                <constraints primaryKey="true" primaryKeyName="uas_file_pkey" nullable="false"/>
+            </column>
+            <column name="name" type="varchar(255)"/>
+            <column name="content_type" type="varchar(255)"/>
+        </createTable>
+        <createTable tableName="uas_config_file">
+            <column name="id" type="varchar(255)">
+                <constraints primaryKey="true" primaryKeyName="uas_config_file_pkey" nullable="false"/>
+            </column>
+            <column name="created" type="datetime"/>
+            <column name="value" type="nclob"/>
+        </createTable>
+    </changeSet>
+    <changeSet id="2" author="zamborsky">
+        <createTable tableName="uas_sequence">
+            <column name="id" type="varchar(255)">
+                <constraints primaryKey="true" primaryKeyName="uas_sequence_pkey" nullable="false"/>
+            </column>
+            <column name="created" type="datetime"/>
+            <column name="updated" type="datetime"/>
+            <column name="deleted" type="datetime"/>
+
+            <column name="name" type="nvarchar(255)"/>
+            <column name="list_order" type="bigint"/>
+            <column name="deletable" type="boolean"/>
+            <column name="active" type="boolean"/>
+
+            <column name="format" type="varchar(255)"/>
+            <column name="counter" type="bigint"/>
+        </createTable>
+    </changeSet>
+    <changeSet id="3" author="zamborsky">
+        <addColumn tableName="uas_file">
+            <column name="description" type="nclob"/>
+        </addColumn>
+    </changeSet>
+    <changeSet id="4" author="zamborsky">
+        <addColumn tableName="uas_file">
+            <column name="created" type="datetime"/>
+            <column name="updated" type="datetime"/>
+            <column name="deleted" type="datetime"/>
+        </addColumn>
+    </changeSet>
+    <changeSet id="5" author="zamborsky">
+        <addColumn tableName="uas_file">
+            <column name="indexed_content" type="boolean"/>
+        </addColumn>
+    </changeSet>
+    <changeSet id="6" author="zamborsky">
+        <createTable tableName="uas_template">
+            <column name="id" type="varchar(255)">
+                <constraints primaryKey="true" primaryKeyName="uas_template_pkey" nullable="false"/>
+            </column>
+            <column name="created" type="datetime"/>
+            <column name="updated" type="datetime"/>
+            <column name="deleted" type="datetime"/>
+
+            <column name="name" type="nvarchar(255)"/>
+            <column name="type" type="nvarchar(255)"/>
+
+            <column name="file_id" type="varchar(255)">
+                <constraints foreignKeyName="uas_template_file_fk"
+                             referencedTableName="uas_file" referencedColumnNames="id"/>
+            </column>
+        </createTable>
+        <createTable tableName="uas_report">
+            <column name="id" type="varchar(255)">
+                <constraints primaryKey="true" primaryKeyName="uas_report_pkey" nullable="false"/>
+            </column>
+            <column name="created" type="datetime"/>
+            <column name="updated" type="datetime"/>
+            <column name="deleted" type="datetime"/>
+
+            <column name="provider" type="nvarchar(255)"/>
+            <column name="params" type="nvarchar(255)"/>
+            <column name="tag" type="nvarchar(255)"/>
+
+            <column name="template_id" type="varchar(255)">
+                <constraints foreignKeyName="uas_report_template_fk"
+                             referencedTableName="uas_template" referencedColumnNames="id"/>
+            </column>
+        </createTable>
+    </changeSet>
+    <changeSet id="7" author="zamborsky">
+        <dropForeignKeyConstraint baseTableName="uas_report" constraintName="uas_report_template_fk"/>
+        <dropColumn tableName="uas_report" columnName="template_id"/>
+        <addColumn tableName="uas_report">
+            <column name="name" type="nvarchar(255)"/>
+            <column name="list_order" type="bigint"/>
+            <column name="active" type="boolean"/>
+            <column name="type" type="varchar(255)"/>
+            <column name="location" type="varchar(255)"/>
+            <column name="form" type="varchar(255)"/>
+            <column name="file_name" type="nvarchar(255)"/>
+
+            <column name="template_id" type="varchar(255)">
+                <constraints foreignKeyName="uas_report_file_fk"
+                             referencedTableName="uas_file" referencedColumnNames="id"/>
+            </column>
+        </addColumn>
+        <dropTable tableName="uas_template"/>
+    </changeSet>
+    <changeSet id="8" author="zamborsky">
+        <createTable tableName="uas_revision">
+            <column name="id" type="bigint">
+                <constraints primaryKey="true" primaryKeyName="uas_revision_pkey" nullable="false"/>
+            </column>
+            <column name="rev_timestamp" type="bigint"/>
+            <column name="author" type="varchar(255)"/>
+        </createTable>
+        <createTable tableName="uas_revision_item">
+            <column name="revision_id" type="bigint">
+                <constraints foreignKeyName="uas_revision_item_revision_fk"
+                             referencedTableName="uas_revision" referencedColumnNames="id"/>
+            </column>
+            <column name="entity_id" type="varchar(255)"/>
+            <column name="operation" type="varchar(255)"/>
+        </createTable>
+    </changeSet>
+    <changeSet id="9" author="zamborsky">
+        <createSequence sequenceName="hibernate_sequence" startValue="1" />
+    </changeSet>
+    <changeSet id="10" author="zamborsky">
+        <createTable tableName="uas_role">
+            <column name="id" type="varchar(255)">
+                <constraints primaryKey="true" primaryKeyName="uas_role_pkey" nullable="false"/>
+            </column>
+            <column name="created" type="datetime"/>
+            <column name="updated" type="datetime"/>
+            <column name="deleted" type="datetime"/>
+
+            <column name="name" type="nvarchar(255)"/>
+
+            <column name="parent_id" type="varchar(255)">
+                <constraints foreignKeyName="uas_role_parent_fk"
+                             referencedTableName="uas_role" referencedColumnNames="id"/>
+            </column>
+        </createTable>
+        <createTable tableName="uas_role_permission">
+            <column name="role_id" type="varchar(255)">
+                <constraints foreignKeyName="uas_role_permission_role_fk"
+                             referencedTableName="uas_role" referencedColumnNames="id"/>
+            </column>
+            <column name="value" type="varchar(255)"/>
+        </createTable>
+        <createTable tableName="uas_assigned_role">
+            <column name="id" type="varchar(255)">
+                <constraints primaryKey="true" primaryKeyName="uas_assigned_role_pkey" nullable="false"/>
+            </column>
+            <column name="user_id" type="varchar(255)"/>
+            <column name="role_id" type="varchar(255)">
+                <constraints foreignKeyName="uas_assigned_role_role_fk"
+                             referencedTableName="uas_role" referencedColumnNames="id"/>
+            </column>
+        </createTable>
+    </changeSet>
+    <changeSet id="11" author="zamborsky">
+        <validCheckSum>7:dd2a01b39b7e6d76a7cfa629a615ecfb</validCheckSum>
+        <renameColumn tableName="uas_role_permission" oldColumnName="value" newColumnName="permission" columnDataType="varchar(255)"/>
+    </changeSet>
+    <changeSet id="12" author="zamborsky">
+        <createTable tableName="uas_error">
+            <column name="id" type="varchar(255)">
+                <constraints primaryKey="true" primaryKeyName="uas_error_pkey" nullable="false"/>
+            </column>
+            <column name="created" type="datetime"/>
+            <column name="updated" type="datetime"/>
+            <column name="deleted" type="datetime"/>
+
+            <column name="message" type="nclob"/>
+            <column name="stack_trace" type="nclob"/>
+            <column name="client_side" type="boolean"/>
+            <column name="user_id" type="nvarchar(1024)"/>
+            <column name="ip" type="nvarchar(1024)"/>
+            <column name="url" type="nvarchar(1024)"/>
+            <column name="user_agent" type="nvarchar(1024)"/>
+
+
+        </createTable>
+    </changeSet>
+    <changeSet id="13" author="zamborsky">
+        <createTable tableName="uas_dictionary">
+            <column name="id" type="varchar(255)">
+                <constraints primaryKey="true" primaryKeyName="uas_dictionary_pkey" nullable="false"/>
+            </column>
+            <column name="created" type="datetime"/>
+            <column name="updated" type="datetime"/>
+            <column name="deleted" type="datetime"/>
+
+            <column name="name" type="nvarchar(255)"/>
+            <column name="list_order" type="bigint"/>
+            <column name="active" type="boolean"/>
+        </createTable>
+        <createTable tableName="uas_dictionary_value">
+            <column name="id" type="varchar(255)">
+                <constraints primaryKey="true" primaryKeyName="uas_dictionary_v_pkey" nullable="false"/>
+            </column>
+            <column name="created" type="datetime"/>
+            <column name="updated" type="datetime"/>
+            <column name="deleted" type="datetime"/>
+
+            <column name="name" type="nvarchar(255)"/>
+            <column name="list_order" type="bigint"/>
+            <column name="active" type="boolean"/>
+
+            <column name="dictionary_id" type="varchar(255)">
+                <constraints foreignKeyName="uas_dictionary_v_fk"
+                             referencedTableName="uas_dictionary" referencedColumnNames="id"/>
+            </column>
+        </createTable>
+    </changeSet>
+    <changeSet id="14" author="zamborsky">
+        <createTable tableName="uas_job">
+            <column name="id" type="varchar(255)">
+                <constraints primaryKey="true" primaryKeyName="uas_job_pkey" nullable="false"/>
+            </column>
+            <column name="created" type="datetime"/>
+            <column name="updated" type="datetime"/>
+            <column name="deleted" type="datetime"/>
+
+            <column name="name" type="nvarchar(255)"/>
+
+            <column name="timing" type="nvarchar(255)"/>
+            <column name="script" type="nclob"/>
+            <column name="script_type" type="varchar(255)"/>
+
+            <column name="active" type="boolean"/>
+        </createTable>
+    </changeSet>
+    <changeSet id="15" author="zamborsky" dbms="mysql">
+        <createTable tableName="hibernate_sequence">
+            <column name="next_val" type="bigint" />
+        </createTable>
+        <insert tableName="hibernate_sequence">
+            <column name="next_val">1</column>
+        </insert>
+    </changeSet>
+    <changeSet id="16" author="zamborsky">
+        <createTable tableName="uas_soap_conversation">
+            <column name="id" type="varchar(255)">
+                <constraints primaryKey="true" primaryKeyName="uas_soap_conversation_pkey" nullable="false"/>
+            </column>
+            <column name="created" type="datetime"/>
+            <column name="updated" type="datetime"/>
+            <column name="deleted" type="datetime"/>
+
+            <column name="request" type="nclob"/>
+            <column name="response" type="nclob"/>
+
+            <column name="service" type="nvarchar(255)"/>
+        </createTable>
+    </changeSet>
+    <changeSet id="17" author="zamborsky">
+        <addColumn tableName="uas_dictionary">
+            <column name="description" type="nclob"/>
+        </addColumn>
+        <addColumn tableName="uas_dictionary_value">
+            <column name="description" type="nclob"/>
+            <column name="valid_from" type="datetime"/>
+            <column name="valid_to" type="datetime"/>
+        </addColumn>
+    </changeSet>
+    <changeSet id="18" author="zambotsky">
+        <addColumn tableName="uas_dictionary_value">
+            <column name="code" type="nvarchar(255)"/>
+        </addColumn>
+    </changeSet>
+    <changeSet id="19" author="zamborsky">
+        <addColumn tableName="uas_dictionary">
+            <column name="parent_id" type="varchar(255)">
+                <constraints foreignKeyName="uas_dictionary_p_fk"
+                             referencedTableName="uas_dictionary" referencedColumnNames="id"/>
+            </column>
+        </addColumn>
+        <addColumn tableName="uas_dictionary_value">
+            <column name="parent_id" type="varchar(255)">
+                <constraints foreignKeyName="uas_dictionary_v_p_fk"
+                             referencedTableName="uas_dictionary_value" referencedColumnNames="id"/>
+            </column>
+        </addColumn>
+    </changeSet>
+    <changeSet id="20" author="zamborsky">
+        <createTable tableName="uas_action">
+            <column name="id" type="varchar(255)">
+                <constraints primaryKey="true" primaryKeyName="uas_action_pkey" nullable="false"/>
+            </column>
+            <column name="created" type="datetime"/>
+            <column name="updated" type="datetime"/>
+            <column name="deleted" type="datetime"/>
+
+            <column name="name" type="nvarchar(255)"/>
+
+            <column name="code" type="nvarchar(255)"/>
+            <column name="script" type="nclob"/>
+            <column name="script_type" type="varchar(255)"/>
+
+            <column name="active" type="boolean"/>
+        </createTable>
+    </changeSet>
+    <changeSet id="21" author="zamborsky">
+        <addColumn tableName="uas_action">
+            <column name="list_order" type="bigint"/>
+            <column name="deletable" type="boolean"/>
+        </addColumn>
+    </changeSet>
+    <changeSet id="22" author="zamborsky">
+        <createTable tableName="uas_notification">
+            <column name="id" type="varchar(255)">
+                <constraints primaryKey="true" primaryKeyName="uas_notification_pkey" nullable="false"/>
+            </column>
+            <column name="created" type="datetime"/>
+            <column name="updated" type="datetime"/>
+            <column name="deleted" type="datetime"/>
+
+            <column name="title" type="nvarchar(255)"/>
+            <column name="description" type="nvarchar(4000)"/>
+
+            <column name="author_id" type="varchar(255)"/>
+            <column name="author_name" type="nvarchar(255)"/>
+            <column name="recipient_id" type="varchar(255)"/>
+            <column name="recipient_name" type="nvarchar(255)"/>
+            <column name="recipient_email" type="nvarchar(255)"/>
+
+            <column name="flash" type="boolean"/>
+            <column name="emailing" type="boolean"/>
+            <column name="read" type="boolean"/>
+        </createTable>
+    </changeSet>
+    <changeSet id="23" author="zamborsky">
+        <addColumn tableName="uas_dictionary">
+            <column name="code" type="nvarchar(255)"/>
+        </addColumn>
+    </changeSet>
+    <changeSet id="24" author="zamborsky">
+        <createTable tableName="uas_job_run">
+            <column name="id" type="varchar(255)">
+                <constraints primaryKey="true" primaryKeyName="uas_job_run_pkey" nullable="false"/>
+            </column>
+            <column name="created" type="datetime"/>
+            <column name="updated" type="datetime"/>
+            <column name="deleted" type="datetime"/>
+
+            <column name="job_id" type="varchar(255)">
+                <constraints foreignKeyName="uas_job_run_j_fk"
+                             referencedTableName="uas_job" referencedColumnNames="id"/>
+            </column>
+
+            <column name="console" type="nclob"/>
+            <column name="result" type="nclob"/>
+        </createTable>
+    </changeSet>
+    <changeSet id="25" author="zamborsky">
+        <addColumn tableName="uas_role">
+            <column name="description" type="nclob"/>
+        </addColumn>
+    </changeSet>
+    <changeSet id="26" author="zamborsky">
+        <addColumn tableName="uas_report">
+            <column name="label" type="nvarchar(255)"/>
+        </addColumn>
+    </changeSet>
+    <changeSet id="27" author="zamborsky">
+        <dropColumn tableName="uas_report" columnName="params"/>
+        <addColumn tableName="uas_report">
+            <column name="params" type="nclob"/>
+        </addColumn>
+    </changeSet>
+    <changeSet id="28" author="zamborsky">
+        <addColumn tableName="uas_job_run">
+            <column name="success" type="boolean"/>
+        </addColumn>
+    </changeSet>
+</databaseChangeLog>
