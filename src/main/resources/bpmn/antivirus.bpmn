@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" id="Definitions_1" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="1.8.2">
+  <bpmn:process id="antivirus" name="antivirus" isExecutable="true">
+    <bpmn:startEvent id="StartEvent_1">
+      <bpmn:outgoing>SequenceFlow_0ed0vpf</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:serviceTask id="scan" name="scan for viruses" camunda:delegateExpression="${scanBpmDelegate}">
+      <bpmn:incoming>SequenceFlow_0ed0vpf</bpmn:incoming>
+      <bpmn:outgoing>SequenceFlow_0ubraqu</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:sequenceFlow id="SequenceFlow_0ed0vpf" sourceRef="StartEvent_1" targetRef="scan" />
+    <bpmn:sequenceFlow id="SequenceFlow_0ubraqu" sourceRef="scan" targetRef="quarantine" />
+    <bpmn:endEvent id="EndEvent_0x1dtva">
+      <bpmn:incoming>SequenceFlow_1k9p9tk</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="SequenceFlow_1k9p9tk" sourceRef="quarantine" targetRef="EndEvent_0x1dtva" />
+    <bpmn:serviceTask id="quarantine" name="move infected files to quarantine" camunda:delegateExpression="${quarantineBpmDelegate}">
+      <bpmn:incoming>SequenceFlow_0ubraqu</bpmn:incoming>
+      <bpmn:outgoing>SequenceFlow_1k9p9tk</bpmn:outgoing>
+    </bpmn:serviceTask>
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="antivirus">
+      <bpmndi:BPMNShape id="_BPMNShape_StartEvent_2" bpmnElement="StartEvent_1">
+        <dc:Bounds x="173" y="102" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ServiceTask_0n4psbx_di" bpmnElement="scan">
+        <dc:Bounds x="265" y="80" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_0ed0vpf_di" bpmnElement="SequenceFlow_0ed0vpf">
+        <di:waypoint xsi:type="dc:Point" x="209" y="120" />
+        <di:waypoint xsi:type="dc:Point" x="232" y="120" />
+        <di:waypoint xsi:type="dc:Point" x="232" y="120" />
+        <di:waypoint xsi:type="dc:Point" x="265" y="120" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="202" y="114" width="90" height="12" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SequenceFlow_0ubraqu_di" bpmnElement="SequenceFlow_0ubraqu">
+        <di:waypoint xsi:type="dc:Point" x="365" y="120" />
+        <di:waypoint xsi:type="dc:Point" x="386" y="120" />
+        <di:waypoint xsi:type="dc:Point" x="386" y="120" />
+        <di:waypoint xsi:type="dc:Point" x="416" y="120" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="401" y="114" width="0" height="12" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="EndEvent_0x1dtva_di" bpmnElement="EndEvent_0x1dtva">
+        <dc:Bounds x="583" y="102" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="601" y="142" width="0" height="12" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_1k9p9tk_di" bpmnElement="SequenceFlow_1k9p9tk">
+        <di:waypoint xsi:type="dc:Point" x="516" y="120" />
+        <di:waypoint xsi:type="dc:Point" x="583" y="120" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="549.5" y="99" width="0" height="12" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="ServiceTask_1918rbv_di" bpmnElement="quarantine">
+        <dc:Bounds x="416" y="80" width="100" height="80" />
+      </bpmndi:BPMNShape>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>
