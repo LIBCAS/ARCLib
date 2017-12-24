@@ -14,6 +14,7 @@ import java.time.Instant;
  * @param <T> Type of entity to hold
  * @param <Q> Type of query object
  */
+@Transactional
 public abstract class DatedStore<T extends DatedObject, Q extends EntityPathBase<T>> extends DomainStore<T, Q> {
     public DatedStore(Class<T> type, Class<Q> qType) {
         super(type, qType);

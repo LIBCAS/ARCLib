@@ -1,0 +1,35 @@
+spring.application.name: arclib
+spring:
+    datasource:
+      url: jdbc:postgresql://localhost:5432/arclib-1
+      username: arclib
+      password: vuji61oilo
+      driver-class-name: org.postgresql.Driver
+      name: mainPool
+    jpa:
+      show-sql: false
+      database-platform: org.hibernate.dialect.PostgreSQL9Dialect
+      hibernate:
+        ddl-auto: validate
+        naming-strategy: org.hibernate.cfg.ImprovedNamingStrategy
+        use-new-id-generator-mappings: true
+liquibase:
+  changeLog: classpath:/dbchangelog.arclib.xml
+  url: jdbc:postgresql://localhost:5432/arclib-1
+  user: arclib
+  password: vuji61oilo
+camunda:
+  bpm:
+    application:
+      isDeleteUponUndeploy: false
+      isScanForProcessDefinitions: false
+      isDeployChangedOnly: true
+      isResumePreviousVersions: true
+      resumePreviousBy: a value
+    job-execution:
+      enabled: true
+    metrics:
+      enabled: false
+      db-reporter-activate: false
+arclib:
+  workspace: workspace

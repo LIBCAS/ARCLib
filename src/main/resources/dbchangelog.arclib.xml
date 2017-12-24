@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.4.xsd">
+    <property name="now" value="sysdate" dbms="oracle"/>
+    <property name="now" value="getDate()" dbms="mssql"/>
+    <property name="now" value="now()" dbms="mysql"/>
+    <property name="now" value="now()" dbms="postgresql"/>
+
+    <changeSet id="arclib:1" author="hochla">
+        <createTable tableName="arclib_batch">
+            <column name="id" type="varchar(255)">
+                <constraints primaryKey="true" primaryKeyName="arclib_batch_pkey" nullable="false"/>
+            </column>
+            <column name="created" type="datetime"/>
+            <column name="updated" type="datetime"/>
+            <column name="deleted" type="datetime"/>
+            <column name="state" type="varchar(2000)"/>
+        </createTable>
+
+        <createTable tableName="arclib_sip">
+            <column name="id" type="varchar(255)">
+                <constraints primaryKey="true" primaryKeyName="arclib_sip_pkey" nullable="false"/>
+            </column>
+            <column name="path" type= "nvarchar(2000)"/>
+            <column name="state" type="varchar(2000)"/>
+        </createTable>
+
+        <createTable tableName="arclib_batch_i">
+            <column name="batch_id" type="varchar(255)">
+                <constraints nullable="false" primaryKey="true" foreignKeyName="arclib_batch_i_b_fk"
+                             referencedTableName="arclib_batch" referencedColumnNames="id"/>
+            </column>
+
+            <column name="id" type="nvarchar(255)">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+        </createTable>
+    </changeSet>
+</databaseChangeLog>
