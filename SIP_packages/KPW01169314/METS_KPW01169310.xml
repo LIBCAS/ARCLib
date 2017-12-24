@@ -1,0 +1,332 @@
+﻿<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+<METS:mets LABEL="Z dějin malenovického hradu , [1953]" TYPE="Monograph"
+  xmlns:METS="http://www.loc.gov/METS/"
+  xmlns:xlink="http://www.w3.org/1999/xlink"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+  xsi:schemaLocation="http://www.loc.gov/METS/
+    http://www.loc.gov/standards/mets/mets.xsd 
+">
+	<METS:metsHdr CREATEDATE="2013-01-22T10:55:20Z" ID="kpw01169310" LASTMODDATE="2013-01-22T10:55:20Z" RECORDSTATUS="COMPLETE">
+		<METS:agent ROLE="CREATOR" TYPE="ORGANIZATION"> 
+			<METS:name>Exon s.r.o.</METS:name>
+		</METS:agent>
+		<METS:agent ROLE="ARCHIVIST" TYPE="ORGANIZATION"> 
+			<METS:name>ZLG001</METS:name>
+		</METS:agent>
+	</METS:metsHdr>
+	<METS:dmdSec ID="MODSMD_VOLUME_0001">
+<METS:mdWrap MDTYPE="MODS" MIMETYPE="text/xml">
+<METS:xmlData>
+<mods ID="MODS_VOLUME_0001" version="3.4" xsi:schemaLocation="http://www.loc.gov/mods/v3 http://www.loc.gov/standards/mods/v3/mods-3-4.xsd" xmlns="http://www.loc.gov/mods/v3" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+					<titleInfo>
+						<title>Z dějin malenovického hradu</title>
+					</titleInfo>
+					<name type="personal" usage="primary">
+						<namePart>Janál, Rudolf</namePart>
+						<role>
+							<roleTerm authority="marcrelator" type="code">aut</roleTerm>
+						</role>
+					</name>
+					<typeOfResource>text</typeOfResource>
+					<genre authority="czenas">informační publikace</genre>
+					<originInfo>
+						<place>
+							<placeTerm type="code" authority="marccountry">xr</placeTerm>
+						</place>
+						<place>
+							<placeTerm type="text">Gottwaldov</placeTerm>
+						</place>
+						<publisher>[s.n.]</publisher>
+						<dateIssued>[1953]</dateIssued>
+						<dateIssued encoding="marc" point="start" qualifier="questionable">1953</dateIssued>
+						<dateIssued encoding="marc" point="end" qualifier="questionable">1953</dateIssued>
+						<issuance>monographic</issuance>
+					</originInfo>
+					<language>
+						<languageTerm authority="iso639-2b" type="code">cze</languageTerm>
+					</language>
+					<physicalDescription>
+						<form authority="marccategory">text</form>
+						<form authority="marcsmd">regular print</form>
+						<extent>8 s.</extent>
+					</physicalDescription>
+					<note type="statement of responsibility">Rudolf Janál</note>
+					<note type="bibliography">Obsahuje bibliografii</note>
+					<subject authority="czenas">
+						<name type="corporate">
+							<namePart>Malenovice (hrad)</namePart>
+						</name>
+					</subject>
+					<subject authority="czenas">
+						<geographic>Malenovice (Zlín, Česko)</geographic>
+					</subject>
+					<subject authority="czenas">
+						<geographic>Zlín-oblast (Česko)</geographic>
+					</subject>
+					<subject authority="czenas">
+						<geographic>Zlínský kraj (Česko)</geographic>
+					</subject>
+					<classification authority="udc">728.81(437.323)</classification>
+					<classification authority="udc">94(437.323)</classification>
+					<classification authority="udc">(437.323)</classification>
+					<classification authority="udc">(036)</classification>
+					<location>
+						<physicalLocation authority="siglaADR">ZLG001</physicalLocation>
+					</location>
+					<recordInfo>
+						<recordContentSource authority="marcorg">ABE310</recordContentSource>
+						<recordCreationDate encoding="iso8601">2007-10-04T00:00:00Z</recordCreationDate>
+						<recordChangeDate encoding="iso8601">2012-06-29T09:24:17Z</recordChangeDate>
+						<recordIdentifier source="CZ-ZlKKF">kpw01169310</recordIdentifier>
+						<recordOrigin>Converted from MARCXML to MODS version 3.4</recordOrigin>
+						<languageOfCataloging>
+							<languageTerm authority="iso639-2b" type="code">cze</languageTerm>
+						</languageOfCataloging>
+					</recordInfo>
+					<identifier type="uuid">50c9791d-16b6-4c07-813c-250afd6a6244</identifier>
+					<genre>volume</genre>
+					<identifier type="urnnbn">urn:nbn:cz:zlg001-000019</identifier>
+				</mods>
+</METS:xmlData>
+</METS:mdWrap>
+	</METS:dmdSec>
+	<METS:dmdSec ID="DCMD_VOLUME_0001">
+<METS:mdWrap MDTYPE="DC" MIMETYPE="text/xml">
+<METS:xmlData>
+<oai_dc:dc xsi:schemaLocation="http://www.openarchives.org/OAI/2.0/oai_dc/ http://www.openarchives.org/OAI/2.0/oai_dc.xsd" xmlns:oai_dc="http://www.openarchives.org/OAI/2.0/oai_dc/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:srw_dc="info:srw/schema/1/dc-schema"> 
+					<dc:title>Z dějin malenovického hradu</dc:title>
+					<dc:type>informační publikace</dc:type>
+					<dc:type>volume</dc:type>
+					<dc:creator>Janál, Rudolf</dc:creator>
+					<dc:date>[1953]</dc:date>
+					<dc:description>(Statement of Responsibility)  Rudolf Janál</dc:description>
+					<dc:description>(Bibliography)  Obsahuje bibliografii</dc:description>
+					<dc:format>8 s.</dc:format>
+					<dc:identifier>uuid: 50c9791d-16b6-4c07-813c-250afd6a6244</dc:identifier>
+					<dc:identifier>urnnbn: urn:nbn:cz:zlg001-000019</dc:identifier>
+					<dc:subject>udc:728.81(437.323)</dc:subject>
+					<dc:subject>udc:94(437.323)</dc:subject>
+					<dc:subject>udc:(437.323)</dc:subject>
+					<dc:subject>udc:(036)</dc:subject>
+					<dc:language>Czech</dc:language>
+					<dc:subject>Malenovice (hrad) ( czenas )</dc:subject>
+					<dc:subject>Malenovice (Zlín, Česko) ( czenas )</dc:subject>
+					<dc:subject>Zlín-oblast (Česko) ( czenas )</dc:subject>
+					<dc:subject>Zlínský kraj (Česko) ( czenas )</dc:subject>
+					<dc:publisher>[s.n.]</dc:publisher>
+					<dc:coverage>xr</dc:coverage>
+					<dc:coverage>Gottwaldov</dc:coverage>
+					<dc:type>text</dc:type>
+				</oai_dc:dc>
+</METS:xmlData>
+</METS:mdWrap>
+	</METS:dmdSec>
+	<METS:fileSec> 
+		<METS:fileGrp ID="MC_IMGGRP" USE="Images" > 
+			<METS:file SEQ="0001" CREATED="2013-01-09T12:43:17Z" ID="JP210001" MIMETYPE="image/jp2" CHECKSUM="4228324C12DF6300FCE3D684D1771031" CHECKSUMTYPE="MD5" SIZE="5741925"> 
+				<METS:FLocat LOCTYPE="URL" xlink:href="./masterCopy/MC_KPW01169310_0001.JP2" /> 
+			</METS:file> 
+			<METS:file SEQ="0002" CREATED="2013-01-09T12:43:16Z" ID="JP210002" MIMETYPE="image/jp2" CHECKSUM="144EB3A77FDCC2961C4C761694511295" CHECKSUMTYPE="MD5" SIZE="5961831"> 
+				<METS:FLocat LOCTYPE="URL" xlink:href="./masterCopy/MC_KPW01169310_0002.JP2" /> 
+			</METS:file> 
+			<METS:file SEQ="0003" CREATED="2013-01-09T12:43:16Z" ID="JP210003" MIMETYPE="image/jp2" CHECKSUM="2514C7B107BFFB649370A8FDF83E69D7" CHECKSUMTYPE="MD5" SIZE="6797631"> 
+				<METS:FLocat LOCTYPE="URL" xlink:href="./masterCopy/MC_KPW01169310_0003.JP2" /> 
+			</METS:file> 
+			<METS:file SEQ="0004" CREATED="2013-01-09T12:43:17Z" ID="JP210004" MIMETYPE="image/jp2" CHECKSUM="5938608293A0FDD6A3CBE5F99356B51A" CHECKSUMTYPE="MD5" SIZE="7169641"> 
+				<METS:FLocat LOCTYPE="URL" xlink:href="./masterCopy/MC_KPW01169310_0004.JP2" /> 
+			</METS:file> 
+			<METS:file SEQ="0005" CREATED="2013-01-09T12:43:19Z" ID="JP210005" MIMETYPE="image/jp2" CHECKSUM="8589F9569577BF66F587603B44875ED6" CHECKSUMTYPE="MD5" SIZE="7216735"> 
+				<METS:FLocat LOCTYPE="URL" xlink:href="./masterCopy/MC_KPW01169310_0005.JP2" /> 
+			</METS:file> 
+			<METS:file SEQ="0006" CREATED="2013-01-09T12:43:16Z" ID="JP210006" MIMETYPE="image/jp2" CHECKSUM="606BDC107A4A7E7AC2A3170302BC2586" CHECKSUMTYPE="MD5" SIZE="7401153"> 
+				<METS:FLocat LOCTYPE="URL" xlink:href="./masterCopy/MC_KPW01169310_0006.JP2" /> 
+			</METS:file> 
+			<METS:file SEQ="0007" CREATED="2013-01-09T12:43:17Z" ID="JP210007" MIMETYPE="image/jp2" CHECKSUM="28DDF085352EC3FEAAA313FC674CE4C9" CHECKSUMTYPE="MD5" SIZE="7075493"> 
+				<METS:FLocat LOCTYPE="URL" xlink:href="./masterCopy/MC_KPW01169310_0007.JP2" /> 
+			</METS:file> 
+			<METS:file SEQ="0008" CREATED="2013-01-09T12:43:19Z" ID="JP210008" MIMETYPE="image/jp2" CHECKSUM="4E124BE41529216A4F79F1EA6D9DBA7A" CHECKSUMTYPE="MD5" SIZE="6665582"> 
+				<METS:FLocat LOCTYPE="URL" xlink:href="./masterCopy/MC_KPW01169310_0008.JP2" /> 
+			</METS:file> 
+		</METS:fileGrp> 
+		<METS:fileGrp ID="UC_IMGGRP" USE="Images" > 
+			<METS:file SEQ="0001" CREATED="2013-01-09T12:43:17Z" ID="JP220001" MIMETYPE="image/jp2" CHECKSUM="4228324C12DF6300FCE3D684D1771031" CHECKSUMTYPE="MD5" SIZE="653520"> 
+				<METS:FLocat LOCTYPE="URL" xlink:href="./userCopy/UC_KPW01169310_0001.JP2" /> 
+			</METS:file> 
+			<METS:file SEQ="0002" CREATED="2013-01-09T12:43:17Z" ID="JP220002" MIMETYPE="image/jp2" CHECKSUM="144EB3A77FDCC2961C4C761694511295" CHECKSUMTYPE="MD5" SIZE="638279"> 
+				<METS:FLocat LOCTYPE="URL" xlink:href="./userCopy/UC_KPW01169310_0002.JP2" /> 
+			</METS:file> 
+			<METS:file SEQ="0003" CREATED="2013-01-09T12:43:17Z" ID="JP220003" MIMETYPE="image/jp2" CHECKSUM="2514C7B107BFFB649370A8FDF83E69D7" CHECKSUMTYPE="MD5" SIZE="653214"> 
+				<METS:FLocat LOCTYPE="URL" xlink:href="./userCopy/UC_KPW01169310_0003.JP2" /> 
+			</METS:file> 
+			<METS:file SEQ="0004" CREATED="2013-01-09T12:43:17Z" ID="JP220004" MIMETYPE="image/jp2" CHECKSUM="5938608293A0FDD6A3CBE5F99356B51A" CHECKSUMTYPE="MD5" SIZE="645047"> 
+				<METS:FLocat LOCTYPE="URL" xlink:href="./userCopy/UC_KPW01169310_0004.JP2" /> 
+			</METS:file> 
+			<METS:file SEQ="0005" CREATED="2013-01-09T12:43:20Z" ID="JP220005" MIMETYPE="image/jp2" CHECKSUM="8589F9569577BF66F587603B44875ED6" CHECKSUMTYPE="MD5" SIZE="644709"> 
+				<METS:FLocat LOCTYPE="URL" xlink:href="./userCopy/UC_KPW01169310_0005.JP2" /> 
+			</METS:file> 
+			<METS:file SEQ="0006" CREATED="2013-01-09T12:43:19Z" ID="JP220006" MIMETYPE="image/jp2" CHECKSUM="606BDC107A4A7E7AC2A3170302BC2586" CHECKSUMTYPE="MD5" SIZE="646402"> 
+				<METS:FLocat LOCTYPE="URL" xlink:href="./userCopy/UC_KPW01169310_0006.JP2" /> 
+			</METS:file> 
+			<METS:file SEQ="0007" CREATED="2013-01-09T12:43:19Z" ID="JP220007" MIMETYPE="image/jp2" CHECKSUM="28DDF085352EC3FEAAA313FC674CE4C9" CHECKSUMTYPE="MD5" SIZE="642454"> 
+				<METS:FLocat LOCTYPE="URL" xlink:href="./userCopy/UC_KPW01169310_0007.JP2" /> 
+			</METS:file> 
+			<METS:file SEQ="0008" CREATED="2013-01-09T12:43:20Z" ID="JP220008" MIMETYPE="image/jp2" CHECKSUM="4E124BE41529216A4F79F1EA6D9DBA7A" CHECKSUMTYPE="MD5" SIZE="650691"> 
+				<METS:FLocat LOCTYPE="URL" xlink:href="./userCopy/UC_KPW01169310_0008.JP2" /> 
+			</METS:file> 
+		</METS:fileGrp> 
+		<METS:fileGrp ID="TXTGRP" USE="Text" > 
+			<METS:file SEQ="0001" CREATED="2013-01-09T12:43:16Z" ID="TXT30001" MIMETYPE="text/plain" CHECKSUM="7e36ec75699bbd99c06192db46f5f915" CHECKSUMTYPE="MD5" SIZE="166"> 
+				<METS:FLocat LOCTYPE="URL" xlink:href="./TXT/TXT_KPW01169310_0001.TXT" /> 
+			</METS:file> 
+			<METS:file SEQ="0002" CREATED="2013-01-09T12:43:19Z" ID="TXT30002" MIMETYPE="text/plain" CHECKSUM="ef9c643c2b4c740d9868086b4514c30e" CHECKSUMTYPE="MD5" SIZE="44"> 
+				<METS:FLocat LOCTYPE="URL" xlink:href="./TXT/TXT_KPW01169310_0002.TXT" /> 
+			</METS:file> 
+			<METS:file SEQ="0003" CREATED="2013-01-09T12:43:19Z" ID="TXT30003" MIMETYPE="text/plain" CHECKSUM="e858790dc606e3e921f402a0f903442d" CHECKSUMTYPE="MD5" SIZE="2506"> 
+				<METS:FLocat LOCTYPE="URL" xlink:href="./TXT/TXT_KPW01169310_0003.TXT" /> 
+			</METS:file> 
+			<METS:file SEQ="0004" CREATED="2013-01-09T12:43:20Z" ID="TXT30004" MIMETYPE="text/plain" CHECKSUM="6c4354ee6df851c56c2fb43ddce89685" CHECKSUMTYPE="MD5" SIZE="3117"> 
+				<METS:FLocat LOCTYPE="URL" xlink:href="./TXT/TXT_KPW01169310_0004.TXT" /> 
+			</METS:file> 
+			<METS:file SEQ="0005" CREATED="2013-01-09T12:43:19Z" ID="TXT30005" MIMETYPE="text/plain" CHECKSUM="9f54af5b0a08b8738dcad95320174b91" CHECKSUMTYPE="MD5" SIZE="2517"> 
+				<METS:FLocat LOCTYPE="URL" xlink:href="./TXT/TXT_KPW01169310_0005.TXT" /> 
+			</METS:file> 
+			<METS:file SEQ="0006" CREATED="2013-01-09T12:43:15Z" ID="TXT30006" MIMETYPE="text/plain" CHECKSUM="1bea6a29d45ad160889090060d637257" CHECKSUMTYPE="MD5" SIZE="2772"> 
+				<METS:FLocat LOCTYPE="URL" xlink:href="./TXT/TXT_KPW01169310_0006.TXT" /> 
+			</METS:file> 
+			<METS:file SEQ="0007" CREATED="2013-01-09T12:43:18Z" ID="TXT30007" MIMETYPE="text/plain" CHECKSUM="6b866382fd75877fc53be42eea11c718" CHECKSUMTYPE="MD5" SIZE="2909"> 
+				<METS:FLocat LOCTYPE="URL" xlink:href="./TXT/TXT_KPW01169310_0007.TXT" /> 
+			</METS:file> 
+			<METS:file SEQ="0008" CREATED="2013-01-09T12:43:16Z" ID="TXT30008" MIMETYPE="text/plain" CHECKSUM="7875ad0dd2578b3151164b87ef1e2474" CHECKSUMTYPE="MD5" SIZE="3389"> 
+				<METS:FLocat LOCTYPE="URL" xlink:href="./TXT/TXT_KPW01169310_0008.TXT" /> 
+			</METS:file> 
+		</METS:fileGrp> 
+		<METS:fileGrp ID="ALTOGRP" USE="Layout" > 
+			<METS:file SEQ="0001" CREATED="2013-01-09T12:43:16Z" ID="XML40001" MIMETYPE="text/xml" CHECKSUM="84beb79e0926f48f68b0daa93a0b43be" CHECKSUMTYPE="MD5" SIZE="7380"> 
+				<METS:FLocat LOCTYPE="URL" xlink:href="./ALTO/ALTO_KPW01169310_0001.XML" /> 
+			</METS:file> 
+			<METS:file SEQ="0002" CREATED="2013-01-09T12:43:15Z" ID="XML40002" MIMETYPE="text/xml" CHECKSUM="1dedf4800c6e764e4dd3816c3d104539" CHECKSUMTYPE="MD5" SIZE="3099"> 
+				<METS:FLocat LOCTYPE="URL" xlink:href="./ALTO/ALTO_KPW01169310_0002.XML" /> 
+			</METS:file> 
+			<METS:file SEQ="0003" CREATED="2013-01-09T12:43:20Z" ID="XML40003" MIMETYPE="text/xml" CHECKSUM="013d2b77a653827b4f517e54ab60b4f7" CHECKSUMTYPE="MD5" SIZE="52204"> 
+				<METS:FLocat LOCTYPE="URL" xlink:href="./ALTO/ALTO_KPW01169310_0003.XML" /> 
+			</METS:file> 
+			<METS:file SEQ="0004" CREATED="2013-01-09T12:43:17Z" ID="XML40004" MIMETYPE="text/xml" CHECKSUM="4b07adff1bb448040d075711fa5d54c1" CHECKSUMTYPE="MD5" SIZE="70781"> 
+				<METS:FLocat LOCTYPE="URL" xlink:href="./ALTO/ALTO_KPW01169310_0004.XML" /> 
+			</METS:file> 
+			<METS:file SEQ="0005" CREATED="2013-01-09T12:43:19Z" ID="XML40005" MIMETYPE="text/xml" CHECKSUM="123966ecdeb7a8b7d30b42e9adf6519d" CHECKSUMTYPE="MD5" SIZE="50407"> 
+				<METS:FLocat LOCTYPE="URL" xlink:href="./ALTO/ALTO_KPW01169310_0005.XML" /> 
+			</METS:file> 
+			<METS:file SEQ="0006" CREATED="2013-01-09T12:43:19Z" ID="XML40006" MIMETYPE="text/xml" CHECKSUM="7891787b1b5b0f3ffa6ebca9a78b3e4b" CHECKSUMTYPE="MD5" SIZE="56589"> 
+				<METS:FLocat LOCTYPE="URL" xlink:href="./ALTO/ALTO_KPW01169310_0006.XML" /> 
+			</METS:file> 
+			<METS:file SEQ="0007" CREATED="2013-01-09T12:43:17Z" ID="XML40007" MIMETYPE="text/xml" CHECKSUM="2a07a947abdda0ca0d7a84b853261b3e" CHECKSUMTYPE="MD5" SIZE="62644"> 
+				<METS:FLocat LOCTYPE="URL" xlink:href="./ALTO/ALTO_KPW01169310_0007.XML" /> 
+			</METS:file> 
+			<METS:file SEQ="0008" CREATED="2013-01-09T12:43:20Z" ID="XML40008" MIMETYPE="text/xml" CHECKSUM="776503fc9b2f151f1b53a6bdc5831cfe" CHECKSUMTYPE="MD5" SIZE="69316"> 
+				<METS:FLocat LOCTYPE="URL" xlink:href="./ALTO/ALTO_KPW01169310_0008.XML" /> 
+			</METS:file> 
+		</METS:fileGrp> 
+		<METS:fileGrp ID="TECHMDGRP" USE="Technical Metadata" > 
+			<METS:file SEQ="0001" CREATED="2013-01-22T10:55:20Z" ID="XML50001" MIMETYPE="text/xml" CHECKSUM="994fa07770797ee258fcd37a4da4aa09" CHECKSUMTYPE="MD5" SIZE="22778"> 
+				<METS:FLocat LOCTYPE="URL" xlink:href="./amdSec/AMD_METS_KPW01169310_0001.xml" /> 
+			</METS:file> 
+			<METS:file SEQ="0002" CREATED="2013-01-22T10:55:20Z" ID="XML50002" MIMETYPE="text/xml" CHECKSUM="2f1ad986f0c8397c3cd1e6a81b3aa3d3" CHECKSUMTYPE="MD5" SIZE="22777"> 
+				<METS:FLocat LOCTYPE="URL" xlink:href="./amdSec/AMD_METS_KPW01169310_0002.xml" /> 
+			</METS:file> 
+			<METS:file SEQ="0003" CREATED="2013-01-22T10:55:20Z" ID="XML50003" MIMETYPE="text/xml" CHECKSUM="a59367e74b094bc3acc80a9e87efdf65" CHECKSUMTYPE="MD5" SIZE="22781"> 
+				<METS:FLocat LOCTYPE="URL" xlink:href="./amdSec/AMD_METS_KPW01169310_0003.xml" /> 
+			</METS:file> 
+			<METS:file SEQ="0004" CREATED="2013-01-22T10:55:20Z" ID="XML50004" MIMETYPE="text/xml" CHECKSUM="5c653e8196b9417277d27d30913d65ea" CHECKSUMTYPE="MD5" SIZE="22781"> 
+				<METS:FLocat LOCTYPE="URL" xlink:href="./amdSec/AMD_METS_KPW01169310_0004.xml" /> 
+			</METS:file> 
+			<METS:file SEQ="0005" CREATED="2013-01-22T10:55:20Z" ID="XML50005" MIMETYPE="text/xml" CHECKSUM="fc54453183933e4c12bbfdd638d3a542" CHECKSUMTYPE="MD5" SIZE="22781"> 
+				<METS:FLocat LOCTYPE="URL" xlink:href="./amdSec/AMD_METS_KPW01169310_0005.xml" /> 
+			</METS:file> 
+			<METS:file SEQ="0006" CREATED="2013-01-22T10:55:20Z" ID="XML50006" MIMETYPE="text/xml" CHECKSUM="acb08bf4d7289336fb112e952b2baabf" CHECKSUMTYPE="MD5" SIZE="22781"> 
+				<METS:FLocat LOCTYPE="URL" xlink:href="./amdSec/AMD_METS_KPW01169310_0006.xml" /> 
+			</METS:file> 
+			<METS:file SEQ="0007" CREATED="2013-01-22T10:55:20Z" ID="XML50007" MIMETYPE="text/xml" CHECKSUM="becc3f206d7e8c00726ea024c70f1b49" CHECKSUMTYPE="MD5" SIZE="22781"> 
+				<METS:FLocat LOCTYPE="URL" xlink:href="./amdSec/AMD_METS_KPW01169310_0007.xml" /> 
+			</METS:file> 
+			<METS:file SEQ="0008" CREATED="2013-01-22T10:55:20Z" ID="XML50008" MIMETYPE="text/xml" CHECKSUM="62f19a75f140e0eed85d68d174a66052" CHECKSUMTYPE="CRC" SIZE="22781"> 
+				<METS:FLocat LOCTYPE="URL" xlink:href="./amdSec/AMD_METS_KPW01169310_0008.xml" /> 
+			</METS:file> 
+		</METS:fileGrp> 
+	</METS:fileSec> 
+	<METS:structMap LABEL="Physical_Structure" TYPE="PHYSICAL"> 
+		<METS:div ID="DIV_M_0000" DMDID="MODSMD_VOLUME_0001"  ORDER="0" TYPE="monograph" LABEL="Z dějin malenovického hradu , [1953]"> 
+			<METS:div ID="PageID_0001" ORDER="0001" ORDERLABEL="[1]" TYPE="TitlePage"> 
+				<METS:fptr FILEID="JP210001" /> 
+				<METS:fptr FILEID="JP220001" /> 
+				<METS:fptr FILEID="TXT30001" /> 
+				<METS:fptr FILEID="XML40001" /> 
+				<METS:fptr FILEID="XML50001" /> 
+			</METS:div> 
+			<METS:div ID="PageID_0002" ORDER="0002" ORDERLABEL="[2]" TYPE="Blank"> 
+				<METS:fptr FILEID="JP210002" /> 
+				<METS:fptr FILEID="JP220002" /> 
+				<METS:fptr FILEID="TXT30002" /> 
+				<METS:fptr FILEID="XML40002" /> 
+				<METS:fptr FILEID="XML50002" /> 
+			</METS:div> 
+			<METS:div ID="PageID_0003" ORDER="0003" ORDERLABEL="3" TYPE="NormalPage"> 
+				<METS:fptr FILEID="JP210003" /> 
+				<METS:fptr FILEID="JP220003" /> 
+				<METS:fptr FILEID="TXT30003" /> 
+				<METS:fptr FILEID="XML40003" /> 
+				<METS:fptr FILEID="XML50003" /> 
+			</METS:div> 
+			<METS:div ID="PageID_0004" ORDER="0004" ORDERLABEL="4" TYPE="NormalPage"> 
+				<METS:fptr FILEID="JP210004" /> 
+				<METS:fptr FILEID="JP220004" /> 
+				<METS:fptr FILEID="TXT30004" /> 
+				<METS:fptr FILEID="XML40004" /> 
+				<METS:fptr FILEID="XML50004" /> 
+			</METS:div> 
+			<METS:div ID="PageID_0005" ORDER="0005" ORDERLABEL="5" TYPE="NormalPage"> 
+				<METS:fptr FILEID="JP210005" /> 
+				<METS:fptr FILEID="JP220005" /> 
+				<METS:fptr FILEID="TXT30005" /> 
+				<METS:fptr FILEID="XML40005" /> 
+				<METS:fptr FILEID="XML50005" /> 
+			</METS:div> 
+			<METS:div ID="PageID_0006" ORDER="0006" ORDERLABEL="6" TYPE="NormalPage"> 
+				<METS:fptr FILEID="JP210006" /> 
+				<METS:fptr FILEID="JP220006" /> 
+				<METS:fptr FILEID="TXT30006" /> 
+				<METS:fptr FILEID="XML40006" /> 
+				<METS:fptr FILEID="XML50006" /> 
+			</METS:div> 
+			<METS:div ID="PageID_0007" ORDER="0007" ORDERLABEL="7" TYPE="NormalPage"> 
+				<METS:fptr FILEID="JP210007" /> 
+				<METS:fptr FILEID="JP220007" /> 
+				<METS:fptr FILEID="TXT30007" /> 
+				<METS:fptr FILEID="XML40007" /> 
+				<METS:fptr FILEID="XML50007" /> 
+			</METS:div> 
+			<METS:div ID="PageID_0008" ORDER="0008" ORDERLABEL="8" TYPE="NormalPage"> 
+				<METS:fptr FILEID="JP210008" /> 
+				<METS:fptr FILEID="JP220008" /> 
+				<METS:fptr FILEID="TXT30008" /> 
+				<METS:fptr FILEID="XML40008" /> 
+				<METS:fptr FILEID="XML50008" /> 
+			</METS:div> 
+		</METS:div> 
+	</METS:structMap>
+	<METS:structMap LABEL="Logical_Structure" TYPE="LOGICAL"> 
+		<METS:div LABEL="Z dějin malenovického hradu , [1953]" TYPE="MONOGRAPH" ID="MONOGRAPH_0001"> 
+			<METS:div LABEL="Z dějin malenovického hradu , [1953]" TYPE="VOLUME" ID="VOLUME_0001" DMDID="MODSMD_VOLUME_0001"> 
+			</METS:div> 
+		</METS:div> 
+	</METS:structMap>
+	<METS:structLink>
+		<METS:smLink xlink:from="VOLUME_0001" xlink:to="PageID_0001" />
+		<METS:smLink xlink:from="VOLUME_0001" xlink:to="PageID_0002" />
+		<METS:smLink xlink:from="VOLUME_0001" xlink:to="PageID_0003" />
+		<METS:smLink xlink:from="VOLUME_0001" xlink:to="PageID_0004" />
+		<METS:smLink xlink:from="VOLUME_0001" xlink:to="PageID_0005" />
+		<METS:smLink xlink:from="VOLUME_0001" xlink:to="PageID_0006" />
+		<METS:smLink xlink:from="VOLUME_0001" xlink:to="PageID_0007" />
+		<METS:smLink xlink:from="VOLUME_0001" xlink:to="PageID_0008" />
+	</METS:structLink>
+</METS:mets>

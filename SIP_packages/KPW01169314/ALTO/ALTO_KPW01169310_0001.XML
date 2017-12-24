@@ -1,0 +1,102 @@
+﻿<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<alto xmlns="http://www.loc.gov/standards/alto/ns-v2#" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <Description>
+    <MeasurementUnit>pixel</MeasurementUnit>
+    <OCRProcessing ID="IdOcr">
+      <ocrProcessingStep>
+        <processingDateTime>2012-10-17</processingDateTime>
+        <processingSoftware>
+          <softwareCreator>ABBYY</softwareCreator>
+          <softwareName>ABBYY Recognition Server</softwareName>
+          <softwareVersion>4.0</softwareVersion>
+        </processingSoftware>
+      </ocrProcessingStep>
+    </OCRProcessing>
+  </Description>
+  <Styles>
+    <ParagraphStyle ID="StyleId-FFFFFFFF-FFFF-FFFF-FFFF-FFFFFFFFFFFF-" ALIGN="Left" LEFT="0" RIGHT="0" FIRSTLINE="0" />
+    <ParagraphStyle ID="StyleId-E7C4BBD5-60DD-4282-86D5-11F294DFFF0E-" ALIGN="Center" LEFT="0" RIGHT="0" FIRSTLINE="0" LINESPACE="0" />
+    <ParagraphStyle ID="StyleId-7B83F626-EAB3-45DC-AED4-044EC06715A4-" ALIGN="Left" LEFT="0" RIGHT="0" FIRSTLINE="0" LINESPACE="0" />
+    <ParagraphStyle ID="StyleId-C59EDA21-BF57-4E58-A13E-608BE0CE2625-" ALIGN="Right" LEFT="0" RIGHT="0" FIRSTLINE="0" LINESPACE="0" />
+    <ParagraphStyle ID="StyleId-2390C842-8E59-4ADF-9B3F-24894CAEC606-" ALIGN="Block" LEFT="0" RIGHT="0" FIRSTLINE="0" LINESPACE="1320" />
+    <ParagraphStyle ID="StyleId-8692FCBB-3C55-4BFD-820A-94189CCA2B0D-" ALIGN="Block" LEFT="0" RIGHT="0" FIRSTLINE="0" LINESPACE="1320" />
+    <ParagraphStyle ID="StyleId-08FDF9BD-EA7A-415E-98AF-0D1FFAF043F0-" ALIGN="Left" LEFT="0" RIGHT="0" FIRSTLINE="0" LINESPACE="0" />
+    <ParagraphStyle ID="StyleId-51D9B7EE-561C-482D-8D6B-B77500C79933-" ALIGN="Left" LEFT="0" RIGHT="0" FIRSTLINE="0" LINESPACE="0" />
+  </Styles>
+  <Layout>
+    <Page ID="Page1" PHYSICAL_IMG_NR="1">
+      <PrintSpace HEIGHT="2461" WIDTH="1769" VPOS="0" HPOS="0">
+        <ComposedBlock ID="BlockId-20A135E6-3846-46EA-83D0-39D59F6FD5B4-" HEIGHT="1022" WIDTH="1584" VPOS="18" HPOS="108" TYPE="container">
+          <TextBlock ID="BlockId-32A225C6-7A05-4E1E-BD90-CDAE490360E9-" HEIGHT="104" WIDTH="372" VPOS="62" HPOS="1240" STYLEREFS="StyleId-C59EDA21-BF57-4E58-A13E-608BE0CE2625-">
+            <TextLine HEIGHT="70" WIDTH="336" VPOS="86" HPOS="1259">
+              <String CONTENT="A^469227" HEIGHT="70" WIDTH="336" VPOS="86" HPOS="1259" />
+            </TextLine>
+          </TextBlock>
+          <TextBlock ID="BlockId-4F92E0F8-8897-44A5-B9CD-BEF13854E47B-" HEIGHT="334" WIDTH="1584" VPOS="18" HPOS="108" STYLEREFS="StyleId-2390C842-8E59-4ADF-9B3F-24894CAEC606-">
+            <Shape>
+              <Polygon POINTS="108,18 1166,18 1166,184 1692,184 1692,352 108,352 108,18" />
+            </Shape>
+            <TextLine HEIGHT="68" WIDTH="1535" VPOS="217" HPOS="139">
+              <String CONTENT="728.81" HEIGHT="42" WIDTH="180" VPOS="228" HPOS="139" />
+              <SP WIDTH="64" VPOS="230" HPOS="320" />
+              <String CONTENT="JANÄL" HEIGHT="51" WIDTH="152" VPOS="218" HPOS="385" />
+              <SP WIDTH="612" VPOS="217" HPOS="538" />
+              <String CONTENT="OKRESI.1" HEIGHT="50" WIDTH="222" VPOS="217" HPOS="1151" />
+              <SP WIDTH="21" VPOS="217" HPOS="1374" />
+              <String CONTENT="KNIHOVNA" HEIGHT="56" WIDTH="278" VPOS="229" HPOS="1396" />
+            </TextLine>
+            <TextLine HEIGHT="57" WIDTH="1260" VPOS="279" HPOS="366" STYLEREFS="StyleId-8692FCBB-3C55-4BFD-820A-94189CCA2B0D-">
+              <String CONTENT="—" HEIGHT="4" WIDTH="55" VPOS="298" HPOS="366" />
+              <SP WIDTH="755" VPOS="279" HPOS="421" />
+              <String CONTENT="V" HEIGHT="35" WIDTH="34" VPOS="279" HPOS="1177" />
+              <SP WIDTH="15" VPOS="279" HPOS="1212" />
+              <String CONTENT="GOTTWAIDOVŽ" HEIGHT="52" WIDTH="338" VPOS="282" HPOS="1228" />
+              <SP WIDTH="12" VPOS="293" HPOS="1567" />
+              <String CONTENT="-1" HEIGHT="32" WIDTH="46" VPOS="304" HPOS="1580" />
+            </TextLine>
+          </TextBlock>
+          <TextBlock ID="BlockId-1B903C06-CCC5-4C64-BA60-06E3131074E7-" HEIGHT="478" WIDTH="1008" VPOS="562" HPOS="376" STYLEREFS="StyleId-E7C4BBD5-60DD-4282-86D5-11F294DFFF0E-">
+            <TextLine HEIGHT="94" WIDTH="80" VPOS="599" HPOS="703" STYLEREFS="StyleId-51D9B7EE-561C-482D-8D6B-B77500C79933-">
+              <String CONTENT="Z" HEIGHT="94" WIDTH="80" VPOS="599" HPOS="703" />
+            </TextLine>
+            <TextLine HEIGHT="104" WIDTH="978" VPOS="779" HPOS="391">
+              <String CONTENT="malenovkkého" HEIGHT="104" WIDTH="630" VPOS="779" HPOS="391" />
+              <SP WIDTH="54" VPOS="779" HPOS="1022" />
+              <String CONTENT="hradu" HEIGHT="102" WIDTH="292" VPOS="779" HPOS="1077" />
+            </TextLine>
+            <TextLine HEIGHT="30" WIDTH="488" VPOS="1005" HPOS="634" STYLEREFS="StyleId-08FDF9BD-EA7A-415E-98AF-0D1FFAF043F0-">
+              <String CONTENT="Dr" HEIGHT="23" WIDTH="52" VPOS="1011" HPOS="634" />
+              <SP WIDTH="28" VPOS="1011" HPOS="687" />
+              <String CONTENT="RUDOLF" HEIGHT="25" WIDTH="207" VPOS="1010" HPOS="716" />
+              <SP WIDTH="30" VPOS="1010" HPOS="924" />
+              <String CONTENT="JANÄL" HEIGHT="29" WIDTH="167" VPOS="1005" HPOS="955" />
+            </TextLine>
+          </TextBlock>
+        </ComposedBlock>
+        <TextBlock ID="BlockId-BFE18356-0810-4C36-B476-DDD4CA42B6FE-" HEIGHT="82" WIDTH="278" VPOS="1317" HPOS="715" STYLEREFS="StyleId-7B83F626-EAB3-45DC-AED4-044EC06715A4-">
+          <TextLine HEIGHT="68" WIDTH="266" VPOS="1325" HPOS="721">
+            <String CONTENT="&quot;ssedi" HEIGHT="68" WIDTH="266" VPOS="1325" HPOS="721" />
+          </TextLine>
+        </TextBlock>
+        <TextBlock ID="BlockId-4E1AEA6D-F6E1-4A0C-AAB1-3ADEB4DCF87C-" HEIGHT="45" WIDTH="675" VPOS="2160" HPOS="543" STYLEREFS="StyleId-08FDF9BD-EA7A-415E-98AF-0D1FFAF043F0-">
+          <TextLine HEIGHT="33" WIDTH="663" VPOS="2166" HPOS="549">
+            <String CONTENT="Tisk" HEIGHT="25" WIDTH="75" VPOS="2167" HPOS="549" />
+            <SP WIDTH="14" VPOS="2167" HPOS="625" />
+            <String CONTENT="Slovácké" HEIGHT="26" WIDTH="149" VPOS="2167" HPOS="640" />
+            <SP WIDTH="14" VPOS="2168" HPOS="790" />
+            <String CONTENT="tiskárny" HEIGHT="31" WIDTH="144" VPOS="2168" HPOS="805" />
+            <SP WIDTH="13" VPOS="2174" HPOS="950" />
+            <String CONTENT="v" HEIGHT="18" WIDTH="19" VPOS="2174" HPOS="964" />
+            <SP WIDTH="14" VPOS="2167" HPOS="984" />
+            <String CONTENT="Gottwaldově" HEIGHT="27" WIDTH="213" VPOS="2166" HPOS="999" />
+          </TextLine>
+        </TextBlock>
+        <GraphicalElement ID="BlockId-A99C09A7-80C7-4051-B0A2-513B69E6516E-" HEIGHT="37" WIDTH="1769" VPOS="0" HPOS="0" />
+        <GraphicalElement ID="BlockId-50B3E142-BBA9-4750-899A-57569C9217AE-" HEIGHT="4" WIDTH="212" VPOS="298" HPOS="366" />
+        <GraphicalElement ID="BlockId-D7894D81-4860-4DF7-8C61-03E7FE66BAEE-" HEIGHT="8" WIDTH="1403" VPOS="2127" HPOS="179" />
+        <GraphicalElement ID="BlockId-F53E9F95-9400-46F3-8104-ED6161199797-" HEIGHT="2405" WIDTH="30" VPOS="0" HPOS="0" />
+        <GraphicalElement ID="BlockId-122387F6-A4BA-4364-8BDD-0F83BF7EFD04-" HEIGHT="2391" WIDTH="37" VPOS="33" HPOS="1732" />
+      </PrintSpace>
+    </Page>
+  </Layout>
+</alto>

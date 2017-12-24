@@ -1,0 +1,504 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+<METS:mets LABEL="Z dějin malenovického hradu , [1953]" TYPE="Monograph"
+  xmlns:METS="http://www.loc.gov/METS/"
+  xmlns:xlink="http://www.w3.org/1999/xlink"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+  xsi:schemaLocation="http://www.loc.gov/METS/
+    http://www.loc.gov/standards/mets/mets.xsd
+    info:lc/xmlns/premis-v2
+    http://www.loc.gov/standards/premis/v2/premis.xsd">
+<METS:metsHdr CREATEDATE="2013-01-22T10:55:20Z" ID="kpw01169310" >
+<METS:agent ROLE="CREATOR" TYPE="INDIVIDUAL"> 
+<METS:name>Administrator</METS:name>
+</METS:agent>
+</METS:metsHdr>
+<METS:amdSec ID="PageID_0004"> 
+<METS:techMD ID="MIX_001"> 
+<METS:mdWrap MDTYPE="NISOIMG" MIMETYPE="text/xml"> 
+<METS:xmlData>
+<mix:mix xmlns:mix="http://www.loc.gov/mix/v20">
+	<mix:BasicDigitalObjectInformation>
+		<mix:ObjectIdentifier>
+			<mix:objectIdentifierType>filename</mix:objectIdentifierType>
+			<mix:objectIdentifierValue>PS_KPW01169310_0004.TIF</mix:objectIdentifierValue>
+		</mix:ObjectIdentifier>
+		<mix:ObjectIdentifier>
+			<mix:objectIdentifierType>MD5</mix:objectIdentifierType>
+			<mix:objectIdentifierValue>4ac831bcf0978028d686f5e936fd6398</mix:objectIdentifierValue>
+		</mix:ObjectIdentifier>
+		<mix:fileSize>14466807</mix:fileSize>
+		<mix:FormatDesignation>
+			<mix:formatName>image/tiff</mix:formatName>
+			<mix:formatVersion>6.0</mix:formatVersion>
+		</mix:FormatDesignation>
+		<mix:byteOrder>little endian</mix:byteOrder>
+		<mix:Compression>
+			<mix:compressionScheme>uncompressed</mix:compressionScheme>
+		</mix:Compression>
+	</mix:BasicDigitalObjectInformation>
+	<mix:BasicImageInformation>
+		<mix:BasicImageCharacteristics>
+			<mix:imageWidth>1881</mix:imageWidth>
+			<mix:imageHeight>2560</mix:imageHeight>
+			<mix:PhotometricInterpretation>
+				<mix:colorSpace>RGB</mix:colorSpace>
+				<mix:ColorProfile>
+					<mix:IccProfile>
+						<mix:iccProfileName>IT8_7_2-1993.icm</mix:iccProfileName>
+						<mix:iccProfileVersion>2</mix:iccProfileVersion>
+					</mix:IccProfile>
+				</mix:ColorProfile>
+			</mix:PhotometricInterpretation>
+		</mix:BasicImageCharacteristics>
+	</mix:BasicImageInformation>
+	<mix:ImageCaptureMetadata>
+		<mix:GeneralCaptureInformation>
+			<mix:dateTimeCreated>2012-10-02T14:55:07Z</mix:dateTimeCreated>
+			<mix:imageProducer>EXON s.r.o.</mix:imageProducer>
+			<mix:captureDevice>digital still camera</mix:captureDevice>
+		</mix:GeneralCaptureInformation>
+		<mix:ScannerCapture>
+			<mix:scannerManufacturer>i2S</mix:scannerManufacturer>
+			<mix:ScannerModel>
+				<mix:scannerModelName>CopiBook HD</mix:scannerModelName>
+				<mix:scannerModelNumber>OOKHD/800</mix:scannerModelNumber>
+				<mix:scannerModelSerialNo>321008</mix:scannerModelSerialNo>
+			</mix:ScannerModel>
+			<mix:MaximumOpticalResolution>
+				<mix:xOpticalResolution>600</mix:xOpticalResolution>
+				<mix:yOpticalResolution>600</mix:yOpticalResolution>
+				<mix:opticalResolutionUnit>in.</mix:opticalResolutionUnit>
+			</mix:MaximumOpticalResolution>
+			<mix:scannerSensor>OneChipColourArea</mix:scannerSensor>
+			<mix:ScanningSystemSoftware>
+				<mix:scanningSoftwareName>CopiBook RGB+</mix:scanningSoftwareName>
+				<mix:scanningSoftwareVersionNo>4.0.7</mix:scanningSoftwareVersionNo>
+			</mix:ScanningSystemSoftware>
+		</mix:ScannerCapture>
+		<mix:orientation>normal*</mix:orientation>
+	</mix:ImageCaptureMetadata>
+	<mix:ImageAssessmentMetadata>
+		<mix:SpatialMetrics>
+			<mix:samplingFrequencyUnit>in.</mix:samplingFrequencyUnit>
+			<mix:xSamplingFrequency>
+				<mix:numerator>300</mix:numerator>
+				<mix:denominator>1</mix:denominator>
+			</mix:xSamplingFrequency>
+			<mix:ySamplingFrequency>
+				<mix:numerator>300</mix:numerator>
+				<mix:denominator>1</mix:denominator>
+			</mix:ySamplingFrequency>
+		</mix:SpatialMetrics>
+		<mix:ImageColorEncoding>
+			<mix:BitsPerSample>
+				<mix:bitsPerSampleValue>8</mix:bitsPerSampleValue>
+				<mix:bitsPerSampleValue>8</mix:bitsPerSampleValue>
+				<mix:bitsPerSampleValue>8</mix:bitsPerSampleValue>
+			</mix:BitsPerSample>
+			<mix:samplesPerPixel>3</mix:samplesPerPixel>
+		</mix:ImageColorEncoding>
+	</mix:ImageAssessmentMetadata>
+</mix:mix>
+</METS:xmlData> 
+</METS:mdWrap> 
+</METS:techMD> 
+<METS:techMD ID="MIX_002"> 
+<METS:mdWrap MDTYPE="NISOIMG" MIMETYPE="text/xml"> 
+<METS:xmlData>
+<mix:mix xmlns:mix="http://www.loc.gov/mix/v20">
+	<mix:BasicDigitalObjectInformation>
+		<mix:ObjectIdentifier>
+			<mix:objectIdentifierType>filename</mix:objectIdentifierType>
+			<mix:objectIdentifierValue>MC_KPW01169310_0004.jp2</mix:objectIdentifierValue>
+		</mix:ObjectIdentifier>
+		<mix:ObjectIdentifier>
+			<mix:objectIdentifierType>MD5</mix:objectIdentifierType>
+			<mix:objectIdentifierValue>180a6991c78136786626e2ff8c632b3d</mix:objectIdentifierValue>
+		</mix:ObjectIdentifier>
+		<mix:fileSize>7169641</mix:fileSize>
+		<mix:FormatDesignation>
+			<mix:formatName>image/jp2</mix:formatName>
+			<mix:formatVersion>1.0</mix:formatVersion>
+		</mix:FormatDesignation>
+		<mix:byteOrder>big endian</mix:byteOrder>
+		<mix:Compression>
+			<mix:compressionScheme>JPEG 2000</mix:compressionScheme>
+		</mix:Compression>
+	</mix:BasicDigitalObjectInformation>
+	<mix:BasicImageInformation>
+		<mix:BasicImageCharacteristics>
+			<mix:imageWidth>1881</mix:imageWidth>
+			<mix:imageHeight>2560</mix:imageHeight>
+			<mix:PhotometricInterpretation>
+				<mix:ColorProfile>
+					<mix:IccProfile>
+						<mix:iccProfileName>sRGB</mix:iccProfileName>
+						<mix:iccProfileVersion>2</mix:iccProfileVersion>
+					</mix:IccProfile>
+				</mix:ColorProfile>
+			</mix:PhotometricInterpretation>
+		</mix:BasicImageCharacteristics>
+	</mix:BasicImageInformation>
+	<mix:ImageAssessmentMetadata>
+		<mix:SpatialMetrics>
+			<mix:samplingFrequencyUnit>in.</mix:samplingFrequencyUnit>
+			<mix:xSamplingFrequency>
+				<mix:numerator>300</mix:numerator>
+				<mix:denominator>1</mix:denominator>
+			</mix:xSamplingFrequency>
+			<mix:ySamplingFrequency>
+				<mix:numerator>300</mix:numerator>
+				<mix:denominator>1</mix:denominator>
+			</mix:ySamplingFrequency>
+		</mix:SpatialMetrics>
+		<mix:ImageColorEncoding>
+			<mix:BitsPerSample>
+				<mix:bitsPerSampleValue>8</mix:bitsPerSampleValue>
+				<mix:bitsPerSampleValue>8</mix:bitsPerSampleValue>
+				<mix:bitsPerSampleValue>8</mix:bitsPerSampleValue>
+			</mix:BitsPerSample>
+			<mix:samplesPerPixel>3</mix:samplesPerPixel>
+		</mix:ImageColorEncoding>
+	</mix:ImageAssessmentMetadata>
+	<mix:ChangeHistory>
+		<mix:ImageProcessing />
+	</mix:ChangeHistory>
+</mix:mix>
+</METS:xmlData> 
+</METS:mdWrap> 
+</METS:techMD> 
+<METS:techMD ID="OBJ_001"> 
+<METS:mdWrap MDTYPE="PREMIS" MIMETYPE="text/xml"> 
+<METS:xmlData>
+<premis:object xsi:type="premis:file" xmlns:premis="info:lc/xmlns/premis-v2">
+	<premis:objectIdentifier>
+		<premis:objectIdentifierType>ObjectID</premis:objectIdentifierType>
+		<premis:objectIdentifierValue>Object_4564</premis:objectIdentifierValue>
+	</premis:objectIdentifier>
+	<premis:preservationLevel>
+		<premis:preservationLevelValue>deleted</premis:preservationLevelValue>
+		<premis:preservationLevelDateAssigned>2013-01-14</premis:preservationLevelDateAssigned>
+	</premis:preservationLevel>
+	<premis:objectCharacteristics>
+		<premis:compositionLevel>0</premis:compositionLevel>
+		<premis:fixity>
+			<premis:messageDigestAlgorithm>CRC32</premis:messageDigestAlgorithm>
+			<premis:messageDigest>546a1464</premis:messageDigest>
+			<premis:messageDigestOriginator>JHOVE</premis:messageDigestOriginator>
+		</premis:fixity>
+		<premis:fixity>
+			<premis:messageDigestAlgorithm>SHA-1</premis:messageDigestAlgorithm>
+			<premis:messageDigest>cb84ba56b30950b394c331d4752b5443acf88e71</premis:messageDigest>
+			<premis:messageDigestOriginator>JHOVE</premis:messageDigestOriginator>
+		</premis:fixity>
+		<premis:fixity>
+			<premis:messageDigestAlgorithm>MD5</premis:messageDigestAlgorithm>
+			<premis:messageDigest>4ac831bcf0978028d686f5e936fd6398</premis:messageDigest>
+			<premis:messageDigestOriginator>JHOVE</premis:messageDigestOriginator>
+		</premis:fixity>
+		<premis:size>14466807</premis:size>
+		<premis:format>
+			<premis:formatDesignation>
+				<premis:formatName>image/tiff</premis:formatName>
+				<premis:formatVersion>6.0</premis:formatVersion>
+			</premis:formatDesignation>
+			<premis:formatRegistry>
+				<premis:formatRegistryName>PRONOM</premis:formatRegistryName>
+				<premis:formatRegistryKey>fmt/10</premis:formatRegistryKey>
+			</premis:formatRegistry>
+		</premis:format>
+		<premis:creatingApplication>
+			<premis:creatingApplicationName>LIMB</premis:creatingApplicationName>
+			<premis:creatingApplicationVersion>1.00</premis:creatingApplicationVersion>
+			<premis:dateCreatedByApplication>2012-10-02T14:55:07Z</premis:dateCreatedByApplication>
+		</premis:creatingApplication>
+	</premis:objectCharacteristics>
+	<premis:originalName>PS_KPW011693105_0004.TIF</premis:originalName>
+	<premis:linkingEventIdentifier>
+		<premis:linkingEventIdentifierType>EventID</premis:linkingEventIdentifierType>
+		<premis:linkingEventIdentifierValue>Event_4564</premis:linkingEventIdentifierValue>
+	</premis:linkingEventIdentifier>
+</premis:object>
+</METS:xmlData> 
+</METS:mdWrap> 
+</METS:techMD> 
+<METS:techMD ID="OBJ_003"> 
+<METS:mdWrap MDTYPE="PREMIS" MIMETYPE="text/xml"> 
+<METS:xmlData>
+<premis:object xsi:type="premis:file" xmlns:premis="info:lc/xmlns/premis-v2">
+	<premis:objectIdentifier>
+		<premis:objectIdentifierType>ObjectID</premis:objectIdentifierType>
+		<premis:objectIdentifierValue>Object_4553</premis:objectIdentifierValue>
+	</premis:objectIdentifier>
+	<premis:preservationLevel>
+		<premis:preservationLevelValue>preservation</premis:preservationLevelValue>
+		<premis:preservationLevelDateAssigned>2013-01-14</premis:preservationLevelDateAssigned>
+	</premis:preservationLevel>
+	<premis:objectCharacteristics>
+		<premis:compositionLevel>0</premis:compositionLevel>
+		<premis:fixity>
+			<premis:messageDigestAlgorithm>CRC32</premis:messageDigestAlgorithm>
+			<premis:messageDigest>77288f3c</premis:messageDigest>
+			<premis:messageDigestOriginator>JHOVE</premis:messageDigestOriginator>
+		</premis:fixity>
+		<premis:fixity>
+			<premis:messageDigestAlgorithm>SHA-1</premis:messageDigestAlgorithm>
+			<premis:messageDigest>920ce9341ced025f0050f520abfa33e0562b0e4d</premis:messageDigest>
+			<premis:messageDigestOriginator>JHOVE</premis:messageDigestOriginator>
+		</premis:fixity>
+		<premis:fixity>
+			<premis:messageDigestAlgorithm>MD5</premis:messageDigestAlgorithm>
+			<premis:messageDigest>4b07adff1bb448040d075711fa5d54c1</premis:messageDigest>
+			<premis:messageDigestOriginator>JHOVE</premis:messageDigestOriginator>
+		</premis:fixity>
+		<premis:size>70781</premis:size>
+		<premis:format>
+			<premis:formatDesignation>
+				<premis:formatName>text/xml</premis:formatName>
+				<premis:formatVersion>1.0</premis:formatVersion>
+			</premis:formatDesignation>
+			<premis:formatRegistry>
+				<premis:formatRegistryName>PRONOM</premis:formatRegistryName>
+				<premis:formatRegistryKey>fmt/101</premis:formatRegistryKey>
+			</premis:formatRegistry>
+		</premis:format>
+		<premis:creatingApplication>
+			<premis:creatingApplicationName>Recognition Server</premis:creatingApplicationName>
+			<premis:creatingApplicationVersion>3.0</premis:creatingApplicationVersion>
+			<premis:dateCreatedByApplication>2013-01-11T14:17:32Z</premis:dateCreatedByApplication>
+		</premis:creatingApplication>
+	</premis:objectCharacteristics>
+	<premis:originalName>ALTO_KPW01169310_0004.XML</premis:originalName>
+	<premis:relationship>
+		<premis:relationshipType>derivation</premis:relationshipType>
+		<premis:relationshipSubType>created from</premis:relationshipSubType>
+		<premis:relatedObjectIdentification>
+			<premis:relatedObjectIdentifierType>temporary filepath</premis:relatedObjectIdentifierType>
+			<premis:relatedObjectIdentifierValue>C:\Digi_linka\Procyon_Projekty\kpw01169310\PS_KPW01169310_0004.TIF</premis:relatedObjectIdentifierValue>
+		</premis:relatedObjectIdentification>
+		<premis:relatedEventIdentification>
+			<premis:relatedEventIdentifierType>EventID</premis:relatedEventIdentifierType>
+			<premis:relatedEventIdentifierValue>Event_4553</premis:relatedEventIdentifierValue>
+			<premis:relatedEventSequence>4553</premis:relatedEventSequence>
+		</premis:relatedEventIdentification>
+	</premis:relationship>
+</premis:object>
+</METS:xmlData> 
+</METS:mdWrap> 
+</METS:techMD> 
+<METS:techMD ID="OBJ_002"> 
+<METS:mdWrap MDTYPE="PREMIS" MIMETYPE="text/xml"> 
+<METS:xmlData>
+<premis:object xsi:type="premis:file" xmlns:premis="info:lc/xmlns/premis-v2">
+	<premis:objectIdentifier>
+		<premis:objectIdentifierType>ObjectID</premis:objectIdentifierType>
+		<premis:objectIdentifierValue>Object_4565</premis:objectIdentifierValue>
+	</premis:objectIdentifier>
+	<premis:preservationLevel>
+		<premis:preservationLevelValue>preservation</premis:preservationLevelValue>
+		<premis:preservationLevelDateAssigned>2013-01-14</premis:preservationLevelDateAssigned>
+	</premis:preservationLevel>
+	<premis:objectCharacteristics>
+		<premis:compositionLevel>0</premis:compositionLevel>
+		<premis:fixity>
+			<premis:messageDigestAlgorithm>CRC32</premis:messageDigestAlgorithm>
+			<premis:messageDigest>7db90549</premis:messageDigest>
+			<premis:messageDigestOriginator>JHOVE</premis:messageDigestOriginator>
+		</premis:fixity>
+		<premis:fixity>
+			<premis:messageDigestAlgorithm>SHA-1</premis:messageDigestAlgorithm>
+			<premis:messageDigest>43b112f43c0f4e36622dc0737e45dca9d0d21855</premis:messageDigest>
+			<premis:messageDigestOriginator>JHOVE</premis:messageDigestOriginator>
+		</premis:fixity>
+		<premis:fixity>
+			<premis:messageDigestAlgorithm>MD5</premis:messageDigestAlgorithm>
+			<premis:messageDigest>180a6991c78136786626e2ff8c632b3d</premis:messageDigest>
+			<premis:messageDigestOriginator>JHOVE</premis:messageDigestOriginator>
+		</premis:fixity>
+		<premis:size>7169641</premis:size>
+		<premis:format>
+			<premis:formatDesignation>
+				<premis:formatName>image/jp2</premis:formatName>
+				<premis:formatVersion>1.0</premis:formatVersion>
+			</premis:formatDesignation>
+			<premis:formatRegistry>
+				<premis:formatRegistryName>PRONOM</premis:formatRegistryName>
+				<premis:formatRegistryKey>x-fmt/392</premis:formatRegistryKey>
+			</premis:formatRegistry>
+		</premis:format>
+		<premis:creatingApplication>
+			<premis:creatingApplicationName>BookRestorer</premis:creatingApplicationName>
+			<premis:creatingApplicationVersion>3.4.1</premis:creatingApplicationVersion>
+			<premis:dateCreatedByApplication>2012-10-02T14:58:45Z</premis:dateCreatedByApplication>
+		</premis:creatingApplication>
+	</premis:objectCharacteristics>
+	<premis:originalName>MC_KPW01169310_0004.jp2</premis:originalName>
+	<premis:relationship>
+		<premis:relationshipType>derivation</premis:relationshipType>
+		<premis:relationshipSubType>created from</premis:relationshipSubType>
+		<premis:relatedObjectIdentification>
+			<premis:relatedObjectIdentifierType>temporary filepath</premis:relatedObjectIdentifierType>
+			<premis:relatedObjectIdentifierValue>C:\Digi_linka\Procyon_Projekty\kpw01169310\PS_KPW01169310_0004.TIF</premis:relatedObjectIdentifierValue>
+		</premis:relatedObjectIdentification>
+		<premis:relatedEventIdentification>
+			<premis:relatedEventIdentifierType>EventID</premis:relatedEventIdentifierType>
+			<premis:relatedEventIdentifierValue>Event_4565</premis:relatedEventIdentifierValue>
+			<premis:relatedEventSequence>4565</premis:relatedEventSequence>
+		</premis:relatedEventIdentification>
+	</premis:relationship>
+</premis:object>
+</METS:xmlData> 
+</METS:mdWrap> 
+</METS:techMD> 
+<METS:digiprovMD ID="EVT_001"> 
+<METS:mdWrap MDTYPE="PREMIS" MIMETYPE="text/xml"> 
+<METS:xmlData>
+<premis:event xmlns:premis="info:lc/xmlns/premis-v2">
+	<premis:eventIdentifier>
+		<premis:eventIdentifierType>EventId</premis:eventIdentifierType>
+		<premis:eventIdentifierValue>Event_4553</premis:eventIdentifierValue>
+	</premis:eventIdentifier>
+	<premis:eventType>capture</premis:eventType>
+	<premis:eventDateTime>2013-01-11T14:17:32Z</premis:eventDateTime>
+	<premis:eventDetail>capture/XML_creation</premis:eventDetail>
+	<premis:eventOutcomeInformation>
+		<premis:eventOutcome>successful</premis:eventOutcome>
+	</premis:eventOutcomeInformation>
+	<premis:linkingAgentIdentifier>
+		<premis:linkingAgentIdentifierType>AgentId</premis:linkingAgentIdentifierType>
+		<premis:linkingAgentIdentifierValue>agent_Recognition_Server_3.0</premis:linkingAgentIdentifierValue>
+	</premis:linkingAgentIdentifier>
+	<premis:linkingObjectIdentifier>
+		<premis:linkingObjectIdentifierType>URN</premis:linkingObjectIdentifierType>
+		<premis:linkingObjectIdentifierValue>URN:NBN:cz_0011#0001</premis:linkingObjectIdentifierValue>
+	</premis:linkingObjectIdentifier>
+</premis:event>
+</METS:xmlData> 
+</METS:mdWrap> 
+</METS:digiprovMD> 
+<METS:digiprovMD ID="EVT_002"> 
+<METS:mdWrap MDTYPE="PREMIS" MIMETYPE="text/xml"> 
+<METS:xmlData>
+<premis:event xmlns:premis="info:lc/xmlns/premis-v2">
+	<premis:eventIdentifier>
+		<premis:eventIdentifierType>EventId</premis:eventIdentifierType>
+		<premis:eventIdentifierValue>Event_4565</premis:eventIdentifierValue>
+	</premis:eventIdentifier>
+	<premis:eventType>migration</premis:eventType>
+	<premis:eventDateTime>2012-10-02T14:58:45Z</premis:eventDateTime>
+	<premis:eventDetail>migration/MC_creation</premis:eventDetail>
+	<premis:eventOutcomeInformation>
+		<premis:eventOutcome>successful</premis:eventOutcome>
+	</premis:eventOutcomeInformation>
+	<premis:linkingAgentIdentifier>
+		<premis:linkingAgentIdentifierType>AgentId</premis:linkingAgentIdentifierType>
+		<premis:linkingAgentIdentifierValue>agent_BookRestorer_3.4.1</premis:linkingAgentIdentifierValue>
+	</premis:linkingAgentIdentifier>
+	<premis:linkingObjectIdentifier>
+		<premis:linkingObjectIdentifierType>URN</premis:linkingObjectIdentifierType>
+		<premis:linkingObjectIdentifierValue>URN:NBN:cz_0011#0001</premis:linkingObjectIdentifierValue>
+	</premis:linkingObjectIdentifier>
+</premis:event>
+</METS:xmlData> 
+</METS:mdWrap> 
+</METS:digiprovMD> 
+<METS:digiprovMD ID="EVT_003"> 
+<METS:mdWrap MDTYPE="PREMIS" MIMETYPE="text/xml"> 
+<METS:xmlData>
+<premis:event xmlns:premis="info:lc/xmlns/premis-v2">
+	<premis:eventIdentifier>
+		<premis:eventIdentifierType>EventId</premis:eventIdentifierType>
+		<premis:eventIdentifierValue>Event_4564</premis:eventIdentifierValue>
+	</premis:eventIdentifier>
+	<premis:eventType>capture</premis:eventType>
+	<premis:eventDateTime>2012-10-02T14:55:07Z</premis:eventDateTime>
+	<premis:eventDetail>capture_digitization</premis:eventDetail>
+	<premis:eventOutcomeInformation>
+		<premis:eventOutcome>successful</premis:eventOutcome>
+	</premis:eventOutcomeInformation>
+	<premis:linkingAgentIdentifier>
+		<premis:linkingAgentIdentifierType>AgentId</premis:linkingAgentIdentifierType>
+		<premis:linkingAgentIdentifierValue>agent_CopiBook_0.0.0.1</premis:linkingAgentIdentifierValue>
+	</premis:linkingAgentIdentifier>
+	<premis:linkingObjectIdentifier>
+		<premis:linkingObjectIdentifierType>URN</premis:linkingObjectIdentifierType>
+		<premis:linkingObjectIdentifierValue>URN:NBN:cz_0011#0001</premis:linkingObjectIdentifierValue>
+	</premis:linkingObjectIdentifier>
+</premis:event>
+</METS:xmlData> 
+</METS:mdWrap> 
+</METS:digiprovMD> 
+<METS:digiprovMD ID="AGENT_001"> 
+<METS:mdWrap MDTYPE="PREMIS" MIMETYPE="text/xml"> 
+<METS:xmlData>
+<premis:agent xmlns:premis="info:lc/xmlns/premis-v2">
+	<premis:agentIdentifier>
+		<premis:agentIdentifierType>AgentID</premis:agentIdentifierType>
+		<premis:agentIdentifierValue>agent_CopiBook_0.0.0.1</premis:agentIdentifierValue>
+	</premis:agentIdentifier>
+	<premis:agentName>CopiBook RGB+</premis:agentName>
+	<premis:agentType>software</premis:agentType>
+</premis:agent>
+</METS:xmlData> 
+</METS:mdWrap> 
+</METS:digiprovMD> 
+<METS:digiprovMD ID="AGENT_002"> 
+<METS:mdWrap MDTYPE="PREMIS" MIMETYPE="text/xml"> 
+<METS:xmlData>
+<premis:agent xmlns:premis="info:lc/xmlns/premis-v2">
+	<premis:agentIdentifier>
+		<premis:agentIdentifierType>AgentID</premis:agentIdentifierType>
+		<premis:agentIdentifierValue>agent_Recognition_Server_3.0</premis:agentIdentifierValue>
+	</premis:agentIdentifier>
+	<premis:agentName>Recognition Server</premis:agentName>
+	<premis:agentType>software</premis:agentType>
+</premis:agent>
+</METS:xmlData> 
+</METS:mdWrap> 
+</METS:digiprovMD> 
+<METS:digiprovMD ID="AGENT_003"> 
+<METS:mdWrap MDTYPE="PREMIS" MIMETYPE="text/xml"> 
+<METS:xmlData>
+<premis:agent xmlns:premis="info:lc/xmlns/premis-v2">
+	<premis:agentIdentifier>
+		<premis:agentIdentifierType>AgentID</premis:agentIdentifierType>
+		<premis:agentIdentifierValue>agent_BookRestorer_3.4.1</premis:agentIdentifierValue>
+	</premis:agentIdentifier>
+	<premis:agentName>BookRestorer</premis:agentName>
+	<premis:agentType>software</premis:agentType>
+</premis:agent>
+</METS:xmlData> 
+</METS:mdWrap> 
+</METS:digiprovMD> 
+</METS:amdSec> 
+<METS:fileSec> 
+<METS:fileGrp ID="MC_IMGGRP" USE="Images" > 
+<METS:file SEQ="0004" CREATED="2013-01-09T12:43:17Z" ID="JP210004" MIMETYPE="image/jp2" CHECKSUM="180a6991c78136786626e2ff8c632b3d" CHECKSUMTYPE="MD5" SIZE="7169641"> 
+<METS:FLocat LOCTYPE="URL" xlink:href="./masterCopy/MC_KPW01169310_0004.JP2" /> 
+</METS:file> 
+</METS:fileGrp> 
+<METS:fileGrp ID="UC_IMGGRP" USE="Images" > 
+<METS:file SEQ="0004" CREATED="2013-01-09T12:43:17Z" ID="JP220004" MIMETYPE="image/jp2" CHECKSUM="37fa7e6a4fb19e78d4782435eac4cd4e" CHECKSUMTYPE="MD5" SIZE="645047"> 
+<METS:FLocat LOCTYPE="URL" xlink:href="./userCopy/UC_KPW01169310_0004.JP2" /> 
+</METS:file> 
+</METS:fileGrp> 
+<METS:fileGrp ID="TXTGRP" USE="Text" > 
+<METS:file SEQ="0004" CREATED="2013-01-09T12:43:20Z" ID="TXT30004" MIMETYPE="text/plain" CHECKSUM="6c4354ee6df851c56c2fb43ddce89685" CHECKSUMTYPE="MD5" SIZE="3117"> 
+<METS:FLocat LOCTYPE="URL" xlink:href="./TXT/TXT_KPW01169310_0004.TXT" /> 
+</METS:file> 
+</METS:fileGrp> 
+<METS:fileGrp ID="ALTOGRP" USE="Layout" > 
+<METS:file SEQ="0004" CREATED="2013-01-09T12:43:17Z" ID="XML40004" MIMETYPE="text/xml" CHECKSUM="4b07adff1bb448040d075711fa5d54c1" CHECKSUMTYPE="MD5" SIZE="70781"> 
+<METS:FLocat LOCTYPE="URL" xlink:href="./ALTO/ALTO_KPW01169310_0004.XML" /> 
+</METS:file> 
+</METS:fileGrp> 
+</METS:fileSec> 
+<METS:structMap LABEL="Physical_Structure" TYPE="PHYSICAL"> 
+<METS:div TYPE="MONOGRAPH_PAGE"> 
+<METS:fptr FILEID="JP210004" /> 
+<METS:fptr FILEID="JP220004" /> 
+<METS:fptr FILEID="TXT30004" /> 
+<METS:fptr FILEID="XML40004" /> 
+</METS:div> 
+</METS:structMap> 
+</METS:mets> 
