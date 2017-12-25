@@ -1,0 +1,9 @@
+<profile xmlns="http://www.arclib.lib.cas.cz">
+    <rule>
+        <nodeCheck>
+            <filePath>/info.xml</filePath>
+            <xPath>/info/creator</xPath>
+            <value>123456</value>
+        </nodeCheck>
+    </rule>
+</profile>

@@ -36,5 +36,15 @@
                 <constraints nullable="false" primaryKey="true"/>
             </column>
         </createTable>
+
+        <createTable tableName="arclib_validation_profile">
+            <column name="id" type="varchar(255)">
+                <constraints primaryKey="true" primaryKeyName="arclib_validation_profile_pkey" nullable="false"/>
+            </column>
+            <column name="created" type="datetime"/>
+            <column name="updated" type="datetime"/>
+            <column name="deleted" type="datetime"/>
+            <column name="xml" type="nclob"/>
+        </createTable>
     </changeSet>
 </databaseChangeLog>

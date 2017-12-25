@@ -1,0 +1,98 @@
+<profile xmlns="http://www.arclib.lib.cas.cz">
+    <rule>
+    <validationSchemaCheck>
+        <filePath>/info.xml</filePath>
+        <schema><![CDATA[
+            <xs:schema attributeFormDefault="unqualified" elementFormDefault="qualified" targetNamespace="http://www.ee.cz/schemas/NDK/info.xsd" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+              <xs:element name="info">
+                <xs:complexType>
+                  <xs:sequence>
+                    <xs:element type="xs:dateTime" name="created"/>
+                    <xs:element type="xs:string" name="packageid"/>
+                    <xs:element name="titleid">
+                      <xs:complexType>
+                        <xs:simpleContent>
+                          <xs:extension base="xs:string">
+                            <xs:attribute type="xs:string" name="TYPE"/>
+                          </xs:extension>
+                        </xs:simpleContent>
+                      </xs:complexType>
+                    </xs:element>
+                    <xs:element type="xs:string" name="creator"/>
+                    <xs:element name="itemlist">
+                      <xs:complexType>
+                        <xs:sequence>
+                          <xs:element type="xs:string" name="item" maxOccurs="unbounded" minOccurs="0"/>
+                        </xs:sequence>
+                        <xs:attribute type="xs:byte" name="ITEMTOTAL"/>
+                      </xs:complexType>
+                    </xs:element>
+                    <xs:element type="xs:int" name="size"/>
+                    <xs:element name="checksum">
+                      <xs:complexType>
+                        <xs:simpleContent>
+                          <xs:extension base="xs:string">
+                            <xs:attribute type="xs:string" name="TYPE"/>
+                            <xs:attribute type="xs:string" name="CHECKSUM"/>
+                          </xs:extension>
+                        </xs:simpleContent>
+                      </xs:complexType>
+                    </xs:element>
+                    <xs:element type="xs:string" name="note"/>
+                  </xs:sequence>
+                </xs:complexType>
+              </xs:element>
+            </xs:schema>
+            ]]>
+        </schema>
+    </validationSchemaCheck>
+</rule>
+    <rule>
+        <validationSchemaCheck>
+            <filePath>/info.xml</filePath>
+            <schema><![CDATA[
+            <xs:schema attributeFormDefault="unqualified" elementFormDefault="qualified" targetNamespace="http://www.ee.cz/schemas/NDK/info.xsd" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+              <xs:element name="info">
+                <xs:complexType>
+                  <xs:sequence>
+                    <xs:element type="xs:dateTime" name="created"/>
+                    <xs:element type="xs:string" name="packageid"/>
+                    <xs:element name="titleid">
+                      <xs:complexType>
+                        <xs:simpleContent>
+                          <xs:extension base="xs:string">
+                            <xs:attribute type="xs:string" name="TYPE"/>
+                          </xs:extension>
+                        </xs:simpleContent>
+                      </xs:complexType>
+                    </xs:element>
+                    <xs:element type="xs:string" name="creator"/>
+                    <xs:element name="itemlist">
+                      <xs:complexType>
+                        <xs:sequence>
+                          <xs:element type="xs:string" name="item" maxOccurs="unbounded" minOccurs="0"/>
+                        </xs:sequence>
+                        <xs:attribute type="xs:byte" name="ITEMTOTAL"/>
+                      </xs:complexType>
+                    </xs:element>
+                    <xs:element type="xs:int" name="size"/>
+                    <xs:element name="checksum">
+                      <xs:complexType>
+                        <xs:simpleContent>
+                          <xs:extension base="xs:string">
+                            <xs:attribute type="xs:string" name="TYPE"/>
+                            <xs:attribute type="xs:string" name="CHECKSUM"/>
+                          </xs:extension>
+                        </xs:simpleContent>
+                      </xs:complexType>
+                    </xs:element>
+                    <xs:element type="xs:string" name="note"/>
+                  </xs:sequence>
+                </xs:complexType>
+              </xs:element>
+            </xs:schema>
+            ]]>
+            </schema>
+        </validationSchemaCheck>
+    </rule>
+</profile>
