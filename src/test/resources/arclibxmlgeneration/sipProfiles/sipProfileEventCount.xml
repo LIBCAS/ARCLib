@@ -1,0 +1,13 @@
+<profile xmlns="http://www.arclib.lib.cas.cz/SIP_PROFILE">
+    <mapping>
+        <source>
+            <rootDirPath>/amdSec</rootDirPath>
+            <fileRegex>^AMD.*xml$</fileRegex>
+            <xPath>/mets/amdSec/digiprovMD/mdWrap/xmlData/event/eventType</xPath>
+        </source>
+        <destination>
+            <xPath>/METS:mets/METS:amdSec/METS:digiprovMD/METS:mdWrap/METS:xmlData/ARCLIB:eventAgents/ARCLIB:eventAgent/ARCLIB:eventType
+            </xPath>
+        </destination>
+    </mapping>
+</profile>

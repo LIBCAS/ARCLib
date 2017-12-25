@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<xsd:schema targetNamespace="http://arclib.lib.cas.cz/ARCLIB_XML"
+            xmlns="http://arclib.lib.cas.cz/ARCLIB_XML"
+            xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            xmlns:premis="http://www.loc.gov/premis/v3"
+            elementFormDefault="qualified">
+    <xsd:import namespace="http://www.loc.gov/premis/v3" schemaLocation="https://www.loc.gov/standards/premis/premis.xsd"/>
+
+    <xsd:element name="formats">
+        <xsd:complexType>
+            <xsd:sequence>
+                <xsd:element name="format" minOccurs="0" maxOccurs="unbounded">
+                    <xsd:complexType>
+                        <xsd:sequence>
+                            <xsd:element name="fileFormat"/>
+                            <xsd:element name="fileCount"/>
+                            <xsd:element name="identificationTool"/>
+                        </xsd:sequence>
+                    </xsd:complexType>
+                </xsd:element>
+            </xsd:sequence>
+        </xsd:complexType>
+    </xsd:element>
+
+    <xsd:element name="devices">
+        <xsd:complexType>
+            <xsd:sequence>
+                <xsd:element name="device" minOccurs="0" maxOccurs="unbounded">
+                    <xsd:complexType>
+                        <xsd:all>
+                            <xsd:element name="deviceId" minOccurs="0"/>
+                            <xsd:element name="fileCount" minOccurs="0"/>
+                        </xsd:all>
+                    </xsd:complexType>
+                </xsd:element>
+            </xsd:sequence>
+        </xsd:complexType>
+    </xsd:element>
+
+    <xsd:element name="eventAgents">
+        <xsd:complexType>
+            <xsd:sequence>
+                <xsd:element name="eventAgent" minOccurs="0" maxOccurs="unbounded">
+                    <xsd:complexType>
+                        <xsd:all>
+                            <xsd:element name="eventType" type="premis:stringPlusAuthority" minOccurs="0"/>
+                            <xsd:element name="agentName" type="xsd:string" minOccurs="0"/>
+                            <xsd:element name="eventDate" type="xsd:dateTime" minOccurs="0"/>
+                            <xsd:element name="eventCount" type="xsd:int" minOccurs="0"/>
+                        </xsd:all>
+                    </xsd:complexType>
+                </xsd:element>
+            </xsd:sequence>
+        </xsd:complexType>
+    </xsd:element>
+</xsd:schema>

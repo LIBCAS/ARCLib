@@ -572,6 +572,13 @@
             <version>2.4</version>
         </dependency>
 
+        <!--Java XPath engine -->
+        <dependency>
+            <groupId>jaxen</groupId>
+            <artifactId>jaxen</artifactId>
+            <version>1.1.1</version>
+        </dependency>
+
         <!-- Testing -->
         <dependency>
             <groupId>org.springframework.security</groupId>

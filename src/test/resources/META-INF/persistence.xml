@@ -14,6 +14,7 @@
         <class>cz.inqool.uas.error.Error</class>
         <class>cz.cas.lib.arclib.domain.ValidationProfile</class>
         <class>cz.cas.lib.arclib.domain.Sip</class>
+        <class>cz.cas.lib.arclib.domain.SipProfile</class>
         <class>cz.inqool.uas.security.authorization.assign.AssignedRole</class>
         <class>cz.inqool.uas.security.authorization.role.Role</class>
         <exclude-unlisted-classes>false</exclude-unlisted-classes>

@@ -33,3 +33,12 @@ camunda:
       db-reporter-activate: false
 arclib:
   workspace: workspace
+  arclibXmlValidationChecks: classpath:arclibXmlValidationChecks.txt
+  arclibXmlSchema: classpath:xmlSchemas/arclibXml.xsd
+  metsSchema: classpath:xmlSchemas/mets.xsd
+  premisSchema: classpath:xmlSchemas/premis-v2-2.xsd
+  sipProfileSchema: classpath:xmlSchemas/sipProfile.xsd
+namespaces:
+  METS: http://www.loc.gov/METS/
+  ARCLIB: http://arclib.lib.cas.cz/ARCLIB_XML
+  PREMIS: http://www.loc.gov/premis/v3
