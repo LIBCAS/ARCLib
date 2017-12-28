@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+<METS:mets xmlns:ARCLIB="http://arclib.lib.cas.cz/ARCLIB_XSD" xmlns:METS="http://www.loc.gov/METS/" xmlns:premis="info:lc/xmlns/premis-v2">
+	<METS:amdSec>
+		<METS:digiprovMD ID="TEST_ID_3">
+			<METS:mdWrap MDTYPE="PREMIS">
+				<METS:xmlData>
+					<premis:event>
+						<premis:eventDateTime>blah</premis:eventDateTime>
+					</premis:event>
+				</METS:xmlData>
+			</METS:mdWrap>
+		</METS:digiprovMD>
+	</METS:amdSec>
+</METS:mets>

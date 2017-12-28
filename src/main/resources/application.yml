@@ -48,3 +48,5 @@ mail:
     name: Aplikace Arclib
   app:
     name: Arclib
+solr:
+  endpoint: http://localhost:8983/solr
