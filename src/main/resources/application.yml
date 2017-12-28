@@ -42,3 +42,9 @@ namespaces:
   METS: http://www.loc.gov/METS/
   ARCLIB: http://arclib.lib.cas.cz/ARCLIB_XML
   PREMIS: http://www.loc.gov/premis/v3
+mail:
+  sender:
+    email: noreply@arclib.lib.cas.cz
+    name: Aplikace Arclib
+  app:
+    name: Arclib

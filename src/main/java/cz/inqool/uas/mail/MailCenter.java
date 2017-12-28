@@ -48,7 +48,7 @@ public class MailCenter {
 
     private String appLogo;
 
-    private String appName;
+    protected String appName;
 
     private String appLink;
 
@@ -68,7 +68,7 @@ public class MailCenter {
         sendAssignmentInternal(email, businessKey, taskId, taskName, taskKey, created, dueDate, otherName,"templates/taskPoolNotificationAssigned.vm");
     }
 
-    private MimeMessageHelper generalMessage(String emailTo, @Nullable String subject, boolean hasAttachment) throws MessagingException {
+    protected MimeMessageHelper generalMessage(String emailTo, @Nullable String subject, boolean hasAttachment) throws MessagingException {
         MimeMessage message = sender.create();
 
         // use the true flag to indicate you need a multipart message
@@ -92,7 +92,7 @@ public class MailCenter {
         return helper;
     }
 
-    private Map<String, Object> generalArguments() {
+    protected Map<String, Object> generalArguments() {
         Map<String, Object> arguments = new HashMap<>();
         arguments.put("appLogo", appLogo);
         arguments.put("appName", appName);
@@ -101,7 +101,7 @@ public class MailCenter {
         return arguments;
     }
 
-    private void transformAndSend(InputStream template, Map<String, Object> arguments, MimeMessageHelper helper)
+    protected void transformAndSend(InputStream template, Map<String, Object> arguments, MimeMessageHelper helper)
             throws MessagingException, IOException {
 
         if (!enabled) {
