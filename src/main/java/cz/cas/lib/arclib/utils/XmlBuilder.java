@@ -1,4 +1,4 @@
-package cz.cas.lib.arclib.service;
+package cz.cas.lib.arclib.utils;
 
 import cz.inqool.uas.exception.GeneralException;
 import lombok.extern.slf4j.Slf4j;
@@ -8,13 +8,11 @@ import org.dom4j.Node;
 import org.dom4j.XPath;
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.NodeList;
-import org.xml.sax.SAXException;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.transform.TransformerException;
 import java.io.ByteArrayInputStream;
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;

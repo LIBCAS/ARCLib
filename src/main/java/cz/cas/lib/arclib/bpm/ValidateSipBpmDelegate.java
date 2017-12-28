@@ -44,12 +44,14 @@ public class ValidateSipBpmDelegate implements JavaDelegate {
      * 3. deletes SIP from workspace
      *
      * @param execution parameter containing the SIP id
-     * @throws FileNotFoundException
-     * @throws InterruptedException
+     * @throws IOException
+     * @throws ParserConfigurationException
+     * @throws SAXException
+     * @throws XPathExpressionException
      */
     @Transactional
     @Override
-    public void execute(DelegateExecution execution) throws IOException, InterruptedException, ParserConfigurationException,
+    public void execute(DelegateExecution execution) throws IOException, ParserConfigurationException,
             SAXException, XPathExpressionException {
         String sipId = (String) execution.getVariable("sipId");
         String validationProfileId = (String) execution.getVariable("validationProfileId");
@@ -79,9 +81,8 @@ public class ValidateSipBpmDelegate implements JavaDelegate {
      * Copies folder with SIP contents to workspace
      * @param src path to the folder where the SIP is located
      * @param sipId id of the SIP
-     * @throws IOException
      */
-    private void copySipToWorkspace(String src, String sipId) throws IOException {
+    private void copySipToWorkspace(String src, String sipId) {
         checked(() -> {
             Path folder = Paths.get(workspace);
             if (!exists(folder)) {

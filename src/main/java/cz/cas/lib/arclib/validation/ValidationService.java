@@ -1,11 +1,11 @@
 package cz.cas.lib.arclib.validation;
 
 import cz.cas.lib.arclib.domain.ValidationProfile;
+import cz.cas.lib.arclib.exception.validation.InvalidNodeValue;
+import cz.cas.lib.arclib.exception.validation.MissingFile;
+import cz.cas.lib.arclib.exception.validation.SchemaValidationError;
+import cz.cas.lib.arclib.exception.validation.WrongNodeValue;
 import cz.cas.lib.arclib.store.ValidationProfileStore;
-import cz.cas.lib.arclib.validation.exception.InvalidNodeValue;
-import cz.cas.lib.arclib.validation.exception.MissingFile;
-import cz.cas.lib.arclib.validation.exception.SchemaValidationError;
-import cz.cas.lib.arclib.validation.exception.WrongNodeValue;
 import cz.inqool.uas.exception.GeneralException;
 import cz.inqool.uas.exception.MissingObject;
 import lombok.extern.slf4j.Slf4j;

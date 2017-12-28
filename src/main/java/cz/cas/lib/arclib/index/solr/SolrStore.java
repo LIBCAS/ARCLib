@@ -1,9 +1,9 @@
-package cz.cas.lib.arclib.solr;
+package cz.cas.lib.arclib.index.solr;
 
-import cz.cas.lib.arclib.index.Filter;
 import cz.cas.lib.arclib.index.IndexFieldConfig;
 import cz.cas.lib.arclib.index.IndexStore;
 import cz.inqool.uas.exception.BadArgument;
+import cz.inqool.uas.index.dto.Filter;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.solr.common.SolrInputDocument;

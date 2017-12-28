@@ -1,8 +1,8 @@
-package cz.cas.lib.arclib.solr;
+package cz.cas.lib.arclib.index.solr;
 
-import cz.cas.lib.arclib.index.Filter;
-import cz.cas.lib.arclib.index.FilterOperation;
 import cz.inqool.uas.exception.BadArgument;
+import cz.inqool.uas.index.dto.Filter;
+import cz.inqool.uas.index.dto.FilterOperation;
 import org.springframework.data.solr.core.query.Criteria;
 
 import java.util.List;

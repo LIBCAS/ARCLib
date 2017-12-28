@@ -1,4 +1,4 @@
-package cz.cas.lib.arclib.validation.exception;
+package cz.cas.lib.arclib.exception.validation;
 
 import cz.inqool.uas.exception.GeneralException;
 

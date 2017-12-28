@@ -1,6 +1,7 @@
 package cz.cas.lib.arclib.api;
 
 import cz.cas.lib.arclib.index.IndexStore;
+import cz.inqool.uas.index.dto.FilterOperation;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
@@ -21,7 +22,7 @@ public class IndexApi {
      *     ?filter[0].field=event_type&filter[0].operation=EQ&filter[0].value=validation
      * </p>
      * <p>
-     *     See {@link cz.cas.lib.arclib.index.FilterOperation} for all supported operations, {@link cz.cas.lib.arclib.solr.SolrQueryBuilder} for operations meaning and tests for the usage.
+     *     See {@link FilterOperation} for all supported operations, {@link cz.cas.lib.arclib.index.solr.SolrQueryBuilder} for operations meaning and tests for the usage.
      * </p>
      * @param filter
      * @return  list of IDs of documents

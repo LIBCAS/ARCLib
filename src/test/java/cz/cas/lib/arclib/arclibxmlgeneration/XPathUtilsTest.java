@@ -1,6 +1,6 @@
 package cz.cas.lib.arclib.arclibxmlgeneration;
 
-import cz.cas.lib.arclib.service.XPathUtils;
+import cz.cas.lib.arclib.utils.XPathUtils;
 import org.dom4j.InvalidXPathException;
 import org.junit.Test;
 import org.w3c.dom.NodeList;

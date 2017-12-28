@@ -1,4 +1,4 @@
-package cz.cas.lib.arclib;
+package cz.cas.lib.arclib.config;
 
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import cz.inqool.uas.store.DomainStore;

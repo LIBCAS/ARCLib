@@ -1,6 +1,6 @@
 package cz.cas.lib.arclib.arclibxmlgeneration;
 
-import cz.cas.lib.arclib.service.XmlBuilder;
+import cz.cas.lib.arclib.utils.XmlBuilder;
 import org.dom4j.Document;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;

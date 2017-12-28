@@ -1,4 +1,4 @@
-package cz.cas.lib.arclib.solr;
+package cz.cas.lib.arclib.index.solr;
 
 import org.springframework.data.solr.repository.SolrCrudRepository;
 

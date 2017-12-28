@@ -58,4 +58,13 @@ public class Filter {
      * Sub-filters.
      */
     protected List<Filter> filter = new ArrayList<>();
+
+    @Override
+    public String toString() {
+        return "Filter{" +
+                "field='" + field + '\'' +
+                ", operation=" + operation +
+                ", value='" + value + '\'' +
+                '}';
+    }
 }

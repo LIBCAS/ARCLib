@@ -1,6 +1,6 @@
 package cz.cas.lib.arclib.api;
 
-import cz.cas.lib.arclib.index.Filter;
+import cz.inqool.uas.index.dto.Filter;
 import lombok.Getter;
 import lombok.Setter;
 

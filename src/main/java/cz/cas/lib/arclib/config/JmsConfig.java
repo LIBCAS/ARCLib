@@ -1,4 +1,4 @@
-package cz.cas.lib.arclib;
+package cz.cas.lib.arclib.config;
 
 import org.springframework.boot.autoconfigure.jms.DefaultJmsListenerContainerFactoryConfigurer;
 import org.springframework.context.annotation.Bean;

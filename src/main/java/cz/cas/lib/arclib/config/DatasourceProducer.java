@@ -1,4 +1,4 @@
-package cz.cas.lib.arclib;
+package cz.cas.lib.arclib.config;
 
 import org.springframework.boot.autoconfigure.jdbc.DataSourceBuilder;
 import org.springframework.boot.context.properties.ConfigurationProperties;

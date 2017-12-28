@@ -1,4 +1,4 @@
-package cz.cas.lib.arclib.solr;
+package cz.cas.lib.arclib.index.solr;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

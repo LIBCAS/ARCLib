@@ -1,5 +1,7 @@
 package cz.cas.lib.arclib.index;
 
+import cz.inqool.uas.exception.BadArgument;
+import cz.inqool.uas.index.dto.Filter;
 import org.w3c.dom.Node;
 
 import javax.xml.XMLConstants;
@@ -26,7 +28,7 @@ public interface IndexStore {
     /**
      * Creates index. {@link FieldType#TIME} are stored as count of milliseconds.
      *
-     * @throws cz.cas.lib.arclib.exception.BadArgument if the value of {@link FieldType#TIME}, {@link FieldType#DATE} or {@link FieldType#DATETIME} field can't be parsed.
+     * @throws BadArgument if the value of {@link FieldType#TIME}, {@link FieldType#DATE} or {@link FieldType#DATETIME} field can't be parsed.
      */
     void createIndex(String sipId, int xmlVersion, String arclibXml);
 
@@ -34,7 +36,7 @@ public interface IndexStore {
      * Finds documents.
      *
      * @return list of IDs of documents
-     * @throws cz.cas.lib.arclib.exception.BadArgument if query contains field undefined in Solr schema.
+     * @throws BadArgument if query contains field undefined in Solr schema.
      */
     List<String> findAll(List<Filter> filter);
 

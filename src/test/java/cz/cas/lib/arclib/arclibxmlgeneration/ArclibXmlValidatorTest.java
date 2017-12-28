@@ -1,8 +1,8 @@
 package cz.cas.lib.arclib.arclibxmlgeneration;
 
 import com.google.common.io.Resources;
+import cz.cas.lib.arclib.exception.validation.MissingNode;
 import cz.cas.lib.arclib.service.ArclibXmlValidator;
-import cz.cas.lib.arclib.exception.MissingNode;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.core.io.ClassPathResource;
@@ -52,8 +52,7 @@ public class ArclibXmlValidatorTest {
      * Tests that the {@link MissingNode} exception is thrown when the ARCLib XML is missing the element <i>metsHdr</i>.
      */
     @Test
-    public void validateArclibXmlWithValidatorMissingNode() throws IOException, XPathExpressionException, SAXException,
-            ParserConfigurationException {
+    public void validateArclibXmlWithValidatorMissingNode() {
         URL arclibXml = Resources.getResource(INVALID_ARCLIB_XML_MISSING_METS_HDR);
         assertThrown(() -> validator.validateArclibXml(new ByteArrayInputStream(Resources.toByteArray(arclibXml)))).isInstanceOf
                 (MissingNode.class);
@@ -63,8 +62,7 @@ public class ArclibXmlValidatorTest {
      * Tests that the {@link MissingNode} exception is thrown when the ARCLib XML contains an invalid tag
      */
     @Test
-    public void validateArclibXmlWithValidatorInvalidTag() throws IOException, XPathExpressionException, SAXException,
-            ParserConfigurationException {
+    public void validateArclibXmlWithValidatorInvalidTag() {
         URL arclibXml = Resources.getResource(INVALID_ARCLIB_XML_INVALID_TAG);
         assertThrown(() -> validator.validateArclibXml(new ByteArrayInputStream(Resources.toByteArray(arclibXml)))).isInstanceOf
                 (SAXException.class);

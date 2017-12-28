@@ -2,6 +2,8 @@ package cz.cas.lib.arclib.service;
 
 import cz.cas.lib.arclib.domain.SipProfile;
 import cz.cas.lib.arclib.store.SipProfileStore;
+import cz.cas.lib.arclib.utils.XPathUtils;
+import cz.cas.lib.arclib.utils.XmlBuilder;
 import cz.inqool.uas.exception.InvalidAttribute;
 import cz.inqool.uas.exception.MissingObject;
 import cz.inqool.uas.util.Utils;

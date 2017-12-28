@@ -1,6 +1,7 @@
 package cz.cas.lib.arclib.service;
 
-import cz.cas.lib.arclib.exception.MissingNode;
+import cz.cas.lib.arclib.exception.validation.MissingNode;
+import cz.cas.lib.arclib.utils.XPathUtils;
 import cz.inqool.uas.util.Utils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;

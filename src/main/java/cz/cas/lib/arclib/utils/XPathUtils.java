@@ -1,4 +1,4 @@
-package cz.cas.lib.arclib.service;
+package cz.cas.lib.arclib.utils;
 
 import org.apache.commons.lang3.StringUtils;
 import org.dom4j.InvalidXPathException;

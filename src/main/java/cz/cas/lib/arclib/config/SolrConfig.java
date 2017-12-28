@@ -1,4 +1,4 @@
-package cz.cas.lib.arclib.solr;
+package cz.cas.lib.arclib.config;
 
 
 import org.apache.solr.client.solrj.SolrClient;
@@ -10,7 +10,7 @@ import org.springframework.data.solr.core.SolrTemplate;
 import org.springframework.data.solr.repository.config.EnableSolrRepositories;
 
 @Configuration
-@EnableSolrRepositories(basePackages = "cz.cas.lib.arclib.solr", multicoreSupport = true)
+@EnableSolrRepositories(basePackages = "cz.cas.lib.arclib.index.solr", multicoreSupport = true)
 public class SolrConfig {
 
     @Value("${solr.endpoint}")
