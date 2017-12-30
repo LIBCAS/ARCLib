@@ -27,9 +27,6 @@ public class ValidationApiTest implements ApiTest {
     private ValidationApi api;
 
     @Inject
-    private SipStore sipStore;
-
-    @Inject
     private ValidationProfileStore validationProfileStore;
 
     private static final String SIP_ID = "KPW01169310";
@@ -37,11 +34,7 @@ public class ValidationApiTest implements ApiTest {
 
     @Test
     public void validationApiTest() throws Exception {
-        Sip sip = new Sip();
-        sip.setPath(SIP_PATH);
-        sipStore.save(sip);
-
-        ValidationProfile validationProfile = new ValidationProfile();
+           ValidationProfile validationProfile = new ValidationProfile();
         InputStream inputStream = getClass().getResourceAsStream("/validation/validationProfileMixedChecks.xml");
         String xml = readFromInputStream(inputStream);
 
@@ -50,7 +43,8 @@ public class ValidationApiTest implements ApiTest {
 
         Thread.sleep(2000);
 
-        mvc(api).perform(put("/api/validation_api/validate/" + sip.getId())
+        mvc(api).perform(put("/api/validation_api/validate/")
+                .param("pathToSip", SIP_PATH)
                 .param("validationProfileId", validationProfile.getId()))
                 .andExpect(status().is2xxSuccessful());
     }

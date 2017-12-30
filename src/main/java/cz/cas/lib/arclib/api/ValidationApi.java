@@ -15,10 +15,12 @@ public class ValidationApi {
     @Getter
     private RuntimeService runtimeService;
 
-    @RequestMapping(value = "/validate/{sipId}", method = RequestMethod.PUT)
+    @RequestMapping(value = "/validate", method = RequestMethod.PUT)
     @Transactional
-    public void validateSip(@PathVariable("sipId") String sipId, @RequestParam("validationProfileId") String validationProfileId) {
-        runtimeService.startProcessInstanceByKey("ValidateSip", asMap("sipId", sipId, "validationProfileId", validationProfileId))
+    public void validateSip(@RequestParam("pathToSip") String pathToSip, @RequestParam("validationProfileId") String
+    validationProfileId) {
+        runtimeService.startProcessInstanceByKey("ValidateSip", asMap("pathToSip", pathToSip,
+                "validationProfileId", validationProfileId))
                 .getProcessInstanceId();
     }
 
