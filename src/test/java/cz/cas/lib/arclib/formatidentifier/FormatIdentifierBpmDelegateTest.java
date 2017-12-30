@@ -37,7 +37,7 @@ public class FormatIdentifierBpmDelegateTest {
     @Before
     public void before() {
         repositoryService.createDeployment()
-                .addClasspathResource("processes/formatIdentification.bpmn")
+                .addClasspathResource("bpmn/formatIdentification.bpmn")
                 .deploy();
     }
 
