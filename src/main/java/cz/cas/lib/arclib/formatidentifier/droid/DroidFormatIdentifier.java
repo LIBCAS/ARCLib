@@ -31,33 +31,29 @@ public class DroidFormatIdentifier implements FormatIdentifier {
         }
     }
 
-    @Getter
-    private String workspace;
-
     @Override
-    public Map<String, List<String>> analyze(String sipId) throws IOException, InterruptedException {
-        log.info("DROID format analysis for SIP " + sipId + " started.");
+    public Map<String, List<String>> analyze(String pathToSip) throws IOException, InterruptedException {
+        log.info("DROID format analysis for SIP at path " + pathToSip + " started.");
 
-        Path pathToSip = Paths.get(workspace).resolve(sipId);
-
-        if (!Files.exists(pathToSip)) {
+        if (!Files.exists(Paths.get(pathToSip))) {
             log.error("SIP at path " + pathToSip + " doest not exist.");
             throw new FileNotFoundException("no file/folder found at: " + pathToSip);
         }
 
-        Path profileResultsPath = Paths.get(workspace).resolve(sipId + ".droid");
+        Path profileResultsPath = Paths.get(pathToSip + ".droid");
 
         getDroidSignatureFilesVersions().forEach(sigFileVers ->
                 log.info("Signature file: " + sigFileVers));
 
-        runProfile(pathToSip, profileResultsPath);
+        runProfile(Paths.get(pathToSip), profileResultsPath);
 
-        Path exportResultsPath = Paths.get(workspace).resolve(sipId + ".csv");
+        Path exportResultsPath = Paths.get(pathToSip + ".csv");
         exportProfile(profileResultsPath, exportResultsPath);
 
-        Map<String, List<String>> filePathsToParsedColumnValues = parseResults(exportResultsPath, CsvResultColumn.PUID, pathToSip);
+        Map<String, List<String>> filePathsToParsedColumnValues = parseResults(exportResultsPath, CsvResultColumn.PUID, Paths.get
+                (pathToSip));
 
-        log.info("DROID format analysis for SIP " + sipId + " finished.");
+        log.info("DROID format analysis for SIP at path " + pathToSip + " finished.");
 
         return filePathsToParsedColumnValues;
     }
@@ -213,10 +209,5 @@ public class DroidFormatIdentifier implements FormatIdentifier {
         }
 
         return filePathsToParsedColumnValues;
-    }
-
-    @Inject
-    public void setWorkspace(@Value("${arclib.workspace}") String workspace) {
-        this.workspace = workspace;
     }
 }

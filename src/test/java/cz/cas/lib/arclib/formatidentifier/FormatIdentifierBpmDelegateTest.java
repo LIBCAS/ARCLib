@@ -8,30 +8,22 @@ import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
-import org.springframework.util.FileSystemUtils;
 
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 
-import static java.nio.file.Files.createDirectories;
-import static java.nio.file.Files.exists;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 
 /**
- * Ensure the droid.bpmn Process is working correctly
+ * Ensure the formatIdentification.bpmn Process is working correctly
  */
 @RunWith(SpringRunner.class)
 @SpringBootTest
 public class FormatIdentifierBpmDelegateTest {
     private static final String SIP_ID = "KPW01169310";
-    private static final String WORKSPACE = "workspace";
-    private static final Path SIP_SOURCES_FOLDER = Paths.get("SIP_packages/");
+    private static final String SIP_PATH = "SIP_packages/" + SIP_ID;
 
     @Autowired
     private HistoryService historyService;
@@ -42,20 +34,10 @@ public class FormatIdentifierBpmDelegateTest {
 
     private String processInstanceId = null;
 
-    @BeforeClass
-    public static void setUp() throws IOException {
-        copySipToWorkspace(SIP_SOURCES_FOLDER, SIP_ID);
-    }
-
-    @AfterClass
-    public static void tearDown() throws IOException {
-//        deleteWorkspace();
-    }
-
     @Before
     public void before() {
         repositoryService.createDeployment()
-                .addClasspathResource("bpmn/droid.bpmn")
+                .addClasspathResource("processes/formatIdentification.bpmn")
                 .deploy();
     }
 
@@ -73,10 +55,10 @@ public class FormatIdentifierBpmDelegateTest {
      * </ul>
      */
     @Test
-    public void testOK() throws IOException, InterruptedException {
+    public void testOK() {
         Map<String, Object> variables = new HashMap<>();
-        variables.put("sipId", SIP_ID);
-        runtimeService.startProcessInstanceByKey("Droid", variables).getId();
+        variables.put("pathToSip", SIP_PATH);
+        processInstanceId = runtimeService.startProcessInstanceByKey("FormatIdentification", variables).getId();
 
         Map mapOfFilesToFormats = (Map) (historyService.createHistoricVariableInstanceQuery()
                 .variableName("mapOfFilesToFormats")
@@ -84,20 +66,5 @@ public class FormatIdentifierBpmDelegateTest {
 
         assertThat(mapOfFilesToFormats, is(notNullValue()));
         assertThat(mapOfFilesToFormats.size(), is(55));
-    }
-
-    private static void copySipToWorkspace(Path path, String sipId) throws IOException {
-        if (!exists(Paths.get(WORKSPACE))) {
-            createDirectories(Paths.get(WORKSPACE));
-        }
-
-        FileSystemUtils.copyRecursively(new File(path.resolve(sipId).toAbsolutePath().toString()),
-                new File(Paths.get(WORKSPACE).resolve(sipId).toAbsolutePath().toString()));
-    }
-
-    private static void deleteWorkspace() {
-        if (exists(Paths.get(WORKSPACE))) {
-            FileSystemUtils.deleteRecursively(new File(Paths.get(WORKSPACE).toAbsolutePath().toString()));
-        }
     }
 }

@@ -29,7 +29,9 @@ public class FormatIdentifierBpmDelegate implements JavaDelegate {
      */
     @Override
     public void execute(DelegateExecution execution) throws InterruptedException, IOException {
-        Map<String, List<String>> mapOfFilesToFormats = formatIdentifier.analyze((String) execution.getVariable("sipId"));
+        String pathToSip = (String) execution.getVariable("pathToSip");
+
+        Map<String, List<String>> mapOfFilesToFormats = formatIdentifier.analyze(pathToSip);
         execution.setVariable("mapOfFilesToFormats", mapOfFilesToFormats);
     }
 

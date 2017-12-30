@@ -31,33 +31,17 @@ import static org.hamcrest.core.Is.is;
 public class DroidFormatIdentifierTest {
 
     private static final String SIP_ID = "KPW01169310";
-    private static final String WORKSPACE = "workspace";
-    private static final Path SIP_SOURCES_FOLDER = Paths.get("SIP_packages/");
+    private static final String SIP_PATH = "SIP_packages/" + SIP_ID;
 
     @Autowired
     private DroidFormatIdentifier formatIdentifier;
-
-    @BeforeClass
-    public static void initialize() throws IOException {
-        copySipToWorkspace(SIP_SOURCES_FOLDER, SIP_ID);
-    }
-
-    @AfterClass
-    public static void tearDown() throws IOException {
-        deleteWorkspace();
-    }
-
-    @Before
-    public void setUp() {
-        formatIdentifier.setWorkspace(WORKSPACE);
-    }
 
     /**
      * Test that all the files in the SIP package are scanned (also the files located in all the subfolders)
      */
     @Test
     public void testThatAllFilesScanned() throws InterruptedException, IOException {
-        Map<String, List<String>> result = formatIdentifier.analyze(SIP_ID);
+        Map<String, List<String>> result = formatIdentifier.analyze(SIP_PATH);
 
         assertThat(result.size(), is(55));
     }
@@ -67,7 +51,7 @@ public class DroidFormatIdentifierTest {
      */
     @Test
     public void analyzeRightExtensionsIdentifiedTest() throws IOException, InterruptedException {
-        Map<String, List<String>> result = formatIdentifier.analyze(SIP_ID);
+        Map<String, List<String>> result = formatIdentifier.analyze(SIP_PATH);
 
         String filePath1 = ("file://METS_KPW01169310.xml");
         assertThat(result.get(filePath1), contains("fmt/101"));
@@ -91,30 +75,5 @@ public class DroidFormatIdentifierTest {
     @Test
     public void analyzeNonExistentPackageTest() {
         assertThrown(() -> formatIdentifier.analyze("nonExistentPackage")).isInstanceOf(FileNotFoundException.class);
-    }
-
-    /**
-     * Test the the right exception is thrown when an ID of a nonexistent workspace path is provided
-     */
-    @Test
-    public void analyzeNonExistentWorkspaceTest() {
-        formatIdentifier.setWorkspace("nonExistentWorkspace");
-
-        assertThrown(() -> formatIdentifier.analyze("KPW01169310")).isInstanceOf(FileNotFoundException.class);
-    }
-
-    private static void copySipToWorkspace(Path path, String sipId) throws IOException {
-        if (!exists(Paths.get(WORKSPACE))) {
-            createDirectories(Paths.get(WORKSPACE));
-        }
-
-        FileSystemUtils.copyRecursively(new File(path.resolve(sipId).toAbsolutePath().toString()),
-                new File(Paths.get(WORKSPACE).resolve(sipId).toAbsolutePath().toString()));
-    }
-
-    private static void deleteWorkspace() {
-        if (exists(Paths.get(WORKSPACE))) {
-            FileSystemUtils.deleteRecursively(new File(Paths.get(WORKSPACE).toAbsolutePath().toString()));
-        }
     }
 }
