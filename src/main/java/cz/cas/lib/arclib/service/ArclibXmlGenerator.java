@@ -23,7 +23,6 @@ import org.xml.sax.SAXException;
 import javax.inject.Inject;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.TransformerException;
-import javax.xml.xpath.XPathExpressionException;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -56,11 +55,10 @@ public class ArclibXmlGenerator {
      * @throws IOException
      * @throws SAXException
      * @throws ParserConfigurationException
-     * @throws XPathExpressionException
      * @throws TransformerException
      */
     public String generateArclibXml(String sipPath, String sipProfileId)
-            throws ParserConfigurationException, TransformerException, SAXException, XPathExpressionException, IOException {
+            throws ParserConfigurationException, TransformerException, SAXException, IOException {
         log.info("Generating ARCLib XML for SIP at path " + sipPath + " using SIP profile with ID " + sipProfileId + ".");
 
         SipProfile sipProfile = store.find(sipProfileId);
