@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" id="Definitions_1" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="1.8.0">
+  <bpmn:process id="IngestWorkflow" name="IngestWorkflow" isExecutable="true">
+    <bpmn:startEvent id="StartEvent_1mo35mc">
+      <bpmn:outgoing>SequenceFlow_0xci5c6</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:serviceTask id="ServiceTask_083ttyy" name="scan for viruses" camunda:delegateExpression="${scanBpmDelegate}">
+      <bpmn:incoming>SequenceFlow_0xci5c6</bpmn:incoming>
+      <bpmn:outgoing>SequenceFlow_1x2u7jv</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:endEvent id="EndEvent_13ma093">
+      <bpmn:incoming>SequenceFlow_1wt63pz</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:serviceTask id="ServiceTask_0fj855p" name="move infected files to quarantine" camunda:delegateExpression="${quarantineBpmDelegate}">
+      <bpmn:incoming>SequenceFlow_1x2u7jv</bpmn:incoming>
+      <bpmn:outgoing>SequenceFlow_0bfjygd</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:sequenceFlow id="SequenceFlow_0xci5c6" sourceRef="StartEvent_1mo35mc" targetRef="ServiceTask_083ttyy" />
+    <bpmn:sequenceFlow id="SequenceFlow_1x2u7jv" sourceRef="ServiceTask_083ttyy" targetRef="ServiceTask_0fj855p" />
+    <bpmn:serviceTask id="ServiceTask_1wcsq07" name="verify fixity" camunda:delegateExpression="${fixityBpmDelegate}">
+      <bpmn:incoming>SequenceFlow_0bfjygd</bpmn:incoming>
+      <bpmn:outgoing>SequenceFlow_1bmmfl1</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:sequenceFlow id="SequenceFlow_0bfjygd" sourceRef="ServiceTask_0fj855p" targetRef="ServiceTask_1wcsq07" />
+    <bpmn:sequenceFlow id="SequenceFlow_1bmmfl1" sourceRef="ServiceTask_1wcsq07" targetRef="ServiceTask_13wwsae" />
+    <bpmn:serviceTask id="ServiceTask_13wwsae" name="validation" camunda:delegateExpression="${validateSipBpmDelegate}">
+      <bpmn:incoming>SequenceFlow_1bmmfl1</bpmn:incoming>
+      <bpmn:outgoing>SequenceFlow_0qy1eyq</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:sequenceFlow id="SequenceFlow_0qy1eyq" sourceRef="ServiceTask_13wwsae" targetRef="ServiceTask_0j4vph6" />
+    <bpmn:serviceTask id="ServiceTask_0j4vph6" name="analyze formats" camunda:delegateExpression="${formatIdentifierBpmDelegate}">
+      <bpmn:incoming>SequenceFlow_0qy1eyq</bpmn:incoming>
+      <bpmn:outgoing>SequenceFlow_1wt63pz</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:sequenceFlow id="SequenceFlow_1wt63pz" sourceRef="ServiceTask_0j4vph6" targetRef="EndEvent_13ma093" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="IngestWorkflow">
+      <bpmndi:BPMNShape id="StartEvent_1mo35mc_di" bpmnElement="StartEvent_1mo35mc">
+        <dc:Bounds x="13" y="146" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="-14" y="182" width="0" height="12" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ServiceTask_083ttyy_di" bpmnElement="ServiceTask_083ttyy">
+        <dc:Bounds x="105" y="124" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="EndEvent_13ma093_di" bpmnElement="EndEvent_13ma093">
+        <dc:Bounds x="169" y="276" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="97" y="316" width="90" height="12" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ServiceTask_0fj855p_di" bpmnElement="ServiceTask_0fj855p">
+        <dc:Bounds x="256" y="124" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_0xci5c6_di" bpmnElement="SequenceFlow_0xci5c6">
+        <di:waypoint xsi:type="dc:Point" x="49" y="164" />
+        <di:waypoint xsi:type="dc:Point" x="72" y="164" />
+        <di:waypoint xsi:type="dc:Point" x="72" y="164" />
+        <di:waypoint xsi:type="dc:Point" x="105" y="164" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="42" y="158" width="0" height="12" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SequenceFlow_1x2u7jv_di" bpmnElement="SequenceFlow_1x2u7jv">
+        <di:waypoint xsi:type="dc:Point" x="205" y="164" />
+        <di:waypoint xsi:type="dc:Point" x="226" y="164" />
+        <di:waypoint xsi:type="dc:Point" x="226" y="164" />
+        <di:waypoint xsi:type="dc:Point" x="256" y="164" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="196" y="158" width="0" height="12" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="ServiceTask_1wcsq07_di" bpmnElement="ServiceTask_1wcsq07">
+        <dc:Bounds x="403" y="124" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_0bfjygd_di" bpmnElement="SequenceFlow_0bfjygd">
+        <di:waypoint xsi:type="dc:Point" x="356" y="164" />
+        <di:waypoint xsi:type="dc:Point" x="403" y="164" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="379.5" y="143" width="0" height="12" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SequenceFlow_1bmmfl1_di" bpmnElement="SequenceFlow_1bmmfl1">
+        <di:waypoint xsi:type="dc:Point" x="453" y="204" />
+        <di:waypoint xsi:type="dc:Point" x="453" y="254" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="423" y="223" width="90" height="12" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="ServiceTask_13wwsae_di" bpmnElement="ServiceTask_13wwsae">
+        <dc:Bounds x="403" y="254" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_0qy1eyq_di" bpmnElement="SequenceFlow_0qy1eyq">
+        <di:waypoint xsi:type="dc:Point" x="403" y="294" />
+        <di:waypoint xsi:type="dc:Point" x="357" y="294" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="335" y="273" width="90" height="12" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="ServiceTask_0j4vph6_di" bpmnElement="ServiceTask_0j4vph6">
+        <dc:Bounds x="256" y="254" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_1wt63pz_di" bpmnElement="SequenceFlow_1wt63pz">
+        <di:waypoint xsi:type="dc:Point" x="256" y="294" />
+        <di:waypoint xsi:type="dc:Point" x="205" y="294" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="230.5" y="273" width="0" height="12" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>
