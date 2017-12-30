@@ -1,0 +1,16 @@
+<profile xmlns="http://www.arclib.lib.cas.cz">
+    <rule>
+        <nodeCheck>
+            <filePath>/info.xml</filePath>
+            <xPath>/info/creator</xPath>
+            <value>ZLG001</value>
+        </nodeCheck>
+    </rule>
+    <rule>
+        <nodeCheck>
+            <filePath>/info.xml</filePath>
+            <xPath>/info/packageid</xPath>
+            <regex>.*KPW.*</regex>
+        </nodeCheck>
+    </rule>
+</profile>

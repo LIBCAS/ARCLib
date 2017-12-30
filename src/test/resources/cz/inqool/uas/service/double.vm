@@ -1,0 +1,4 @@
+## @vtlvariable name="param2" type="java.lang.String"
+## @vtlvariable name="param" type="java.lang.String"
+$param
+$param2

@@ -1,0 +1,17 @@
+<profile xmlns="http://www.arclib.lib.cas.cz">
+    <rule>
+        <fileExistenceCheck>
+            <filePath>/METS_KPW01169310.xml</filePath>
+        </fileExistenceCheck>
+    </rule>
+    <rule>
+        <fileExistenceCheck>
+            <filePath>/info.xml</filePath>
+        </fileExistenceCheck>
+    </rule>
+    <rule>
+        <fileExistenceCheck>
+            <filePath>/desktop.ini</filePath>
+        </fileExistenceCheck>
+    </rule>
+</profile>

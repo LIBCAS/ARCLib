@@ -1,0 +1,49 @@
+Popis,Povinnost,Verzování,Původ,Násobnost,Jmeno fieldu indexu,Typ fieldu indexu,XPath
+Root,povinné,neverzuje se,přebírá se,1,label,text,/METS:mets/@LABEL
+Root,povinné,neverzuje se,přebírá se,1,type,string,/METS:mets/@TYPE
+Root,povinné,neverzuje se,generuje ARCLIB,1,objid,string,/METS:mets/@OBJID
+Hlavička,povinné,neverzuje se,generuje ARCLIB,1,fulltext,fulltext,/METS:mets/METS:metsHdr/@CREATEDATE
+Hlavička,povinné,neverzuje se,generuje ARCLIB,1,fulltext,fulltext,/METS:mets/METS:metsHdr/@LASTMODDATE
+Hlavička,povinné,neverzuje se,generuje ARCLIB,1,fulltext,fulltext,/METS:mets/METS:metsHdr/@ID
+Hlavička,povinné,neverzuje se,generuje ARCLIB,1,fulltext,fulltext,/METS:mets/METS:metsHdr/@ADMID
+Hlavička,povinné,neverzuje se,generuje ARCLIB,N,fulltext,fulltext,/METS:mets/METS:metsHdr//METS:agent
+Agent,povinné,neverzuje se,generuje ARCLIB,1,fulltext,fulltext,/METS:mets/METS:metsHdr/METS:agent/@ROLE
+Agent,povinné,neverzuje se,generuje ARCLIB,1,fulltext,fulltext,/METS:mets/METS:metsHdr/METS:agent/@TYPE
+Agent,povinné,neverzuje se,generuje ARCLIB,1,fulltext,fulltext,/METS:mets/METS:metsHdr/METS:agent/METS:name
+Popisná metadata - generický Dublin Core,povinné,neverzuje se,přebírá se,1,atribut,atribut,/METS:mets/METS:dmdSec/METS:mdWrap[@MDTYPE='DC']/METS:xmlData/oai_dc:dc
+Vazba mezi verzemi AIP,povinné,verzuje se,generuje ARCLIb ,1,atribut,atribut,/METS:mets/METS:dmdSec/METS:mdWrap[@MDTYPE='DC']/METS:xmlData/oai_dc:dc/isVersionOf
+Popisná metadata - specifické sady Dublin Core,nepovinné,neverzuje se,přebírá se,N,atribut,atribut,/METS:mets/METS:dmdSec[@ID='specifikator']/METS:mdWrap[@MDTYPE='DC']/METS:xmlData/oai_dc:dc
+Technická metadata pro celý balíček,povinné,verzuje se,generuje ARCLIb ,1,fulltext,fulltext,/METS:mets/METS:amdSec/METS:techMD/METS:mdWrap[@MDTYPE='PREMIS']/METS:xmlData/premis:object/premis:objectIdentifier
+Technická metadata pro celý balíček,povinné,verzuje se,generuje ARCLIb ,N,fulltext,fulltext,/METS:mets/METS:amdSec/METS:techMD/METS:mdWrap[@MDTYPE='PREMIS']/METS:xmlData/premis:object/premis:objectCharacteristics/premis:fixity
+Technická metadata pro celý balíček,povinné,verzuje se,generuje ARCLIb ,1,fulltext,fulltext,/METS:mets/METS:amdSec/METS:techMD/METS:mdWrap[@MDTYPE='PREMIS']/METS:xmlData/premis:object/premis:objectCharacteristics/premis:size
+Technická metadata pro celý balíček,povinné,verzuje se,generuje ARCLIb ,1,fulltext,fulltext,/METS:mets/METS:amdSec/METS:techMD/METS:mdWrap[@MDTYPE='PREMIS']/METS:xmlData/premis:object/premis:objectCharacteristics/premis:format
+Technická metadata pro celý balíček,povinné,verzuje se,generuje ARCLIb ,1,fulltext,fulltext,/METS:mets/METS:amdSec/METS:techMD/METS:mdWrap[@MDTYPE='PREMIS']/METS:xmlData/premis:object/premis:objectCharacteristics/premis:format/premis:formatNote
+Technická metadata agregovaná,nepovinné,neverzuje se,přebírá se,N,fulltext,fulltext,/METS:mets/METS:amdSec/METS:techMD/METS:mdWrap[@MDTYPE='OTHER']/METS:xmlData/ARCLIB:formats/ARCLIB:format
+Technická metadata agregovaná přebíraná,nepovinné,neverzuje se,přebírá se,1,format,string,/METS:mets/METS:amdSec/METS:techMD/METS:mdWrap[@MDTYPE='OTHER']/METS:xmlData/ARCLIB:formats/ARCLIB:format/ARCLIB:fileFormat
+Technická metadata agregovaná přebíraná,nepovinné,neverzuje se,přebírá se,1,format_file_count,int,/METS:mets/METS:amdSec/METS:techMD/METS:mdWrap[@MDTYPE='OTHER']/METS:xmlData/ARCLIB:formats/ARCLIB:format/ARCLIB:fileCount
+Technická metadata agregovaná přebíraná,nepovinné,neverzuje se,přebírá se,1,format_identification,text,/METS:mets/METS:amdSec/METS:techMD/METS:mdWrap[@MDTYPE='OTHER']/METS:xmlData/ARCLIB:formats/ARCLIB:format/ARCLIB:identificationTool
+Technická metadata agregovaná generovaná ArcLib,povinné,verzuje se,generuje ARCLIb ,1,format,string,/METS:mets/METS:amdSec/METS:techMD/METS:mdWrap[@MDTYPE='OTHER']/METS:xmlData/ARCLIB:formats/ARCLIB:format/ARCLIB:fileFormat
+Technická metadata agregovaná generovaná ArcLib,povinné,verzuje se,generuje ARCLIb ,1,format_file_count,int,/METS:mets/METS:amdSec/METS:techMD/METS:mdWrap[@MDTYPE='OTHER']/METS:xmlData/ARCLIB:formats/ARCLIB:format/ARCLIB:fileCount
+Technická metadata agregovaná generovaná ArcLib,povinné,verzuje se,generuje ARCLIb ,1,format_identification,text,/METS:mets/METS:amdSec/METS:techMD/METS:mdWrap[@MDTYPE='OTHER']/METS:xmlData/ARCLIB:formats/ARCLIB:format/ARCLIB:identificationTool
+Technická metadata agregovaná přebíraná,nepovinné,neverzuje se,přebírá se,N,fulltext,fulltext,/METS:mets/METS:amdSec/METS:techMD/METS:mdWrap[@MDTYPE='OTHER']/METS:xmlData/ARCLIB:devices/ARCLIB:device
+Technická metadata agregovaná přebíraná,nepovinné,neverzuje se,přebírá se,1,device_id,string,/METS:mets/METS:amdSec/METS:techMD/METS:mdWrap[@MDTYPE='OTHER']/METS:xmlData/ARCLIB:devices/ARCLIB:device/ARCLIB:deviceId
+Technická metadata agregovaná přebíraná,nepovinné,neverzuje se,přebírá se,1,device_file_count,int,/METS:mets/METS:amdSec/METS:techMD/METS:mdWrap[@MDTYPE='OTHER']/METS:xmlData/ARCLIB:devices/ARCLIB:device/ARCLIB:fileCount
+Provenance a kontroly při ingestu,povinné,neverzuje se,generuje ARCLIb ,N,fulltext,fulltext,/METS:mets/METS:amdSec/METS:digiprovMD/METS:mdWrap[@MDTYPE='PREMIS']/METS:xmlData/premis:event
+Provenance a kontroly při ingestu,povinné,neverzuje se,generuje ARCLIb ,1,event_outcome,time,/METS:mets/METS:amdSec/METS:digiprovMD/METS:mdWrap[@MDTYPE='PREMIS']/METS:xmlData/premis:event/premis:eventOutcomeInformation/premis:eventOutcome
+Provenance a kontroly při ingestu,povinné,neverzuje se,generuje ARCLIb ,1,event_agent_id,string,/METS:mets/METS:amdSec/METS:digiprovMD/METS:mdWrap[@MDTYPE='PREMIS']/METS:xmlData/premis:event/premis:linkingAgentIdentifier/premis:linkingAgentIdentifierValue
+Provenance a kontroly při ingestu,povinné,neverzuje se,generuje ARCLIb ,1,event_detail,date,/METS:mets/METS:amdSec/METS:digiprovMD/METS:mdWrap[@MDTYPE='PREMIS']/METS:xmlData/premis:event/premis:eventDetail
+Provenance a kontroly při ingestu,povinné,neverzuje se,generuje ARCLIb ,1,event_type,string,/METS:mets/METS:amdSec/METS:digiprovMD/METS:mdWrap[@MDTYPE='PREMIS']/METS:xmlData/premis:event/premis:eventType
+Provenance a kontroly při ingestu,povinné,neverzuje se,generuje ARCLIb ,1,event_date,datetime,/METS:mets/METS:amdSec/METS:digiprovMD/METS:mdWrap[@MDTYPE='PREMIS']/METS:xmlData/premis:event/premis:eventDateTime
+Provenance a kontroly při ingestu,povinné,neverzuje se,generuje ARCLIb ,1,event_id,string,/METS:mets/METS:amdSec/METS:digiprovMD/METS:mdWrap[@MDTYPE='PREMIS']/METS:xmlData/premis:event/premis:eventIdentifier/premis:eventIdentifierValue
+Provenance přebrané ze SIP,nepovinné,neverzuje se,přebírá se,N,fulltext,fulltext,/METS:mets/METS:amdSec/METS:digiprovMD/METS:mdWrap[@MDTYPE='OTHER']/METS:xmlData/ARCLIB:eventAgents/ARCLIB:eventAgent
+Provenance přebrané ze SIP,nepovinné,neverzuje se,přebírá se,1,arc_event_type,string,/METS:mets/METS:amdSec/METS:digiprovMD/METS:mdWrap[@MDTYPE='OTHER']/METS:xmlData/ARCLIB:eventAgents/ARCLIB:eventAgent/ARCLIB:eventType
+Provenance přebrané ze SIP,nepovinné,neverzuje se,přebírá se,1,arc_event_agent_id,string,/METS:mets/METS:amdSec/METS:digiprovMD/METS:mdWrap[@MDTYPE='OTHER']/METS:xmlData/ARCLIB:eventAgents/ARCLIB:eventAgent/ARCLIB:agentName
+Provenance přebrané ze SIP,nepovinné,neverzuje se,přebírá se,1,arc_event_date,datetime,/METS:mets/METS:amdSec/METS:digiprovMD/METS:mdWrap[@MDTYPE='OTHER']/METS:xmlData/ARCLIB:eventAgents/ARCLIB:eventAgent/ARCLIB:eventDate
+Provenance přebrané ze SIP,nepovinné,neverzuje se,přebírá se,1,arc_event_count,int,/METS:mets/METS:amdSec/METS:digiprovMD/METS:mdWrap[@MDTYPE='OTHER']/METS:xmlData/ARCLIB:eventAgents/ARCLIB:eventAgent/ARCLIB:eventCount
+Provenance při aktualizaci AIP metadata,povinné,neverzuje se,generuje ARCLIb ,N,event_ingestion,text,/METS:mets/METS:amdSec/METS:digiprovMD/METS:mdWrap[@MDTYPE='PREMIS']/METS:xmlData/premis:event[premis:eventType/text()='ingestion']
+Provenance při revalidaci novým profilem,povinné,neverzuje se,generuje ARCLIb ,N,event_validation,text,/METS:mets/METS:amdSec/METS:digiprovMD/METS:mdWrap[@MDTYPE='PREMIS']/METS:xmlData/premis:event[premis:eventType/text()='validation']
+Provenance při opakování identifikace formátů v SIP,povinné,neverzuje se,generuje ARCLIb ,N,event_validation,text,/METS:mets/METS:amdSec/METS:digiprovMD/METS:mdWrap[@MDTYPE='PREMIS']/METS:xmlData/premis:event[premis:eventType/text()='validation']
+Práva,nepovinné,verzuje se,přebírá se,1,fulltext,fulltext,/METS:mets/METS:amdSec/METS:rightsMD
+Další bibliografická metadata,nepovinné,verzuje se,přebírá se,1,fulltext,fulltext,/METS:mets/METS:amdSec/METS:sourceMD
+Informace o struktuře ARCLIB AIP,povinné,verzuje se,generuje ARCLIb ,1,fulltext,fulltext,/METS:mets/METS:fileSec
+Informace o struktuře ARCLIB AIP,povinné,verzuje se,generuje ARCLIb ,1,fulltext,fulltext,/METS:mets/METS:structMap

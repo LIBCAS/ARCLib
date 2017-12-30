@@ -1,0 +1,49 @@
+﻿<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<alto xmlns="http://www.loc.gov/standards/alto/ns-v2#" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <Description>
+    <MeasurementUnit>pixel</MeasurementUnit>
+    <OCRProcessing ID="IdOcr">
+      <ocrProcessingStep>
+        <processingDateTime>2012-10-17</processingDateTime>
+        <processingSoftware>
+          <softwareCreator>ABBYY</softwareCreator>
+          <softwareName>ABBYY Recognition Server</softwareName>
+          <softwareVersion>4.0</softwareVersion>
+        </processingSoftware>
+      </ocrProcessingStep>
+    </OCRProcessing>
+  </Description>
+  <Styles>
+    <ParagraphStyle ID="StyleId-FFFFFFFF-FFFF-FFFF-FFFF-FFFFFFFFFFFF-" ALIGN="Left" LEFT="0" RIGHT="0" FIRSTLINE="0" />
+    <ParagraphStyle ID="StyleId-A7D10C2B-1205-4FA5-B15D-8EE64321592A-" ALIGN="Center" LEFT="0" RIGHT="0" FIRSTLINE="0" LINESPACE="1320" />
+    <ParagraphStyle ID="StyleId-02C7D054-9DBD-4DFE-97B2-FD17C442DF61-" ALIGN="Left" LEFT="0" RIGHT="0" FIRSTLINE="0" LINESPACE="0" />
+  </Styles>
+  <Layout>
+    <Page ID="Page1" PHYSICAL_IMG_NR="1">
+      <PrintSpace HEIGHT="2438" WIDTH="1744" VPOS="0" HPOS="0">
+        <TextBlock ID="BlockId-C85265A0-8977-4DDB-92E7-A93635616091-" HEIGHT="258" WIDTH="560" VPOS="1144" HPOS="662" STYLEREFS="StyleId-A7D10C2B-1205-4FA5-B15D-8EE64321592A-">
+          <TextLine HEIGHT="57" WIDTH="527" VPOS="1156" HPOS="678">
+            <String CONTENT="OKRESř«SÍ" HEIGHT="57" WIDTH="219" VPOS="1156" HPOS="678" />
+            <SP WIDTH="23" VPOS="1156" HPOS="898" />
+            <String CONTENT="KNIHOVNA" HEIGHT="46" WIDTH="283" VPOS="1162" HPOS="922" />
+          </TextLine>
+          <TextLine HEIGHT="48" WIDTH="453" VPOS="1218" HPOS="704">
+            <String CONTENT="V" HEIGHT="35" WIDTH="35" VPOS="1231" HPOS="704" />
+            <SP WIDTH="15" VPOS="1230" HPOS="740" />
+            <String CONTENT="GOTTWALDOVE-1" HEIGHT="48" WIDTH="401" VPOS="1218" HPOS="756" />
+          </TextLine>
+        </TextBlock>
+        <TextBlock ID="BlockId-48AF1D55-78A1-46A3-B39E-B71350244008-" HEIGHT="38" WIDTH="36" VPOS="2400" HPOS="1296" STYLEREFS="StyleId-02C7D054-9DBD-4DFE-97B2-FD17C442DF61-">
+          <TextLine HEIGHT="38" WIDTH="36" VPOS="2400" HPOS="1296">
+            <String CONTENT="II" HEIGHT="38" WIDTH="36" VPOS="2400" HPOS="1296" />
+          </TextLine>
+        </TextBlock>
+        <GraphicalElement ID="BlockId-B2B918E7-3AD1-4A42-808C-5FE6A90CD8DD-" HEIGHT="28" WIDTH="1744" VPOS="2410" HPOS="0" />
+        <GraphicalElement ID="BlockId-D00CDEC7-8DD8-46BC-9279-CBC465EEAE5D-" HEIGHT="229" WIDTH="14" VPOS="1248" HPOS="1716" />
+        <GraphicalElement ID="BlockId-95F35C3D-6D09-4021-90FC-0C0B9CBD4644-" HEIGHT="6" WIDTH="55" VPOS="2133" HPOS="1221" />
+        <GraphicalElement ID="BlockId-A8170189-6E6C-4C40-99D4-56FD17ACD6FE-" HEIGHT="7" WIDTH="129" VPOS="2135" HPOS="1325" />
+        <GraphicalElement ID="BlockId-87FA821A-E662-4BCB-85FC-036C6D7ADDA4-" HEIGHT="6" WIDTH="90" VPOS="2187" HPOS="963" />
+      </PrintSpace>
+    </Page>
+  </Layout>
+</alto>

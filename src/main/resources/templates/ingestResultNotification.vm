@@ -1,0 +1,18 @@
+#* @vtlvariable name="serverUrl" type="java.lang.String" *#
+#* @vtlvariable name="dueTime" type="java.lang.String" *#
+#* @vtlvariable name="dueDate" type="java.lang.String" *#
+#* @vtlvariable name="taskName" type="java.lang.String" *#
+#* @vtlvariable name="createdTime" type="java.lang.String" *#
+#* @vtlvariable name="createdDate" type="java.lang.String" *#
+<p>Dobrý den,</p>
+
+<p>dne $createdDate ve $createdTime proběhl ingest SIP balíčku $sipId</p>
+<p>výsledek: $result</p>
+
+<p>
+    S pozdravem
+    <br/>
+    Aplikace $appName
+</p>
+
+<p style="color: silver">Tento email byl poslán automatizovaně, proto na něj neodpovídejte.</p>

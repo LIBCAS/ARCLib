@@ -1,0 +1,9 @@
+<profile xmlns="http://www.arclib.lib.cas.cz">
+    <rule>
+        <nodeCheck>
+            <filePath>/info.xml</filePath>
+            <xPath>/info/creator</xPath>
+            <regex>someRegexPattern</regex>
+        </nodeCheck>
+    </rule>
+</profile>

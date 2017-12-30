@@ -1,0 +1,24 @@
+<profile xmlns="http://www.arclib.lib.cas.cz/SIP_PROFILE">
+    <mapping>
+        <source>
+            <rootDirPath>/</rootDirPath>
+            <fileRegex>METS_KPW01169310.xml</fileRegex>
+            <xPath>/mets/@LABEL</xPath>
+        </source>
+        <destination>
+            <xPath>/METS:mets/@LABEL</xPath>
+        </destination>
+    </mapping>
+
+    <mapping>
+        <source>
+            <rootDirPath>/amdSec</rootDirPath>
+            <fileRegex>AMD_METS_KPW01169310_0001.xml</fileRegex>
+            <xPath>/mets/metsHdr</xPath>
+        </source>
+        <destination>
+            <xPath>/METS:mets/METS:metsHdr</xPath>
+        </destination>
+    </mapping>
+
+</profile>

@@ -1,0 +1,54 @@
+﻿<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+<info xmlns="http://www.ee.cz/schemas/NDK/info.xsd">
+<created>2013-01-22T10:55:22</created>
+<packageid>KPW01169310</packageid>
+<titleid TYPE="isbn">KPW01169310</titleid>
+<creator>ZLG001</creator>
+<itemlist ITEMTOTAL="42">
+<item>./KPW01169310.md5</item>
+<item>./METS_KPW01169310.xml</item>
+<item>./ALTO/ALTO_KPW01169310_0001.XML</item>
+<item>./ALTO/ALTO_KPW01169310_0002.XML</item>
+<item>./ALTO/ALTO_KPW01169310_0003.XML</item>
+<item>./ALTO/ALTO_KPW01169310_0004.XML</item>
+<item>./ALTO/ALTO_KPW01169310_0005.XML</item>
+<item>./ALTO/ALTO_KPW01169310_0006.XML</item>
+<item>./ALTO/ALTO_KPW01169310_0007.XML</item>
+<item>./ALTO/ALTO_KPW01169310_0008.XML</item>
+<item>./amdSec/AMD_METS_KPW01169310_0001.xml</item>
+<item>./amdSec/AMD_METS_KPW01169310_0002.xml</item>
+<item>./amdSec/AMD_METS_KPW01169310_0003.xml</item>
+<item>./amdSec/AMD_METS_KPW01169310_0004.xml</item>
+<item>./amdSec/AMD_METS_KPW01169310_0005.xml</item>
+<item>./amdSec/AMD_METS_KPW01169310_0006.xml</item>
+<item>./amdSec/AMD_METS_KPW01169310_0007.xml</item>
+<item>./amdSec/AMD_METS_KPW01169310_0008.xml</item>
+<item>./masterCopy/MC_KPW01169310_0001.JP2</item>
+<item>./masterCopy/MC_KPW01169310_0002.JP2</item>
+<item>./masterCopy/MC_KPW01169310_0003.JP2</item>
+<item>./masterCopy/MC_KPW01169310_0004.JP2</item>
+<item>./masterCopy/MC_KPW01169310_0005.JP2</item>
+<item>./masterCopy/MC_KPW01169310_0006.JP2</item>
+<item>./masterCopy/MC_KPW01169310_0007.JP2</item>
+<item>./masterCopy/MC_KPW01169310_0008.JP2</item>
+<item>./TXT/TXT_KPW01169310_0001.TXT</item>
+<item>./TXT/TXT_KPW01169310_0002.TXT</item>
+<item>./TXT/TXT_KPW01169310_0003.TXT</item>
+<item>./TXT/TXT_KPW01169310_0004.TXT</item>
+<item>./TXT/TXT_KPW01169310_0005.TXT</item>
+<item>./TXT/TXT_KPW01169310_0006.TXT</item>
+<item>./TXT/TXT_KPW01169310_0007.TXT</item>
+<item>./TXT/TXT_KPW01169310_0008.TXT</item>
+<item>./userCopy/UC_KPW01169310_0001.JP2</item>
+<item>./userCopy/UC_KPW01169310_0002.JP2</item>
+<item>./userCopy/UC_KPW01169310_0003.JP2</item>
+<item>./userCopy/UC_KPW01169310_0004.JP2</item>
+<item>./userCopy/UC_KPW01169310_0005.JP2</item>
+<item>./userCopy/UC_KPW01169310_0006.JP2</item>
+<item>./userCopy/UC_KPW01169310_0007.JP2</item>
+<item>./userCopy/UC_KPW01169310_0008.JP2</item>
+</itemlist>
+<size>58396</size>
+<checksum TYPE="MD5" CHECKSUM="d1d016ee7614c5cde640d4b8ec22b23b">KPW01169310.md5</checksum>
+<note />
+</info>

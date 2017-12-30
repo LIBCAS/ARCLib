@@ -1,0 +1,39 @@
+<html>
+<head>
+    <title>Admin console</title>
+    <script src="jquery-3.2.1.min.js"></script>
+</head>
+<body>
+<form id="form">
+Script type:
+<select name="type" style="display: block">
+    <option value="GROOVY">Groovy</option>
+    <option value="JAVASCRIPT">JavaScript</option>
+</select>
+Transaction:
+<input name="transaction" style="display: block" type="checkbox">
+Script to run:
+<textarea name="script" style="display: block; width: 100%; height: 200px"></textarea>
+<br/>
+Result:
+<textarea id="result" style="display: block; width: 100%; height: 200px" disabled></textarea>
+<br/>
+<button id="run" style="display: block">Run</button>
+</form>
+<script>
+    $(document).ready(function(){
+        $("#run").click(function(){
+            $.post({
+                url: 'execute',
+                data: $("#form").serialize(),
+                success: function(msg) {
+                    $("#result").val(msg);
+                }
+            });
+
+            return false;
+        });
+    });
+</script>
+</body>
+</html>

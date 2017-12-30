@@ -1,0 +1,7 @@
+<profile xmlns="http://www.arclib.lib.cas.cz">
+    <rule>
+        <fileExistenceCheck>
+            <filePath>/nonExistentFile</filePath>
+        </fileExistenceCheck>
+    </rule>
+</profile>

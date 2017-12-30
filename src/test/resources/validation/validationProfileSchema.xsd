@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<xs:schema elementFormDefault="qualified" targetNamespace="http://www.arclib.lib.cas.cz" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+    <xs:element name="profile">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element maxOccurs="unbounded" name="rule">
+                    <xs:complexType>
+                        <xs:choice>
+                            <xs:element name="validationSchemaCheck">
+                                <xs:complexType>
+                                    <xs:sequence>
+                                        <xs:element name="filePath" type="xs:string"/>
+                                        <xs:element name="schema" type="xs:string"/>
+                                    </xs:sequence>
+                                </xs:complexType>
+                            </xs:element>
+                            <xs:element name="nodeCheck">
+                                <xs:complexType>
+                                    <xs:sequence>
+                                        <xs:element name="filePath" type="xs:string"/>
+                                        <xs:element name="xPath" type="xs:string"/>
+                                        <xs:choice>
+                                            <xs:element name="value" type="xs:string"/>
+                                            <xs:element name="regex" type="xs:string"/>
+                                        </xs:choice>
+                                    </xs:sequence>
+                                </xs:complexType>
+                            </xs:element>
+                            <xs:element name="fileExistenceCheck">
+                                <xs:complexType>
+                                    <xs:sequence>
+                                        <xs:element name="filePath" type="xs:string"/>
+                                    </xs:sequence>
+                                </xs:complexType>
+                            </xs:element>
+                        </xs:choice>
+                    </xs:complexType>
+                </xs:element>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+</xs:schema>

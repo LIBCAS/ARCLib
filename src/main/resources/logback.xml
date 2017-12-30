@@ -1,0 +1,12 @@
+<configuration>
+    <include resource="org/springframework/boot/logging/logback/base.xml"/>
+    <appender name="ARCLIB" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%boldGreen(${CONSOLE_LOG_PATTERN})</pattern>
+            <charset>utf8</charset>
+        </encoder>
+    </appender>
+<logger name="cz.cas.lib.arclib" level="TRACE" additivity="false">
+    <appender-ref ref="ARCLIB"/>
+</logger>
+</configuration>
