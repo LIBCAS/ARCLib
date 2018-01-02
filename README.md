@@ -1,4 +1,4 @@
-**You can find ARCLib prototypes there: https://github.com/LIBCAS/ARCLib-Prototypes** 
+**You can find ARCLib prototypes here: https://github.com/LIBCAS/ARCLib-Prototypes** 
 
 **Database**
 * user: **arclib**
