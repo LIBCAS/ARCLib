@@ -1,17 +1,12 @@
-<profile xmlns="http://www.arclib.lib.cas.cz">
+<profile xmlns="http://www.arclib.lib.cas.cz/VALIDATION_PROFILE">
     <rule>
         <fileExistenceCheck>
-            <filePath>/METS_KPW01169310.xml</filePath>
+            <filePath>mets_7033d800-0935-11e4-beed-5ef3fc9ae867.xml</filePath>
         </fileExistenceCheck>
     </rule>
     <rule>
         <fileExistenceCheck>
-            <filePath>/info.xml</filePath>
-        </fileExistenceCheck>
-    </rule>
-    <rule>
-        <fileExistenceCheck>
-            <filePath>/desktop.ini</filePath>
+            <filePath>info_7033d800-0935-11e4-beed-5ef3fc9ae867.xml</filePath>
         </fileExistenceCheck>
     </rule>
 </profile>

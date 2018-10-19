@@ -17,7 +17,7 @@
             <mime>application/vnd.visio</mime>
             <mime>application/vnd.ms-outlook</mime>
         </parser>
-        
+
         <parser name="parse-officex" class="org.apache.tika.parser.microsoft.ooxml.OOXMLParser">
             <mime>application/x-tika-ooxml</mime>
             <mime>application/vnd.openxmlformats-officedocument.presentationml.presentation</mime>

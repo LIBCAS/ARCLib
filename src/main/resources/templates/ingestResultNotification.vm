@@ -6,7 +6,7 @@
 #* @vtlvariable name="createdDate" type="java.lang.String" *#
 <p>Dobrý den,</p>
 
-<p>dne $createdDate ve $createdTime proběhl ingest SIP balíčku $sipId</p>
+<p>dne $createdDate ve $createdTime proběhl ingest dávky $batchId</p>
 <p>výsledek: $result</p>
 
 <p>

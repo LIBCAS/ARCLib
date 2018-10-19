@@ -6,7 +6,7 @@
             <charset>utf8</charset>
         </encoder>
     </appender>
-<logger name="cz.cas.lib.arclib" level="TRACE" additivity="false">
-    <appender-ref ref="ARCLIB"/>
-</logger>
+    <logger name="cz.cas.lib.arclib" level="TRACE" additivity="false">
+        <appender-ref ref="ARCLIB"/>
+    </logger>
 </configuration>

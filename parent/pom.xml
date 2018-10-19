@@ -4,7 +4,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>cz.inqool.uas</groupId>
+    <groupId>cz.cas.lib.core</groupId>
     <artifactId>parent</artifactId>
     <version>1.15.64</version>
     <packaging>pom</packaging>
@@ -40,10 +40,10 @@
         <!-- override defaults -->
         <logback.version>1.1.6</logback.version><!-- pushed back because of incompatibility -->
         <httpclient.version>4.5.4-inqool2</httpclient.version>
-        <elasticsearch.version>2.4.4</elasticsearch.version> <!-- not override, just to be sure -->
         <tomcat.version>8.5.14-inqool</tomcat.version>
         <!-- transitive -->
         <findbugs.version>2.0.1</findbugs.version>
+        <solr.version>6.0.1</solr.version>
 
         <lucene.version>5.5.2</lucene.version>
         <postgis.version>2.2.1</postgis.version>
@@ -87,7 +87,7 @@
             </dependency>
 
             <dependency>
-                <groupId>cz.inqool.uas</groupId>
+                <groupId>cz.cas.lib.core</groupId>
                 <artifactId>core</artifactId>
                 <version>${project.version}</version>
             </dependency>
@@ -356,7 +356,7 @@
                     <version>2.18.1</version>
                     <configuration>
                         <!--suppress MavenModelInspection -->
-                        <argLine>${argLine} -Dtests.security.manager=false -Dtests.timezone=Europe/Prague</argLine>
+                        <argLine>-Dtests.security.manager=false</argLine>
                     </configuration>
                 </plugin>
                 <plugin>

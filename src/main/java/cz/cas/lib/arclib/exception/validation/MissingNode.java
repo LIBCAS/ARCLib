@@ -1,6 +1,6 @@
 package cz.cas.lib.arclib.exception.validation;
 
-import cz.inqool.uas.exception.GeneralException;
+import cz.cas.lib.core.exception.GeneralException;
 
 public class MissingNode extends GeneralException {
     private String xPath;

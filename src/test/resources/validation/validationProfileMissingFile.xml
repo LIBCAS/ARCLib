@@ -1,4 +1,4 @@
-<profile xmlns="http://www.arclib.lib.cas.cz">
+<profile xmlns="http://www.arclib.lib.cas.cz/VALIDATION_PROFILE">
     <rule>
         <fileExistenceCheck>
             <filePath>/nonExistentFile</filePath>

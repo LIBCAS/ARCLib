@@ -1,0 +1,30 @@
+stages:
+    - build
+    - deploy
+
+build:
+    stage: build
+    tags:
+        - maven
+    script:
+        - "mvn clean package -B -Dmaven.test.skip=true"
+    artifacts:
+        paths:
+            - target/arclib*.jar
+    only:
+        - master
+
+devel:
+    stage: deploy
+    when: manual
+    dependencies:
+        - build
+    variables:
+        SERVER_ADDR: "arclib.inqool.cz"
+        SSH_PORT: "22"
+    only:
+        - master
+    script:
+        - "rm -f target/arclib*javadoc.jar"
+        - "scp -P $SSH_PORT -o StrictHostKeyChecking=no target/arclib-*.jar gitlab-runner@$SERVER_ADDR:/opt/api/api.jar"
+        - "ssh -p $SSH_PORT -o StrictHostKeyChecking=no gitlab-runner@$SERVER_ADDR 'sudo systemctl restart api'"

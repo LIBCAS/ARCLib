@@ -1,7 +1,7 @@
 package cz.cas.lib.arclib.mail;
 
-import cz.inqool.uas.mail.AsyncMailSender;
-import cz.inqool.uas.service.Templater;
+import cz.cas.lib.core.mail.AsyncMailSender;
+import cz.cas.lib.core.service.Templater;
 import helper.MockMailSender;
 import org.apache.velocity.app.VelocityEngine;
 import org.junit.Before;
@@ -38,17 +38,6 @@ public class ArclibMailCenterTest {
         mailCenter.setSenderName("test");
         mailCenter.setAppName("arclib");
         mailCenter.setEnabled(true);
-    }
-
-    @Test
-    public void sendAipSavedNotificationTest() {
-        mailCenter.sendAipSavedNotification("test@test.cz", "123", "AIP has been successfully saved.", Instant.now());
-
-        Object content = mockMailSender.getJavaMailProperties().get("mailContent");
-        mockMailSender.getJavaMailProperties().remove("mailContent");
-
-        assertThat(content, is(not(nullValue())));
-        assertThat(content.toString(), containsString("AIP has been successfully saved."));
     }
 
     @Test

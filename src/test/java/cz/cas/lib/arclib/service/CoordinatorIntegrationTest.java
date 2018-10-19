@@ -1,69 +1,179 @@
 package cz.cas.lib.arclib.service;
 
-import cz.cas.lib.arclib.api.CoordinatorApi;
+import com.google.common.io.Resources;
+import cz.cas.lib.arclib.api.BatchApi;
 import cz.cas.lib.arclib.domain.Batch;
 import cz.cas.lib.arclib.domain.BatchState;
-import cz.cas.lib.arclib.domain.Sip;
-import cz.cas.lib.arclib.domain.SipState;
-import cz.cas.lib.arclib.store.BatchStore;
-import cz.cas.lib.arclib.store.SipStore;
-import cz.inqool.uas.domain.DomainObject;
+import cz.cas.lib.arclib.domain.Producer;
+import cz.cas.lib.arclib.domain.ingestWorkflow.IngestWorkflow;
+import cz.cas.lib.arclib.domain.ingestWorkflow.IngestWorkflowState;
+import cz.cas.lib.arclib.domain.ingestWorkflow.WorkflowDefinition;
+import cz.cas.lib.arclib.domain.profiles.PathToSipId;
+import cz.cas.lib.arclib.domain.profiles.ProducerProfile;
+import cz.cas.lib.arclib.domain.profiles.SipProfile;
+import cz.cas.lib.arclib.domain.profiles.ValidationProfile;
+import cz.cas.lib.arclib.store.*;
 import helper.ApiTest;
-import org.hamcrest.core.Is;
-import org.junit.After;
-import org.junit.Test;
+import helper.SrDbTest;
+import helper.auth.WithMockCustomUser;
+import org.junit.*;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.jms.core.JmsTemplate;
 import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.util.FileSystemUtils;
 
 import javax.inject.Inject;
-import java.sql.SQLException;
+import java.io.File;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
 
-import static cz.inqool.uas.util.Utils.asSet;
+import static cz.cas.lib.core.util.Utils.asList;
+import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 import static org.hamcrest.Matchers.hasSize;
-import static org.hamcrest.core.Is.is;
+import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.fileUpload;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest
-public class CoordinatorIntegrationTest implements ApiTest {
+public class CoordinatorIntegrationTest extends SrDbTest implements ApiTest {
+
     @Inject
-    private CoordinatorService service;
+    private BatchService batchService;
+
+    @Inject
+    private ProducerProfileStore producerProfileStore;
+
+    @Inject
+    private SipProfileStore sipProfileStore;
+
+    @Inject
+    private ValidationProfileStore validationProfileStore;
+
+    @Inject
+    private BatchApi api;
+
+    @Inject
+    private IngestWorkflowStore ingestWorkflowStore;
+
+    @Inject
+    private ProducerStore producerStore;
+
+    @Inject
+    private WorkflowDefinitionStore workflowDefinitionStore;
 
     @Inject
     private BatchStore batchStore;
 
-    @Inject
-    private SipStore sipStore;
+    private static final Path BPMN_TEST_PATH = Paths.get("src/test/resources/bpmn/minimalWorkflow.bpmn");
+    private static final String PRODUCER_CONFIG = "{}";
+    private static final String INGEST_CONFIG = "{\"antivirus\":{\"type\":\"clamav\",\"cmd\":[\"clamscan\",\"-r\"],\"quarantine\":\"quarantine\"}}";
 
-    @Inject
-    private JmsTemplate template;
+    private static final Path RS = Paths.get("src/test/resources");
+    private static final Path FILE_STORAGE = Paths.get("fileStorage");
 
-    @Inject
-    private CoordinatorApi api;
+    private static final Path SIP_FOLDER = RS.resolve("testSip.zip");
 
-    public static final String SIP_SOURCES = "SIP_packages";
+    private static final Path FIXITY = RS.resolve("testSip.sums");
+    private static final String PATH_TO_XML = "/testSip/testXml.xml";
+    private static final String PATH_TO_AUTHORIAL_ID = "/mets/metsHdr/@ID";
+    private static final String PATH_TO_METADATA = "/testSip/testXml.xml";
+
+    private static final String TRANSFER_AREA_PATH_1 = "test_transfer_area_1";
+    private static final String TRANSFER_AREA_PATH_2 = "test_transfer_area_2";
+    private static final String TRANSFER_AREA_PATH_3 = "test_transfer_area_3";
+    private static final String TRANSFER_AREA_PATH_4 = "test_transfer_area_4";
+
+    private static final String SIP_PROFILE_XSLT_PATH = "/sipProfiles/xslts/minimalisticSipProfile.xsl";
+
+    private String sipProfileXslt;
+    private SipProfile sipProfile;
+    private ValidationProfile validationProfile;
+    private WorkflowDefinition workflowDefinition;
+
+    @AfterClass
+    public static void after() {
+        List<String> paths = asList(
+                TRANSFER_AREA_PATH_1, TRANSFER_AREA_PATH_2, TRANSFER_AREA_PATH_3, TRANSFER_AREA_PATH_4);
+        paths.forEach(path -> FileSystemUtils.deleteRecursively(
+                new File(FILE_STORAGE.resolve(path).toAbsolutePath().toString())));
+    }
+
+    @Before
+    public void before() throws IOException {
+        Files.createDirectories(FILE_STORAGE);
+
+        sipProfile = new SipProfile();
+
+        PathToSipId pathToSipId = new PathToSipId();
+        pathToSipId.setPathToXml(PATH_TO_XML);
+        pathToSipId.setXPathToId(PATH_TO_AUTHORIAL_ID);
+        sipProfile.setPathToSipId(pathToSipId);
+
+        sipProfileXslt = Resources.toString(getClass().getResource(SIP_PROFILE_XSLT_PATH), StandardCharsets.UTF_8);
+        sipProfile.setXsl(sipProfileXslt);
+
+        sipProfile.setSipMetadataPath(PATH_TO_METADATA);
+        sipProfileStore.save(sipProfile);
+
+        validationProfile = new ValidationProfile("xml");
+        validationProfileStore.save(validationProfile);
+
+        byte[] bpmnDefinition = Files.readAllBytes(BPMN_TEST_PATH);
+        workflowDefinition = new WorkflowDefinition(
+                new String(bpmnDefinition, StandardCharsets.UTF_8));
+        workflowDefinitionStore.save(workflowDefinition);
+    }
+
+    @After
+    public void tearDown() {
+        batchStore.findAll().forEach(entity -> batchStore.delete(entity));
+        ingestWorkflowStore.findAll().forEach(entity -> ingestWorkflowStore.delete(entity));
+    }
 
     /**
-     * Test of ({@link CoordinatorService#start(String)}) method. The method is passed a path to the test folder containing three empty
-     * files. The test asserts that:
-     *
-     * 1. there is a new instance of batch created and its state is PROCESSING
-     * 2. there are three SIP packages created (one for each file) and their state is PROCESSED
+     * Test of ({@link CoordinatorService#processBatchOfSips(String, String, String, String)}) method.
+     * <p>
+     * 1. there is a new instance of batch created and its state is PROCESSED
+     * 2. there is a new instance of SIP created its state is PROCESSED
      * 3. SIP ids that belong to the batch are the same as the ids of the SIP packages stored in database
      */
     @Test
-    public void startTest() throws Exception {
+    @WithMockCustomUser
+    @Ignore
+    public void processBatchOfSipsTest() throws Exception {
+        Path transferAreaPath = FILE_STORAGE.resolve(TRANSFER_AREA_PATH_1);
+        Files.createDirectories(transferAreaPath);
+
+        Files.copy(SIP_FOLDER, transferAreaPath.resolve(SIP_FOLDER.getFileName()), REPLACE_EXISTING);
+        Files.copy(FIXITY, transferAreaPath.resolve(FIXITY.getFileName()), REPLACE_EXISTING);
+
+        Producer producer = new Producer();
+        producer.setName("test producer name");
+        producer.setTransferAreaPath(TRANSFER_AREA_PATH_1);
+        producerStore.save(producer);
+
+        ProducerProfile producerProfile = new ProducerProfile();
+        producerProfile.setSipProfile(sipProfile);
+        producerProfile.setWorkflowConfig(PRODUCER_CONFIG);
+        producerProfile.setValidationProfile(validationProfile);
+        producerProfile.setWorkflowDefinition(workflowDefinition);
+        producerProfile.setProducer(producer);
+        producerProfileStore.save(producerProfile);
+
         final String[] result = new String[1];
-        mvc(api).perform(post("/api/coordinator/start")
-                .content(SIP_SOURCES.getBytes()))
+        mvc(api).perform(
+                fileUpload("/api/coordinator/start")
+                        .param("workflowConfig", INGEST_CONFIG)
+                        .param("producerProfileId", producerProfile.getId())
+        )
                 .andExpect(status().is2xxSuccessful())
                 .andDo(r -> result[0] = r.getResponse().getContentAsString());
 
@@ -72,40 +182,58 @@ public class CoordinatorIntegrationTest implements ApiTest {
         /*
         wait until all the JMS communication is finished and the proper data is stored in DB
          */
-        Thread.sleep(24000);
+        Thread.sleep(20000);
 
-        Batch batch = batchStore.find(batchId);
+        Batch batch = batchService.get(batchId);
         assertThat(batch.getState(), is(BatchState.PROCESSED));
 
-        Collection<Sip> allSips = sipStore.findAll();
-        assertThat(allSips, hasSize(5));
-        allSips.forEach(sip -> {
-            assertThat(sip.getState(), Is.is(SipState.PROCESSED));
-        });
+        Collection<IngestWorkflow> allIngestWorkflows = ingestWorkflowStore.findAll();
+        assertThat(allIngestWorkflows, hasSize(1));
+        allIngestWorkflows.forEach(sipPackage -> assertThat(sipPackage.getProcessingState(), is(IngestWorkflowState.PROCESSED)));
 
-        List<String> allSipsIds = allSips.stream()
-                .map(DomainObject::getId)
-                .collect(Collectors.toList());
-        Set<String> batchSipIds = batch.getIds();
-        assertThat(batchSipIds.toArray(), is(allSipsIds.toArray()));
+        List<IngestWorkflow> batchIngestWorkflows = batch.getIngestWorkflows();
+        assertThat(batchIngestWorkflows.toArray(), is(allIngestWorkflows.toArray()));
     }
 
-
     /**
-     * Test of ({@link CoordinatorService#cancel(String)}) method. There are two methods called in a row:
-     * 1. method ({@link CoordinatorService#start(String)}) passed a path to the test folder containing three empty files
-     * 2. method ({@link CoordinatorService#cancel(String)}) that cancels the batch
-     *
-     * The test asserts that:
-     * 1. the state of the batch is CANCELED
+     * Test of ({@link CoordinatorService#cancelBatch(String)}) method. There are two methods called in a row:
+     * 1. method ({@link CoordinatorService#processBatchOfSips(String, String, String, String})
+     * 2. method ({@link CoordinatorService#cancelBatch(String)}) that cancels the batch
+     * <p>
+     * The test asserts that the state of the batch is CANCELED.
      */
     @Test
+    @WithMockCustomUser
+    @Ignore
     public void cancelTest() throws Exception {
+        Path transferAreaPath = FILE_STORAGE.resolve(TRANSFER_AREA_PATH_2);
+        Files.createDirectories(transferAreaPath);
+
+        Files.copy(SIP_FOLDER, transferAreaPath.resolve(SIP_FOLDER.getFileName()), REPLACE_EXISTING);
+        Files.copy(FIXITY, transferAreaPath.resolve(FIXITY.getFileName()), REPLACE_EXISTING);
+
+        Producer producer = new Producer();
+        producer.setName("test producer name");
+        producer.setTransferAreaPath(TRANSFER_AREA_PATH_2);
+        producerStore.save(producer);
+
+        ProducerProfile producerProfile = new ProducerProfile();
+        producerProfile.setSipProfile(sipProfile);
+        producerProfile.setWorkflowConfig(PRODUCER_CONFIG);
+        producerProfile.setValidationProfile(validationProfile);
+        producerProfile.setWorkflowDefinition(workflowDefinition);
+        producerProfile.setProducer(producer);
+        producerProfileStore.save(producerProfile);
+
         final String[] result = new String[1];
-        mvc(api).perform(post("/api/coordinator/start")
-                .content(SIP_SOURCES.getBytes()))
+        mvc(api).perform(
+                fileUpload("/api/coordinator/start")
+                        .param("workflowConfig", INGEST_CONFIG)
+                        .param("producerProfileId", producerProfile.getId())
+        )
                 .andExpect(status().is2xxSuccessful())
                 .andDo(r -> result[0] = r.getResponse().getContentAsString());
+
 
         String batchId = result[0];
 
@@ -116,23 +244,47 @@ public class CoordinatorIntegrationTest implements ApiTest {
          */
         Thread.sleep(12000);
 
-        Batch batch = batchStore.find(batchId);
+        Batch batch = batchService.get(batchId);
         assertThat(batch.getState(), is(BatchState.CANCELED));
     }
 
     /**
-     * Test of ({@link CoordinatorService#cancel(String)}) method. There are two methods called in a row:
-     * 1. method ({@link CoordinatorService#start(String)}) passed a path to the test folder containing three empty files
-     * 2. method ({@link CoordinatorService#suspend(String)}) that suspends the batch
-     *
-     * 1. the state of the batch is SUSPENDED
+     * Test of ({@link CoordinatorService#cancelBatch(String)}) method. There are two methods called in a row:
+     * 1. method ({@link CoordinatorService#processBatchOfSips(String, String, String, String)})
+     * 2. method ({@link CoordinatorService#suspendBatch(String)}) that suspends the batch
+     * <p>
+     * The test asserts that the state of the batch is SUSPENDED.
      */
-    @Test
-    public void suspendTest() throws Exception {
-        final String[] result = new String[1];
 
-        mvc(api).perform(post("/api/coordinator/start")
-                .content(SIP_SOURCES.getBytes()))
+    @Test
+    @Ignore
+    @WithMockCustomUser
+    public void suspendTest() throws Exception {
+        Path transferAreaPath = FILE_STORAGE.resolve(TRANSFER_AREA_PATH_3);
+        Files.createDirectories(transferAreaPath);
+
+        Files.copy(SIP_FOLDER, transferAreaPath.resolve(SIP_FOLDER.getFileName()), REPLACE_EXISTING);
+        Files.copy(FIXITY, transferAreaPath.resolve(FIXITY.getFileName()), REPLACE_EXISTING);
+
+        Producer producer = new Producer();
+        producer.setName("test producer name");
+        producer.setTransferAreaPath(TRANSFER_AREA_PATH_3);
+        producerStore.save(producer);
+
+        ProducerProfile producerProfile = new ProducerProfile();
+        producerProfile.setSipProfile(sipProfile);
+        producerProfile.setWorkflowConfig(PRODUCER_CONFIG);
+        producerProfile.setValidationProfile(validationProfile);
+        producerProfile.setProducer(producer);
+        producerProfile.setWorkflowDefinition(workflowDefinition);
+        producerProfileStore.save(producerProfile);
+
+        final String[] result = new String[1];
+        mvc(api).perform(
+                fileUpload("/api/coordinator/start")
+                        .param("workflowConfig", INGEST_CONFIG)
+                        .param("producerProfileId", producerProfile.getId())
+        )
                 .andExpect(status().is2xxSuccessful())
                 .andDo(r -> result[0] = r.getResponse().getContentAsString());
 
@@ -145,27 +297,49 @@ public class CoordinatorIntegrationTest implements ApiTest {
          */
         Thread.sleep(12000);
 
-        Batch batch = batchStore.find(batchId);
+        Batch batch = batchService.get(batchId);
         assertThat(batch.getState(), is(BatchState.SUSPENDED));
     }
 
     /**
-     * Test of ({@link CoordinatorService#resume(String}) method. There are three methods called in a sequence:
-     * 1. method ({@link CoordinatorService#start(String}) passed a path to the test folder containing three empty files
-     * 2. method ({@link CoordinatorService#suspend(String}) that suspends the batch
-     * 3. method ({@link CoordinatorService#resume(String}) that resumes the batch
-     *
+     * Test of ({@link CoordinatorService#resumeBatch(String}) method. There are three methods called in a sequence:
+     * 1. method ({@link CoordinatorService#start(String})
+     * 2. method ({@link CoordinatorService#suspendBatch(String}) that suspends the batch
+     * 3. method ({@link CoordinatorService#resumeBatch(String}) that resumes the batch
+     * <p>
      * The test asserts that:
      * 1. the batch is in the state PROCESSING
-     * 2. there are three SIP packages created (one for each file) and their state is PROCESSED
+     * 2. there is one SIP package created and its state is PROCESSED
      * 3. sip ids that belong to the batch are the same as the ids of the sip packages stored in database
      */
     @Test
+    @Ignore
     public void resumeTest() throws Exception {
-        final String[] result = new String[1];
+        Path transferAreaPath = FILE_STORAGE.resolve(TRANSFER_AREA_PATH_4);
+        Files.createDirectories(transferAreaPath);
 
-        mvc(api).perform(post("/api/coordinator/start")
-                .content(SIP_SOURCES.getBytes()))
+        Files.copy(SIP_FOLDER, transferAreaPath.resolve(SIP_FOLDER.getFileName()), REPLACE_EXISTING);
+        Files.copy(FIXITY, transferAreaPath.resolve(FIXITY.getFileName()), REPLACE_EXISTING);
+
+        Producer producer = new Producer();
+        producer.setName("test producer name");
+        producer.setTransferAreaPath(TRANSFER_AREA_PATH_4);
+        producerStore.save(producer);
+
+        ProducerProfile producerProfile = new ProducerProfile();
+        producerProfile.setSipProfile(sipProfile);
+        producerProfile.setWorkflowConfig(PRODUCER_CONFIG);
+        producerProfile.setValidationProfile(validationProfile);
+        producerProfile.setWorkflowDefinition(workflowDefinition);
+        producerProfile.setProducer(producer);
+        producerProfileStore.save(producerProfile);
+
+        final String[] result = new String[1];
+        mvc(api).perform(
+                fileUpload("/api/coordinator/start")
+                        .param("workflowConfig", INGEST_CONFIG)
+                        .param("producerProfileId", producerProfile.getId())
+        )
                 .andExpect(status().is2xxSuccessful())
                 .andDo(r -> result[0] = r.getResponse().getContentAsString());
 
@@ -181,108 +355,16 @@ public class CoordinatorIntegrationTest implements ApiTest {
         /*
         wait until all the JMS communication is finished and the proper data is stored in DB
          */
-        Thread.sleep(60000);
+        Thread.sleep(40000);
 
-        Batch batch = batchStore.find(batchId);
+        Batch batch = batchService.get(batchId);
         assertThat(batch.getState(), is(BatchState.PROCESSED));
 
-        Collection<Sip> allSips = sipStore.findAll();
-        assertThat(allSips, hasSize(5));
-        allSips.forEach(sip -> {
-            assertThat(sip.getState(), is(SipState.PROCESSED));
-        });
+        Collection<IngestWorkflow> allSips = ingestWorkflowStore.findAll();
+        assertThat(allSips, hasSize(1));
+        allSips.forEach(sipPackage -> assertThat(sipPackage.getProcessingState(), is(IngestWorkflowState.PROCESSED)));
 
-        List<String> allSipsIds = allSips.stream()
-                .map(DomainObject::getId)
-                .collect(Collectors.toList());
-        Set<String> batchSipIds = batch.getIds();
-        assertThat(batchSipIds.toArray(), is(allSipsIds.toArray()));
-    }
-
-    /**
-     * Test of ({@link CoordinatorService#resume(String}) method. The method is passed ID of a batch that:
-     * 1. is in the state SUSPENDED
-     * 2. has a SIP package in the state PROCESSING
-     *
-     * The test asserts that:
-     * 1. the batch has not resumed (the return value of the method is false)
-     * 2. the batch state is SUSPENDED
-     */
-    @Test
-    public void resumeTestSipWithStateProcessing() throws Exception {
-        Sip sip = new Sip();
-        sip.setState(SipState.PROCESSING);
-        sipStore.save(sip);
-
-        Batch batch = new Batch();
-        batch.setState(BatchState.SUSPENDED);
-        batch.setIds(asSet(sip.getId()));
-        batchStore.save(batch);
-
-        final String[] result = new String[1];
-
-        mvc(api).perform(post("/api/coordinator/" + batch.getId() + "/resume"))
-                .andExpect(status().is2xxSuccessful())
-                .andDo(r -> result[0] = r.getResponse().getContentAsString());
-
-        Boolean hasResumed = Boolean.getBoolean(result[0]);
-
-        Thread.sleep(2000);
-
-        assertThat(hasResumed, is(false));
-        batch = batchStore.find(batch.getId());
-        assertThat(batch.getState(), is(BatchState.SUSPENDED));
-    }
-
-    /**
-     * Test of ({@link CoordinatorService#resume(String}) method. The method is passed ID of a batch that:
-     * 1. is in the state SUSPENDED
-     * 2. has no SIP packages in the state PROCESSING, has only a SIP package in the state NEW
-     *
-     * The test asserts that:
-     * 1. the batch has successfuly resumed (the return value of the method is true)
-     * 2. the batch state is PROCESSING
-     */
-    @Test
-    public void resumeTestNoSipWithStateProcessing() throws Exception {
-        Sip sip = new Sip();
-        sip.setState(SipState.NEW);
-        sipStore.save(sip);
-
-        Sip sip2 = new Sip();
-        sip2.setState(SipState.PROCESSED);
-        sipStore.save(sip2);
-
-        Batch batch = new Batch();
-        batch.setState(BatchState.SUSPENDED);
-        batch.setIds(asSet(sip.getId(), sip2.getId()));
-        batchStore.save(batch);
-
-        final String[] result = new String[1];
-
-        mvc(api).perform(post("/api/coordinator/" + batch.getId() + "/resume"))
-                .andExpect(status().is2xxSuccessful())
-                .andDo(r -> result[0] = r.getResponse().getContentAsString());
-
-        Boolean hasResumed = Boolean.valueOf(result[0]);
-
-        Thread.sleep(2000);
-
-        assertThat(hasResumed, is(true));
-        batch = batchStore.find(batch.getId());
-        assertThat(batch.getState(), is(BatchState.PROCESSED));
-
-        sip = sipStore.find(sip.getId());
-        assertThat(sip.getState(), is(SipState.PROCESSED));
-
-        sip2 = sipStore.find(sip2.getId());
-        assertThat(sip2.getState(), is(SipState.PROCESSED));
-    }
-
-    @After
-    public void testTearDown() throws SQLException {
-        sipStore.findAll().forEach(sipStore::delete);
-
-        batchStore.findAll().forEach(batchStore::delete);
+        List<IngestWorkflow> batchSips = batch.getIngestWorkflows();
+        assertThat(batchSips.toArray(), is(allSips.toArray()));
     }
 }

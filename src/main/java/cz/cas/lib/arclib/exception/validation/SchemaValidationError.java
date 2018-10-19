@@ -1,36 +1,28 @@
 package cz.cas.lib.arclib.exception.validation;
 
-import cz.inqool.uas.exception.GeneralException;
+import cz.cas.lib.core.exception.GeneralException;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.Setter;
 
+@Getter
+@Setter
+@AllArgsConstructor
 public class SchemaValidationError extends GeneralException {
+    private String sipId;
+    private String validationProfileId;
     private String xmlPath;
     private String xsdSchema;
     private String message;
 
-    public SchemaValidationError(String xmlPath, String xsdSchema, String message) {
-        this.xmlPath = xmlPath;
-        this.xsdSchema = xsdSchema;
-        this.message = message;
-    }
-
     @Override
     public String toString() {
         return "SchemaValidationError{" +
-                "xmlPath='" + xmlPath + '\'' +
+                "sipId='" + sipId + '\'' +
+                ", validationProfileId=' \n" + validationProfileId + '\'' +
+                ", xmlPath=' \n" + xmlPath + '\'' +
                 ", xsdSchema=' \n" + xsdSchema + '\'' +
                 ", message=' \n" + message + '\'' +
                 '}';
-    }
-
-    public String getXmlPath() {
-        return xmlPath;
-    }
-
-    public String getXsdSchema() {
-        return xsdSchema;
-    }
-
-    public String getMessage() {
-        return message;
     }
 }

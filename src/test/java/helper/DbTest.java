@@ -1,5 +1,7 @@
 package helper;
 
+import com.querydsl.jpa.impl.JPAQueryFactory;
+import cz.cas.lib.core.store.DomainStore;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.hibernate.internal.SessionImpl;
@@ -38,14 +40,14 @@ public abstract class DbTest {
     }
 
     @BeforeClass
-    public static void classSetUp() {
+    public static void classSetUp() throws Exception {
         Logger.getRootLogger().setLevel(Level.INFO);
 
         factory = Persistence.createEntityManagerFactory("test");
     }
 
     @AfterClass
-    public static void classTearDown() {
+    public static void classTearDown() throws Exception {
         if (factory != null) {
             factory.close();
             factory = null;
@@ -84,6 +86,13 @@ public abstract class DbTest {
         //s.execute("DROP SCHEMA PUBLIC CASCADE ");
         s.execute("TRUNCATE SCHEMA PUBLIC AND COMMIT");
         s.close();
+    }
+
+    public void initializeStores(DomainStore... stores) {
+        for (DomainStore store : stores) {
+            store.setEntityManager(em);
+            store.setQueryFactory(new JPAQueryFactory(em));
+        }
     }
 
     protected static void delete(String path) throws IOException {

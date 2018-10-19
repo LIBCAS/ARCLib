@@ -1,29 +1,24 @@
 package cz.cas.lib.arclib.exception.validation;
 
-import cz.inqool.uas.exception.GeneralException;
+import cz.cas.lib.core.exception.GeneralException;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.Setter;
 
+@Getter
+@Setter
+@AllArgsConstructor
 public class MissingFile extends GeneralException {
-    private String filePath;
+    private String sipId;
     private String validationProfileId;
-
-    public MissingFile(String filePath, String validationProfileId) {
-        this.filePath = filePath;
-        this.validationProfileId = validationProfileId;
-    }
+    private String filePath;
 
     @Override
     public String toString() {
         return "MissingFile{" +
-                "filePath=" + filePath +
-                "validationProfileId" + validationProfileId + '\'' +
+                "sipId='" + sipId + '\'' +
+                ", validationProfileId='" + validationProfileId + '\'' +
+                ", filePath='" + filePath + '\'' +
                 '}';
-    }
-
-    public String getFilePath() {
-        return filePath;
-    }
-
-    public String getValidationProfileId() {
-        return validationProfileId;
     }
 }

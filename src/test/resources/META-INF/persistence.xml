@@ -6,28 +6,49 @@
 
     <persistence-unit name="test" transaction-type="RESOURCE_LOCAL">
         <provider>org.hibernate.jpa.HibernatePersistenceProvider</provider>
-        <class>cz.inqool.uas.store.revision.Revision</class>
-        <class>cz.inqool.uas.file.FileRef</class>
-        <class>cz.inqool.uas.sequence.Sequence</class>
-        <class>cz.inqool.uas.report.Report</class>
-        <class>cz.inqool.uas.config.change.ConfigFile</class>
-        <class>cz.inqool.uas.error.Error</class>
-        <class>cz.cas.lib.arclib.domain.ValidationProfile</class>
-        <class>cz.cas.lib.arclib.domain.Sip</class>
-        <class>cz.cas.lib.arclib.domain.SipProfile</class>
-        <class>cz.inqool.uas.security.authorization.assign.AssignedRole</class>
-        <class>cz.inqool.uas.security.authorization.role.Role</class>
+        <class>cz.cas.lib.core.store.revision.Revision</class>
+        <class>cz.cas.lib.core.file.FileRef</class>
+        <class>cz.cas.lib.core.sequence.Sequence</class>
+        <class>cz.cas.lib.core.report.Report</class>
+        <class>cz.cas.lib.core.config.change.ConfigFile</class>
+        <class>cz.cas.lib.core.error.Error</class>
+        <class>cz.cas.lib.arclib.domain.profiles.ValidationProfile</class>
+        <class>cz.cas.lib.arclib.domain.ingestWorkflow.IngestWorkflow</class>
+        <class>cz.cas.lib.arclib.domain.profiles.SipProfile</class>
+        <class>cz.cas.lib.arclib.report.Report</class>
+        <class>cz.cas.lib.arclib.domain.Producer</class>
+        <class>cz.cas.lib.arclib.domain.profiles.ProducerProfile</class>
+        <class>cz.cas.lib.arclib.domain.ingestWorkflow.WorkflowDefinition</class>
+        <class>cz.cas.lib.arclib.domain.ingestWorkflow.IngestWorkflowFailureInfo</class>
+        <class>cz.cas.lib.arclib.domain.Batch</class>
+        <class>cz.cas.lib.arclib.domain.IngestRoutine</class>
+        <class>cz.cas.lib.arclib.domain.HashType</class>
+        <class>cz.cas.lib.arclib.domain.Hash</class>
+        <class>cz.cas.lib.core.scheduling.job.Job</class>
+        <class>cz.cas.lib.arclib.security.authorization.assign.AssignedRole</class>
+        <class>cz.cas.lib.arclib.security.authorization.role.Role</class>
+        <class>cz.cas.lib.arclib.domain.AipQuery</class>
+        <class>cz.cas.lib.arclib.domain.User</class>
+        <class>cz.cas.lib.arclib.domain.packages.Sip</class>
+        <class>cz.cas.lib.arclib.domain.packages.AuthorialPackage</class>
+        <class>cz.cas.lib.arclib.domain.packages.AuthorialPackageUpdateLock</class>
+        <class>cz.cas.lib.arclib.domain.Hash</class>
+        <class>cz.cas.lib.core.scheduling.job.Job</class>
+        <class>cz.cas.lib.arclib.domain.ingestWorkflow.IngestIssue</class>
+        <class>cz.cas.lib.arclib.domain.packages.AipDeletionRequest</class>
+        <class>cz.cas.lib.arclib.domain.ExportRoutine</class>
         <exclude-unlisted-classes>false</exclude-unlisted-classes>
 
         <properties>
             <property name="hibernate.dialect" value="org.hibernate.dialect.HSQLDialect"/>
-            <property name="hibernate.ejb.implicit_naming_strategy" value="org.springframework.boot.orm.jpa.hibernate.SpringImplicitNamingStrategy"/>
-            <property name="hibernate.ejb.physical_naming_strategy" value="org.springframework.boot.orm.jpa.hibernate.SpringPhysicalNamingStrategy"/>
+            <property name="hibernate.ejb.implicit_naming_strategy"
+                      value="org.springframework.boot.orm.jpa.hibernate.SpringImplicitNamingStrategy"/>
+            <property name="hibernate.ejb.physical_naming_strategy"
+                      value="org.springframework.boot.orm.jpa.hibernate.SpringPhysicalNamingStrategy"/>
             <property name="hibernate.archive.autodetection" value="class, hbm"/>
             <property name="javax.persistence.schema-generation.database.action" value="drop-and-create"/>
             <property name="javax.persistence.jdbc.driver" value="org.hsqldb.jdbc.JDBCDriver"/>
             <property name="javax.persistence.jdbc.url" value="jdbc:hsqldb:mem:testdb"/>
-            <property name="org.hibernate.envers.audit_strategy" value="org.hibernate.envers.strategy.ValidityAuditStrategy"/>
             <property name="javax.persistence.validation.mode" value="none"/>
         </properties>
     </persistence-unit>

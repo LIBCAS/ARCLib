@@ -1,21 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
-<xsd:schema targetNamespace="http://arclib.lib.cas.cz/ARCLIB_XML"
-            xmlns="http://arclib.lib.cas.cz/ARCLIB_XML"
+<xsd:schema targetNamespace="http://arclib.lib.cas.cz/ARCLIB_XSD"
+            xmlns="http://arclib.lib.cas.cz/ARCLIB_XSD"
             xmlns:xsd="http://www.w3.org/2001/XMLSchema"
-            xmlns:premis="http://www.loc.gov/premis/v3"
             elementFormDefault="qualified">
-    <xsd:import namespace="http://www.loc.gov/premis/v3" schemaLocation="https://www.loc.gov/standards/premis/premis.xsd"/>
+    <xsd:import namespace="http://www.loc.gov/premis/v3"
+                schemaLocation="https://www.loc.gov/standards/premis/premis.xsd"/>
 
     <xsd:element name="formats">
         <xsd:complexType>
             <xsd:sequence>
                 <xsd:element name="format" minOccurs="0" maxOccurs="unbounded">
                     <xsd:complexType>
-                        <xsd:sequence>
-                            <xsd:element name="fileFormat"/>
-                            <xsd:element name="fileCount"/>
-                            <xsd:element name="identificationTool"/>
-                        </xsd:sequence>
+                        <xsd:all>
+                            <xsd:element name="fileFormat" type="xsd:string"/>
+                            <xsd:element name="formatRegistryKey" type="xsd:string"/>
+                            <xsd:element name="formatRegistryName" type="xsd:string"/>
+                            <xsd:element name="creatingApplicationName" type="xsd:string"/>
+                            <xsd:element name="creatingApplicationVersion" type="xsd:string"/>
+                            <xsd:element name="dateCreatedByApplication" type="xsd:date"/>
+                            <xsd:element name="preservationLevelValue" type="xsd:string" minOccurs="0"/>
+                            <xsd:element name="scannerModelSerialNo" type="xsd:string" minOccurs="0"/>
+                            <xsd:element name="fileCount" type="xsd:int"/>
+                        </xsd:all>
                     </xsd:complexType>
                 </xsd:element>
             </xsd:sequence>
@@ -28,8 +34,8 @@
                 <xsd:element name="device" minOccurs="0" maxOccurs="unbounded">
                     <xsd:complexType>
                         <xsd:all>
-                            <xsd:element name="deviceId" minOccurs="0"/>
-                            <xsd:element name="fileCount" minOccurs="0"/>
+                            <xsd:element name="deviceId" type="xsd:string"/>
+                            <xsd:element name="fileCount" type="xsd:int"/>
                         </xsd:all>
                     </xsd:complexType>
                 </xsd:element>
@@ -43,10 +49,47 @@
                 <xsd:element name="eventAgent" minOccurs="0" maxOccurs="unbounded">
                     <xsd:complexType>
                         <xsd:all>
-                            <xsd:element name="eventType" type="premis:stringPlusAuthority" minOccurs="0"/>
-                            <xsd:element name="agentName" type="xsd:string" minOccurs="0"/>
-                            <xsd:element name="eventDate" type="xsd:dateTime" minOccurs="0"/>
-                            <xsd:element name="eventCount" type="xsd:int" minOccurs="0"/>
+                            <xsd:element name="eventType" type="xsd:string"/>
+                            <xsd:element name="agentName" type="xsd:string"/>
+                            <xsd:element name="linkingDeviceID" type="xsd:string"/>
+                            <xsd:element name="scannerModelSerialNo" type="xsd:string" minOccurs="0"/>
+                            <xsd:element name="scanningSoftwareName" type="xsd:string" minOccurs="0"/>
+                            <xsd:element name="eventDate" type="xsd:date"/>
+                            <xsd:element name="eventCount" type="xsd:int"/>
+                        </xsd:all>
+                    </xsd:complexType>
+                </xsd:element>
+            </xsd:sequence>
+        </xsd:complexType>
+    </xsd:element>
+
+    <xsd:element name="ImageCaptureInformation">
+        <xsd:complexType>
+            <xsd:sequence>
+                <xsd:element name="ImageCaptureMetadata" minOccurs="0" maxOccurs="unbounded">
+                    <xsd:complexType>
+                        <xsd:all>
+                            <xsd:element name="dateCreated" type="xsd:date"/>
+                            <xsd:element name="imageProducer" type="xsd:string"/>
+                            <xsd:element name="scannerModelSerialNo" type="xsd:string" minOccurs="0"/>
+                            <xsd:element name="eventCount" type="xsd:int"/>
+                        </xsd:all>
+                    </xsd:complexType>
+                </xsd:element>
+            </xsd:sequence>
+        </xsd:complexType>
+    </xsd:element>
+
+    <xsd:element name="creatingApplications">
+        <xsd:complexType>
+            <xsd:sequence>
+                <xsd:element name="creatingApplication" minOccurs="0" maxOccurs="unbounded">
+                    <xsd:complexType>
+                        <xsd:all>
+                            <xsd:element name="creatingApplicationName" type="xsd:string"/>
+                            <xsd:element name="creatingApplicationVersion" type="xsd:string"/>
+                            <xsd:element name="dateCreatedByApplication" type="xsd:date"/>
+                            <xsd:element name="eventCount" type="xsd:int"/>
                         </xsd:all>
                     </xsd:complexType>
                 </xsd:element>

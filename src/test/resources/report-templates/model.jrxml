@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Created with Jaspersoft Studio version 6.4.0.final using JasperReports Library version 6.4.1  -->
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports"
+              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+              xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd"
+              name="newreport" pageWidth="595" pageHeight="842" columnWidth="555" leftMargin="20" rightMargin="20"
+              topMargin="20" bottomMargin="20" uuid="46a212d9-2651-4e65-bec6-4716c13808c8">
+    <property name="com.jaspersoft.studio.data.defaultdataadapter" value="prot9DS"/>
+    <property name="com.jaspersoft.studio.data.sql.tables" value=""/>
+    <style name="Table_TH" mode="Opaque" backcolor="#F0F8FF">
+        <box>
+            <pen lineWidth="0.5" lineColor="#000000"/>
+            <topPen lineWidth="0.5" lineColor="#000000"/>
+            <leftPen lineWidth="0.5" lineColor="#000000"/>
+            <bottomPen lineWidth="0.5" lineColor="#000000"/>
+            <rightPen lineWidth="0.5" lineColor="#000000"/>
+        </box>
+    </style>
+    <style name="Table_CH" mode="Opaque" backcolor="#BFE1FF">
+        <box>
+            <pen lineWidth="0.5" lineColor="#000000"/>
+            <topPen lineWidth="0.5" lineColor="#000000"/>
+            <leftPen lineWidth="0.5" lineColor="#000000"/>
+            <bottomPen lineWidth="0.5" lineColor="#000000"/>
+            <rightPen lineWidth="0.5" lineColor="#000000"/>
+        </box>
+    </style>
+    <style name="Table_TD" mode="Opaque" backcolor="#FFFFFF">
+        <box>
+            <pen lineWidth="0.5" lineColor="#000000"/>
+            <topPen lineWidth="0.5" lineColor="#000000"/>
+            <leftPen lineWidth="0.5" lineColor="#000000"/>
+            <bottomPen lineWidth="0.5" lineColor="#000000"/>
+            <rightPen lineWidth="0.5" lineColor="#000000"/>
+        </box>
+    </style>
+    <subDataset name="Dataset1" uuid="e07b1536-be22-46b7-ac4a-d44b64894a74">
+        <property name="com.jaspersoft.studio.data.sql.tables" value=""/>
+        <property name="com.jaspersoft.studio.data.defaultdataadapter" value="prot9DS"/>
+        <parameter name="like" class="java.lang.String">
+            <parameterDescription><![CDATA[]]></parameterDescription>
+            <defaultValueExpression><![CDATA[""]]></defaultValueExpression>
+        </parameter>
+        <parameter name="chars" class="java.lang.Integer">
+            <parameterDescription><![CDATA[]]></parameterDescription>
+            <defaultValueExpression><![CDATA[7]]></defaultValueExpression>
+        </parameter>
+        <queryString language="SQL">
+            <![CDATA[select * from  arclib_report where name like '%$P!{like}%']]>
+        </queryString>
+        <field name="id" class="java.lang.String"/>
+        <field name="name" class="java.lang.String"/>
+    </subDataset>
+    <parameter name="like" class="java.lang.String">
+        <parameterDescription><![CDATA[]]></parameterDescription>
+        <defaultValueExpression><![CDATA[""]]></defaultValueExpression>
+    </parameter>
+    <parameter name="chars" class="java.lang.Integer">
+        <parameterDescription><![CDATA[]]></parameterDescription>
+        <defaultValueExpression><![CDATA[7]]></defaultValueExpression>
+    </parameter>
+    <queryString>
+        <![CDATA[select 1]]>
+    </queryString>
+    <background>
+        <band splitType="Stretch"/>
+    </background>
+    <title>
+        <band height="251" splitType="Stretch">
+            <componentElement>
+                <reportElement positionType="Float" x="130" y="100" width="241" height="151"
+                               uuid="ab3343ad-be2c-4ec9-8900-c2c81310aead">
+                    <property name="com.jaspersoft.studio.layout"
+                              value="com.jaspersoft.studio.editor.layout.VerticalRowLayout"/>
+                    <property name="com.jaspersoft.studio.table.style.table_header" value="Table_TH"/>
+                    <property name="com.jaspersoft.studio.table.style.column_header" value="Table_CH"/>
+                    <property name="com.jaspersoft.studio.table.style.detail" value="Table_TD"/>
+                </reportElement>
+                <jr:table xmlns:jr="http://jasperreports.sourceforge.net/jasperreports/components"
+                          xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports/components http://jasperreports.sourceforge.net/xsd/components.xsd">
+                    <datasetRun subDataset="Dataset1" uuid="030df0d1-116d-419d-976b-b9c7a8f72e1e">
+                        <datasetParameter name="like">
+                            <datasetParameterExpression><![CDATA[$P{like}]]></datasetParameterExpression>
+                        </datasetParameter>
+                        <datasetParameter name="chars">
+                            <datasetParameterExpression><![CDATA[$P{chars}]]></datasetParameterExpression>
+                        </datasetParameter>
+                        <connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
+                    </datasetRun>
+                    <jr:column width="120" uuid="112877b4-8de8-4a35-8d8d-292129cd829a">
+                        <jr:tableHeader style="Table_TH" height="30"/>
+                        <jr:tableFooter style="Table_TH" height="30"/>
+                        <jr:columnHeader style="Table_CH" height="30">
+                            <textField>
+                                <reportElement x="0" y="0" width="120" height="30"
+                                               uuid="2e5dfb18-6b19-4ccf-83ff-0a8329a83fb5"/>
+                                <textFieldExpression><![CDATA["id (first "+$P{chars}+" chars)"]]></textFieldExpression>
+                            </textField>
+                        </jr:columnHeader>
+                        <jr:columnFooter style="Table_CH" height="30"/>
+                        <jr:detailCell style="Table_TD" height="30">
+                            <textField>
+                                <reportElement x="0" y="0" width="120" height="30"
+                                               uuid="29afc815-105f-4987-9639-27382e82eaea"/>
+                                <textFieldExpression><![CDATA[$F{id}.substring(0,$P{chars})]]></textFieldExpression>
+                            </textField>
+                        </jr:detailCell>
+                    </jr:column>
+                    <jr:column width="120" uuid="61bae371-b8ee-4a13-93d8-883f7a544634">
+                        <jr:tableHeader style="Table_TH" height="30"/>
+                        <jr:tableFooter style="Table_TH" height="30"/>
+                        <jr:columnHeader style="Table_CH" height="30">
+                            <staticText>
+                                <reportElement positionType="Float" x="0" y="0" width="120" height="30"
+                                               uuid="4ad8ead4-146b-47a3-9df5-e0261facc9bf">
+                                    <property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+                                </reportElement>
+                                <text><![CDATA[name]]></text>
+                            </staticText>
+                        </jr:columnHeader>
+                        <jr:columnFooter style="Table_CH" height="30"/>
+                        <jr:detailCell style="Table_TD" height="30">
+                            <textField>
+                                <reportElement positionType="Float" x="0" y="0" width="120" height="30"
+                                               uuid="75a89155-6cf0-48c0-9d38-6e621ac344db">
+                                    <property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+                                </reportElement>
+                                <textFieldExpression><![CDATA[$F{name}]]></textFieldExpression>
+                            </textField>
+                        </jr:detailCell>
+                    </jr:column>
+                </jr:table>
+            </componentElement>
+            <line>
+                <reportElement x="90" y="60" width="361" height="5" uuid="7eef59de-0d30-4fa4-a1ae-ef1d4c4105b4"/>
+            </line>
+        </band>
+    </title>
+    <pageHeader>
+        <band height="35" splitType="Stretch"/>
+    </pageHeader>
+    <columnHeader>
+        <band height="61" splitType="Stretch"/>
+    </columnHeader>
+    <detail>
+        <band height="125" splitType="Stretch"/>
+    </detail>
+    <columnFooter>
+        <band height="45" splitType="Stretch"/>
+    </columnFooter>
+    <pageFooter>
+        <band height="54" splitType="Stretch"/>
+    </pageFooter>
+    <summary>
+        <band height="42" splitType="Stretch"/>
+    </summary>
+</jasperReport>

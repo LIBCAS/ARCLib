@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" id="Definitions_1" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="1.11.3">
+  <bpmn:process id="fixityGeneratorProcess" isExecutable="true">
+    <bpmn:startEvent id="StartEvent_18qq1n2">
+      <bpmn:outgoing>SequenceFlow_1jtopgz</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:sequenceFlow id="SequenceFlow_1jtopgz" sourceRef="StartEvent_18qq1n2" targetRef="fixityGenerator" />
+    <bpmn:endEvent id="EndEvent_1eelgwy">
+      <bpmn:incoming>SequenceFlow_1abbszp</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:serviceTask id="fixityGenerator" name="fixity generator" camunda:asyncBefore="true" camunda:delegateExpression="${fixityGeneratorDelegate}">
+      <bpmn:incoming>SequenceFlow_1jtopgz</bpmn:incoming>
+      <bpmn:outgoing>SequenceFlow_1abbszp</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:sequenceFlow id="SequenceFlow_1abbszp" sourceRef="fixityGenerator" targetRef="EndEvent_1eelgwy" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="fixityGeneratorProcess">
+      <bpmndi:BPMNShape id="StartEvent_18qq1n2_di" bpmnElement="StartEvent_18qq1n2">
+        <dc:Bounds x="361" y="124" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="334" y="164" width="90" height="12" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_1jtopgz_di" bpmnElement="SequenceFlow_1jtopgz">
+        <di:waypoint xsi:type="dc:Point" x="397" y="142" />
+        <di:waypoint xsi:type="dc:Point" x="420" y="142" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="363.5" y="121" width="90" height="12" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="EndEvent_1eelgwy_di" bpmnElement="EndEvent_1eelgwy">
+        <dc:Bounds x="546" y="123" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="519" y="163" width="90" height="12" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ServiceTask_0c02l1y_di" bpmnElement="fixityGenerator">
+        <dc:Bounds x="420" y="102" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_1abbszp_di" bpmnElement="SequenceFlow_1abbszp">
+        <di:waypoint xsi:type="dc:Point" x="520" y="139" />
+        <di:waypoint xsi:type="dc:Point" x="546" y="140" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="533" y="118.5" width="0" height="12" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

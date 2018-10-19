@@ -13,6 +13,24 @@ spring:
         ddl-auto: validate
         naming-strategy: org.hibernate.cfg.ImprovedNamingStrategy
         use-new-id-generator-mappings: true
+    http:
+      multipart:
+        maxFileSize: -1
+        maxRequestSize: -1
+    jackson:
+      serialization:
+        write-dates-as-timestamps: false
+    mail:
+      host: smtp.gmail.com
+      port: 465
+      username: noreply@inqool.cz
+      password: blah38espro
+      protocol: smtp
+      properties.mail.smtp:
+        auth: true
+        starttls.enable: false
+        ssl.trust: smtp.gmail.com
+        ssl.enable: true
 liquibase:
   changeLog: classpath:/dbchangelog.arclib.xml
   url: jdbc:postgresql://localhost:5432/arclib
@@ -28,25 +46,86 @@ camunda:
       resumePreviousBy: a value
     job-execution:
       enabled: true
+      active: true
     metrics:
       enabled: false
       db-reporter-activate: false
 arclib:
-  workspace: workspace
-  arclibXmlValidationChecks: classpath:arclibXmlValidationChecks.txt
+  version: 1.0
+  path:
+    workspace: workspace
+    quarantine: workspace/quarantine
+    fileStorage: fileStorage
+  arclibXmlValidator:
+    arclibXmlValidationChecks: classpath:arclibXmlValidationChecks.txt
+    pathToAipId: /mets/@OBJID
+    pathToAuthorialId: /mets/metsHdr/altRecordID[@TYPE='original SIP identifier']
+    pathToSipVersionNumber: /mets/dmdSec/mdWrap/xmlData/sipVersionNumber
+    pathToPhysicalVersionOf: /mets/dmdSec/mdWrap/xmlData/sipVersionOf
   arclibXmlSchema: classpath:xmlSchemas/arclibXml.xsd
   metsSchema: classpath:xmlSchemas/mets.xsd
   premisSchema: classpath:xmlSchemas/premis-v2-2.xsd
   sipProfileSchema: classpath:xmlSchemas/sipProfile.xsd
+  validationProfileSchema: classpath:xmlSchemas/validationProfile.xsd
+  ingestRoutineBatchStartScript: classpath:batchStart.groovy
+  exportRoutineAipExportScript: classpath:aipExport.groovy
+  exportRoutineXmlExportScript: classpath:xmlExport.groovy
+  keepAliveUpdateScript: classpath:keepAliveUpdate.groovy
+  deleteSipFromTransferArea: true
+  aipStoreRetries: 3
+  aipStoreTimeout: PT1M
+  aipSavedCheckRetries: 10
+  aipSavedCheckTimeout: PT1M
+  keepAliveUpdateTimeout: 10
 namespaces:
-  METS: http://www.loc.gov/METS/
-  ARCLIB: http://arclib.lib.cas.cz/ARCLIB_XML
-  PREMIS: http://www.loc.gov/premis/v3
+  mets: http://www.loc.gov/METS/
+  arclib: http://arclib.lib.cas.cz/ARCLIB_XML
+  premis: info:lc/xmlns/premis-v2
+  oai_dc: http://www.openarchives.org/OAI/2.0/oai_dc/
+  dc: http://purl.org/dc/elements/1.1/
+  dcterms: http://purl.org/dc/terms/
 mail:
   sender:
     email: noreply@arclib.lib.cas.cz
     name: Aplikace Arclib
   app:
     name: Arclib
+    logo: logo.png
+    link: http://arclib.inqool.cz
+    url: http://arclib.inqool.cz
+  enabled: false
+security:
+  basic:
+    authQuery: "/api/user/login"
+  jwt:
+    secret: YXVyYTI0Z3JvZ3M=
+    expiration: 900000
+    refresh: 30
+  roles:
+    internal:
+      enabled: true
+  ldap:
+    startTls: true
+    enabled: true
+    server: ldap://inqooltest-arclib.libj.cas.cz
+    bind:
+      dn: cn=arclib,dc=libj,dc=cas,dc=cz
+      pwd: Welcome18
+    user:
+      type: filter
+      filter: (uid={0})
+      search-base: ou=users,ou=Archive,o=KNAV,dc=libj,dc=cas,dc=cz
+bpm:
+  enabled: true
 solr:
   endpoint: http://localhost:8983/solr
+  arclibxml:
+    corename: arclibXml
+env: production
+archivalStorage:
+  api: http://localhost:8081/api
+  authorization:
+    bearer:
+      read: eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJkNjdmNGYyMi02NWVmLTQwMDUtOTRjYi1lYTg5MzNjZWRhMzMiLCJuYW1lIjoiYXJjbGliLXJlYWQiLCJhdXQiOlsiUk9MRV9SRUFEIl0sImlhdCI6MTUzMDY5MzY3MiwiZXhwIjoxNTYwNjkzNjcyfQ.DvRCR6SQS8ZjzQ6CIsAIMx2fmopEgN1LmAeVq8PQT2M
+      readWrite: eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiI3ODNkNDIyNC0zZWEyLTQ5N2MtOWEzMC02Nzg3ODg2MTljNDciLCJuYW1lIjoiYXJjbGliLXJlYWQtd3JpdGUiLCJhdXQiOlsiUk9MRV9SRUFEX1dSSVRFIl0sImlhdCI6MTUzMDY5MzQ5NSwiZXhwIjoxNTYwNjkzNDk1fQ.pEroOcl2agtSjv2TSykHOtakgBoZR5MLtPDcZOs1hR0
+      admin: eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJkZDVhZDJmMC00NDg2LTQ0MjktYTBlNS02NGY3OGRhYTkxOGQiLCJuYW1lIjoiYWRtaW4iLCJhdXQiOlsiUk9MRV9BRE1JTiJdLCJpYXQiOjE1MzM1MTE2ODUsImV4cCI6MTU2MzUxMTY4NX0.GseWdK1CEJ1J8QacXwEz_VX0iez7Fohu-rVX2_LDsCY

@@ -1,90 +1,114 @@
 package cz.cas.lib.arclib.api;
 
-import cz.cas.lib.arclib.domain.ValidationProfile;
+import cz.cas.lib.arclib.domain.profiles.ValidationProfile;
+import cz.cas.lib.arclib.security.authorization.Roles;
 import cz.cas.lib.arclib.store.ValidationProfileStore;
-import cz.inqool.uas.domain.DomainObject;
-import cz.inqool.uas.exception.BadArgument;
-import cz.inqool.uas.exception.MissingObject;
-import cz.inqool.uas.store.Transactional;
+import cz.cas.lib.arclib.utils.XmlUtils;
+import cz.cas.lib.core.exception.BadArgument;
+import cz.cas.lib.core.exception.ConflictObject;
+import cz.cas.lib.core.exception.GeneralException;
+import cz.cas.lib.core.exception.MissingObject;
+import cz.cas.lib.core.store.Transactional;
+import io.swagger.annotations.*;
 import lombok.Getter;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.Resource;
 import org.springframework.web.bind.annotation.*;
+import org.xml.sax.SAXException;
 
+import javax.annotation.security.RolesAllowed;
 import javax.inject.Inject;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Collection;
 
-import static cz.inqool.uas.util.Utils.eq;
-import static cz.inqool.uas.util.Utils.notNull;
+import static cz.cas.lib.core.util.Utils.eq;
+import static cz.cas.lib.core.util.Utils.notNull;
 
 @RestController
+@Api(value = "validation-profile", description = "Api for interaction with validation profiles")
 @RequestMapping("/api/validation_profile")
 public class ValidationProfileApi {
     @Getter
     private ValidationProfileStore store;
+    private Resource validationProfileSchema;
 
-    /**
-     * Saves an instance.
-     *
-     * <p>
-     *     Specified id should correspond to {@link DomainObject#id} otherwise exception is thrown.
-     * </p>
-     * @param id Id of the instance
-     * @param request Single instance
-     * @return Single instance (possibly with computed attributes)
-     * @throws BadArgument if specified id does not correspond to {@link DomainObject#id}
-     */
+    @ApiOperation(value = "Saves an instance. Roles.SUPER_ADMIN, Roles.ADMIN",
+            notes = "Returns single instance (possibly with computed attributes)",
+            response = ValidationProfile.class)
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Successful response", response = ValidationProfile.class),
+            @ApiResponse(code = 400, message = "Specified id does not correspond to the id of the instance")})
+    @RolesAllowed({Roles.SUPER_ADMIN, Roles.ADMIN})
     @RequestMapping(value = "/{id}", method = RequestMethod.PUT)
     @Transactional
-    ValidationProfile save(@PathVariable("id") String id, @RequestBody ValidationProfile request) {
+    public ValidationProfile save(@ApiParam(value = "Id of the instance", required = true)
+                                  @PathVariable("id") String id,
+                                  @ApiParam(value = "Single instance", required = true)
+                                  @RequestBody ValidationProfile request) throws IOException {
         eq(id, request.getId(), () -> new BadArgument("id"));
+
+        ValidationProfile validationProfileByName = store.findByName(request.getName());
+        if (validationProfileByName != null && !validationProfileByName.getId().equals(request.getId()))
+            throw new ConflictObject(ValidationProfile.class, request.getName());
+
+        String validationProfileXml = request.getXml();
+        try {
+            XmlUtils.validateWithXMLSchema(new ByteArrayInputStream(validationProfileXml.getBytes()),
+                    new InputStream[]{validationProfileSchema.getInputStream()});
+        } catch (SAXException e) {
+            throw new GeneralException("Provided validation profile is invalid against its respective XSD schema.", e);
+        }
 
         return store.save(request);
     }
 
-    /**
-     * Deletes an instance.
-     *
-     * @param id Id of the instance
-     * @throws MissingObject if specified instance is not found
-     */
+    @ApiOperation(value = "Deletes an instance. Roles.SUPER_ADMIN")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Successful response"),
+            @ApiResponse(code = 404, message = "Instance does not exist")})
+    @RolesAllowed({Roles.SUPER_ADMIN})
     @RequestMapping(value = "/{id}", method = RequestMethod.DELETE)
     @Transactional
-    void delete(@PathVariable("id") String id) {
+    public void delete(@ApiParam(value = "Id of the instance", required = true)
+                       @PathVariable("id") String id) {
         ValidationProfile entity = store.find(id);
         notNull(entity, () -> new MissingObject(store.getType(), id));
 
         store.delete(entity);
     }
 
-    /**
-     * Gets one instance specified by id.
-     *
-     * @param id Id of the instance
-     * @return Single instance
-     * @throws MissingObject if instance does not exists
-     */
-
+    @ApiOperation(value = "Gets one instance specified by id", response = ValidationProfile.class)
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Successful response", response = ValidationProfile.class),
+            @ApiResponse(code = 404, message = "Instance does not exist")})
     @RequestMapping(value = "/{id}", method = RequestMethod.GET)
     @Transactional
-    ValidationProfile get(@PathVariable("id") String id) {
+    public ValidationProfile get(@ApiParam(value = "Id of the instance", required = true)
+                                 @PathVariable("id") String id) {
         ValidationProfile entity = store.find(id);
         notNull(entity, () -> new MissingObject(store.getType(), id));
 
         return entity;
     }
 
-    /**
-     * Gets all instances
-     *
-     * @return All instances
-     */
+    @ApiOperation(value = "Gets all instances", response = Collection.class)
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Successful response", response = Collection.class)})
     @RequestMapping(method = RequestMethod.GET)
     @Transactional
-    Collection<ValidationProfile> list() {
+    public Collection<ValidationProfile> list() {
         return store.findAll();
     }
 
     @Inject
     public void setStore(ValidationProfileStore store) {
         this.store = store;
+    }
+
+    @Inject
+    public void setValidationProfileSchema(@Value("${arclib.validationProfileSchema}") Resource validationProfileSchema) {
+        this.validationProfileSchema = validationProfileSchema;
     }
 }

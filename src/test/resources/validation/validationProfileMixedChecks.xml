@@ -1,44 +1,56 @@
-<profile xmlns="http://www.arclib.lib.cas.cz">
+<profile xmlns="http://www.arclib.lib.cas.cz/VALIDATION_PROFILE">
     <rule>
         <validationSchemaCheck>
-            <filePath>/info.xml</filePath>
+            <filePath>info_7033d800-0935-11e4-beed-5ef3fc9ae867.xml</filePath>
             <schema><![CDATA[
-            <xs:schema attributeFormDefault="unqualified" elementFormDefault="qualified" targetNamespace="http://www.ee.cz/schemas/NDK/info.xsd" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+           <xs:schema attributeFormDefault="unqualified" elementFormDefault="qualified" xmlns:xs="http://www.w3.org/2001/XMLSchema">
               <xs:element name="info">
                 <xs:complexType>
                   <xs:sequence>
                     <xs:element type="xs:dateTime" name="created"/>
+                    <xs:element type="xs:float" name="metadataversion"/>
                     <xs:element type="xs:string" name="packageid"/>
-                    <xs:element name="titleid">
+                    <xs:element type="xs:string" name="mainmets"/>
+                    <xs:element name="validation">
                       <xs:complexType>
                         <xs:simpleContent>
                           <xs:extension base="xs:string">
-                            <xs:attribute type="xs:string" name="TYPE"/>
+                            <xs:attribute type="xs:string" name="version"/>
                           </xs:extension>
                         </xs:simpleContent>
                       </xs:complexType>
                     </xs:element>
+                    <xs:element name="titleid" maxOccurs="unbounded" minOccurs="0">
+                      <xs:complexType>
+                        <xs:simpleContent>
+                          <xs:extension base="xs:string">
+                            <xs:attribute type="xs:string" name="type" use="optional"/>
+                          </xs:extension>
+                        </xs:simpleContent>
+                      </xs:complexType>
+                    </xs:element>
+                    <xs:element type="xs:string" name="collection"/>
+                    <xs:element type="xs:string" name="institution"/>
                     <xs:element type="xs:string" name="creator"/>
+                    <xs:element type="xs:int" name="size"/>
                     <xs:element name="itemlist">
                       <xs:complexType>
                         <xs:sequence>
                           <xs:element type="xs:string" name="item" maxOccurs="unbounded" minOccurs="0"/>
                         </xs:sequence>
-                        <xs:attribute type="xs:byte" name="ITEMTOTAL"/>
+                        <xs:attribute type="xs:byte" name="itemtotal"/>
                       </xs:complexType>
                     </xs:element>
-                    <xs:element type="xs:int" name="size"/>
                     <xs:element name="checksum">
                       <xs:complexType>
                         <xs:simpleContent>
                           <xs:extension base="xs:string">
-                            <xs:attribute type="xs:string" name="TYPE"/>
-                            <xs:attribute type="xs:string" name="CHECKSUM"/>
+                            <xs:attribute type="xs:string" name="type"/>
+                            <xs:attribute type="xs:string" name="checksum"/>
                           </xs:extension>
                         </xs:simpleContent>
                       </xs:complexType>
                     </xs:element>
-                    <xs:element type="xs:string" name="note"/>
                   </xs:sequence>
                 </xs:complexType>
               </xs:element>
@@ -49,21 +61,21 @@
     </rule>
     <rule>
         <nodeCheck>
-            <filePath>/info.xml</filePath>
-            <xPath>/info/creator</xPath>
-            <value>ZLG001</value>
+            <filePath>amdsec/amd_mets_7033d800-0935-11e4-beed-5ef3fc9ae867_0001.xml</filePath>
+            <xPath>/mets/metsHdr/agent/name</xPath>
+            <value>ABA001</value>
         </nodeCheck>
     </rule>
     <rule>
         <nodeCheck>
-            <filePath>/info.xml</filePath>
+            <filePath>info_7033d800-0935-11e4-beed-5ef3fc9ae867.xml</filePath>
             <xPath>/info/creator</xPath>
             <regex>.*001</regex>
         </nodeCheck>
     </rule>
     <rule>
         <fileExistenceCheck>
-            <filePath>/METS_KPW01169310.xml</filePath>
+            <filePath>mets_7033d800-0935-11e4-beed-5ef3fc9ae867.xml</filePath>
         </fileExistenceCheck>
     </rule>
 </profile>
