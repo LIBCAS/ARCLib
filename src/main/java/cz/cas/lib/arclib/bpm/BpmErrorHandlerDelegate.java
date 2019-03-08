@@ -3,6 +3,7 @@ package cz.cas.lib.arclib.bpm;
 import cz.cas.lib.arclib.domain.ingestWorkflow.IngestWorkflowFailureInfo;
 import cz.cas.lib.arclib.domain.ingestWorkflow.IngestWorkflowFailureType;
 import cz.cas.lib.arclib.service.IngestErrorHandler;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.camunda.bpm.engine.delegate.DelegateExecution;
 import org.camunda.bpm.engine.delegate.JavaDelegate;
@@ -15,6 +16,8 @@ import javax.inject.Inject;
 public class BpmErrorHandlerDelegate extends ArclibDelegate implements JavaDelegate {
 
     private IngestErrorHandler ingestErrorHandler;
+    @Getter
+    private String toolName = "ARCLib_error_handler";
 
     /**
      * Handles BPM errors using {@link IngestErrorHandler}
@@ -24,15 +27,15 @@ public class BpmErrorHandlerDelegate extends ArclibDelegate implements JavaDeleg
     @Override
     public void execute(DelegateExecution execution) {
         String externalId = getIngestWorkflowExternalId(execution);
-        log.info("Execution of Bpm error handler delegate started for ingest workflow with external id " + externalId + ".");
+        log.debug("Execution of Bpm error handler delegate started for ingest workflow with external id " + externalId + ".");
 
         String errorCode = getStringVariable(execution, BpmConstants.ProcessVariables.errorCode);
-        String errorMessage = getStringVariable(execution, BpmConstants.ProcessVariables.errorCode);
+        String errorMessage = getStringVariable(execution, BpmConstants.ProcessVariables.errorMessage);
         IngestWorkflowFailureInfo failureInfo = new IngestWorkflowFailureInfo(
                 errorCode + " : " + errorMessage, null, IngestWorkflowFailureType.BPM_ERROR
         );
-        String assignee = getStringVariable(execution, BpmConstants.ProcessVariables.assignee);
-        ingestErrorHandler.handleError(externalId, failureInfo, execution.getProcessInstanceId(), assignee);
+        String responsiblePerson = getStringVariable(execution, BpmConstants.ProcessVariables.responsiblePerson);
+        ingestErrorHandler.handleError(externalId, failureInfo, execution.getProcessInstanceId(), responsiblePerson);
     }
 
     @Inject

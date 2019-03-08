@@ -1,14 +1,16 @@
 package cz.cas.lib.arclib.domain.preservationPlanning;
 
-import cz.cas.lib.core.domain.DomainObject;
+import cz.cas.lib.core.domain.DatedObject;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.BatchSize;
 
 import javax.persistence.Entity;
-import javax.persistence.ManyToOne;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.Table;
+import java.util.Objects;
 
 /**
  * Vzťah medzi formátmi
@@ -19,16 +21,46 @@ import javax.persistence.Table;
 @Entity
 @Table(name = "arclib_related_format")
 @NoArgsConstructor
-public class RelatedFormat extends DomainObject {
-
+public class RelatedFormat extends DatedObject {
     /**
      * Typ vťahu
      */
-    private String relationshipType;
+    @Enumerated(EnumType.STRING)
+    private FormatRelationshipType relationshipType;
 
     /**
-     * Súvisiaci formát
+     * Formátové id súvisiaceho formátu
      */
-    @ManyToOne
-    private Format relatedFormat;
+    private Integer relatedFormatId;
+
+    /**
+     * Meno súvisiaceho formátu
+     */
+    private String relatedFormatName;
+
+    /**
+     * Verzia súvisiaceho formátu
+     */
+    private String relatedFormatVersion;
+
+    /**
+     * Interné číslo verzie
+     */
+    private Integer internalVersionNumber;
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        RelatedFormat that = (RelatedFormat) o;
+        return relationshipType == that.relationshipType &&
+                Objects.equals(relatedFormatId, that.relatedFormatId) &&
+                Objects.equals(relatedFormatName, that.relatedFormatName) &&
+                Objects.equals(relatedFormatVersion, that.relatedFormatVersion);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(relationshipType, relatedFormatId, relatedFormatName, relatedFormatVersion);
+    }
 }

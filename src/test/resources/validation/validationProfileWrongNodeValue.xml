@@ -1,7 +1,7 @@
 <profile xmlns="http://www.arclib.lib.cas.cz/VALIDATION_PROFILE">
     <rule>
         <nodeCheck>
-            <filePath>amdsec/amd_mets_7033d800-0935-11e4-beed-5ef3fc9ae867_0001.xml</filePath>
+            <filePathGlobPattern>amdsec/amd_mets_7033d800-0935-11e4-beed-5ef3fc9ae867_0001.xml</filePathGlobPattern>
             <xPath>/mets/metsHdr/agent/name</xPath>
             <value>XYZ</value>
         </nodeCheck>

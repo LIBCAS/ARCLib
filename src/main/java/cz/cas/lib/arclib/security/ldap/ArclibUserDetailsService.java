@@ -5,9 +5,10 @@ import cz.cas.lib.arclib.mail.ArclibMailCenter;
 import cz.cas.lib.arclib.security.authorization.assign.AssignedRoleService;
 import cz.cas.lib.arclib.security.user.UserDelegate;
 import cz.cas.lib.arclib.security.user.UserDetails;
-import cz.cas.lib.arclib.store.UserStore;
+import cz.cas.lib.arclib.service.UserService;
 import cz.cas.lib.core.security.UserDetailsService;
 import cz.cas.lib.core.store.Transactional;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
@@ -21,16 +22,17 @@ import java.util.stream.Collectors;
 /**
  * Updater of User data from external source
  */
+@Slf4j
 @Service
 public class ArclibUserDetailsService implements UserDetailsService {
-    private UserStore store;
+    private UserService service;
 
     private AssignedRoleService assignedRoleService;
     private ArclibMailCenter arclibMailCenter;
 
     @Transactional
     public User updateFromExternal(User external) {
-        User user = store.findUserByUsername(external.getUsername());
+        User user = service.findUserByUsername(external.getUsername());
 
         if (user == null || user.getDeleted() != null) {
             String id = user == null ? UUID.randomUUID().toString() : user.getId();
@@ -45,7 +47,9 @@ public class ArclibUserDetailsService implements UserDetailsService {
         user.setEmail(external.getEmail());
         user.setLdapDn(user.getLdapDn());
 
-        store.save(user);
+        service.save(user);
+        log.debug("User " + user.getId() + " successfully updated from external.");
+
         return user;
     }
 
@@ -61,7 +65,7 @@ public class ArclibUserDetailsService implements UserDetailsService {
 
     @Override
     public UserDelegate loadUserById(String id) {
-        User user = store.find(id);
+        User user = service.find(id);
         if (user != null) {
             return new UserDelegate(user, null);
         } else {
@@ -75,8 +79,8 @@ public class ArclibUserDetailsService implements UserDetailsService {
     }
 
     @Inject
-    public void setStore(UserStore store) {
-        this.store = store;
+    public void setStore(UserService service) {
+        this.service = service;
     }
 
     @Inject

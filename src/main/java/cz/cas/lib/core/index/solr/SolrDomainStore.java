@@ -68,6 +68,12 @@ public class SolrDomainStore<T extends DomainObject, Q extends EntityPathBase<T>
     }
 
     @Override
+    public void hardDelete(T entity) {
+        delete(entity);
+    }
+
+
+    @Override
     public Result<T> findAll(Params params) {
         return SolrStore.super.findAll(params);
     }

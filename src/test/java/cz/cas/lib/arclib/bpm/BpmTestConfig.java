@@ -5,7 +5,7 @@ import org.camunda.bpm.engine.impl.history.HistoryLevel;
 import org.camunda.bpm.engine.impl.incident.IncidentHandler;
 import org.camunda.bpm.engine.test.mock.MockExpressionManager;
 
-import static org.codehaus.groovy.runtime.InvokerHelper.asList;
+import static cz.cas.lib.core.util.Utils.asList;
 
 public class BpmTestConfig extends StandaloneInMemProcessEngineConfiguration {
     public BpmTestConfig() {

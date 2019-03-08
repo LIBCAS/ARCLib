@@ -46,7 +46,7 @@ public interface NamedApi<T extends DomainObject> extends GeneralApi<T> {
     default List<T> all() {
         Params params = new Params();
         params.setSort(getNameAttribute());
-        params.setPageSize(1000);
+        params.setPageSize(null);
 
         return getAdapter().findAll(params).getItems();
     }
@@ -71,7 +71,7 @@ public interface NamedApi<T extends DomainObject> extends GeneralApi<T> {
                              @RequestParam("prefix") String prefix) {
         Params params = new Params();
         params.setSort(getNameAttribute());
-        params.setPageSize(100);
+        params.setPageSize(null);
         params.setFilter(Utils.asList(new Filter(getNameAttribute(), FilterOperation.STARTWITH, prefix, null)));
 
         return getAdapter().findAll(params).getItems();
@@ -97,7 +97,7 @@ public interface NamedApi<T extends DomainObject> extends GeneralApi<T> {
                                @RequestParam("q") String q) {
         Params params = new Params();
         params.setSort(getNameAttribute());
-        params.setPageSize(100);
+        params.setPageSize(null);
         params.setFilter(Utils.asList(new Filter(getNameAttribute(), FilterOperation.CONTAINS, q, null)));
 
         return getAdapter().findAll(params).getItems();

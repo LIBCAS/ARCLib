@@ -3,7 +3,7 @@ package cz.cas.lib.arclib.security.jwt;
 import cz.cas.lib.arclib.domain.User;
 import cz.cas.lib.arclib.security.user.UserDelegate;
 import cz.cas.lib.arclib.security.user.UserDetails;
-import cz.cas.lib.arclib.store.UserStore;
+import cz.cas.lib.arclib.service.UserService;
 import cz.cas.lib.core.security.jwt.spi.JwtHandler;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.GrantedAuthority;
@@ -22,7 +22,7 @@ import static cz.cas.lib.core.util.Utils.notNull;
 @Service
 public class ArclibJwtHandler implements JwtHandler {
 
-    private UserStore userStore;
+    private UserService userService;
 
     public UserDetails parseClaims(Map<String, Object> claims) {
         String userId = (String) claims.get("sub");
@@ -30,7 +30,7 @@ public class ArclibJwtHandler implements JwtHandler {
         Set<GrantedAuthority> authorities = authorityNames.stream()
                 .map(SimpleGrantedAuthority::new)
                 .collect(Collectors.toSet());
-        User user = userStore.find(userId);
+        User user = userService.find(userId);
         notNull(user, () -> new BadCredentialsException("User not found."));
         return new UserDelegate(user, authorities);
     }
@@ -59,7 +59,7 @@ public class ArclibJwtHandler implements JwtHandler {
     }
 
     @Inject
-    public void setUserStore(UserStore userStore) {
-        this.userStore = userStore;
+    public void setUserService(UserService userService) {
+        this.userService = userService;
     }
 }

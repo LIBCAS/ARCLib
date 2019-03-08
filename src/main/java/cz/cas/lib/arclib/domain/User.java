@@ -73,12 +73,4 @@ public class User extends DatedObject {
             return username;
         }
     }
-
-    public void setProducer(Producer p) {
-        this.producer = p;
-    }
-
-    public void setProducer(String id) {
-        this.producer = new Producer(id);
-    }
 }

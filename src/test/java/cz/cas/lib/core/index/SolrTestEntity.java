@@ -12,12 +12,16 @@ import org.springframework.data.solr.core.mapping.SolrDocument;
 
 @Getter
 @Setter
-@SolrDocument(solrCoreName = "test")
+@SolrDocument(collection = "test")
 public class SolrTestEntity extends SolrDatedObject {
 
     @Field
     @Indexed(type = FieldType.STRING)
     protected String stringAttribute;
+
+    @Field
+    @Indexed(type = FieldType.TEXT)
+    protected String textAttribute;
 
     @Field
     @Indexed(type = FieldType.FOLDING)

@@ -3,31 +3,36 @@ package cz.cas.lib.arclib.service.formatIdentification;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.JsonNodeType;
-import cz.cas.lib.arclib.bpm.BpmConstants;
+import cz.cas.lib.arclib.bpm.IngestTool;
 import cz.cas.lib.arclib.domain.ingestWorkflow.IngestIssue;
 import cz.cas.lib.arclib.domain.ingestWorkflow.IngestWorkflow;
+import cz.cas.lib.arclib.domain.preservationPlanning.FormatDefinition;
+import cz.cas.lib.arclib.domain.preservationPlanning.IngestIssueDefinitionCode;
+import cz.cas.lib.arclib.domain.preservationPlanning.Tool;
 import cz.cas.lib.arclib.exception.bpm.ConfigParserException;
 import cz.cas.lib.arclib.exception.bpm.IncidentException;
-import cz.cas.lib.arclib.service.formatIdentification.droid.CsvResultColumn;
-import cz.cas.lib.arclib.service.formatIdentification.droid.DroidFormatIdentificationTool;
-import cz.cas.lib.arclib.store.IngestIssueStore;
-import cz.cas.lib.arclib.store.IngestWorkflowStore;
-import cz.cas.lib.core.exception.GeneralException;
+import cz.cas.lib.arclib.service.IngestIssueService;
+import cz.cas.lib.arclib.service.preservationPlanning.FormatDefinitionService;
+import cz.cas.lib.arclib.store.IngestIssueDefinitionStore;
 import cz.cas.lib.core.store.Transactional;
 import cz.cas.lib.core.util.Utils;
+import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 
-import javax.inject.Inject;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import static cz.cas.lib.arclib.utils.ArclibUtils.parseEnumFromConfig;
-
-public abstract class FormatIdentificationTool {
-    private IngestIssueStore ingestIssueStore;
-    private IngestWorkflowStore ingestWorkflowStore;
+@Slf4j
+public abstract class FormatIdentificationTool implements IngestTool {
+    private IngestWorkflow ingestWorkflow;
+    private IngestIssueDefinitionStore ingestIssueDefinitionStore;
+    private FormatDefinitionService formatDefinitionService;
+    private IngestIssueService ingestIssueService;
+    @Getter
+    private Tool toolEntity;
 
     public static final String FORMAT_IDENTIFIER_EXPR = "/formatIdentification";
     public static final String PATHS_AND_FORMATS_EXPR = "/pathsAndFormats";
@@ -39,8 +44,6 @@ public abstract class FormatIdentificationTool {
     public static final String EXPECTED_JSON_INPUT = "List of pairs of paths to files and their respective file formats, e.g. " +
             "[ {\"filePath\":\"this/is/a/filepath\", \"format\":\"fmt/101\"}," +
             " {\"filePath\":\"this/is/another/filepath\", \"format\":\"fmt/993\"} ]";
-
-    public static final String DROID_FORMAT_IDENTIFIER_NAME = "DROID format identifier";
 
     /**
      * Performs the format identification analysis for all the files belonging the SIP package
@@ -54,41 +57,6 @@ public abstract class FormatIdentificationTool {
     public abstract Map<String, List<Utils.Pair<String, String>>> analyze(Path pathToSip) throws IOException;
 
     /**
-     * Returns a string containing the version of format identifier together with the versions of the signature files.
-     *
-     * @return string with the format identifier version
-     */
-    public abstract String getToolVersion();
-
-    /**
-     * Returns a string with the name of the format identifier.
-     *
-     * @return name of the format identifier
-     */
-    public abstract String getToolName();
-
-    /**
-     * Create and initialize the format identifier using the JSON configuration
-     *
-     * @param root JSON config
-     * @return instance of {@link FormatIdentificationTool} implemented according to the JSON configuration
-     * @throws ConfigParserException JSON configuration is missing the necessary attributes for the configuration
-     *                               of {@link FormatIdentificationTool}
-     */
-    public static FormatIdentificationTool initialize(JsonNode root) throws ConfigParserException {
-        FormatIdentificationToolType formatIdentificationToolType = parseEnumFromConfig(root, FORMAT_IDENTIFIER_EXPR + IDENTIFIER_TYPE_EXPR,
-                FormatIdentificationToolType.class);
-        switch (formatIdentificationToolType) {
-            case DROID:
-                CsvResultColumn parsedColumn = parseEnumFromConfig(root, FORMAT_IDENTIFIER_EXPR + PARSED_COLUMN_EXPR,
-                        CsvResultColumn.class);
-                return new DroidFormatIdentificationTool(parsedColumn);
-            default:
-                throw new GeneralException("unexpected format identifier configuration error");
-        }
-    }
-
-    /**
      * Resolve the format ambiguity with the predefined values for the files that have been identified with multiple
      * formats.
      *
@@ -100,8 +68,8 @@ public abstract class FormatIdentificationTool {
     public TreeMap<String, Utils.Pair<String, String>> resolveAmbiguousIdentifications(
             Map<String, List<Utils.Pair<String, String>>> identifiedFormats, JsonNode configRoot, String externalId)
             throws IncidentException {
-        //list of paths to formats with predefined values to help to resolve the format identification ambiguity
-        List<Utils.Pair<String, String>> predefinedFormats = parsePathsToFormats(configRoot, externalId);
+        //list of paths and formats with predefined values to help to resolve the format identification ambiguity
+        List<Utils.Pair<String, String>> predefinedFormats = parsePathsAndFormats(configRoot, externalId);
 
         //map of files to lists of formats for which it was unable to unambiguously determine the format
         TreeMap<String, List<Utils.Pair<String, String>>> unresolvableFormats = new TreeMap<>();
@@ -111,7 +79,7 @@ public abstract class FormatIdentificationTool {
 
         identifiedFormats.entrySet().stream()
                 .forEach(pathToListOfFormats -> {
-                    Utils.Pair formatToIdentificationMethod = null;
+                    Utils.Pair<String, String> formatToIdentificationMethod = null;
                     String filePath = pathToListOfFormats.getKey();
                     List<Utils.Pair<String, String>> formatsAndIdentificationMethods = pathToListOfFormats.getValue();
 
@@ -120,6 +88,7 @@ public abstract class FormatIdentificationTool {
                         formatToIdentificationMethod = formatsAndIdentificationMethods.get(0);
                     } else {
                         //file has been identified with multiple formats
+                        log.debug("Resolving ambiguous format identification for file at path " + filePath + ".");
                         List<Utils.Pair> matchingPatterns = predefinedFormats.stream()
                                 .filter(filePathRegexAndFormat -> Pattern.compile(filePathRegexAndFormat.getL()).matcher(filePath).matches())
                                 .collect(Collectors.toList());
@@ -131,19 +100,20 @@ public abstract class FormatIdentificationTool {
                             //recreating the config value as it was passed in the JSON config
                             String configValue = "{\"" + FILE_PATH_EXPR + "\":\"" + filePathRegexAndFormat.getL() +
                                     "\", \"" + FORMAT_EXPR + "\":\"" + filePathRegexAndFormat.getR() + "\"}";
+                            FormatDefinition formatDefinitionEntity = formatDefinitionService.findPreferredDefinitionsByPuid(formatToIdentificationMethod.getL());
                             invokeFormatResolvedByConfigIssue(FORMAT_IDENTIFIER_EXPR + PATHS_AND_FORMATS_EXPR,
-                                    configValue, externalId);
+                                    configValue, externalId, formatDefinitionEntity);
+                            log.debug("Ambiguous format identification for file at path " + filePath + " resolved successfully.");
                         } else {
                             //it was unable to determine the format using the predefined values
                             unresolvableFormats.put(filePath, formatsAndIdentificationMethods);
+                            log.warn("Unable to unambiguously resolve format for file at path " + filePath + ".");
                         }
                     }
                     resultingFormats.put(filePath, formatToIdentificationMethod);
                 });
 
-        if (!unresolvableFormats.isEmpty()) {
-            invokeUnresolvableFormatsIssue(unresolvableFormats, externalId);
-        }
+        if (!unresolvableFormats.isEmpty()) invokeUnresolvableFormatsIssue(unresolvableFormats, externalId);
         return resultingFormats;
     }
 
@@ -155,7 +125,7 @@ public abstract class FormatIdentificationTool {
      * @return list parsed out pairs of paths and formats
      * @throws ConfigParserException JSON configuration is invalid
      */
-    public List<Utils.Pair<String, String>> parsePathsToFormats(JsonNode root, String externalId) throws IncidentException {
+    public List<Utils.Pair<String, String>> parsePathsAndFormats(JsonNode root, String externalId) throws IncidentException {
         ObjectMapper om = new ObjectMapper();
         JsonNode pathsToFormatsNode = root.at(FORMAT_IDENTIFIER_EXPR + PATHS_AND_FORMATS_EXPR);
 
@@ -176,68 +146,79 @@ public abstract class FormatIdentificationTool {
     }
 
     @Transactional
-    private void invokeInvalidConfigIssue(String configPath, String nodeValue, String getExternalId)
+    private void invokeInvalidConfigIssue(String configPath, String nodeValue, String externalId)
             throws IncidentException {
-        IngestWorkflow ingestWorkflow = ingestWorkflowStore.findByExternalId(getExternalId);
+        log.warn("Invoking invalid config issue for ingest workflow " + externalId + ".");
 
-        IngestIssue issue = new IngestIssue(ingestWorkflow,
-                BpmConstants.FormatIdentification.class,
-                "Invalid config."
+        IngestIssue issue = new IngestIssue(
+                ingestWorkflow,
+                toolEntity,
+                ingestIssueDefinitionStore.findByCode(IngestIssueDefinitionCode.CONFIG_PARSE_ERROR),
+                null,
+                IngestIssue.createInvalidConfigNote(configPath, nodeValue, EXPECTED_JSON_INPUT),
+                false
         );
-        issue.setSolvedByConfig(false);
-        issue.setInvalidConfigNote(configPath, nodeValue, EXPECTED_JSON_INPUT);
-        ingestIssueStore.save(issue);
+        ingestIssueService.save(issue);
         throw new IncidentException(issue);
     }
 
     @Transactional
-    private void invokeFormatResolvedByConfigIssue(String configPath, String configValue,
-                                                   String getExternalId) {
-        IngestWorkflow ingestWorkflow = ingestWorkflowStore.findByExternalId(getExternalId);
+    private void invokeFormatResolvedByConfigIssue(String configPath, String configValue, String externalId, FormatDefinition formatDefinition) {
+        log.debug("Invoking format resolved by config issue for ingest workflow " + externalId + ".");
+
         IngestIssue issue = new IngestIssue(
                 ingestWorkflow,
-                BpmConstants.FormatIdentification.class,
-                "Ambiguous format resolved by config.",
-                true,
-                ""
+                toolEntity,
+                ingestIssueDefinitionStore.findByCode(IngestIssueDefinitionCode.FILE_FORMAT_RESOLVED_BY_CONFIG),
+                formatDefinition,
+                IngestIssue.createUsedConfigNote(configPath, configValue),
+                true
         );
-        issue.setUsedConfigNote(configPath, configValue);
-
-        ingestIssueStore.save(issue);
+        ingestIssueService.save(issue);
     }
 
     @Transactional
     private void invokeUnresolvableFormatsIssue(TreeMap<String, List<Utils.Pair<String, String>>> ambiguousFormats,
-                                                String getExternalId) throws IncidentException {
-        StringBuilder sb = new StringBuilder();
+                                                String externalId) throws IncidentException {
+        log.warn("Invoking unresolvable formats issue for ingest workflow " + externalId + ".");
+        List<IngestIssue> issues = new ArrayList<>();
+        StringBuilder allFilesSb = new StringBuilder();
+
         ambiguousFormats.entrySet().stream()
                 .forEach(item -> {
-                    sb.append("File at path: " + item.getKey() + " was identified with multiple formats: {\n");
                     List<Utils.Pair<String, String>> formats = item.getValue();
-                    formats.forEach(pair ->
-                            sb.append("format: " + pair.getL() + ", identification method: " + pair.getR() + "\n"));
+                    StringBuilder oneFileSb = new StringBuilder();
+                    oneFileSb.append("File at path: " + item.getKey() + " was identified with multiple formats: {\n");
+                    formats.forEach(pair -> {
+                        oneFileSb.append("format: " + pair.getL() + ", identification method: " + pair.getR() + "\n");
+                    });
+                    oneFileSb.append("}\n");
+                    formats.forEach(pair -> {
+                        issues.add(new IngestIssue(
+                                ingestWorkflow,
+                                toolEntity,
+                                ingestIssueDefinitionStore.findByCode(IngestIssueDefinitionCode.FILE_FORMAT_UNRESOLVABLE),
+                                formatDefinitionService.findPreferredDefinitionsByPuid(pair.getL()),
+                                oneFileSb.toString(),
+                                false
+                        ));
+                    });
+                    allFilesSb.append(oneFileSb);
                 });
-        sb.append("}");
-
-        IngestWorkflow ingestWorkflow = ingestWorkflowStore.findByExternalId(getExternalId);
-        IngestIssue issue = new IngestIssue(
-                ingestWorkflow,
-                BpmConstants.FormatIdentification.class,
-                sb.toString(),
-                false,
-                ""
-        );
-        ingestIssueStore.save(issue);
-        throw new IncidentException(issue);
+        ingestIssueService.save(issues);
+        throw new IncidentException(allFilesSb.toString());
     }
 
-    @Inject
-    public void setIngestWorkflowStore(IngestWorkflowStore ingestWorkflowStore) {
-        this.ingestWorkflowStore = ingestWorkflowStore;
-    }
-
-    @Inject
-    public void setIngestIssueStore(IngestIssueStore ingestIssueStore) {
-        this.ingestIssueStore = ingestIssueStore;
+    public void inject(FormatDefinitionService formatDefinitionService,
+                       IngestIssueService ingestIssueService,
+                       IngestIssueDefinitionStore ingestIssueDefinitionStore,
+                       IngestWorkflow iw,
+                       Tool tool
+    ) {
+        this.ingestWorkflow = iw;
+        this.formatDefinitionService = formatDefinitionService;
+        this.ingestIssueDefinitionStore = ingestIssueDefinitionStore;
+        this.ingestIssueService = ingestIssueService;
+        this.toolEntity = tool;
     }
 }

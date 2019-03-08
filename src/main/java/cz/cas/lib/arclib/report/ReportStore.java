@@ -1,7 +1,7 @@
 package cz.cas.lib.arclib.report;
 
 import cz.cas.lib.core.exception.BadArgument;
-import cz.cas.lib.core.exception.ConflictObject;
+import cz.cas.lib.core.exception.ConflictException;
 import cz.cas.lib.core.exception.GeneralException;
 import cz.cas.lib.core.store.DomainStore;
 import cz.cas.lib.core.store.Transactional;
@@ -65,7 +65,7 @@ public class ReportStore extends DomainStore<Report, QReport> {
             id = save(new Report(name, IOUtils.toString(template, StandardCharsets.UTF_8), compiledReport)).getId();
         } catch (PersistenceException e) {
             if (e.getCause() instanceof ConstraintViolationException)
-                throw new ConflictObject("Duplicate name of template:" + name);
+                throw new ConflictException("Duplicate name of template:" + name);
             else
                 throw e;
         }

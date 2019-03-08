@@ -8,6 +8,7 @@ import cz.cas.lib.arclib.dto.JmsDto;
 import cz.cas.lib.arclib.mail.ArclibMailCenter;
 import cz.cas.lib.arclib.security.user.UserDetails;
 import cz.cas.lib.arclib.store.HashStore;
+import cz.cas.lib.arclib.utils.ArclibUtils;
 import cz.cas.lib.arclib.utils.XmlUtils;
 import cz.cas.lib.core.exception.BadArgument;
 import cz.cas.lib.core.exception.GeneralException;
@@ -36,8 +37,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static cz.cas.lib.arclib.utils.ArclibUtils.getSipSumsTransferAreaPath;
-import static cz.cas.lib.arclib.utils.ArclibUtils.toBatchDeploymentName;
+import static cz.cas.lib.arclib.utils.ArclibUtils.*;
 import static cz.cas.lib.core.util.Utils.asList;
 import static cz.cas.lib.core.util.Utils.notNull;
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
@@ -97,19 +97,30 @@ public class CoordinatorService {
             throw new GeneralException("There is no folder on the path " + fullTransferAreaPath.toString() +
                     ". Please specify a valid path.");
         }
-        Path sipPath = fullTransferAreaPath.resolve(originalFileName).toAbsolutePath();
+        Path absoluteTransferAreaPath = fullTransferAreaPath.toAbsolutePath();
+        String fileNameWithoutFileExtension = originalFileName.substring(0, originalFileName.lastIndexOf("."));
+
+        if (!(fileNameWithoutFileExtension + ArclibUtils.ZIP_EXTENSION).equals(originalFileName))
+            throw new GeneralException("Cannot process SIP without a .zip extension");
+
+        String fileName = originalFileName;
+        Path sipPath = absoluteTransferAreaPath.resolve(fileName);
+
+        for (int num = 1; Files.exists(sipPath); num++) {
+            fileName = fileNameWithoutFileExtension + " (" + num + ")" + ArclibUtils.ZIP_EXTENSION;
+            sipPath = absoluteTransferAreaPath.resolve(fileName);
+        }
+
         Files.copy(sipContent, sipPath, REPLACE_EXISTING);
-        log.info("SIP content of file name " + originalFileName + " has been copied to transfer area at the path " +
+        log.debug("SIP content of file name " + fileName + " has been copied to transfer area at the path " +
                 sipPath.toString());
 
         hashStore.save(hash);
 
-        String fileNameWithoutFileExtension = originalFileName.substring(0, originalFileName.lastIndexOf("."));
-
         IngestWorkflow ingestWorkflow = new IngestWorkflow();
         ingestWorkflow.setProcessingState(IngestWorkflowState.NEW);
         ingestWorkflow.setHash(hash);
-        ingestWorkflow.setOriginalFileName(fileNameWithoutFileExtension);
+        ingestWorkflow.setFileName(fileName);
         ingestWorkflowService.save(ingestWorkflow);
 
         return runBatch(asList(ingestWorkflow), producerProfile, workflowConfig, fullTransferAreaPath, userDetails.getId());
@@ -261,7 +272,7 @@ public class CoordinatorService {
         boolean hasProcessingIngestWorkflow = batch.getIngestWorkflows().stream()
                 .anyMatch(ingestWorkflow -> ingestWorkflow.getProcessingState() == IngestWorkflowState.PROCESSING);
         if (hasProcessingIngestWorkflow) {
-            log.info("Batch " + batch.getId() + " has still some ingest workflow in the state PROCESSING. Processing of " +
+            log.warn("Batch " + batch.getId() + " has still some ingest workflow in the state PROCESSING. Processing of " +
                     "batch cannot be resumed.");
             return false;
         }
@@ -295,16 +306,14 @@ public class CoordinatorService {
      * @return list of created ingest workflows
      */
     private List<IngestWorkflow> scanTransferArea(File folder) {
-        log.info("Scanning transfer area at path " + folder.toPath().toString() + " for SIP packages.");
+        log.debug("Scanning transfer area at path " + folder.toPath().toString() + " for SIP packages.");
         List<IngestWorkflow> ingestWorkflows = Arrays
                 .stream(folder.listFiles())
-                .filter(f -> f.getName().toLowerCase().endsWith(".zip"))
+                .filter(f -> f.getName().toLowerCase().endsWith(ZIP_EXTENSION))
                 .map(f -> {
                     IngestWorkflow ingestWorkflow = new IngestWorkflow();
                     ingestWorkflow.setProcessingState(IngestWorkflowState.NEW);
-
-                    String fileNameWithoutFileExtension = f.getName().substring(0, f.getName().lastIndexOf("."));
-                    ingestWorkflow.setOriginalFileName(fileNameWithoutFileExtension);
+                    ingestWorkflow.setFileName(f.getName());
 
                     Path pathToChecksumFile = getSipSumsTransferAreaPath(f.toPath());
                     try {
@@ -319,7 +328,7 @@ public class CoordinatorService {
                     return ingestWorkflow;
                 })
                 .collect(Collectors.toList());
-        log.info("Number of SIP packages to be processed: " + ingestWorkflows.size() + ".");
+        log.debug("Number of SIP packages to be processed: " + ingestWorkflows.size() + ".");
         return ingestWorkflows;
     }
 
@@ -349,7 +358,7 @@ public class CoordinatorService {
                 "null bpmnDefinition of producer profile with id " + producerProfile.getId()));
 
         Batch batch = new Batch(ingestWorkflows, BatchState.PROCESSING, producerProfile, workflowConfig,
-                transferAreaPath.toString(), producerProfile.getDebuggingModeActive());
+                transferAreaPath.toString(), producerProfile.isDebuggingModeActive());
         batchService.create(batch, userId);
         log.info("New Batch with id " + batch.getId() + " created. The batch state is set to PROCESSING.");
 
@@ -366,11 +375,11 @@ public class CoordinatorService {
         ingestWorkflows.forEach(ingestWorkflow -> {
             ingestWorkflow.setBatch(batch);
             ingestWorkflowService.save(ingestWorkflow);
-            log.info("Ingest workflow with external id " + ingestWorkflow.getExternalId() + " was assigned batch " + batch.getId() + ".");
+            log.debug("Ingest workflow with external id " + ingestWorkflow.getExternalId() + " was assigned batch " + batch.getId() + ".");
         });
 
         ingestWorkflows.forEach(ingestWorkflow -> {
-            log.info("Sending a message to Worker to process ingest workflow with external id " + ingestWorkflow.getExternalId() + ".");
+            log.debug("Sending a message to Worker to process ingest workflow with external id " + ingestWorkflow.getExternalId() + ".");
             template.convertAndSend("worker", new JmsDto(ingestWorkflow.getExternalId(), userId));
         });
         return batch.getId();
@@ -402,7 +411,7 @@ public class CoordinatorService {
         //strip spaces, tabulations and new lines
         hashValue = hashValue.replaceAll("\\s+$", "");
         hash.setHashValue(hashValue);
-        log.info("Extracted hash of type " + hashType + " and value " + hashValue + ".");
+        log.debug("Extracted hash of type " + hashType + " and value " + hashValue + ".");
         return hash;
     }
 

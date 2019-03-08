@@ -1,12 +1,10 @@
 package cz.cas.lib.core.security;
 
-import cz.cas.lib.arclib.bpm.security.BpmAuthenticationFilter;
 import cz.cas.lib.core.security.basic.BasicAuthenticationFilter;
 import cz.cas.lib.core.security.jwt.JwtFilter;
 import cz.cas.lib.core.security.jwt.JwtPostFilter;
 import cz.cas.lib.core.security.jwt.JwtTokenProvider;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
@@ -69,10 +67,6 @@ public abstract class BaseSecurityInitializer extends WebSecurityConfigurerAdapt
 
         httpSecurity = httpSecurity.addFilterBefore(new JwtFilter(), AnonymousAuthenticationFilter.class);
 
-        if (bpmEnabled) {
-            httpSecurity = httpSecurity.addFilterBefore(bpmAuthenticationFilter(), AnonymousAuthenticationFilter.class);
-        }
-
         httpSecurity.addFilterAfter(new JwtPostFilter(tokenProvider), FilterSecurityInterceptor.class);
     }
 
@@ -89,12 +83,6 @@ public abstract class BaseSecurityInitializer extends WebSecurityConfigurerAdapt
     @Bean
     public AuthenticationManager authenticationManagerBean() throws Exception {
         return super.authenticationManagerBean();
-    }
-
-    @Bean
-    @ConditionalOnProperty(prefix = "bpm", name = "enabled")
-    public BpmAuthenticationFilter bpmAuthenticationFilter() {
-        return new BpmAuthenticationFilter();
     }
 
     @Inject

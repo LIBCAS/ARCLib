@@ -17,6 +17,7 @@ import cz.cas.lib.core.script.ScriptType;
 import cz.cas.lib.core.store.Transactional;
 import cz.cas.lib.core.util.Utils;
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
@@ -32,6 +33,7 @@ import java.util.Map;
 
 import static cz.cas.lib.core.util.Utils.notNull;
 
+@Slf4j
 @Service
 public class IngestRoutineService implements DelegateAdapter<IngestRoutine> {
     private Resource batchStartScript;
@@ -73,6 +75,8 @@ public class IngestRoutineService implements DelegateAdapter<IngestRoutine> {
      * @param ingestRoutine
      */
     private void createIngestRoutineJob(IngestRoutine ingestRoutine) {
+        log.debug("Scheduling ingest routine job for ingest routine: " + ingestRoutine.getId());
+
         Job job = ingestRoutine.getJob();
         notNull(job, () -> new MissingAttribute(IngestRoutine.class, ingestRoutine.getId(), "job"));
         job.setScriptType(ScriptType.GROOVY);
@@ -151,6 +155,8 @@ public class IngestRoutineService implements DelegateAdapter<IngestRoutine> {
         Utils.notNull(entity, () -> new MissingObject(delegate.getType(), id));
 
         delegate.delete(entity);
+
+        log.debug("Canceling ingest routine job for ingest routine: " + id + ".");
         jobService.delete(entity.getJob());
     }
 

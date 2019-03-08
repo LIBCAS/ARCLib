@@ -1,6 +1,7 @@
 package cz.cas.lib.core.mail;
 
 import cz.cas.lib.core.service.Templater;
+import freemarker.template.TemplateException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -11,7 +12,7 @@ import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.mail.MessagingException;
 import javax.mail.internet.MimeMessage;
-import java.io.InputStream;
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
 import java.util.Map;
@@ -32,8 +33,6 @@ public class MailCenter {
 
     private AsyncMailSender sender;
 
-    private Templater templater;
-
     private String senderEmail;
 
     private String senderName;
@@ -45,6 +44,8 @@ public class MailCenter {
     private String appLink;
 
     private String appUrl;
+
+    private Templater templater;
 
     protected MimeMessageHelper generalMessage(String emailTo, @Nullable String subject, boolean hasAttachment) throws MessagingException {
         MimeMessage message = sender.create();
@@ -79,8 +80,8 @@ public class MailCenter {
         return arguments;
     }
 
-    protected void transformAndSend(InputStream template, Map<String, Object> arguments, MimeMessageHelper helper)
-            throws MessagingException {
+    protected void transformAndSend(String template, Map<String, Object> arguments, MimeMessageHelper helper)
+            throws MessagingException, IOException, TemplateException {
 
         if (!enabled) {
             log.warn("Mail message was silently consumed because mail system is disabled.");

@@ -3,8 +3,6 @@
             xmlns="http://arclib.lib.cas.cz/ARCLIB_XSD"
             xmlns:xsd="http://www.w3.org/2001/XMLSchema"
             elementFormDefault="qualified">
-    <xsd:import namespace="http://www.loc.gov/premis/v3"
-                schemaLocation="https://www.loc.gov/standards/premis/premis.xsd"/>
 
     <xsd:element name="formats">
         <xsd:complexType>
@@ -12,7 +10,7 @@
                 <xsd:element name="format" minOccurs="0" maxOccurs="unbounded">
                     <xsd:complexType>
                         <xsd:all>
-                            <xsd:element name="fileFormat" type="xsd:string"/>
+                            <xsd:element name="fileFormat" type="xsd:string" minOccurs="0"/>
                             <xsd:element name="formatRegistryKey" type="xsd:string"/>
                             <xsd:element name="formatRegistryName" type="xsd:string"/>
                             <xsd:element name="creatingApplicationName" type="xsd:string"/>

@@ -18,10 +18,10 @@ import javax.persistence.Embeddable;
 @AllArgsConstructor
 public class PathToSipId {
     /**
-     * Cesta k XML súboru obsahujúcemu autorské ID
+     * Cesta k XML súboru obsahujúcemu autorské ID vo forme glob vzoru
      */
-    @Column(name = "authorial_id_file_path")
-    private String pathToXml;
+    @Column(name = "authorial_id_file_path_glob_pattern")
+    private String pathToXmlGlobPattern;
 
     /**
      * XPath k uzlu s autorským ID v rámci XML suboru

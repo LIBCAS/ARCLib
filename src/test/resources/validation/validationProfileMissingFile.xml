@@ -1,7 +1,7 @@
 <profile xmlns="http://www.arclib.lib.cas.cz/VALIDATION_PROFILE">
     <rule>
         <fileExistenceCheck>
-            <filePath>/nonExistentFile</filePath>
+            <filePathGlobPattern>/nonExistentFile</filePathGlobPattern>
         </fileExistenceCheck>
     </rule>
 </profile>

@@ -8,6 +8,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.solr.core.query.Criteria;
 import org.springframework.data.solr.core.query.SimpleFilterQuery;
 import org.springframework.data.solr.core.query.SimpleQuery;
+import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -17,6 +18,7 @@ import static cz.cas.lib.arclib.index.solr.SolrQueryUtils.notInQuery;
 import static cz.cas.lib.core.util.Utils.toSolrReference;
 import static java.util.Collections.emptySet;
 
+@Repository
 public class SolrStoreImpl extends SolrDatedStore<TestEntity, QTestEntity, SolrTestEntity> {
     public SolrStoreImpl() {
         super(TestEntity.class, QTestEntity.class, SolrTestEntity.class);
@@ -28,6 +30,7 @@ public class SolrStoreImpl extends SolrDatedStore<TestEntity, QTestEntity, SolrT
 
         indexObject.setStringAttribute(obj.getStringAttribute());
         indexObject.setFoldingAttribute(obj.getStringAttribute());
+        indexObject.setTextAttribute(obj.getStringAttribute());
 
         indexObject.setIntAttribute(obj.getIntAttribute());
         indexObject.setDoubleAttribute(obj.getDoubleAttribute());

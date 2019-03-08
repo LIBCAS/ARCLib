@@ -27,7 +27,7 @@ import org.springframework.data.solr.core.mapping.SolrDocument;
 @NoArgsConstructor
 @Getter
 @Setter
-@SolrDocument(solrCoreName = "solrref")
+@SolrDocument(collection = "solrref")
 //requires some existing core specified but in fact document is not stored there when declared as a child
 public class SolrReference extends SolrDomainObject {
     @Indexed(type = FieldType.FOLDING)

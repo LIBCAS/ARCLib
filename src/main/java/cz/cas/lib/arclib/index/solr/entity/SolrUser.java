@@ -10,7 +10,7 @@ import org.springframework.data.solr.core.mapping.SolrDocument;
 
 @Getter
 @Setter
-@SolrDocument(solrCoreName = "user")
+@SolrDocument(collection = "user")
 public class SolrUser extends SolrDatedObject {
     @Field
     @Indexed(type = FieldType.STRING)

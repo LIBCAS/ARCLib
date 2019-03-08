@@ -116,7 +116,7 @@ public class ProducerProfileApi {
     @Transactional
     public Collection<ProducerProfile> listAll() {
         Params params = new Params();
-        params.setPageSize(1000);
+        params.setPageSize(null);
 
         if (!hasRole(userDetails, Roles.SUPER_ADMIN)) {
             addPrefilter(params, new Filter("producerId", FilterOperation.EQ, userDetails.getProducerId(), null));

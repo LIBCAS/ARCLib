@@ -22,6 +22,7 @@ import cz.cas.lib.core.script.ScriptType;
 import cz.cas.lib.core.store.Transactional;
 import cz.cas.lib.core.util.Utils;
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
@@ -38,6 +39,7 @@ import java.util.stream.Collectors;
 
 import static cz.cas.lib.core.util.Utils.notNull;
 
+@Slf4j
 @Service
 public class ExportRoutineService implements DelegateAdapter<ExportRoutine> {
     private Resource aipExportScript;
@@ -56,9 +58,6 @@ public class ExportRoutineService implements DelegateAdapter<ExportRoutine> {
 
     @Getter
     private AipQueryStore aipQueryStore;
-
-    @Getter
-    private final String SEQUENCE_ID = "80ebbcf0-0c7b-420c-8fef-243f4d90a810";
 
     /**
      * Saves the instance of export routine to database. Furthermore it creates a job that performs the
@@ -106,6 +105,8 @@ public class ExportRoutineService implements DelegateAdapter<ExportRoutine> {
      */
     @Transactional
     private String scheduleAipExportRoutineJob(ExportRoutine exportRoutine, boolean all) throws JsonProcessingException {
+        log.debug("Scheduling aip export routine job for export routine: " + exportRoutine.getId());
+
         Job job = new Job();
         job.setActive(true);
         job.setTiming(Utils.toCron(exportRoutine.getExportTime()));
@@ -162,6 +163,8 @@ public class ExportRoutineService implements DelegateAdapter<ExportRoutine> {
      */
     @Transactional
     private String scheduleXmlExportRoutineJob(ExportRoutine exportRoutine) throws JsonProcessingException {
+        log.debug("Scheduling XML export routine job for export routine: " + exportRoutine.getId());
+
         Job job = new Job();
         job.setActive(true);
         job.setTiming(Utils.toCron(exportRoutine.getExportTime()));
@@ -267,6 +270,8 @@ public class ExportRoutineService implements DelegateAdapter<ExportRoutine> {
         Utils.notNull(entity, () -> new MissingObject(delegate.getType(), id));
 
         delegate.delete(entity);
+
+        log.debug("Canceling export routine job for export routine: " + id + ".");
         jobService.delete(entity.getJob());
     }
 

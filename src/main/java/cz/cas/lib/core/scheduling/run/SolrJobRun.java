@@ -13,7 +13,7 @@ import org.springframework.data.solr.core.mapping.SolrDocument;
  */
 @Getter
 @Setter
-@SolrDocument(solrCoreName = "jobRun")
+@SolrDocument(collection = "jobRun")
 public class SolrJobRun extends SolrDatedObject {
     @Field(child = true)
     @Indexed(readonly = true)

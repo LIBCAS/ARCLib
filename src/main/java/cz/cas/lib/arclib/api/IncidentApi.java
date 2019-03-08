@@ -48,8 +48,7 @@ public class IncidentApi {
     @RolesAllowed({Roles.ANALYST, Roles.SUPER_ADMIN})
     @RequestMapping(value = "/solve", method = RequestMethod.POST, consumes = "application/json")
     public void solveIncidents(
-            @ApiParam(value = "solution data", required = true) @Valid @RequestBody IncidentSolutionDto solution
-    ) throws IOException {
+            @ApiParam(value = "solution data", required = true) @Valid @RequestBody IncidentSolutionDto solution) {
         incidentService.solveIncidents(solution.getIds(), solution.getConfig());
     }
 

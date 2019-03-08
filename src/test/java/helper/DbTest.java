@@ -20,7 +20,7 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
 
-public abstract class DbTest {
+public abstract class DbTest extends TransformerFactoryWorkaroundTest {
     private static EntityManagerFactory factory;
 
     private EntityManager em;
@@ -65,7 +65,7 @@ public abstract class DbTest {
     public void testTearDown() throws Exception {
         if (em != null) {
             clearDatabase();
-
+            em.getTransaction().commit();
             em.close();
             em = null;
         }

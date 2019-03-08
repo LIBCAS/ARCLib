@@ -3,35 +3,38 @@ package cz.cas.lib.core.store;
 import com.querydsl.core.types.dsl.*;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
+import cz.cas.lib.arclib.security.authorization.assign.audit.EntityDeleteEvent;
+import cz.cas.lib.arclib.security.authorization.assign.audit.EntitySaveEvent;
+import cz.cas.lib.arclib.security.user.UserDetails;
+import cz.cas.lib.core.audit.AuditLogger;
 import cz.cas.lib.core.domain.DomainObject;
 import cz.cas.lib.core.exception.GeneralException;
-import cz.cas.lib.core.index.dto.Params;
-import cz.cas.lib.core.index.dto.Result;
-import cz.cas.lib.core.rest.data.DataAdapter;
 import lombok.Getter;
+import org.springframework.beans.factory.BeanCreationException;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
+import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static cz.cas.lib.core.util.Utils.notNull;
-import static cz.cas.lib.core.util.Utils.sortByIdList;
+import static cz.cas.lib.core.util.Utils.*;
 import static java.util.Collections.emptyList;
 
 /**
  * Facade around JPA {@link EntityManager} and QueryDSL providing CRUD operations.
- * <p>
+ *
  * <p>
  * All the entity instances should have externally set {@link DomainObject#id} to an {@link java.util.UUID},
  * therefore we do not now if the instance is already saved in database or is completely new. Because of that, there
  * is no create/update method, only the {@link DomainStore#save(DomainObject)}, which handles both cases.
  * </p>
- * <p>
+ *
  * <p>
  * JPA concept of managed/detached instances is prone to development errors. Therefore every instance should be
  * detached upon retrieving. All methods in {@link DomainStore} adhere to this rule.
@@ -41,7 +44,7 @@ import static java.util.Collections.emptyList;
  * {@link DomainStore#findAllInList(List)} which detach the instances or use
  * {@link DomainStore#detachAll()} explicitly.
  * </p>
- * <p>
+ *
  * <p>
  * After every saving of instance, the {@link EntityManager}'s context is flushed. This is a rather expensive
  * operation and therefore if more than a few instances should be saved in a row, one should use
@@ -52,7 +55,7 @@ import static java.util.Collections.emptyList;
  * @param <T> Type of entity to hold
  * @param <Q> Type of query object
  */
-public abstract class DomainStore<T extends DomainObject, Q extends EntityPathBase<T>> implements DataAdapter<T> {
+public abstract class DomainStore<T extends DomainObject, Q extends EntityPathBase<T>> {
     /**
      * Entity manager used for JPA
      */
@@ -62,6 +65,10 @@ public abstract class DomainStore<T extends DomainObject, Q extends EntityPathBa
      * QueryDSL query factory
      */
     protected JPAQueryFactory queryFactory;
+
+    protected AuditLogger auditLogger;
+
+    protected UserDetails userDetails;
 
     /**
      * Entity class object
@@ -85,7 +92,7 @@ public abstract class DomainStore<T extends DomainObject, Q extends EntityPathBa
 
     /**
      * Finds all instances.
-     * <p>
+     *
      * <p>
      * Possibly very cost operation. Should be used only if we know there is not many instances or for
      * debugging purposes.
@@ -100,7 +107,7 @@ public abstract class DomainStore<T extends DomainObject, Q extends EntityPathBa
     /**
      * Returns a portion of all instances.
      * Limit 0 for limitless.
-     * <p>
+     *
      * <p>
      * Possibly less costly operation. Should be used especially if we know there is many instances or for
      * debugging purposes.
@@ -140,7 +147,7 @@ public abstract class DomainStore<T extends DomainObject, Q extends EntityPathBa
 
     /**
      * Finds the first instance.
-     * <p>
+     *
      * <p>
      * Because there is no ordering it is not defined which instance will be returned. Should be used if there
      * is only one instance or in unit tests.
@@ -161,7 +168,7 @@ public abstract class DomainStore<T extends DomainObject, Q extends EntityPathBa
 
     /**
      * Finds all the instances corresponding to the specified {@link List} of ids.
-     * <p>
+     *
      * <p>
      * The returned {@link List} of instances is ordered according to the order of provided ids. If the instance
      * with provided id is not found, it is skipped, therefore the size of returned {@link List} might be of
@@ -213,7 +220,7 @@ public abstract class DomainStore<T extends DomainObject, Q extends EntityPathBa
 
     /**
      * Creates or updates instance.
-     * <p>
+     *
      * <p>
      * Corresponds to {@link EntityManager#merge(Object)} method.
      * </p>
@@ -229,6 +236,8 @@ public abstract class DomainStore<T extends DomainObject, Q extends EntityPathBa
 
         entityManager.flush();
         detachAll();
+
+        logSaveEvent(entity);
 
         return obj;
     }
@@ -249,12 +258,14 @@ public abstract class DomainStore<T extends DomainObject, Q extends EntityPathBa
         entityManager.flush();
         detachAll();
 
+        entities.forEach(this::logSaveEvent);
+
         return saved;
     }
 
     /**
      * Deletes an instance.
-     * <p>
+     *
      * <p>
      * Non existing instance is silently skipped.
      * </p>
@@ -269,6 +280,8 @@ public abstract class DomainStore<T extends DomainObject, Q extends EntityPathBa
 
         if (entity != null) {
             entityManager.remove(entity);
+
+            logDeleteEvent(entity);
         }
     }
 
@@ -282,7 +295,7 @@ public abstract class DomainStore<T extends DomainObject, Q extends EntityPathBa
     }
 
     /**
-     * Creates QueryDSL query object for other entity than the storeAip one.
+     * Creates QueryDSL query object for other entity than the store one.
      *
      * @return Query object
      */
@@ -305,7 +318,7 @@ public abstract class DomainStore<T extends DomainObject, Q extends EntityPathBa
 
     /**
      * Creates meta object attribute.
-     * <p>
+     *
      * <p>
      * Used for addressing QueryDSL attributes, which are not known at compile time. Should be used with caution,
      * because it circumvents type safety.
@@ -321,7 +334,7 @@ public abstract class DomainStore<T extends DomainObject, Q extends EntityPathBa
 
     /**
      * Creates meta object attribute for enum type
-     * <p>
+     *
      * <p>
      * Used for addressing QueryDSL attributes, which are not known at compile time. Should be used with caution,
      * because it circumvents type safety.
@@ -364,9 +377,28 @@ public abstract class DomainStore<T extends DomainObject, Q extends EntityPathBa
         }
     }
 
-    @Override
-    public Result<T> findAll(Params params) {
-        throw new UnsupportedOperationException();
+    protected void logSaveEvent(T entity) {
+        if (unwrap(auditLogger) != null) {
+            String userId;
+            try {
+                userId = unwrap(userDetails) == null || "null".equals(userDetails.toString()) ?  null:userDetails.getId();
+            } catch (BeanCreationException | NullPointerException ex) {
+                userId = null;
+            }
+            auditLogger.logEvent(new EntitySaveEvent(Instant.now(), userId, type.getSimpleName(), entity.getId()));
+        }
+    }
+
+    protected void logDeleteEvent(T entity) {
+        if (unwrap(auditLogger) != null) {
+            String userId;
+            try {
+                userId = unwrap(userDetails) == null || "null".equals(userDetails.toString()) ?  null:userDetails.getId();
+            } catch (BeanCreationException | NullPointerException ex) {
+                userId = null;
+            }
+            auditLogger.logEvent(new EntityDeleteEvent(Instant.now(), userId, type.getSimpleName(), entity.getId()));
+        }
     }
 
     @Inject
@@ -377,5 +409,15 @@ public abstract class DomainStore<T extends DomainObject, Q extends EntityPathBa
     @Inject
     public void setQueryFactory(JPAQueryFactory queryFactory) {
         this.queryFactory = queryFactory;
+    }
+
+    @Inject
+    public void setAuditLogger(AuditLogger auditLogger) {
+        this.auditLogger = auditLogger;
+    }
+
+    @Autowired(required = false)
+    public void setUserDetails(UserDetails userDetails) {
+        this.userDetails = userDetails;
     }
 }

@@ -51,7 +51,7 @@ public class ExporterService {
             throw new GeneralException(e, ex);
         }
         Exporter exporter;
-        log.info("Preparing exporter");
+        log.debug("Preparing exporter");
         switch (format) {
             case PDF:
                 exporter = getPdfExporter();
@@ -74,7 +74,7 @@ public class ExporterService {
         }
         exporter.setExporterInput(new SimpleExporterInput(jasperPrint));
         try {
-            log.info("Exporting");
+            log.debug("Exporting");
             exporter.exportReport();
         } catch (JRException e) {
             throw new GeneralException("Export to " + format + " failed.", e);

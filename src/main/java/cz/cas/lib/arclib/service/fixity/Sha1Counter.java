@@ -6,8 +6,9 @@ import org.springframework.stereotype.Service;
 @Slf4j
 @Service
 public class Sha1Counter extends CryptoLibraryCounter {
+
     @Override
     public String getType() {
-        return "SHA-256";
+        return "SHA-1";
     }
 }

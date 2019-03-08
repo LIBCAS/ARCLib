@@ -1,24 +1,29 @@
 package cz.cas.lib.arclib.index.solr.arclibxml;
 
 import cz.cas.lib.arclib.domain.AipQuery;
+import cz.cas.lib.arclib.domain.Producer;
 import cz.cas.lib.arclib.domain.User;
 import cz.cas.lib.arclib.index.IndexArclibXmlStore;
+import cz.cas.lib.arclib.index.IndexCollectionConfig;
 import cz.cas.lib.arclib.index.IndexFieldConfig;
 import cz.cas.lib.arclib.security.user.UserDetails;
 import cz.cas.lib.arclib.store.AipQueryStore;
 import cz.cas.lib.core.exception.BadArgument;
+import cz.cas.lib.core.exception.GeneralException;
 import cz.cas.lib.core.index.dto.*;
+import cz.cas.lib.core.index.solr.util.NestedCriteria;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.solr.common.SolrInputDocument;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.solr.UncategorizedSolrException;
 import org.springframework.data.solr.core.SolrTemplate;
-import org.springframework.data.solr.core.query.Criteria;
-import org.springframework.data.solr.core.query.SimpleFilterQuery;
-import org.springframework.data.solr.core.query.SimpleQuery;
+import org.springframework.data.solr.core.query.*;
 import org.springframework.stereotype.Service;
 import org.w3c.dom.Document;
+import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
@@ -29,6 +34,7 @@ import javax.xml.bind.DatatypeConverter;
 import javax.xml.namespace.NamespaceContext;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.TransformerException;
 import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathFactory;
@@ -59,7 +65,7 @@ public class SolrArclibXmlStore implements IndexArclibXmlStore<SolrArclibXmlDocu
     private Map<String, String> uris = new HashMap<>();
 
     @SneakyThrows
-    public void createIndex(String arclibXml, String producerId, String userId, IndexedArclibXmlDocumentState state) {
+    public void createIndex(String arclibXml, Producer producer, User user, IndexedArclibXmlDocumentState state, boolean debuggingModeActive) {
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
         factory.setNamespaceAware(true);
         Document xml;
@@ -70,78 +76,56 @@ public class SolrArclibXmlStore implements IndexArclibXmlStore<SolrArclibXmlDocu
             throw e;
         }
         XPath xpath = getXpathWithNamespaceContext();
-        SolrArclibXmlDocument solrSolrArclibXmlDocument = new SolrArclibXmlDocument();
+        Map<String, IndexCollectionConfig> collectionsConfig = getArclibXmlCollectionsConfig();
 
-        for (IndexFieldConfig conf : getFieldsConfig()) {
-            NodeList fields = (NodeList) xpath.evaluate(conf.getXpath(), xml, XPathConstants.NODESET);
-            if (fields == null || fields.getLength() == 0)
-                continue;
-            switch (conf.getFieldName()) {
-                case SolrArclibXmlDocument.ID:
-                    solrSolrArclibXmlDocument.setId(fields.item(0).getTextContent());
-                    continue;
-                case SolrArclibXmlDocument.CREATED:
-                    Calendar parsedDate = DatatypeConverter.parseDateTime(fields.item(0).getTextContent());
-                    java.util.Date created = Date.from(parsedDate.toInstant().atOffset(ZoneOffset.UTC).toInstant());
-                    solrSolrArclibXmlDocument.setCreated(created);
-                    continue;
-                case SolrArclibXmlDocument.SIP_ID:
-                    solrSolrArclibXmlDocument.setSipId(fields.item(0).getTextContent());
-                    continue;
-                case SolrArclibXmlDocument.AUTHORIAL_ID:
-                    solrSolrArclibXmlDocument.setAuthorialId(fields.item(0).getTextContent());
-                    continue;
-                case SolrArclibXmlDocument.SIP_VERSION_NUMBER:
-                    solrSolrArclibXmlDocument.setSipVersionNumber(Integer.valueOf(fields.item(0).getTextContent()));
-                    continue;
-                case SolrArclibXmlDocument.XML_VERSION_NUMBER:
-                    solrSolrArclibXmlDocument.setXmlVersionNumber(Integer.valueOf(fields.item(0).getTextContent()));
-                    continue;
-                case SolrArclibXmlDocument.SIP_VERSION_OF:
-                    solrSolrArclibXmlDocument.setSipVersionOf(fields.item(0).getTextContent());
-                    continue;
-                case SolrArclibXmlDocument.XML_VERSION_OF:
-                    solrSolrArclibXmlDocument.setXmlVersionOf(fields.item(0).getTextContent());
-            }
-
-            for (int i = 0; i < fields.getLength(); i++) {
-                Calendar parsedDate;
-                try {
-                    switch (conf.getFieldType()) {
-                        case DATETIME:
-                            parsedDate = DatatypeConverter.parseDateTime(fields.item(i).getTextContent());
-                            String parsedDateTimeString = DateTimeFormatter.ISO_INSTANT.format(parsedDate.toInstant().atOffset(ZoneOffset.UTC));
-                            solrSolrArclibXmlDocument.addField(conf.getFieldName(), parsedDateTimeString);
-                            break;
-                        case DATE:
-                            parsedDate = DatatypeConverter.parseDate(fields.item(i).getTextContent());
-                            String parsedDateString = DateTimeFormatter.ISO_INSTANT.format(parsedDate.toInstant().atOffset(ZoneOffset.UTC));
-                            solrSolrArclibXmlDocument.addField(conf.getFieldName(), parsedDateString);
-                            break;
-                        case TIME:
-                            ZonedDateTime time = DatatypeConverter.parseTime(fields.item(i).getTextContent()).toInstant().atZone(ZoneId.systemDefault());
-                            long parsedTime = time.getHour() * 60 * 60 * 1000 + time.getMinute() * 60 * 1000 + time.getSecond() * 1000;
-                            solrSolrArclibXmlDocument.addField(conf.getFieldName(), parsedTime);
-                            break;
-                        default:
-                            if (conf.isFullText()) {
-                                solrSolrArclibXmlDocument.addField(conf.getFieldName(), nodeToString(fields.item(i)));
-                            } else {
-                                solrSolrArclibXmlDocument.addField(conf.getFieldName(), fields.item(i).getTextContent());
-                            }
-                    }
-                } catch (IllegalArgumentException | NullPointerException parsingEx) {
-                    String msg = String.format("Could not parse %s as %s", fields.item(i).getTextContent(), conf.getFieldType());
-                    throw new BadArgument(msg);
+        //add main doc
+        IndexCollectionConfig mainDocConfig = collectionsConfig.get(getMainDocumentCollectionName());
+        SolrInputDocument mainDoc = new SolrInputDocument();
+        mainDoc.addField(SolrArclibXmlDocument.COLLECTION_NAME, mainDocConfig.getCollectionName());
+        mainDoc.addField(SolrArclibXmlDocument.PRODUCER_NAME, producer.getName());
+        mainDoc.addField(SolrArclibXmlDocument.PRODUCER_ID, producer.getId());
+        mainDoc.addField(SolrArclibXmlDocument.USER_NAME, user.getUsername());
+        mainDoc.addField(SolrArclibXmlDocument.DOCUMENT, arclibXml);
+        mainDoc.addField(SolrArclibXmlDocument.STATE, state.toString());
+        mainDoc.addField(SolrArclibXmlDocument.DEBUG_MODE, debuggingModeActive);
+        for (IndexFieldConfig conf : mainDocConfig.getIndexedFieldConfig()) {
+            NodeList nodes = (NodeList) xpath.evaluate(conf.getXpath(), xml, XPathConstants.NODESET);
+            if (conf.getFieldName().equals(SolrArclibXmlDocument.DUBLIN_CORE)) {
+                for (int i = 0; i < nodes.getLength(); i++) {
+                    String dmdSecId = nodes.item(0).getParentNode().getParentNode().getParentNode().getAttributes().getNamedItem("ID").getTextContent();
+                    mainDoc.addField(SolrArclibXmlDocument.DUBLIN_CORE, dmdSecId + " " + nodeToString(nodes.item(i)));
                 }
+            } else
+                addFieldToDocument(mainDoc, conf, nodes);
+        }
+        Object mainDocId = mainDoc.getFieldValue(SolrArclibXmlDocument.ID);
+        if (!(mainDocId instanceof String) || ((String) mainDocId).isEmpty())
+            throw new IllegalStateException("ID of document to be indexed was not found in the document");
+        String mainDocIdString = (String) mainDocId;
+        collectionsConfig.remove(getMainDocumentCollectionName());
+
+        //add child docs
+        for (String collectionName : collectionsConfig.keySet()) {
+            IndexCollectionConfig collectionConfig = collectionsConfig.get(collectionName);
+            NodeList rootNodes = (NodeList) xpath.evaluate(collectionConfig.getRootXpath(), xml, XPathConstants.NODESET);
+            if (rootNodes == null || rootNodes.getLength() == 0)
+                continue;
+            for (int i = 0; i < rootNodes.getLength(); i++) {
+                Node rootNode = rootNodes.item(i);
+
+                SolrInputDocument doc = new SolrInputDocument();
+                doc.addField(SolrArclibXmlDocument.COLLECTION_NAME, collectionConfig.getCollectionName());
+                for (IndexFieldConfig conf : collectionConfig.getIndexedFieldConfig()) {
+                    NodeList nodes = (NodeList) xpath.evaluate(conf.getXpath(), rootNode, XPathConstants.NODESET);
+                    addFieldToDocument(doc, conf, nodes);
+                }
+                doc.addField(SolrArclibXmlDocument.ID, mainDocIdString + "_" + collectionName + "_" + i);
+                mainDoc.addChildDocument(doc);
             }
         }
-        solrSolrArclibXmlDocument.setProducerId(producerId);
-        solrSolrArclibXmlDocument.setUserId(userId);
-        solrSolrArclibXmlDocument.setDocument(arclibXml);
-        solrSolrArclibXmlDocument.setState(state);
+
         try {
-            solrTemplate.saveBean(coreName, solrSolrArclibXmlDocument);
+            solrTemplate.saveDocument(coreName, mainDoc);
             solrTemplate.commit(coreName);
         } catch (UncategorizedSolrException ex) {
             log.error(ex.getMessage());
@@ -150,9 +134,9 @@ public class SolrArclibXmlStore implements IndexArclibXmlStore<SolrArclibXmlDocu
     }
 
     @Override
-    public Result<SolrArclibXmlDocument> findAll(Params params, boolean save) {
+    public Result<SolrArclibXmlDocument> findAll(Params params, String queryName) {
         SimpleQuery query = initializeQuery(params);
-        query.addCriteria(Criteria.where(SolrArclibXmlDocument.ID));
+        query.addCriteria(Criteria.where(SolrArclibXmlDocument.COLLECTION_NAME).in(getMainDocumentCollectionName()));
         query.addFilterQuery(new SimpleFilterQuery(buildFilters(params)));
         log.info("Searching for documents");
         Page<SolrArclibXmlDocument> page;
@@ -162,22 +146,38 @@ public class SolrArclibXmlStore implements IndexArclibXmlStore<SolrArclibXmlDocu
             Matcher matcher = Pattern.compile(".+ undefined field (.+)").matcher(ex.getMessage());
             if (matcher.find()) {
                 String msg = "query contains undefined field: " + matcher.group(1);
-                log.error(msg);
                 throw new BadArgument(msg);
             }
             throw ex;
+        }catch (DataAccessResourceFailureException ex){
+            throw new BadArgument(ex.getMessage());
         }
         Result<SolrArclibXmlDocument> result = new Result<>();
         result.setItems(page.getContent());
         result.setCount(page.getTotalElements());
-        if (save)
-            aipQueryStore.save(new AipQuery(new User(userDetails.getId()), result, params));
+        if (queryName != null && !queryName.trim().isEmpty())
+            aipQueryStore.save(new AipQuery(new User(userDetails.getId()), result, params, queryName));
         log.info("Found documents: " + Arrays.toString(result.getItems().stream().map(SolrArclibXmlDocument::getId).toArray()));
         return result;
     }
 
+    @Override
+    public void changeState(String arclibXmlDocumentId, IndexedArclibXmlDocumentState newState) {
+        PartialUpdate partialUpdate = new PartialUpdate(SolrArclibXmlDocument.ID, arclibXmlDocumentId);
+        partialUpdate.add(SolrArclibXmlDocument.STATE, newState.toString());
+        solrTemplate.saveBean(coreName, partialUpdate);
+        solrTemplate.commit(coreName);
+    }
+
+    @Override
+    public void removeIndex(String id) {
+        SolrDataQuery deleteQuery = new SimpleQuery("id:" + id + "*");
+        solrTemplate.delete(coreName, deleteQuery);
+        solrTemplate.commit(coreName);
+    }
+
     /**
-     * Finds ArclibXml index document by the external id and returns all the indexed attributes
+     * Finds ArclibXml index document by the external id and returns all the indexed attributes of the main document, OMMITING CHILDREN
      *
      * @param externalId external id of the ArclibXml index document
      * @return map of indexed attributes and their values
@@ -212,14 +212,12 @@ public class SolrArclibXmlStore implements IndexArclibXmlStore<SolrArclibXmlDocu
         if (operation == null) {
             throw new BadArgument("operation not specified: " + filter);
         }
-        if (operation == FilterOperation.NESTED) {
-            throw new BadArgument("operation not supported: " + filter);
-        }
         if (value == null
                 && operation != FilterOperation.AND
                 && operation != FilterOperation.OR
                 && operation != FilterOperation.NOT_NULL
-                && operation != FilterOperation.IS_NULL) {
+                && operation != FilterOperation.IS_NULL
+                && operation != FilterOperation.NESTED) {
             throw new BadArgument("value not specified: " + filter);
         }
         switch (operation) {
@@ -250,13 +248,15 @@ public class SolrArclibXmlStore implements IndexArclibXmlStore<SolrArclibXmlDocu
                 return isNullQuery(filter.getField());
             case NOT_NULL:
                 return notNullQuery(filter.getField());
+            case NESTED:
+                return nestedQuery(filter.getField(), filter.getFilter());
         }
     }
 
     /**
      * Builds an OR query between sub-filters.
      * <p>
-     * Used internally in {@link SolrArclibXmlStore#findAll(Params, boolean)} )} or in custom search methods in inheriting classes.
+     * Used internally in {@link SolrArclibXmlStore#findAll(Params, String)} )} or in custom search methods in inheriting classes.
      * </p>
      *
      * @param filters {@link List} of {@link Filter}
@@ -272,7 +272,7 @@ public class SolrArclibXmlStore implements IndexArclibXmlStore<SolrArclibXmlDocu
     /**
      * Builds an AND query between sub-filters.
      * <p>
-     * Used internally in {@link SolrArclibXmlStore#findAll(Params, boolean)} )} or in custom search methods in inheriting classes.
+     * Used internally in {@link SolrArclibXmlStore#findAll(Params, String)} )} or in custom search methods in inheriting classes.
      * </p>
      *
      * @param filters {@link List} of {@link Filter}
@@ -326,6 +326,18 @@ public class SolrArclibXmlStore implements IndexArclibXmlStore<SolrArclibXmlDocu
         return xpath;
     }
 
+    private Criteria nestedQuery(String name, List<Filter> filters) {
+        Criteria parentCriteria = Criteria.where(SolrArclibXmlDocument.COLLECTION_NAME).is(getMainDocumentCollectionName());
+        try {
+            Criteria childTypeCriteria = Criteria.where(SolrArclibXmlDocument.COLLECTION_NAME).is(name);
+            Criteria childrenCriteria = andQuery(filters);
+            childrenCriteria.and(childTypeCriteria);
+            return new NestedCriteria(parentCriteria, childrenCriteria);
+        } catch (Exception e) {
+            throw new GeneralException(e);
+        }
+    }
+
     @Inject
     public void setUris(@Value("${namespaces.mets}") String mets, @Value("${namespaces.arclib}") String arclib, @Value("${namespaces" +
             ".premis}") String premis, @Value("${namespaces.oai_dc}") String oai_dc, @Value("${namespaces.dc}") String dc,
@@ -339,6 +351,42 @@ public class SolrArclibXmlStore implements IndexArclibXmlStore<SolrArclibXmlDocu
         uris.put(DCTERMS, dcterms);
 
         this.uris = uris;
+    }
+
+    private void addFieldToDocument(SolrInputDocument doc, IndexFieldConfig conf, NodeList nodes) {
+        if (nodes == null || nodes.getLength() == 0)
+            return;
+        for (int i = 0; i < nodes.getLength(); i++) {
+            Calendar parsedDate;
+            try {
+                switch (conf.getFieldType()) {
+                    case DATETIME:
+                        parsedDate = DatatypeConverter.parseDateTime(nodes.item(i).getTextContent());
+                        String parsedDateTimeString = DateTimeFormatter.ISO_INSTANT.format(parsedDate.toInstant().atOffset(ZoneOffset.UTC));
+                        doc.addField(conf.getFieldName(), parsedDateTimeString);
+                        break;
+                    case DATE:
+                        parsedDate = DatatypeConverter.parseDate(nodes.item(i).getTextContent());
+                        String parsedDateString = DateTimeFormatter.ISO_INSTANT.format(parsedDate.toInstant().atOffset(ZoneOffset.UTC));
+                        doc.addField(conf.getFieldName(), parsedDateString);
+                        break;
+                    case TIME:
+                        ZonedDateTime time = DatatypeConverter.parseTime(nodes.item(i).getTextContent()).toInstant().atZone(ZoneId.systemDefault());
+                        long parsedTime = time.getHour() * 60 * 60 * 1000 + time.getMinute() * 60 * 1000 + time.getSecond() * 1000;
+                        doc.addField(conf.getFieldName(), parsedTime);
+                        break;
+                    default:
+                        if (conf.isSimple()) {
+                            doc.addField(conf.getFieldName(), nodes.item(i).getTextContent());
+                        } else {
+                            doc.addField(conf.getFieldName(), nodeToString(nodes.item(i)));
+                        }
+                }
+            } catch (IllegalArgumentException | NullPointerException | TransformerException parsingEx) {
+                String msg = String.format("Could not parse %s as %s", nodes.item(i).getTextContent(), conf.getFieldType());
+                throw new BadArgument(msg);
+            }
+        }
     }
 
     @Inject

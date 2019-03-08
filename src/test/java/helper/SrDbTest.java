@@ -41,13 +41,16 @@ public class SrDbTest extends DbTest {
         DbTest.classTearDown();
     }
 
+    /**
+     * should have different name than its subclass or the method of subclass is not called
+     *
+     * @throws Exception
+     */
     @Before
-    public void testSetUp() throws Exception {
-        super.testSetUp();
-
+    public void testSetUpp() throws Exception {
         ObjectMapper objectMapper = objectMapperProducer.objectMapper(false, false);
 
-        client = new HttpSolrClient("http://localhost:8983/solr");
+        client = new HttpSolrClient.Builder().withBaseSolrUrl("http://localhost:8983/solr").build();
 
         template = new SolrTemplate(client);
         template.setSchemaCreationFeatures(Collections.singletonList(SolrPersistentEntitySchemaCreator.Feature.CREATE_MISSING_FIELDS));
@@ -59,17 +62,19 @@ public class SrDbTest extends DbTest {
 
         arclibXmlSolrTemplate = new SolrTemplate(client);
         arclibXmlSolrTemplate.afterPropertiesSet();
-
-        client.deleteByQuery("arclib_xml_test", "*:*");
-        client.commit("arclib_xml_test");
-        client.deleteByQuery("test", "*:*");
-        client.commit("test");
     }
 
+    /**
+     * should have different name than its subclass or the method of subclass is not called
+     *
+     * @throws Exception
+     */
     @After
-    public void testTearDown() throws Exception {
-        super.testTearDown();
-
+    public void testTearDownn() throws Exception {
+        client.deleteByQuery("test", "*:*");
+        client.commit("test");
+        client.deleteByQuery("arclib_xml_test", "*:*");
+        client.commit("arclib_xml_test");
         client.close();
     }
 

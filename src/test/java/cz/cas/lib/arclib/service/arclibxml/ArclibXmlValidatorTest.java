@@ -19,7 +19,7 @@ public class ArclibXmlValidatorTest {
 
     private static String VALIDATION_CHECKS = "arclibXmlValidationChecks.txt";
 
-    private static String ARCLIB_XML = "sampleData/arclibXml4.xml";
+    private static String ARCLIB_XML = "sampleData/8b2efafd-b637-4b97-a8f7-1b97dd4ee622_xml_2.xml";
 
     private static String INVALID_ARCLIB_XML_MISSING_METS_HDR =
             "arclibXmls/invalidArclibXmlMissingMetsHdr.xml";

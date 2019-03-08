@@ -32,7 +32,6 @@
 /mets/amdSec/digiprovMD/mdWrap[@MDTYPE='PREMIS']/xmlData/event/eventDateTime
 /mets/amdSec/digiprovMD/mdWrap[@MDTYPE='PREMIS']/xmlData/event/eventIdentifier/eventIdentifierType
 /mets/amdSec/digiprovMD/mdWrap[@MDTYPE='PREMIS']/xmlData/event/eventIdentifier/eventIdentifierValue
-/mets/amdSec/digiprovMD/mdWrap[@MDTYPE='PREMIS']/xmlData/event[eventType/text()='ingestion']
 /mets/amdSec/digiprovMD/mdWrap[@MDTYPE='PREMIS']/xmlData/event[eventType/text()='validation']
 /mets/fileSec
 /mets/structMap

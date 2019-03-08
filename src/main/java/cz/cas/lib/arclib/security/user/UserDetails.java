@@ -1,5 +1,7 @@
 package cz.cas.lib.arclib.security.user;
 
+import cz.cas.lib.arclib.domain.User;
+
 /**
  * Extends base spring UserDetails and adds id
  */
@@ -7,6 +9,8 @@ public interface UserDetails extends org.springframework.security.core.userdetai
     default String getId() {
         return null;
     }
+
+    default User getUser() {return null;}
 
     default String getProducerId() {
         return null;

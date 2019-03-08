@@ -31,7 +31,7 @@ public class AuditLogger {
     public void logEvent(AuditEvent event) {
         try {
             String message = mapper.writer().writeValueAsString(event);
-            log.info(MARKER, message);
+            log.debug(MARKER, message);
 
         } catch (JsonProcessingException e) {
             log.error("Failed to log audit event.", e);

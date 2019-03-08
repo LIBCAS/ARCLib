@@ -51,12 +51,12 @@ public class JobService implements DelegateAdapter<Job> {
         try {
             ScheduledFuture<?> future = runningJobs.remove(job.getId());
             if (future != null) {
-                log.info("Disabling {}", job);
+                log.debug("Disabling {}", job);
                 future.cancel(false);
             }
 
             if (job.getActive() == Boolean.TRUE) {
-                log.info("Enabling {}", job);
+                log.debug("Enabling {}", job);
 
                 future = scheduler.schedule(() -> runner.run(job), new CronTrigger(job.getTiming()));
                 runningJobs.put(job.getId(), future);

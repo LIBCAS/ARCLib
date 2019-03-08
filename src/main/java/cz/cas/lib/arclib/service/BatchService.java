@@ -3,9 +3,7 @@ package cz.cas.lib.arclib.service;
 import cz.cas.lib.arclib.domain.Batch;
 import cz.cas.lib.arclib.index.IndexArclibXmlStore;
 import cz.cas.lib.arclib.index.solr.arclibxml.IndexedArclibXmlDocumentState;
-import cz.cas.lib.arclib.index.solr.arclibxml.SolrArclibXmlDocument;
 import cz.cas.lib.arclib.store.BatchStore;
-import cz.cas.lib.arclib.store.IngestWorkflowStore;
 import cz.cas.lib.core.exception.BadArgument;
 import cz.cas.lib.core.exception.MissingObject;
 import cz.cas.lib.core.index.dto.Params;
@@ -17,8 +15,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import javax.inject.Inject;
-import java.util.ArrayList;
-import java.util.Map;
 
 import static cz.cas.lib.core.util.Utils.notNull;
 
@@ -77,13 +73,8 @@ public class BatchService implements DelegateAdapter<Batch> {
         batch.getIngestWorkflows().forEach(ingestWorkflow -> {
             ingestWorkflowService.delete(ingestWorkflow);
             log.info("Ingest workflow with external id " + ingestWorkflow.getExternalId() + " has been deleted from database.");
-
-            Map<String, Object> aclibXmlIndexDocument = indexArclibXmlStore.findArclibXmlIndexDocument(ingestWorkflow.getExternalId());
-            String producerId = (String) ((ArrayList) aclibXmlIndexDocument.get(SolrArclibXmlDocument.PRODUCER_ID)).get(0);
-            String assignee = (String) ((ArrayList) aclibXmlIndexDocument.get(SolrArclibXmlDocument.USER_ID)).get(0);
-            String document = (String) ((ArrayList) aclibXmlIndexDocument.get(SolrArclibXmlDocument.DOCUMENT)).get(0);
-            indexArclibXmlStore.createIndex(document, producerId, assignee, IndexedArclibXmlDocumentState.DELETED);
-            log.info("Index of XML of ingest workflow " + ingestWorkflow.getExternalId() + " has been updated with " +
+            indexArclibXmlStore.changeState(ingestWorkflow.getExternalId(), IndexedArclibXmlDocumentState.DELETED);
+            log.debug("Index of XML of ingest workflow " + ingestWorkflow.getExternalId() + " has been updated with " +
                     "the ingest workflow state DELETED.");
 
         });

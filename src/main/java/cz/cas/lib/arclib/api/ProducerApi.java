@@ -1,10 +1,11 @@
 package cz.cas.lib.arclib.api;
 
 import cz.cas.lib.arclib.domain.Producer;
+import cz.cas.lib.arclib.exception.BadRequestException;
 import cz.cas.lib.arclib.security.authorization.Roles;
 import cz.cas.lib.arclib.store.ProducerStore;
 import cz.cas.lib.core.exception.BadArgument;
-import cz.cas.lib.core.exception.ConflictObject;
+import cz.cas.lib.core.exception.ConflictException;
 import cz.cas.lib.core.exception.MissingObject;
 import cz.cas.lib.core.index.dto.Result;
 import cz.cas.lib.core.store.Transactional;
@@ -38,12 +39,12 @@ public class ProducerApi {
     public Producer save(@ApiParam(value = "Id of the instance", required = true)
                          @PathVariable("id") String id,
                          @ApiParam(value = "Single instance", required = true)
-                         @RequestBody Producer request) {
+                         @RequestBody Producer request) throws ConflictException {
         eq(id, request.getId(), () -> new BadArgument("id"));
-
-        Producer producerByName = store.findByName(request.getName());
-        if (producerByName != null && !producerByName.getId().equals(request.getId()))
-            throw new ConflictObject(Producer.class, request.getName());
+        notNull(request.getName(), () -> new BadRequestException("name can't be null"));
+        Producer existing = store.find(id);
+        if (existing != null && !existing.getName().equals(request.getName()))
+            throw new ConflictException("Producer name can't be updated");
 
         return store.save(request);
     }

@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 @Slf4j
 @Service
 public class Sha512Counter extends CryptoLibraryCounter {
+
     @Override
     public String getType() {
         return "SHA-512";

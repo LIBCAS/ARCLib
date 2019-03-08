@@ -5,7 +5,6 @@ import cz.cas.lib.arclib.security.authorization.Roles;
 import cz.cas.lib.arclib.store.ValidationProfileStore;
 import cz.cas.lib.arclib.utils.XmlUtils;
 import cz.cas.lib.core.exception.BadArgument;
-import cz.cas.lib.core.exception.ConflictObject;
 import cz.cas.lib.core.exception.GeneralException;
 import cz.cas.lib.core.exception.MissingObject;
 import cz.cas.lib.core.store.Transactional;
@@ -48,10 +47,6 @@ public class ValidationProfileApi {
                                   @ApiParam(value = "Single instance", required = true)
                                   @RequestBody ValidationProfile request) throws IOException {
         eq(id, request.getId(), () -> new BadArgument("id"));
-
-        ValidationProfile validationProfileByName = store.findByName(request.getName());
-        if (validationProfileByName != null && !validationProfileByName.getId().equals(request.getId()))
-            throw new ConflictObject(ValidationProfile.class, request.getName());
 
         String validationProfileXml = request.getXml();
         try {

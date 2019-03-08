@@ -28,17 +28,4 @@ public class IngestRoutineStore
         detachAll();
         return ingestRoutinesFound;
     }
-
-    @Transactional
-    public IngestRoutine findByName(String name) {
-        QIngestRoutine ingestRoutine = qObject();
-
-        IngestRoutine ingestRoutineFound = query()
-                .select(ingestRoutine)
-                .where(ingestRoutine.name.eq(name))
-                .fetchFirst();
-
-        detachAll();
-        return ingestRoutineFound;
-    }
 }

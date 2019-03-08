@@ -2,32 +2,44 @@ package cz.cas.lib.arclib.bpm.delegate;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.io.Resources;
+import cz.cas.lib.arclib.bpm.ArclibXmlExtractorDelegate;
 import cz.cas.lib.arclib.bpm.ArclibXmlGeneratorDelegate;
 import cz.cas.lib.arclib.bpm.BpmConstants;
 import cz.cas.lib.arclib.domain.*;
+import cz.cas.lib.arclib.domain.ingestWorkflow.IngestEvent;
 import cz.cas.lib.arclib.domain.ingestWorkflow.IngestIssue;
 import cz.cas.lib.arclib.domain.ingestWorkflow.IngestWorkflow;
 import cz.cas.lib.arclib.domain.ingestWorkflow.IngestWorkflowState;
 import cz.cas.lib.arclib.domain.packages.AuthorialPackage;
 import cz.cas.lib.arclib.domain.packages.FolderStructure;
 import cz.cas.lib.arclib.domain.packages.Sip;
+import cz.cas.lib.arclib.domain.preservationPlanning.IngestIssueDefinition;
+import cz.cas.lib.arclib.domain.preservationPlanning.IngestIssueDefinitionCode;
+import cz.cas.lib.arclib.domain.preservationPlanning.Tool;
 import cz.cas.lib.arclib.domain.profiles.ProducerProfile;
 import cz.cas.lib.arclib.domain.profiles.SipProfile;
 import cz.cas.lib.arclib.index.solr.arclibxml.SolrArclibXmlStore;
 import cz.cas.lib.arclib.security.user.UserDelegate;
+import cz.cas.lib.arclib.service.IngestIssueService;
+import cz.cas.lib.arclib.service.UserService;
 import cz.cas.lib.arclib.service.arclibxml.ArclibXmlGenerator;
 import cz.cas.lib.arclib.service.arclibxml.ArclibXmlXsltExtractor;
 import cz.cas.lib.arclib.service.fixity.Sha512Counter;
+import cz.cas.lib.arclib.service.formatIdentification.FormatIdentificationToolType;
+import cz.cas.lib.arclib.service.preservationPlanning.ToolService;
 import cz.cas.lib.arclib.store.*;
 import cz.cas.lib.arclib.utils.ArclibUtils;
 import cz.cas.lib.core.sequence.Generator;
 import cz.cas.lib.core.sequence.Sequence;
 import cz.cas.lib.core.sequence.SequenceStore;
 import cz.cas.lib.core.util.Utils;
+import org.camunda.bpm.engine.history.HistoricVariableInstance;
 import org.camunda.bpm.engine.test.Deployment;
 import org.camunda.bpm.engine.test.mock.Mocks;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -40,11 +52,14 @@ import static cz.cas.lib.core.util.Utils.*;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsNull.notNullValue;
 import static org.junit.Assert.assertThat;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.*;
 
-@Deployment(resources = "bpmn/arclibXmlGenerator.bpmn")
+@Deployment(resources = {"bpmn/arclibXmlExtractor.bpmn","bpmn/arclibXmlGenerator.bpmn"})
 public class ArclibXmlGeneratorDelegateTest extends DelegateTest {
 
-    private static final String PROCESS_INSTANCE_KEY = "arclibXmlGeneratorProcess";
+    private static final String PROCESS_INSTANCE_KEY_EXT = "arclibXmlExtractorProcess";
+    private static final String PROCESS_INSTANCE_KEY_GEN = "arclibXmlGeneratorProcess";
     private static final String PATH_TO_METS = "mets_7033d800-0935-11e4-beed-5ef3fc9ae867.xml";
     private static final String SIP_FILE_NAME = SIP.getFileName().toString();
     private static final String CORE_NAME = "arclib_xml_test";
@@ -80,8 +95,18 @@ public class ArclibXmlGeneratorDelegateTest extends DelegateTest {
     private IngestIssueStore ingestIssueStore;
     private SequenceStore sequenceStore;
     private HashStore hashStore;
-
+    private ToolStore toolStore;
+    @Mock
+    private IngestEventStore ingestEventStore;
+    @Mock
+    private UserService userService;
+    @Mock
+    private ProducerStore mockedProducerStore;
+    private IngestIssueDefinitionStore ingestIssueDefinitionStore;
+    private IngestIssueService ingestIssueService;
+    private ToolService toolService;
     private ArclibXmlGeneratorDelegate arclibXmlGeneratorDelegate;
+    private ArclibXmlExtractorDelegate arclibXmlExtractorDelegate;
     private SipProfile sipProfile;
     private IngestWorkflow ingestWorkflow;
     private IngestWorkflow relatedIngestWorkflow;
@@ -95,6 +120,7 @@ public class ArclibXmlGeneratorDelegateTest extends DelegateTest {
     @Before
     public void before() throws IOException {
         hashStore = new HashStore();
+        MockitoAnnotations.initMocks(this);
 
         aipQueryStore = new AipQueryStore();
         sequenceStore = new SequenceStore();
@@ -104,34 +130,31 @@ public class ArclibXmlGeneratorDelegateTest extends DelegateTest {
         solrArclibXmlStore.setCoreName(CORE_NAME);
         solrArclibXmlStore.setSolrTemplate(getArclibXmlSolrTemplate());
         solrArclibXmlStore.setUris("http://www.loc.gov/METS/",
-                "http://arclib.lib.cas.cz/ARCLIB_XML",
+                "http://arclib.lib.cas.cz/ARCLIB_XSD",
                 "info:lc/xmlns/premis-v2",
                 "http://www.openarchives.org/OAI/2.0/oai_dc/",
                 "http://purl.org/dc/elements/1.1/",
                 "http://purl.org/dc/terms/");
 
         userStore = new UserStore();
-        userStore.setTemplate(getTemplate());
-
         ingestWorkflowStore = new IngestWorkflowStore();
         sipProfileStore = new SipProfileStore();
         sipStore = new SipStore();
         authorialPackageStore = new AuthorialPackageStore();
         producerStore = new ProducerStore();
-
+        ingestIssueDefinitionStore = new IngestIssueDefinitionStore();
         batchStore = new BatchStore();
-        batchStore.setTemplate(getTemplate());
-
-        ingestWorkflowStore.setGenerator(generator);
-
         producerProfileStore = new ProducerProfileStore();
-        producerProfileStore.setTemplate(getTemplate());
-
+        toolStore=new ToolStore();
         ingestIssueStore = new IngestIssueStore();
-        ingestIssueStore.setTemplate(getTemplate());
-
-        initializeStores(hashStore, sequenceStore, ingestIssueStore, aipQueryStore, ingestWorkflowStore, sipProfileStore,
+        initializeStores(hashStore,toolStore, ingestIssueDefinitionStore, sequenceStore, ingestIssueStore, aipQueryStore, ingestWorkflowStore, sipProfileStore,
                 sipStore, batchStore, producerProfileStore, producerStore, authorialPackageStore, userStore);
+
+        ingestIssueService=new IngestIssueService();
+        ingestIssueService.setIngestIssueStore(ingestIssueStore);
+
+        toolService=new ToolService();
+        toolService.setToolStore(toolStore);
 
         generator = new Generator();
         generator.setStore(sequenceStore);
@@ -150,16 +173,22 @@ public class ArclibXmlGeneratorDelegateTest extends DelegateTest {
         sequence2.setId(producerProfileStore.getSEQUENCE_ID());
         sequenceStore.save(sequence2);
 
+        Sequence sequence3 = new Sequence();
+        sequence3.setCounter(2L);
+        sequence3.setFormat("'#'#");
+        sequence3.setId(ingestIssueDefinitionStore.getSEQUENCE_ID());
+        sequenceStore.save(sequence3);
+
         producerProfileStore.setGenerator(generator);
         ingestWorkflowStore.setGenerator(generator);
+        ingestIssueDefinitionStore.setGenerator(generator);
 
         extractor = new ArclibXmlXsltExtractor();
         extractor.setSipProfileStore(sipProfileStore);
-        extractor.setWorkspace(WS.toString());
 
         arclibXmlGenerator = new ArclibXmlGenerator();
         arclibXmlGenerator.setUris("http://www.loc.gov/METS/",
-                "http://arclib.lib.cas.cz/ARCLIB_XML",
+                "http://arclib.lib.cas.cz/ARCLIB_XSD",
                 "info:lc/xmlns/premis-v2",
                 "http://www.openarchives.org/OAI/2.0/oai_dc/",
                 "http://purl.org/dc/elements/1.1/",
@@ -167,27 +196,38 @@ public class ArclibXmlGeneratorDelegateTest extends DelegateTest {
         );
         arclibXmlGenerator.setArclibVersion("1.0");
         arclibXmlGenerator.setIngestWorkflowStore(ingestWorkflowStore);
-        arclibXmlGenerator.setIngestIssueStore(ingestIssueStore);
+        arclibXmlGenerator.setIngestEventStore(ingestEventStore);
 
         user = new User();
         userDelegate = new UserDelegate(user);
 
         solrArclibXmlStore.setUserDetails(userDelegate);
 
+        arclibXmlExtractorDelegate = new ArclibXmlExtractorDelegate();
+        arclibXmlExtractorDelegate.setObjectMapper(new ObjectMapper());
+        arclibXmlExtractorDelegate.setWorkspace(WS.toString());
+        arclibXmlExtractorDelegate.setArclibXmlXsltExtractor(extractor);
+        arclibXmlExtractorDelegate.setIngestEventStore(ingestEventStore);
+        arclibXmlExtractorDelegate.setIngestWorkflowStore(ingestWorkflowStore);
+        arclibXmlExtractorDelegate.setToolService(toolService);
+
         arclibXmlGeneratorDelegate = new ArclibXmlGeneratorDelegate();
+        arclibXmlGeneratorDelegate.setIngestEventStore(ingestEventStore);
         arclibXmlGeneratorDelegate.setObjectMapper(new ObjectMapper());
-        arclibXmlGeneratorDelegate.setArclibXmlXsltExtractor(extractor);
         arclibXmlGeneratorDelegate.setWorkspace(WS.toString());
         arclibXmlGeneratorDelegate.setIndexArclibXmlStore(solrArclibXmlStore);
         arclibXmlGeneratorDelegate.setArclibXmlGenerator(arclibXmlGenerator);
         arclibXmlGeneratorDelegate.setIngestWorkflowStore(ingestWorkflowStore);
         arclibXmlGeneratorDelegate.setSha512Counter(sha512Counter);
+        arclibXmlGeneratorDelegate.setToolService(toolService);
+        arclibXmlGeneratorDelegate.setUserService(userService);
+        arclibXmlGeneratorDelegate.setProducerStore(mockedProducerStore);
 
         sipProfile = new SipProfile();
         String sipProfileXml = Resources.toString(this.getClass().getResource(
                 "/sipProfiles/comprehensiveSipProfile.xsl"), StandardCharsets.UTF_8);
         sipProfile.setXsl(sipProfileXml);
-        sipProfile.setSipMetadataPath(PATH_TO_METS);
+        sipProfile.setSipMetadataPathGlobPattern(PATH_TO_METS);
         sipProfileStore.save(sipProfile);
 
         Producer producer = new Producer();
@@ -232,7 +272,7 @@ public class ArclibXmlGeneratorDelegateTest extends DelegateTest {
         ingestWorkflow = new IngestWorkflow();
         ingestWorkflow.setSip(sip);
         ingestWorkflow.setId(INGEST_WORKFLOW_ID);
-        ingestWorkflow.setOriginalFileName(SIP_FILE_NAME);
+        ingestWorkflow.setFileName(SIP_FILE_NAME);
         ingestWorkflow.setBatch(batch);
         ingestWorkflow.setRelatedWorkflow(relatedIngestWorkflow);
         ingestWorkflow.setExternalId(EXTERNAL_ID);
@@ -241,6 +281,9 @@ public class ArclibXmlGeneratorDelegateTest extends DelegateTest {
         ingestWorkflow.setXmlVersionNumber(XML_VERSION);
         ingestWorkflowStore.save(ingestWorkflow);
 
+        when(userService.find(any())).thenReturn(user);
+        when(mockedProducerStore.find(any())).thenReturn(producer);
+        Mocks.register("arclibXmlExtractorDelegate", arclibXmlExtractorDelegate);
         Mocks.register("arclibXmlGeneratorDelegate", arclibXmlGeneratorDelegate);
     }
 
@@ -276,56 +319,72 @@ public class ArclibXmlGeneratorDelegateTest extends DelegateTest {
         variables.put(BpmConstants.ProcessVariables.sipProfileId, sipProfile.getId());
         variables.put(BpmConstants.ProcessVariables.sipVersion, SIP_VERSION);
         variables.put(BpmConstants.ProcessVariables.xmlVersion, XML_VERSION);
-        variables.put(BpmConstants.ProcessVariables.assignee, user.getId());
+        variables.put(BpmConstants.ProcessVariables.responsiblePerson, user.getId());
         variables.put(BpmConstants.ProcessVariables.sipId, sip.getId());
         variables.put(BpmConstants.ProcessVariables.producerId, PRODUCER_ID);
         variables.put(BpmConstants.ProcessVariables.debuggingModeActive, true);
 
-        variables.put(BpmConstants.Ingestion.originalSipFileName, SIP_FILE_NAME);
+        variables.put(BpmConstants.Ingestion.sipFileName, SIP_FILE_NAME);
         variables.put(BpmConstants.Ingestion.filePathsAndFileSizes, filePathsToSizes);
-        variables.put(BpmConstants.Ingestion.success, true);
         variables.put(BpmConstants.Ingestion.dateTime, "2018-05-11T10:27:00Z");
         variables.put(BpmConstants.Ingestion.sizeInBytes, 512312123L);
         variables.put(BpmConstants.Ingestion.authorialId, authorialPackage.getAuthorialId());
         variables.put(BpmConstants.Ingestion.rootDirFilesAndFixities, new ArrayList());
 
         variables.put(BpmConstants.Validation.validationProfileId, VALIDATION_PROFILE_ID);
-        variables.put(BpmConstants.Validation.success, true);
-        variables.put(BpmConstants.Validation.dateTime, "2018-05-11T10:27:17Z");
 
-        variables.put(BpmConstants.FormatIdentification.toolName, "DROID");
-        variables.put(BpmConstants.FormatIdentification.toolVersion, "DROID: version: 6.4, Signature files: 1. Type: Binary Version: 93 File name: DROID_SignatureFile_V93.xml 2. Type: Container Version: 20171130 File name: container-signature-20171130.xml");
+        Tool droidTool = new Tool();
+        droidTool.setName(FormatIdentificationToolType.DROID.toString());
+        droidTool.setVersion("DROID: version: 6.4, Signature files: 1. Type: Binary Version: 93 File name: DROID_SignatureFile_V93.xml 2. Type: Container Version: 20171130 File name: container-signature-20171130.xml");
+        toolService.save(droidTool);
+        variables.put(BpmConstants.FormatIdentification.toolId, droidTool.getId());
         variables.put(BpmConstants.FormatIdentification.dateTime, "2018-05-11T10:27:27Z");
         variables.put(BpmConstants.FormatIdentification.mapOfFilesToFormats, identifiedFormats);
-
+        variables.put(BpmConstants.ProcessVariables.sipFolderWorkspacePath,SIP.toAbsolutePath().toString());
         variables.put(BpmConstants.FixityCheck.filePathsAndFixities, asList(file1, file2, file3));
 
+        IngestIssueDefinition def = new IngestIssueDefinition();
+        def.setName("def");
+        def.setCode(IngestIssueDefinitionCode.FILE_FORMAT_UNRESOLVABLE);
+        ingestIssueDefinitionStore.save(def);
+
         IngestIssue issue = new IngestIssue();
-        issue.setSolvedByConfig(false);
-        issue.setConfigNote("invalid config: [{}] at: /formatIdentification/pathsAndFormats " +
-                "supported values: [List of pairs of paths to files and their respective file formats, e.g." +
-                " [ {\"filePath\":\"this/is/a/filepath\", \"format\":\"fmt/101\"}, {\"filePath\":" +
-                "\"this/is/another/filepath\", \"format\":\"fmt/993\"} ]]");
-        issue.setTaskExecutor(BpmConstants.FormatIdentification.class);
-        issue.setIssue("File at path: this/is/a/file/path was identified with multiple formats: {\n" +
+        issue.setSuccess(false);
+        issue.setDescription("File at path: this/is/a/file/path was identified with multiple formats: {\n" +
                 "format: format1, identification method: some method\n" +
                 "format: format2, identification method: another method\n" +
                 "}");
+        //"invalid config: [{}] at: /formatIdentification/pathsAndFormats " +
+        //                "supported values: [List of pairs of paths to files and their respective file formats, e.g." +
+        //                " [ {\"filePath\":\"this/is/a/filepath\", \"format\":\"fmt/101\"}, {\"filePath\":" +
+        //                "\"this/is/another/filepath\", \"format\":\"fmt/993\"} ]]"
+        issue.setTool(droidTool);
         issue.setIngestWorkflow(ingestWorkflow);
+        issue.setIngestIssueDefinition(def);
         ingestIssueStore.save(issue);
 
         IngestIssue issue2 = new IngestIssue();
-        issue2.setSolvedByConfig(true);
-        issue2.setConfigNote("\"used config: \" + false + \" at: \" + configPath \"/fixityCheck/continueOnInvalidChecksums");
-        issue2.setTaskExecutor(BpmConstants.FixityCheck.class);
-        issue2.setIssue("invalid checksum of files: /some/path/file");
+        issue2.setSuccess(true);
+        issue2.setTool(droidTool);
+        issue2.setDescription("\"used config: \" + false + \" at: \" + configPath \"/fixityCheck/continueOnInvalidChecksums");
         issue2.setIngestWorkflow(ingestWorkflow);
+        issue2.setIngestIssueDefinition(def);
         ingestIssueStore.save(issue2);
 
         flushCache();
 
-        startJob(PROCESS_INSTANCE_KEY, variables);
-
+        startJob(PROCESS_INSTANCE_KEY_EXT, variables);
+        Thread.sleep(3000);
+        List<HistoricVariableInstance> list = rule
+                .getHistoryService()
+                .createHistoricVariableInstanceQuery()
+                .variableName(BpmConstants.MetadataExtraction.result)
+                .list();
+        assertThat(list.size(),is(1));
+        assertThat(list.get(0).getValue(),notNullValue());
+        byte[] extract = (byte[])list.get(0).getValue();
+        variables.put(BpmConstants.MetadataExtraction.result,extract);
+        startJob(PROCESS_INSTANCE_KEY_GEN, variables);
         Thread.sleep(3000);
 
         ingestWorkflow = ingestWorkflowStore.find(this.ingestWorkflow.getId());
@@ -333,5 +392,6 @@ public class ArclibXmlGeneratorDelegateTest extends DelegateTest {
 
         Map<String, Object> aclibXmlIndexDocument = solrArclibXmlStore.findArclibXmlIndexDocument(EXTERNAL_ID);
         assertThat(aclibXmlIndexDocument, notNullValue());
+        verify(ingestEventStore,times(1)).save(any(IngestEvent.class));
     }
 }

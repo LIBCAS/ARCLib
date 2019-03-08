@@ -1,12 +1,18 @@
 package cz.cas.lib.arclib.bpm.delegate;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.querydsl.jpa.impl.JPAQueryFactory;
 import cz.cas.lib.arclib.bpm.BpmConstants;
 import cz.cas.lib.arclib.bpm.ValidatorDelegate;
+import cz.cas.lib.arclib.domain.IngestToolFunction;
+import cz.cas.lib.arclib.domain.ingestWorkflow.IngestWorkflow;
+import cz.cas.lib.arclib.domain.preservationPlanning.Tool;
 import cz.cas.lib.arclib.domain.profiles.ValidationProfile;
 import cz.cas.lib.arclib.exception.validation.MissingFile;
+import cz.cas.lib.arclib.service.preservationPlanning.ToolService;
 import cz.cas.lib.arclib.service.validator.Validator;
+import cz.cas.lib.arclib.store.IngestEventStore;
+import cz.cas.lib.arclib.store.IngestWorkflowStore;
+import cz.cas.lib.arclib.store.ToolStore;
 import cz.cas.lib.arclib.store.ValidationProfileStore;
 import org.camunda.bpm.engine.test.Deployment;
 import org.camunda.bpm.engine.test.mock.Mocks;
@@ -35,6 +41,10 @@ public class ValidatorDelegateTest extends DelegateTest {
 
     private static ValidatorDelegate validatorDelegate;
     private static ValidationProfileStore store;
+    private IngestEventStore ingestEventStore = new IngestEventStore();
+    private ToolStore toolStore = new ToolStore();
+    private IngestWorkflowStore ingestWorkflowStore = new IngestWorkflowStore();
+    private ToolService toolService = new ToolService();
 
     @BeforeClass
     public static void beforeClass() {
@@ -48,12 +58,24 @@ public class ValidatorDelegateTest extends DelegateTest {
     public void before() {
         Validator validator = new Validator();
         store = new ValidationProfileStore();
-        store.setEntityManager(getEm());
-        store.setQueryFactory(new JPAQueryFactory(getEm()));
 
+        initializeStores(store, ingestEventStore, ingestWorkflowStore, toolStore);
+        validatorDelegate.setService(validator);
         validator.setValidationProfileStore(store);
 
-        validatorDelegate.setService(validator);
+        toolService.setToolStore(toolStore);
+        validatorDelegate.setIngestEventStore(ingestEventStore);
+        validatorDelegate.setIngestWorkflowStore(ingestWorkflowStore);
+        validatorDelegate.setToolService(toolService);
+
+        Tool t = new Tool();
+        t.setVersion("1.0");
+        t.setName("ARCLib_" + IngestToolFunction.validation);
+        toolService.save(t);
+
+        IngestWorkflow iw = new IngestWorkflow(INGEST_WORKFLOW_ID);
+        iw.setExternalId(EXTERNAL_ID);
+        ingestWorkflowStore.save(iw);
     }
 
     @Test
@@ -72,9 +94,10 @@ public class ValidatorDelegateTest extends DelegateTest {
         variables.put(BpmConstants.ProcessVariables.ingestWorkflowExternalId, EXTERNAL_ID);
         variables.put(BpmConstants.ProcessVariables.sipId, SIP_ID);
         variables.put(BpmConstants.ProcessVariables.latestConfig, INGEST_CONFIG);
-        variables.put(BpmConstants.Ingestion.originalSipFileName, ORIGINAL_SIP_FILE_NAME);
-        variables.put(BpmConstants.ProcessVariables.assignee, "user");
+        variables.put(BpmConstants.Ingestion.sipFileName, ORIGINAL_SIP_FILE_NAME);
+        variables.put(BpmConstants.ProcessVariables.responsiblePerson, "user");
         variables.put(BpmConstants.Validation.validationProfileId, validationProfile.getId());
+        variables.put(BpmConstants.ProcessVariables.sipFolderWorkspacePath, SIP.toAbsolutePath().toString());
 
         startJob(PROCESS_INSTANCE_KEY, variables);
     }
@@ -95,8 +118,9 @@ public class ValidatorDelegateTest extends DelegateTest {
         variables.put(BpmConstants.ProcessVariables.ingestWorkflowExternalId, EXTERNAL_ID);
         variables.put(BpmConstants.ProcessVariables.latestConfig, INGEST_CONFIG);
         variables.put(BpmConstants.ProcessVariables.sipId, SIP_ID);
-        variables.put(BpmConstants.ProcessVariables.assignee, "user");
-        variables.put(BpmConstants.Ingestion.originalSipFileName, ORIGINAL_SIP_FILE_NAME);
+        variables.put(BpmConstants.ProcessVariables.responsiblePerson, "user");
+        variables.put(BpmConstants.Ingestion.sipFileName, ORIGINAL_SIP_FILE_NAME);
+        variables.put(BpmConstants.ProcessVariables.sipFolderWorkspacePath, SIP.toString());
         variables.put(BpmConstants.Validation.validationProfileId, validationProfile.getId());
 
         assertThrown(() -> startJob(PROCESS_INSTANCE_KEY, variables)).isInstanceOf(MissingFile.class);

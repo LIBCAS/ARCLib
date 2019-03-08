@@ -24,7 +24,7 @@ public abstract class DelegateTest extends SrDbTest {
     public static final Path WS = Paths.get("testWorkspace");
     public static final String INGEST_WORKFLOW_ID = "uuid1";
     public static final String EXTERNAL_ID = "ARCLIB_000000001";
-    public static final String ORIGINAL_SIP_FILE_NAME = "7033d800-0935-11e4-beed-5ef3fc9ae867";
+    public static final String ORIGINAL_SIP_FILE_NAME = "7033d800-0935-11e4-beed-5ef3fc9ae867.zip";
     public static final Path WS_SIP_LOCATION = Paths.get(WS.toString(), EXTERNAL_ID, SIP.getFileName().toString());
     public static final Path WS_SIP_ZIP_LOCATION = Paths.get(WS.toString(), EXTERNAL_ID, SIP_ZIP.getFileName().toString());
 

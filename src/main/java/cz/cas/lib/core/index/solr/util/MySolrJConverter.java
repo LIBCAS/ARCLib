@@ -1,17 +1,17 @@
 package cz.cas.lib.core.index.solr.util;
 
+import org.apache.solr.common.SolrDocumentBase;
 import org.apache.solr.common.SolrInputDocument;
 import org.springframework.data.solr.core.convert.SolrJConverter;
 
 import java.util.List;
-import java.util.Map;
 
 /**
  * Extends SolrJ Converter so child Documents are not ignored
  */
 public class MySolrJConverter extends SolrJConverter {
     @Override
-    public void write(Object source, Map sink) {
+    public void write(Object source, SolrDocumentBase sink) {
         if (source == null) {
             return;
         }

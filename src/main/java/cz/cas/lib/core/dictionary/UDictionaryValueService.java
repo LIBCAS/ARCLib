@@ -65,7 +65,7 @@ public class UDictionaryValueService {
     public List<DictionaryValue> findAllPrefixed(String dictionaryId, String prefix) {
         Params params = new Params();
         params.setSort("name");
-        params.setPageSize(100);
+        params.setPageSize(null);
         params.setFilter(asList(validAndActiveFilter(), new Filter("name", FilterOperation.STARTWITH, prefix, null)));
 
         return this.findAll(dictionaryId, params).getItems();
@@ -74,7 +74,7 @@ public class UDictionaryValueService {
     public List<DictionaryValue> findAllContaining(String dictionaryId, String q) {
         Params params = new Params();
         params.setSort("name");
-        params.setPageSize(100);
+        params.setPageSize(null);
         params.setFilter(asList(validAndActiveFilter(), new Filter("name", FilterOperation.CONTAINS, q, null)));
 
         return this.findAll(dictionaryId, params).getItems();
@@ -83,7 +83,7 @@ public class UDictionaryValueService {
     public List<DictionaryValue> findAll(String dictionaryId) {
         Params params = new Params();
         params.setSort("name");
-        params.setPageSize(1000);
+        params.setPageSize(null);
 
         return this.findAll(dictionaryId, params).getItems();
     }

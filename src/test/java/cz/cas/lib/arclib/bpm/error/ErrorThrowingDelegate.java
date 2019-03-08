@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import cz.cas.lib.arclib.bpm.ArclibDelegate;
 import cz.cas.lib.arclib.bpm.BpmConstants;
 import cz.cas.lib.arclib.exception.bpm.IncidentException;
+import lombok.Getter;
 import org.camunda.bpm.engine.delegate.BpmnError;
 import org.camunda.bpm.engine.delegate.DelegateExecution;
 import org.camunda.bpm.engine.delegate.JavaDelegate;
@@ -25,6 +26,8 @@ import org.springframework.stereotype.Service;
  */
 @Service
 public class ErrorThrowingDelegate extends ArclibDelegate implements JavaDelegate {
+    @Getter
+    private String toolName;
     @Override
     public void execute(DelegateExecution execution) throws Exception {
         String exceptionTypeString = getStringVariable(execution, execution.getCurrentActivityId());

@@ -35,6 +35,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Properties;
 
 import static cz.cas.lib.core.util.Utils.asMap;
 import static cz.cas.lib.core.util.Utils.fileExists;
@@ -48,10 +49,12 @@ public class ArchivalStorageDelegateTest extends DelegateTest {
 
     private static final String PROCESS_INSTANCE_KEY = "archivalStorageProcess";
     private static final String PATH_TO_METS = "mets_7033d800-0935-11e4-beed-5ef3fc9ae867.xml";
-    private static final String SIP_FILE_NAME = SIP.getFileName().toString();
+    private static final String SIP_FILE_NAME = SIP_ZIP.getFileName().toString();
 
     private static final String SIP_HASH = "50FDE99373B04363727473D00AE938A4F4DEBFD0AFB1D428337D81905F6863B3CC303BB3" +
             "31FFB3361085C3A6A2EF4589FF9CD2014C90CE90010CD3805FA5FBC6";
+    private static Properties props = new Properties();
+
 
     private Generator generator;
 
@@ -85,6 +88,7 @@ public class ArchivalStorageDelegateTest extends DelegateTest {
 
     @Before
     public void before() throws IOException {
+        props.load(ClassLoader.getSystemResourceAsStream("application.properties"));
         MockitoAnnotations.initMocks(this);
 
         aipQueryStore = new AipQueryStore();
@@ -129,7 +133,7 @@ public class ArchivalStorageDelegateTest extends DelegateTest {
         archivalStorageService.setBaseEndpoint("");
 
         archivalStorageServiceDebug = new ArchivalStorageServiceDebug();
-        archivalStorageServiceDebug.setWorkspace(WS.toString());
+        archivalStorageServiceDebug.setWorkspace(WS.toString(), props.getProperty("archivalStorage.debugLocation"));
 
         producerProfileStore.setGenerator(generator);
         ingestWorkflowStore.setGenerator(generator);
@@ -154,7 +158,7 @@ public class ArchivalStorageDelegateTest extends DelegateTest {
         String sipProfileXml = Resources.toString(this.getClass().getResource(
                 "/sipProfiles/comprehensiveSipProfile.xsl"), StandardCharsets.UTF_8);
         sipProfile.setXsl(sipProfileXml);
-        sipProfile.setSipMetadataPath(PATH_TO_METS);
+        sipProfile.setSipMetadataPathGlobPattern(PATH_TO_METS);
         sipProfileStore.save(sipProfile);
 
         producer = new Producer();
@@ -190,7 +194,7 @@ public class ArchivalStorageDelegateTest extends DelegateTest {
         ingestWorkflow = new IngestWorkflow();
         ingestWorkflow.setSip(sip);
         ingestWorkflow.setId(INGEST_WORKFLOW_ID);
-        ingestWorkflow.setOriginalFileName(SIP_FILE_NAME);
+        ingestWorkflow.setFileName(SIP_FILE_NAME);
         ingestWorkflow.setBatch(batch);
         ingestWorkflow.setVersioningLevel(VersioningLevel.NO_VERSIONING);
         ingestWorkflow.setXmlVersionNumber(1);
@@ -208,17 +212,17 @@ public class ArchivalStorageDelegateTest extends DelegateTest {
 
     @Test
     public void testArchivalStorageDelegate() throws InterruptedException, IOException {
-        InputStream arclibXmlStream = getClass().getResourceAsStream("/sampleData/arclibXml4.xml");
+        InputStream arclibXmlStream = getClass().getResourceAsStream("/sampleData/8b2efafd-b637-4b97-a8f7-1b97dd4ee622_xml_2.xml");
         String arclibXml = IOUtils.toString(arclibXmlStream, StandardCharsets.UTF_8);
 
-        solrArclibXmlStore.createIndex(arclibXml, producer.getId(), user.getId(), IndexedArclibXmlDocumentState.PROCESSED);
+        solrArclibXmlStore.createIndex(arclibXml, producer, user, IndexedArclibXmlDocumentState.PROCESSED, false);
 
         Map<String, Object> variables = asMap(BpmConstants.ProcessVariables.batchId, batch.getId());
         variables.put(BpmConstants.ProcessVariables.ingestWorkflowExternalId, EXTERNAL_ID);
         variables.put(BpmConstants.ProcessVariables.ingestWorkflowId, INGEST_WORKFLOW_ID);
         variables.put(BpmConstants.ProcessVariables.debuggingModeActive, true);
         variables.put(BpmConstants.MessageDigestCalculation.checksumSha512, SIP_HASH);
-        variables.put(BpmConstants.Ingestion.originalSipFileName, SIP_FILE_NAME);
+        variables.put(BpmConstants.Ingestion.sipFileName, SIP_FILE_NAME);
         variables.put(BpmConstants.ProcessVariables.sipId, sip.getId());
 
         variables.put(BpmConstants.ArchivalStorage.aipStoreRetries, 3);
@@ -229,7 +233,7 @@ public class ArchivalStorageDelegateTest extends DelegateTest {
         Thread.sleep(3000);
 
         ingestWorkflow = ingestWorkflowStore.find(INGEST_WORKFLOW_ID);
-        assertThat(fileExists(WS.resolve(ArchivalStorageServiceDebug.ARC_STORAGE_DATA).resolve(sip.getId())), is(true));
-        assertThat(fileExists(WS.resolve(ArchivalStorageServiceDebug.ARC_STORAGE_DATA).resolve(sip.getId() + 1)), is(true));
+        assertThat(fileExists(WS.resolve(props.getProperty("archivalStorage.debugLocation")).resolve(sip.getId())), is(true));
+        assertThat(fileExists(WS.resolve(props.getProperty("archivalStorage.debugLocation")).resolve(sip.getId() + 1)), is(true));
     }
 }

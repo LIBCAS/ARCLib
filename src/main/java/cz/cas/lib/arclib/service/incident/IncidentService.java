@@ -2,12 +2,13 @@ package cz.cas.lib.arclib.service.incident;
 
 import com.google.common.collect.Lists;
 import cz.cas.lib.arclib.bpm.BpmConstants;
+import cz.cas.lib.arclib.domain.User;
 import cz.cas.lib.arclib.domain.ingestWorkflow.IngestWorkflowFailureInfo;
 import cz.cas.lib.arclib.domain.ingestWorkflow.IngestWorkflowFailureType;
 import cz.cas.lib.arclib.dto.IncidentInfoDto;
-import cz.cas.lib.arclib.exception.bpm.IncidentException;
 import cz.cas.lib.arclib.service.IngestErrorHandler;
 import cz.cas.lib.arclib.service.SolveIncidentDto;
+import cz.cas.lib.arclib.service.UserService;
 import cz.cas.lib.core.exception.GeneralException;
 import cz.cas.lib.core.exception.MissingObject;
 import cz.cas.lib.core.index.dto.Order;
@@ -16,7 +17,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.camunda.bpm.engine.HistoryService;
 import org.camunda.bpm.engine.ManagementService;
 import org.camunda.bpm.engine.RuntimeService;
-import org.camunda.bpm.engine.history.*;
 import org.camunda.bpm.engine.runtime.Incident;
 import org.camunda.bpm.engine.runtime.ProcessInstance;
 import org.camunda.bpm.engine.runtime.ProcessInstanceQuery;
@@ -30,11 +30,8 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
-import static cz.cas.lib.arclib.utils.ArclibUtils.toIncidentConfigVariableName;
 import static cz.cas.lib.core.util.Utils.notNull;
-import static java.util.stream.Collectors.*;
 
 /**
  * Incident manager.
@@ -48,6 +45,7 @@ public class IncidentService {
     private RuntimeService runtimeService;
     private HistoryService historyService;
     private JmsTemplate template;
+    private UserService userService;
     @Getter
     private IngestErrorHandler ingestErrorHandler;
 
@@ -78,7 +76,9 @@ public class IncidentService {
                     String stackTrace = managementService.getJobExceptionStacktrace(incident.getConfiguration());
 
                     Map<String, Object> variables = runtimeService.getVariables(incident.getExecutionId());
-                    incidents.add(
+            String responsiblePersonId = (String) variables.get(BpmConstants.ProcessVariables.responsiblePerson);
+            User responsiblePerson = userService.find(responsiblePersonId);
+            incidents.add(
                             new IncidentInfoDto(
                                     incident.getId(),
                                     incident.getIncidentTimestamp().toInstant(),
@@ -88,7 +88,7 @@ public class IncidentService {
                                     incident.getActivityId(),
                                     (String) variables.get(BpmConstants.ProcessVariables.batchId),
                                     (String) variables.get(BpmConstants.ProcessVariables.ingestWorkflowExternalId),
-                                    (String) variables.get(BpmConstants.ProcessVariables.assignee),
+                                    responsiblePerson,
                                     (String) variables.get(BpmConstants.ProcessVariables.latestConfig),
                                     incident.getProcessInstanceId()
                             )
@@ -106,8 +106,8 @@ public class IncidentService {
             case BATCH:
                 incidents.sort((fst, snd) -> collator.compare(fst.getBatchId(), snd.getBatchId()));
                 break;
-            case ASSIGNEE:
-                incidents.sort((fst, snd) -> collator.compare(fst.getAssignee(), snd.getAssignee()));
+            case RESPONSIBLE_PERSON:
+                incidents.sort((fst, snd) -> collator.compare(fst.getResponsiblePerson().getUsername(), snd.getResponsiblePerson().getUsername()));
                 break;
             case TIMESTAMP:
                 incidents.sort(Comparator.comparing(IncidentInfoDto::getCreated));
@@ -121,88 +121,6 @@ public class IncidentService {
     }
 
     /**
-     * Gets all incidents (also the historical ones) of ingest workflow
-     *
-     * @param externalId external id of ingest workflow
-     * @return Sorted {@link List}
-     */
-    public List<IncidentInfoDto> getIncidentsOfIngestWorkflow(String externalId) {
-        List<IncidentInfoDto> incidentDtos = new ArrayList<>();
-        HistoricProcessInstanceQuery query = historyService.createHistoricProcessInstanceQuery();
-        query.variableValueEquals(BpmConstants.ProcessVariables.ingestWorkflowExternalId, externalId);
-        List<HistoricProcessInstance> processInstances = query.list();
-        if (processInstances.isEmpty()) {
-            return null;
-        }
-        if (processInstances.size() > 1) {
-            throw new GeneralException("Expecting one process instance but found " + processInstances.size() +
-                    " for ingest workflow with external id  " + externalId);
-        }
-        HistoricProcessInstance pi = processInstances.get(0);
-
-        Map<String, Object> processVariables = historyService
-                .createHistoricVariableInstanceQuery()
-                .processInstanceId(pi.getId())
-                .list()
-                .stream()
-                .collect(Collectors.toMap(
-                        HistoricVariableInstance::getName,
-                        HistoricVariableInstance::getValue
-                ));
-
-        Map<String, List<HistoricIncident>> incidents = historyService
-                .createHistoricIncidentQuery()
-                .processInstanceId(pi.getId())
-                .orderByCreateTime()
-                .asc()
-                .list()
-                .stream()
-                .collect(groupingBy(HistoricIncident::getConfiguration, mapping(hi -> hi, toList())));
-
-        for (String jobId : incidents.keySet()) {
-            List<HistoricIncident> incidentsOfJob = incidents.get(jobId);
-            List<HistoricJobLog> jobLogs = historyService
-                    .createHistoricJobLogQuery()
-                    .jobId(jobId)
-                    .failureLog()
-                    .orderPartiallyByOccurrence()
-                    .asc()
-                    .list();
-            jobLogs = jobLogs.stream().filter(l -> {
-                String msg = l.getJobExceptionMessage();
-                return msg != null && msg.contains(IncidentException.INCIDENT_MSG_PREFIX);
-            }).collect(Collectors.toList());
-            if (incidentsOfJob.size() != jobLogs.size())
-                throw new GeneralException("Unexpected error - count of incidents of a job is not the same as count of job failure logs");
-            for (int i = 0; i < incidentsOfJob.size(); i++) {
-                HistoricIncident incident = incidentsOfJob.get(i);
-                String stackTrace = historyService.getHistoricJobLogExceptionStacktrace(jobLogs.get(i).getId());
-
-                String configUsedWhenIncidentOccurred = (String) processVariables.get(toIncidentConfigVariableName(incident.getId()));
-                if (configUsedWhenIncidentOccurred == null)
-                    configUsedWhenIncidentOccurred = (String) processVariables.get(BpmConstants.ProcessVariables.latestConfig);
-
-                incidentDtos.add(
-                        new IncidentInfoDto(
-                                incident.getId(),
-                                incident.getCreateTime().toInstant(),
-                                incident.getEndTime() == null ? null : incident.getEndTime().toInstant(),
-                                incident.getIncidentMessage(),
-                                stackTrace,
-                                incident.getActivityId(),
-                                (String) processVariables.get(BpmConstants.ProcessVariables.batchId),
-                                externalId,
-                                (String) processVariables.get(BpmConstants.ProcessVariables.assignee),
-                                configUsedWhenIncidentOccurred,
-                                incident.getProcessInstanceId()
-                        )
-                );
-            }
-        }
-        return incidentDtos;
-    }
-
-    /**
      * Tries to solve incidents by new config.
      * <p>
      * Incident are solved by workers. If the exception is thrown during incident solution other incident solutions are not affected.
@@ -212,6 +130,7 @@ public class IncidentService {
      * @param config
      */
     public void solveIncidents(List<String> incidentIds, String config) {
+        log.debug("Trying to solve incidents using config " + config + ".");
         for (String incidentId : incidentIds) {
             template.convertAndSend("incident", new SolveIncidentDto(incidentId, config));
         }
@@ -233,12 +152,12 @@ public class IncidentService {
             ProcessInstance processInstance = runtimeService.createProcessInstanceQuery().incidentId(incidentId).singleResult();
             notNull(processInstance, (() -> new MissingObject(Incident.class, incidentId)));
             String externalId = (String) runtimeService.getVariable(processInstance.getId(), BpmConstants.ProcessVariables.ingestWorkflowExternalId);
-            String assignee = (String) runtimeService.getVariable(processInstance.getId(), BpmConstants.ProcessVariables.assignee);
+            String responsiblePerson = (String) runtimeService.getVariable(processInstance.getId(), BpmConstants.ProcessVariables.responsiblePerson);
 
             ingestErrorHandler.handleError(
                     externalId,
                     new IngestWorkflowFailureInfo(reason, null, IngestWorkflowFailureType.INCIDENT_CANCELLATION),
-                    processInstance.getId(), assignee);
+                    processInstance.getId(), responsiblePerson);
         }
     }
 
@@ -265,5 +184,10 @@ public class IncidentService {
     @Inject
     public void setIngestErrorHandler(IngestErrorHandler ingestErrorHandler) {
         this.ingestErrorHandler = ingestErrorHandler;
+    }
+
+    @Inject
+    public void setUserService(UserService userService) {
+        this.userService = userService;
     }
 }

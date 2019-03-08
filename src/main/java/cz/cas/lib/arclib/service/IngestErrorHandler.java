@@ -8,12 +8,12 @@ import cz.cas.lib.arclib.domain.packages.AuthorialPackage;
 import cz.cas.lib.arclib.domain.packages.Sip;
 import cz.cas.lib.arclib.dto.JmsDto;
 import cz.cas.lib.core.exception.MissingObject;
-import cz.cas.lib.core.store.Transactional;
 import cz.cas.lib.core.util.Utils;
 import lombok.extern.slf4j.Slf4j;
 import org.camunda.bpm.engine.RuntimeService;
 import org.springframework.jms.core.JmsTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import javax.inject.Inject;
 
@@ -25,6 +25,7 @@ public class IngestErrorHandler {
     private JmsTemplate template;
     private RuntimeService runtimeService;
     private AipService aipService;
+    private TransactionTemplate transactionTemplate;
 
     /**
      * Assigns failure info to ingest workflow, deactivates AIP update lock, kills camunda process and notifies Coordinator
@@ -34,54 +35,59 @@ public class IngestErrorHandler {
      * @param processInstanceId         process instance id
      * @param userId                    id of the user
      */
-    @Transactional
     public void handleError(String externalId, IngestWorkflowFailureInfo ingestWorkflowFailureInfo, String processInstanceId, String userId) {
-        IngestWorkflow ingestWorkflow = ingestWorkflowService.findByExternalId(externalId);
-        Utils.notNull(ingestWorkflow, () -> new MissingObject(IngestWorkflow.class, externalId));
+        IngestWorkflow iw = transactionTemplate.execute(status -> {
+            IngestWorkflow ingestWorkflow = ingestWorkflowService.findByExternalId(externalId);
+            Utils.notNull(ingestWorkflow, () -> new MissingObject(IngestWorkflow.class, externalId));
 
-        ingestWorkflow.setProcessingState(IngestWorkflowState.FAILED);
-        ingestWorkflow.setFailureInfo(ingestWorkflowFailureInfo);
-        ingestWorkflowService.save(ingestWorkflow);
-        log.info("State of ingest workflow with external id " + ingestWorkflow.getExternalId() + " changed to " + IngestWorkflowState.FAILED + ".");
+            ingestWorkflow.setProcessingState(IngestWorkflowState.FAILED);
+            ingestWorkflow.setFailureInfo(ingestWorkflowFailureInfo);
+            ingestWorkflowService.save(ingestWorkflow);
+            log.info("State of ingest workflow with external id " + ingestWorkflow.getExternalId() + " changed to " + IngestWorkflowState.FAILED + ".");
 
-        IngestWorkflowFailureType failureType = ingestWorkflowFailureInfo.getIngestWorkflowFailureType();
-        String cancellationReason = ingestWorkflowFailureInfo.getMsg();
+            IngestWorkflowFailureType failureType = ingestWorkflowFailureInfo.getIngestWorkflowFailureType();
+            String cancellationReason = ingestWorkflowFailureInfo.getMsg();
 
-        switch (failureType) {
-            case BPM_ERROR:
-                log.error(failureType + " : " + ingestWorkflowFailureInfo.getMsg());
-                runtimeService.deleteProcessInstance(processInstanceId, cancellationReason, false, false);
-                break;
-            case INTERNAL_ERROR:
-                log.error(failureType + " : " + ingestWorkflowFailureInfo.getMsg());
-                runtimeService.deleteProcessInstance(processInstanceId, cancellationReason, false, false);
-                break;
-            case AUTHORIAL_PACKAGE_LOCKED:
-                log.info(failureType + " : " + ingestWorkflowFailureInfo.getMsg());
-                break;
-            case INVALID_CHECKSUM:
-                log.error(failureType + " : " + ingestWorkflowFailureInfo.getMsg());
-                break;
-            case INCIDENT_CANCELLATION:
-                log.info(failureType + " : " + ingestWorkflowFailureInfo.getMsg());
-                runtimeService.deleteProcessInstance(processInstanceId, cancellationReason, false, true);
-                break;
-            case BATCH_CANCELLATION:
-                log.info(failureType + " : " + ingestWorkflowFailureInfo.getMsg());
-                if (processInstanceId != null)
-                    runtimeService.deleteProcessInstance(processInstanceId, cancellationReason, false, true);
-                break;
-        }
-
-        Sip sip = ingestWorkflow.getSip();
-        if (sip != null) {
-            AuthorialPackage authorialPackage = sip.getAuthorialPackage();
-            if (authorialPackage != null) {
-                String authorialPackageId = authorialPackage.getId();
-                aipService.deactivateLock(authorialPackageId);
+            switch (failureType) {
+                case BPM_ERROR:
+                    log.error(failureType + " : " + ingestWorkflowFailureInfo.getMsg());
+                    if (processInstanceId != null)
+                        runtimeService.deleteProcessInstance(processInstanceId, cancellationReason, false, false);
+                    break;
+                case INTERNAL_ERROR:
+                    log.error(failureType + " : " + ingestWorkflowFailureInfo.getMsg());
+                    if (processInstanceId != null)
+                        runtimeService.deleteProcessInstance(processInstanceId, cancellationReason, false, false);
+                    break;
+                case AUTHORIAL_PACKAGE_LOCKED:
+                    log.info(failureType + " : " + ingestWorkflowFailureInfo.getMsg());
+                    break;
+                case INVALID_CHECKSUM:
+                    log.error(failureType + " : " + ingestWorkflowFailureInfo.getMsg());
+                    break;
+                case INCIDENT_CANCELLATION:
+                    log.info(failureType + " : " + ingestWorkflowFailureInfo.getMsg());
+                    if (processInstanceId != null)
+                        runtimeService.deleteProcessInstance(processInstanceId, cancellationReason, false, true);
+                    break;
+                case BATCH_CANCELLATION:
+                    log.info(failureType + " : " + ingestWorkflowFailureInfo.getMsg());
+                    if (processInstanceId != null)
+                        runtimeService.deleteProcessInstance(processInstanceId, cancellationReason, false, true);
+                    break;
             }
-        }
-        template.convertAndSend("finish", new JmsDto(ingestWorkflow.getBatch().getId(), userId));
+
+            Sip sip = ingestWorkflow.getSip();
+            if (sip != null) {
+                AuthorialPackage authorialPackage = sip.getAuthorialPackage();
+                if (authorialPackage != null) {
+                    String authorialPackageId = authorialPackage.getId();
+                    aipService.deactivateLock(authorialPackageId);
+                }
+            }
+            return ingestWorkflow;
+        });
+        template.convertAndSend("finish", new JmsDto(iw.getBatch().getId(), userId));
     }
 
     @Inject
@@ -103,4 +109,7 @@ public class IngestErrorHandler {
     public void setAipService(AipService aipService) {
         this.aipService = aipService;
     }
+
+    @Inject
+    public void setTransactionTemplate(TransactionTemplate transactionTemplate) {this.transactionTemplate = transactionTemplate;}
 }

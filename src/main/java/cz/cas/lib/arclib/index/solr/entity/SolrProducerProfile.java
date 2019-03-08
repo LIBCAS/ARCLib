@@ -12,7 +12,7 @@ import org.springframework.data.solr.core.mapping.SolrDocument;
 
 @Getter
 @Setter
-@SolrDocument(solrCoreName = "producerProfile")
+@SolrDocument(collection = "producerProfile")
 public class SolrProducerProfile extends SolrNamedObject {
 
     @Field

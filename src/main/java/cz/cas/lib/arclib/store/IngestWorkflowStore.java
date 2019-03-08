@@ -39,6 +39,7 @@ public class IngestWorkflowStore extends DatedStore<IngestWorkflow, QIngestWorkf
         IngestWorkflow ingestWorkflowFound = query()
                 .select(ingestWorkflow)
                 .where(ingestWorkflow.externalId.eq(externalId))
+                .where(ingestWorkflow.deleted.isNull())
                 .fetchFirst();
 
         detachAll();
@@ -51,6 +52,20 @@ public class IngestWorkflowStore extends DatedStore<IngestWorkflow, QIngestWorkf
         List<IngestWorkflow> ingestWorkflowsFound = query()
                 .select(ingestWorkflow)
                 .where(ingestWorkflow.sip.authorialPackage.id.eq(authorialPackageId))
+                .where(ingestWorkflow.deleted.isNull())
+                .fetch();
+
+        detachAll();
+        return ingestWorkflowsFound;
+    }
+
+    public List<IngestWorkflow> findBySipId(String sipId) {
+        QIngestWorkflow ingestWorkflow = qObject();
+
+        List<IngestWorkflow> ingestWorkflowsFound = query()
+                .select(ingestWorkflow)
+                .where(ingestWorkflow.sip.id.eq(sipId))
+                .where(ingestWorkflow.deleted.isNull())
                 .fetch();
 
         detachAll();

@@ -1,7 +1,6 @@
 package cz.cas.lib.core.index.solr;
 
 import cz.cas.lib.core.domain.DomainObject;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -19,7 +18,6 @@ import org.springframework.data.solr.core.mapping.Indexed;
  * in {@link SolrStore#save(DomainObject)}.
  * </p>
  */
-@AllArgsConstructor
 @NoArgsConstructor
 @Getter
 @Setter
@@ -30,7 +28,11 @@ public abstract class SolrDomainObject {
 
     @Indexed
     @Field
-    protected final String type = this.getClass().getName();
+    protected String type = this.getClass().getName();
+
+    public SolrDomainObject(String id) {
+        this.id = id;
+    }
 
     @Override
     public boolean equals(Object o) {

@@ -9,6 +9,7 @@ import cz.cas.lib.arclib.store.BatchStore;
 import cz.cas.lib.arclib.store.IngestWorkflowStore;
 import cz.cas.lib.arclib.utils.XmlUtils;
 import cz.cas.lib.core.store.Transactional;
+import helper.TransformerFactoryWorkaroundTest;
 import org.camunda.bpm.engine.RepositoryService;
 import org.junit.After;
 import org.junit.Before;
@@ -31,7 +32,7 @@ import static org.junit.Assert.assertThat;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest
-public class WorkerServiceTest {
+public class WorkerServiceTest extends TransformerFactoryWorkaroundTest {
 
     @Inject
     private BatchStore batchStore;
@@ -50,7 +51,7 @@ public class WorkerServiceTest {
 
     @Before
     public void before() {
-
+        System.setProperty("javax.xml.transform.TransformerFactory", "cz.cas.lib.arclib.config.ArclibTransformerFactory");
     }
 
     @After

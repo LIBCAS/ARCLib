@@ -17,6 +17,7 @@ import cz.cas.lib.arclib.service.IngestWorkflowService;
 import cz.cas.lib.arclib.service.incident.CustomIncidentHandler;
 import cz.cas.lib.arclib.store.IngestWorkflowStore;
 import cz.cas.lib.core.store.Transactional;
+import helper.DbTest;
 import org.camunda.bpm.engine.history.HistoricJobLog;
 import org.camunda.bpm.engine.history.HistoricProcessInstance;
 import org.camunda.bpm.engine.runtime.Job;
@@ -29,6 +30,8 @@ import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.jms.core.JmsTemplate;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import java.util.HashMap;
 import java.util.List;
@@ -42,7 +45,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @Deployment(resources = "bpmn/errorTest.bpmn")
-public class ErrorHandlingTest {
+public class ErrorHandlingTest extends DbTest {
 
     private static final String CONFIG_EX_INCIDENT = "{\"throw\":\"incident\"}";
     private static final String CONFIG_EX_RUNTIME = "{\"throw\":\"runtime\"}";
@@ -53,6 +56,7 @@ public class ErrorHandlingTest {
 
     private IngestWorkflow ingestWorkflow;
     private IngestErrorHandler ingestErrorHandler = new IngestErrorHandler();
+    private TransactionTemplate transactionTemplate = new TransactionTemplate();
     private BpmTestConfig bpmTestConfig = new BpmTestConfig(new CustomIncidentHandler());
 
     @Mock
@@ -69,16 +73,21 @@ public class ErrorHandlingTest {
     @Rule
     public ProcessEngineRule rule = new ProcessEngineRule(bpmTestConfig.buildProcessEngine());
 
+    @Mock
+    private PlatformTransactionManager transactionManager;
+
 
     @Before
     @Transactional
     public void testSetUp() {
+        MockitoAnnotations.initMocks(this);
+
         CustomIncidentHandler customIncidentHandler = (CustomIncidentHandler) bpmTestConfig.getCustomIncidentHandlers().get(0);
         customIncidentHandler.setManagementService(rule.getManagementService());
         customIncidentHandler.setRuntimeService(rule.getRuntimeService());
         customIncidentHandler.setIngestErrorHandler(ingestErrorHandler);
-
-        MockitoAnnotations.initMocks(this);
+        ingestErrorHandler.setTransactionTemplate(transactionTemplate);
+        transactionTemplate.setTransactionManager(transactionManager);
 
         Sip sip = new Sip();
         AuthorialPackage authorialPackage = new AuthorialPackage();

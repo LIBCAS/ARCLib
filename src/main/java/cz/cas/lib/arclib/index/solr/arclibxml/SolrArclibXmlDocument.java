@@ -2,19 +2,20 @@ package cz.cas.lib.arclib.index.solr.arclibxml;
 
 import cz.cas.lib.arclib.domain.ingestWorkflow.IngestWorkflow;
 import cz.cas.lib.arclib.domain.packages.AuthorialPackage;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.apache.solr.client.solrj.beans.Field;
+import org.apache.solr.common.SolrInputDocument;
 import org.springframework.data.solr.core.mapping.Dynamic;
 import org.springframework.data.solr.core.mapping.Indexed;
 import org.springframework.data.solr.core.mapping.SolrDocument;
 
 import java.io.Serializable;
-import java.util.*;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
-@AllArgsConstructor
 @NoArgsConstructor
 @Getter
 @Setter
@@ -24,18 +25,26 @@ public class SolrArclibXmlDocument implements Serializable {
     /**
      * names of fields in SOLR required for application logic
      */
-    public static final String ID = "id";
     public static final String PRODUCER_ID = "producer_id";
-    public static final String USER_ID = "user_id";
+    public static final String PRODUCER_NAME = "producer_name";
+    public static final String USER_NAME = "user_name";
+    public static final String DOCUMENT = "document";
+    public static final String DEBUG_MODE = "debug_mode";
+    public static final String STATE = "state";
+    public static final String COLLECTION_NAME = "collection_name";
+
+    /**
+     * these are also stored in ARCLib XML
+     */
+    public static final String ID = "id";
     public static final String SIP_ID = "sip_id";
     public static final String SIP_VERSION_NUMBER = "sip_version_number";
     public static final String XML_VERSION_NUMBER = "xml_version_number";
     public static final String SIP_VERSION_OF = "sip_version_of";
     public static final String XML_VERSION_OF = "xml_version_of";
     public static final String CREATED = "created";
-    public static final String DOCUMENT = "document";
-    public static final String STATE = "state";
     public static final String AUTHORIAL_ID = "authorial_id";
+    public static final String DUBLIN_CORE = "dublin_core";
 
     /**
      * ID of the document, equal to id {@link IngestWorkflow#externalId}.
@@ -62,12 +71,20 @@ public class SolrArclibXmlDocument implements Serializable {
     private String producerId;
 
     /**
-     * ID of the User.
+     * unique name of the Producer.
      * assigned by application
      */
-    @Field(value = USER_ID)
+    @Field(value = PRODUCER_NAME)
     @Indexed
-    private String userId;
+    private String producerName;
+
+    /**
+     * unique name of the User.
+     * assigned by application
+     */
+    @Field(value = USER_NAME)
+    @Indexed
+    private String userName;
 
     /**
      * Authorial id of the authorial package, equal to id {@link AuthorialPackage#authorialId}.
@@ -130,6 +147,14 @@ public class SolrArclibXmlDocument implements Serializable {
     @Indexed
     private IndexedArclibXmlDocumentState state;
 
+    @Field(value = DEBUG_MODE)
+    @Indexed(defaultValue = "false")
+    private Boolean debugMode;
+
+    @Field(value = COLLECTION_NAME)
+    @Indexed
+    private String collectionName;
+
     /**
      * Other fields of AIP XML which has to be indexed.
      */
@@ -138,24 +163,45 @@ public class SolrArclibXmlDocument implements Serializable {
     @Dynamic
     private Map<String, Object> fields = new HashMap<>();
 
-    /**
-     * Adds field with its value to Solr document. If the field already exists values are stored in list.
-     *
-     * @param fieldKey
-     * @param newFieldValue
-     */
-    public void addField(String fieldKey, Object newFieldValue) {
-        if (fields.containsKey(fieldKey)) {
-            Object oldAttrValue = fields.get(fieldKey);
-            if (oldAttrValue instanceof Set)
-                ((HashSet) oldAttrValue).add(newFieldValue);
-            else {
-                Set<Object> fieldValues = new HashSet<>();
-                fieldValues.add(fields.get(fieldKey));
-                fieldValues.add(newFieldValue);
-                fields.put(fieldKey, fieldValues);
-            }
-        } else
-            fields.put(fieldKey, newFieldValue);
+    public static SolrInputDocument createDocument(String id, Date created, String producerId, String producerName, String userName, String authorialId, String sipId, Integer sipVersionNumber, Integer xmlVersionNumber, String sipVersionOf, String xmlVersionOf, String document, IndexedArclibXmlDocumentState state, Boolean debugMode, String collectionName, Map<String, Object> fields) {
+        SolrInputDocument doc = new SolrInputDocument();
+        doc.addField(ID, id);
+        doc.addField(CREATED, created);
+        doc.addField(PRODUCER_ID, producerId);
+        doc.addField(PRODUCER_NAME, producerName);
+        doc.addField(USER_NAME, userName);
+        doc.addField(AUTHORIAL_ID, authorialId);
+        doc.addField(SIP_ID, sipId);
+        doc.addField(SIP_VERSION_NUMBER, sipVersionNumber);
+        doc.addField(XML_VERSION_NUMBER, xmlVersionNumber);
+        doc.addField(SIP_VERSION_OF, sipVersionOf);
+        doc.addField(XML_VERSION_OF, xmlVersionOf);
+        doc.addField(DOCUMENT, document);
+        doc.addField(STATE, state.toString());
+        doc.addField(DEBUG_MODE, debugMode);
+        doc.addField(COLLECTION_NAME, collectionName);
+        return doc;
     }
+
+//    /**
+//     * Adds field with its value to Solr document. If the field already exists values are stored in list.
+//     *
+//     * @param fieldKey
+//     * @param newFieldValue
+//     */
+//    public void addField(SolrInputDocument solrInputDocument, String fieldKey, Object newFieldValue) {
+//        if (solrInputDocument.getFieldNames().contains(fieldKey)) {
+//            Object oldAttrValue = solrInputDocument.get(fieldKey);
+//            if (oldAttrValue instanceof Set)
+//                ((HashSet) oldAttrValue).add(newFieldValue);
+//            else {
+//                Set<Object> fieldValues = new HashSet<>();
+//                fieldValues.add(solrInputDocument.get(fieldKey));
+//                fieldValues.add(newFieldValue);
+//                solr
+//                solrInputDocument.put(fieldKey, fieldValues);
+//            }
+//        } else
+//            fields.put(fieldKey, newFieldValue);
+//    }
 }

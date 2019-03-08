@@ -10,7 +10,7 @@
                             <xs:element name="validationSchemaCheck">
                                 <xs:complexType>
                                     <xs:sequence>
-                                        <xs:element name="filePath" type="xs:string"/>
+                                        <xs:element name="filePathGlobPattern" type="xs:string"/>
                                         <xs:element name="schema" type="xs:string"/>
                                     </xs:sequence>
                                 </xs:complexType>
@@ -18,7 +18,7 @@
                             <xs:element name="nodeCheck">
                                 <xs:complexType>
                                     <xs:sequence>
-                                        <xs:element name="filePath" type="xs:string"/>
+                                        <xs:element name="filePathGlobPattern" type="xs:string"/>
                                         <xs:element name="xPath" type="xs:string"/>
                                         <xs:choice>
                                             <xs:element name="value" type="xs:string"/>
@@ -30,7 +30,7 @@
                             <xs:element name="fileExistenceCheck">
                                 <xs:complexType>
                                     <xs:sequence>
-                                        <xs:element name="filePath" type="xs:string"/>
+                                        <xs:element name="filePathGlobPattern" type="xs:string"/>
                                     </xs:sequence>
                                 </xs:complexType>
                             </xs:element>

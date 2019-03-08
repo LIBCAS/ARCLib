@@ -22,7 +22,7 @@ public class SchedulingInitializer implements ApplicationListener<ContextRefresh
     public void onApplicationEvent(ContextRefreshedEvent event) {
         Collection<Job> jobs = service.findAll();
 
-        log.info("Starting jobs...");
+        log.debug("Starting jobs...");
 
         jobs.forEach(service::updateJobSchedule);
     }

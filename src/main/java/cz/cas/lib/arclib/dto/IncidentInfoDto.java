@@ -1,7 +1,9 @@
 package cz.cas.lib.arclib.dto;
 
+import cz.cas.lib.arclib.domain.User;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.Instant;
@@ -9,6 +11,7 @@ import java.time.Instant;
 @AllArgsConstructor
 @Getter
 @Setter
+@NoArgsConstructor
 public class IncidentInfoDto {
     private String id;
     private Instant created;
@@ -18,7 +21,7 @@ public class IncidentInfoDto {
     private String activityId;
     private String batchId;
     private String externalId;
-    private String assignee;
+    private User responsiblePerson;
     /**
      * config which was used when incident occurred i.e. config which caused the incident not the one which was used to solve it
      */

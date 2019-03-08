@@ -1,5 +1,6 @@
 package cz.cas.lib.arclib.domain.packages;
 
+import cz.cas.lib.arclib.domain.User;
 import cz.cas.lib.core.domain.DomainObject;
 import cz.cas.lib.core.scheduling.job.Job;
 import lombok.AllArgsConstructor;
@@ -8,10 +9,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.BatchSize;
 
-import javax.persistence.CascadeType;
-import javax.persistence.Entity;
-import javax.persistence.OneToOne;
-import javax.persistence.Table;
+import javax.persistence.*;
 import java.time.Instant;
 
 /**
@@ -35,6 +33,12 @@ public class AuthorialPackageUpdateLock extends DomainObject {
      * Zamknutý
      */
     private boolean locked;
+
+    /**
+     * Užívateľ, ktorý uzamkol balík
+     */
+    @ManyToOne
+    private User lockedByUser;
 
     /**
      * Čas posledného obnovenia

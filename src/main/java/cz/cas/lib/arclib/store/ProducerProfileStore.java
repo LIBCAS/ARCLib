@@ -1,9 +1,9 @@
 package cz.cas.lib.arclib.store;
 
 import cz.cas.lib.arclib.domain.Producer;
-import cz.cas.lib.arclib.domain.profiles.QProducerProfile;
 import cz.cas.lib.arclib.domain.ingestWorkflow.WorkflowDefinition;
 import cz.cas.lib.arclib.domain.profiles.ProducerProfile;
+import cz.cas.lib.arclib.domain.profiles.QProducerProfile;
 import cz.cas.lib.arclib.domain.profiles.SipProfile;
 import cz.cas.lib.arclib.domain.profiles.ValidationProfile;
 import cz.cas.lib.arclib.index.solr.entity.SolrProducerProfile;
@@ -45,7 +45,7 @@ public class ProducerProfileStore extends SolrNamedStore<ProducerProfile, QProdu
     @Transactional
     public ProducerProfile findByExternalId(String number) {
         Params params = new Params();
-        params.setPageSize(1000);
+        params.setPageSize(null);
 
         Filter filter = new Filter();
         filter.setField("externalId");
@@ -99,10 +99,7 @@ public class ProducerProfileStore extends SolrNamedStore<ProducerProfile, QProdu
             indexObject.setWorkflowDefinitionName(workflowDefinition.getName());
         }
 
-        Boolean debuggingModeActive = obj.getDebuggingModeActive();
-        if (debuggingModeActive != null) {
-            indexObject.setDebuggingModeActive(debuggingModeActive);
-        }
+        indexObject.setDebuggingModeActive(obj.isDebuggingModeActive());
         return indexObject;
     }
 

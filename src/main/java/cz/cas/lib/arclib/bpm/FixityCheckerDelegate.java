@@ -1,26 +1,32 @@
 package cz.cas.lib.arclib.bpm;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import cz.cas.lib.arclib.domain.IngestToolFunction;
+import cz.cas.lib.arclib.domain.ingestWorkflow.IngestEvent;
 import cz.cas.lib.arclib.domain.profiles.SipProfile;
 import cz.cas.lib.arclib.exception.bpm.IncidentException;
 import cz.cas.lib.arclib.service.fixity.BagitPackageFixityVerifier;
 import cz.cas.lib.arclib.service.fixity.MetsPackageFixityVerifier;
+import cz.cas.lib.arclib.service.fixity.PackageFixityVerifier;
 import cz.cas.lib.arclib.store.SipProfileStore;
-import cz.cas.lib.arclib.utils.ArclibUtils;
 import cz.cas.lib.core.exception.GeneralException;
 import cz.cas.lib.core.store.Transactional;
 import cz.cas.lib.core.util.Utils;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.camunda.bpm.engine.delegate.DelegateExecution;
 import org.camunda.bpm.engine.delegate.JavaDelegate;
 import org.springframework.stereotype.Service;
 
 import javax.inject.Inject;
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
+import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
+
+import static cz.cas.lib.core.util.Utils.listFilesMatchingGlobPattern;
 
 @Slf4j
 @Service
@@ -32,6 +38,8 @@ public class FixityCheckerDelegate extends ArclibDelegate implements JavaDelegat
     private MetsPackageFixityVerifier metsFixityVerifier;
     private BagitPackageFixityVerifier bagitFixityVerifier;
     private SipProfileStore sipProfileStore;
+    @Getter
+    private String toolName="ARCLib_"+ IngestToolFunction.fixity_check;
 
     /**
      * Checks fixity of files specified in SIP META XML and sets BPM variable `filePathsAndFixities`.
@@ -43,33 +51,53 @@ public class FixityCheckerDelegate extends ArclibDelegate implements JavaDelegat
     @Override
     public void execute(DelegateExecution execution) throws IOException, IncidentException {
         String ingestWorkflowExternalId = getIngestWorkflowExternalId(execution);
-        log.info("Execution of Fixity checker delegate started for ingest workflow " + ingestWorkflowExternalId + ".");
+        log.debug("Execution of Fixity checker delegate started for ingest workflow " + ingestWorkflowExternalId + ".");
 
         String sipProfileId = getStringVariable(execution, BpmConstants.ProcessVariables.sipProfileId);
         JsonNode config = getConfigRoot(execution);
         SipProfile sipProfile = sipProfileStore.find(sipProfileId);
-        String originalSipFileName = getStringVariable(execution, BpmConstants.Ingestion.originalSipFileName);
-        Path sipWsPath = ArclibUtils.getSipFolderWorkspacePath(ingestWorkflowExternalId, workspace, originalSipFileName);
+        Path sipFolderWorkspacePath = Paths.get((String) execution.getVariable(BpmConstants.ProcessVariables.sipFolderWorkspacePath));
+
         List<Utils.Triplet<String, String, String>> filePathsAndFixities;
+        //support for multiple bpm tasks for fixity check
+        List<Utils.Triplet<String, String, String>> previousResult = (List<Utils.Triplet<String, String, String>>) execution.getVariable(BpmConstants.FixityCheck.filePathsAndFixities);
+        filePathsAndFixities = previousResult == null ? new ArrayList<>() : previousResult;
+
+        PackageFixityVerifier verifier;
+
+        String sipMetadataPathGlobPattern = sipProfile.getSipMetadataPathGlobPattern();
+        List<File> matchingFiles = listFilesMatchingGlobPattern(new File(sipFolderWorkspacePath.toAbsolutePath().toString()), sipMetadataPathGlobPattern);
+
+        if (matchingFiles.size() == 0) throw new GeneralException("File with metadata for ingest workflow with external id "
+                + ingestWorkflowExternalId + " does not exist at path given by glob pattern: " + sipMetadataPathGlobPattern);
+
+        if (matchingFiles.size() > 1) throw new GeneralException("Multiple files found " +
+                "at the path given by glob pattern: " + sipMetadataPathGlobPattern);
+
+        File metsFile = matchingFiles.get(0);
+
         switch (sipProfile.getPackageType()) {
             case METS:
-                filePathsAndFixities = metsFixityVerifier
-                        .verifySIP(sipWsPath.resolve(sipProfile.getSipMetadataPath()), ingestWorkflowExternalId, config);
+                verifier = metsFixityVerifier;
+                filePathsAndFixities.addAll(verifier
+                        .verifySIP(sipFolderWorkspacePath, metsFile.toPath(), ingestWorkflowExternalId,
+                                config, getFormatIdentificationResult(execution)));
                 break;
             case BAGIT:
-                filePathsAndFixities = bagitFixityVerifier
-                        .verifySIP(sipWsPath.resolve(sipProfile.getSipMetadataPath()).getParent(), ingestWorkflowExternalId, config);
+                verifier = bagitFixityVerifier;
+                filePathsAndFixities.addAll(verifier
+                        .verifySIP(sipFolderWorkspacePath, metsFile.toPath().getParent(),
+                                ingestWorkflowExternalId, config, getFormatIdentificationResult(execution)));
                 break;
             default:
-                throw new GeneralException("Unknown package type: " + sipProfile.getPackageType());
+                throw new GeneralException("Unsupported package type: " + sipProfile.getPackageType());
         }
 
         execution.setVariable(BpmConstants.FixityCheck.filePathsAndFixities, filePathsAndFixities);
+        ingestEventStore.save(new IngestEvent(ingestWorkflowStore.findByExternalId(ingestWorkflowExternalId), toolService.findByNameAndVersion(verifier.getToolName(), verifier.getToolVersion()), true, null));
         execution.setVariable(BpmConstants.FixityCheck.success, true);
-        execution.setVariable(BpmConstants.FixityCheck.dateTime,
-                Instant.now().truncatedTo(ChronoUnit.SECONDS).toString());
 
-        log.info("Execution of Fixity verifier delegate finished for ingest workflow " + ingestWorkflowExternalId + ".");
+        log.debug("Execution of Fixity verifier delegate finished for ingest workflow " + ingestWorkflowExternalId + ".");
     }
 
     @Inject

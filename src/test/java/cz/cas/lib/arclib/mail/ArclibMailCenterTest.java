@@ -2,12 +2,14 @@ package cz.cas.lib.arclib.mail;
 
 import cz.cas.lib.core.mail.AsyncMailSender;
 import cz.cas.lib.core.service.Templater;
+import freemarker.template.Configuration;
 import helper.MockMailSender;
-import org.apache.velocity.app.VelocityEngine;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.InjectMocks;
 import org.mockito.MockitoAnnotations;
+import org.springframework.data.solr.core.query.Criteria;
+import org.springframework.data.solr.core.query.SimpleStringCriteria;
 
 import java.time.Instant;
 
@@ -28,8 +30,8 @@ public class ArclibMailCenterTest {
     public void setUp() {
         MockitoAnnotations.initMocks(this);
 
-        Templater templater = new Templater();
-        templater.setEngine(new VelocityEngine());
+        Configuration configuration = new Configuration();
+        Templater templater = new Templater(configuration);
 
         sender.setSender(mockMailSender);
         mailCenter.setSender(sender);
@@ -42,12 +44,13 @@ public class ArclibMailCenterTest {
 
     @Test
     public void sendIngestResultNotificationTest() {
+        Criteria name = Criteria.where("name").expression(":*: -");
         mailCenter.sendIngestResultNotification("test@test.cz", "456", "Ingest has been successfully performed.",
                 Instant.now());
 
         Object content = mockMailSender.getJavaMailProperties().get("mailContent");
         mockMailSender.getJavaMailProperties().remove("mailContent");
-
+        System.out.println(content);
         assertThat(content, is(not(nullValue())));
         assertThat(content.toString(), containsString("Ingest has been successfully performed."));
     }

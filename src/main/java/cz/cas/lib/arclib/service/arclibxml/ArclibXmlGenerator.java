@@ -1,12 +1,16 @@
 package cz.cas.lib.arclib.service.arclibxml;
 
 import cz.cas.lib.arclib.bpm.BpmConstants;
+import cz.cas.lib.arclib.domain.IngestToolFunction;
+import cz.cas.lib.arclib.domain.ingestWorkflow.IngestEvent;
 import cz.cas.lib.arclib.domain.ingestWorkflow.IngestIssue;
 import cz.cas.lib.arclib.domain.ingestWorkflow.IngestWorkflow;
 import cz.cas.lib.arclib.domain.packages.FolderStructure;
 import cz.cas.lib.arclib.domain.packages.Sip;
+import cz.cas.lib.arclib.domain.preservationPlanning.Tool;
 import cz.cas.lib.arclib.exception.validation.MissingNode;
-import cz.cas.lib.arclib.store.IngestIssueStore;
+import cz.cas.lib.arclib.service.preservationPlanning.ToolService;
+import cz.cas.lib.arclib.store.IngestEventStore;
 import cz.cas.lib.arclib.store.IngestWorkflowStore;
 import cz.cas.lib.arclib.utils.NamespaceChangingVisitor;
 import cz.cas.lib.core.store.Transactional;
@@ -28,20 +32,11 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static cz.cas.lib.arclib.utils.ArclibUtils.*;
+import static cz.cas.lib.core.util.Utils.isNullOrEmptyString;
 
 @Slf4j
 @Service
 public class ArclibXmlGenerator {
-    public static final String INGESTION_EVENT = "ingestion_event";
-    public static final String VALIDATION_EVENT = "validation_event";
-    public static final String QUARANTINE_EVENT = "quarantine_event";
-    public static final String MESSAGE_DIGEST_CALCULATION_EVENT = "message_digest_calculation_event";
-    public static final String METADATA_EXTRACTION_EVENT = "metadata_extraction_event";
-    public static final String FIXITY_CHECK_EVENT = "fixity_check_event";
-    public static final String FORMAT_IDENTIFICATION_EVENT = "format_identification_event";
-    public static final String VIRUS_CHECK_EVENT = "virus_check_event";
-    public static final String METADATA_MODIFICATION_EVENT = "metadata_modification_event";
-
     public static final String INITIAL_VERSION = "initial version";
     public static final String EVENT = "EVENT_";
     public static final String AGENT_ARCLIB = "agent_ARCLIB";
@@ -50,11 +45,11 @@ public class ArclibXmlGenerator {
     public static final String AGENT_NUMBER_FORMAT = "%03d";
 
     private IngestWorkflowStore ingestWorkflowStore;
+    private ToolService toolService;
     private Map<String, String> uris;
     private String arclibVersion;
-    private IngestIssueStore ingestIssueStore;
+    private IngestEventStore ingestEventStore;
 
-    private List<String> events;
     private List<Utils.Pair<String, String>> filePathsAndObjIdentifiers;
 
     /**
@@ -67,17 +62,16 @@ public class ArclibXmlGenerator {
      */
     @Transactional
     public Document generateMetadata(String xml, Map<String, Object> variables) throws DocumentException {
-        events = new ArrayList<>();
         filePathsAndObjIdentifiers = new ArrayList<>();
 
         String ingestWorkflowExternalId = (String) variables.get(BpmConstants.ProcessVariables.ingestWorkflowExternalId);
-        log.info("Generating metadata for ingest workflow with external id " + ingestWorkflowExternalId + ".");
+        log.debug("Generating metadata for ingest workflow with external id " + ingestWorkflowExternalId + ".");
         IngestWorkflow ingestWorkflow = ingestWorkflowStore.findByExternalId(ingestWorkflowExternalId);
 
         List<Utils.Pair<String, String>> filePathsAndFileSizes = (List<Utils.Pair<String, String>>)
                 variables.get(BpmConstants.Ingestion.filePathsAndFileSizes);
 
-        //assign each file and object identifier
+        //assign each file an object identifier
         List<String> filePaths = filePathsAndFileSizes.stream().map(Utils.Pair::getL).collect(Collectors.toList());
         for (int i = 0; i < filePaths.size(); i++) {
             String objIdentifier = "obj-" + String.format(OBJ_NUMBER_FORMAT, i + 1);
@@ -121,14 +115,15 @@ public class ArclibXmlGenerator {
         /*
           Add premis:agents and respective premis:events
          */
-        Element element = addPremisAgentsAndEvents(metsElement, variables);
+        Set<String> eventIdentifiers = new HashSet<>();
+        Element element = addPremisAgentsAndEvents(metsElement, variables, eventIdentifiers);
         int positionOfPremisAgentsAndEvents = metsElement.elements().indexOf(element);
 
         /*
           Add premis:object for whole package
          */
         //place the element with premis object before the element with premis agents and events
-        addPremisObject(metsElement, variables, positionOfPremisAgentsAndEvents);
+        addPremisObject(metsElement, variables, positionOfPremisAgentsAndEvents, eventIdentifiers);
 
         /*
           Add METS:fileSec
@@ -188,178 +183,73 @@ public class ArclibXmlGenerator {
     }
 
     /**
+     * every external tool used results in new agent, internal tools falls under ARCLIB agent
+     *
      * @return created METS:amdSec element to which the agents and events are added
      */
-    private Element addPremisAgentsAndEvents(Element metsElement, Map<String, Object> variables) {
+    private Element addPremisAgentsAndEvents(Element metsElement, Map<String, Object> variables, Set<String> eventIdentifiers) {
+        String iwExternalId = (String) variables.get(BpmConstants.ProcessVariables.ingestWorkflowExternalId);
+
+        List<IngestEvent> allEvents = ingestEventStore.findAllOfIngestWorkflow(iwExternalId);
         /*
           Add premis:agent elements
          */
-        Element amdSecElement = metsElement.addElement("METS:amdSec");
         int agentCounter = 1;
-
+        Element amdSecElement = metsElement.addElement("METS:amdSec");
         //ARCLib agent
-        String arclibEventAgentIdentifier = AGENT_ARCLIB;
-        addEventAgent(amdSecElement, agentCounter++, arclibEventAgentIdentifier, "ARCLIB",
+        addEventAgent(amdSecElement, agentCounter++, AGENT_ARCLIB, "ARCLIB",
                 "software", "Version " + arclibVersion);
 
-        //format identifier agent
-        String formatIdentificationAgentIdentifier = "";
-        String formatIdentificationToolName = (String) variables.get(BpmConstants.FormatIdentification.toolName);
-        if (formatIdentificationToolName != null) {
-            formatIdentificationAgentIdentifier = "agent_" + formatIdentificationToolName;
-            addEventAgent(amdSecElement, agentCounter++, formatIdentificationAgentIdentifier, formatIdentificationToolName,
-                    "software", (String) variables.get(BpmConstants.FormatIdentification.toolVersion));
-        }
+        List<Tool> usedExternalTools = allEvents
+                .stream()
+                .filter(e -> !e.getTool().isInternal())
+                .map(IngestEvent::getTool)
+                .distinct()
+                .collect(Collectors.toList());
 
-        //virus check agent
-        String virusCheckAgentIdentifier = "";
-        String virusCheckToolName = (String) variables.get(BpmConstants.VirusCheck.toolName);
-        if (virusCheckToolName != null) {
-            virusCheckAgentIdentifier = "agent_" + virusCheckToolName;
-            addEventAgent(amdSecElement, agentCounter++, virusCheckAgentIdentifier, virusCheckToolName,
-                    "software", (String) variables.get(BpmConstants.VirusCheck.toolVersion));
+        for (Tool t : usedExternalTools) {
+            String agentNote = "Version: " + t.getVersion();
+            if (!isNullOrEmptyString(t.getDescription()))
+                agentNote = agentNote + ", Description: " + t.getDescription();
+            addEventAgent(amdSecElement, agentCounter++, toAgentId(t), t.getName(),
+                    "software", agentNote);
         }
 
         /*
           Add premis:event elements
          */
-        Element amdSecForEventsElement = metsElement.addElement("METS:amdSec");
         int eventCounter = 1;
+        Element amdSecForEventsElement = metsElement.addElement("METS:amdSec");
 
-        //ingestion event
-        if (variables.get(BpmConstants.Ingestion.success) != null) {
-            events.add(INGESTION_EVENT);
-            addEvent(amdSecForEventsElement, INGESTION_EVENT, EVENT + String.format("%03d", eventCounter++),
-                    (Boolean) variables.get(BpmConstants.Ingestion.success),
-                    arclibEventAgentIdentifier, "Original name of the SIP package: " +
-                            variables.get(BpmConstants.Ingestion.originalSipFileName), "ingestion",
-                    (String) variables.get(BpmConstants.Ingestion.dateTime));
+        Map<IngestToolFunction, Integer> eventsPerFunction = new HashMap<>();
+        for (IngestEvent event : allEvents) {
+            IngestToolFunction function = event.getTool().getToolFunction();
+            Integer count = eventsPerFunction.get(function);
+            if (count == null) count = 1;
+            else count++;
+            eventsPerFunction.put(function, count);
+            String eventIdValue = toEventId(function) + "_" + String.format("%03d", count);
+            String agentValue = event.getTool().isInternal() ? AGENT_ARCLIB : toAgentId(event.getTool());
+            String eventDetail;
+            if (event instanceof IngestIssue && ((IngestIssue) event).getIngestIssueDefinition().isReconfigurable()) {
+                IngestIssue issue = (IngestIssue) event;
+                eventDetail = issue.getIngestIssueDefinition().toString() + (issue.getFormatDefinition() == null ? "" : ", " + issue.getFormatDefinition()) + ", Issue details: " + issue.getDescription();
+            } else
+                eventDetail = event.getDescription();
+
+            String eventIdentifier = EVENT + String.format("%03d", eventCounter++);
+
+            addEvent(amdSecForEventsElement, eventIdValue, eventIdentifier, event.isSuccess(), agentValue, eventDetail,
+                    function.toString().replace("_", " "), event.getCreated().truncatedTo(ChronoUnit.SECONDS).toString());
+            eventIdentifiers.add(eventIdValue);
         }
-
-        //validation event
-        if (variables.get(BpmConstants.Validation.success) != null) {
-            events.add(VALIDATION_EVENT);
-            addEvent(amdSecForEventsElement, VALIDATION_EVENT, EVENT + String.format("%03d", eventCounter++),
-                    (Boolean) variables.get(BpmConstants.Validation.success),
-                    arclibEventAgentIdentifier, null, "validation",
-                    (String) variables.get(BpmConstants.Validation.dateTime));
-        }
-
-        int fixityEventCounter = 1;
-        //fixity check events
-        if (variables.get(BpmConstants.FixityCheck.success) != null) {
-            String fixityEventIdentifier = FIXITY_CHECK_EVENT + "_" + String.format("%03d", fixityEventCounter++);
-            events.add(fixityEventIdentifier);
-
-            addEvent(amdSecForEventsElement, fixityEventIdentifier, EVENT + String.format("%03d", eventCounter++),
-                    (Boolean) variables.get(BpmConstants.FixityCheck.success),
-                    arclibEventAgentIdentifier, null, "fixity check",
-                    (String) variables.get(BpmConstants.FixityCheck.dateTime));
-        }
-
-        List<IngestIssue> fixityCheckIssues = ingestIssueStore.findByTaskExecutorAndExternalId(
-                BpmConstants.FixityCheck.class, (String) variables.get(BpmConstants.ProcessVariables.ingestWorkflowExternalId));
-        for (IngestIssue issue : fixityCheckIssues) {
-            String fixityEventIdentifier = FIXITY_CHECK_EVENT + "_" + String.format("%03d", fixityEventCounter++);
-            events.add(fixityEventIdentifier);
-
-            String eventDetail = "Issue: " + issue.getIssue() + " Config: " + issue.getConfigNote();
-            addEvent(amdSecForEventsElement,
-                    fixityEventIdentifier,
-                    EVENT + String.format(EVENT_NUMBER_FORMAT, eventCounter++),
-                    issue.isSolvedByConfig(), arclibEventAgentIdentifier, eventDetail, "fixity check",
-                    issue.getUpdated().truncatedTo(ChronoUnit.SECONDS).toString());
-        }
-
-        int formatIdentificationCounter = 1;
-        //format identification events
-        if (variables.get(BpmConstants.FormatIdentification.success) != null) {
-            String formatIdentificationEventIdentifier = FORMAT_IDENTIFICATION_EVENT + "_" + String.format("%03d", formatIdentificationCounter++);
-            events.add(formatIdentificationEventIdentifier);
-
-            addEvent(amdSecForEventsElement,
-                    formatIdentificationAgentIdentifier,
-                    EVENT + String.format(EVENT_NUMBER_FORMAT, eventCounter++),
-                    (Boolean) variables.get(BpmConstants.FormatIdentification.success),
-                    formatIdentificationAgentIdentifier, null, "format identification",
-                    (String) variables.get(BpmConstants.FormatIdentification.dateTime));
-        }
-        List<IngestIssue> formatIdentificationIssues = ingestIssueStore.findByTaskExecutorAndExternalId(
-                BpmConstants.FormatIdentification.class, (String) variables.get(BpmConstants.ProcessVariables.ingestWorkflowExternalId));
-        for (IngestIssue issue : formatIdentificationIssues) {
-            String eventDetail = "Issue: " + issue.getIssue() + " Config: " + issue.getConfigNote();
-
-            String formatIdentificationEventIdentifier = FORMAT_IDENTIFICATION_EVENT + "_" + String.format("%03d", formatIdentificationCounter++);
-            events.add(formatIdentificationEventIdentifier);
-
-            addEvent(amdSecForEventsElement,
-                    formatIdentificationEventIdentifier,
-                    EVENT + String.format(EVENT_NUMBER_FORMAT, eventCounter++),
-                    issue.isSolvedByConfig(), formatIdentificationAgentIdentifier, eventDetail, "format identification",
-                    issue.getUpdated().truncatedTo(ChronoUnit.SECONDS).toString());
-        }
-
-        //metadata extraction event
-        if (variables.get(BpmConstants.MetadataExtraction.success) != null) {
-            events.add(METADATA_EXTRACTION_EVENT);
-            addEvent(amdSecForEventsElement, METADATA_EXTRACTION_EVENT, EVENT + String.format("%03d", eventCounter++),
-                    (Boolean) variables.get(BpmConstants.MetadataExtraction.success),
-                    arclibEventAgentIdentifier, null, "metadata extraction",
-                    (String) variables.get(BpmConstants.MetadataExtraction.dateTime));
-        }
-
-        int virusCheckEventCounter = 1;
-        //virus check events
-        if (variables.get(BpmConstants.VirusCheck.success) != null) {
-            String virusCheckEventIdentifier = VIRUS_CHECK_EVENT + "_" + String.format("%03d", virusCheckEventCounter++);
-            events.add(virusCheckEventIdentifier);
-
-            addEvent(amdSecForEventsElement, virusCheckEventIdentifier,
-                    EVENT + String.format(EVENT_NUMBER_FORMAT, eventCounter++),
-                    (Boolean) variables.get(BpmConstants.VirusCheck.success),
-                    virusCheckAgentIdentifier, null, "virus check",
-                    (String) variables.get(BpmConstants.VirusCheck.dateTime));
-        }
-        List<IngestIssue> virusCheckIssues = ingestIssueStore.findByTaskExecutorAndExternalId(
-                BpmConstants.VirusCheck.class, (String) variables.get(BpmConstants.ProcessVariables.ingestWorkflowExternalId));
-        for (IngestIssue issue : virusCheckIssues) {
-            String eventDetail = "Issue: " + issue.getIssue() + " Config: " + issue.getConfigNote();
-
-            String virusCheckEventIdentifier = VIRUS_CHECK_EVENT + "_" + String.format("%03d", virusCheckEventCounter++);
-            events.add(virusCheckEventIdentifier);
-
-            addEvent(amdSecForEventsElement, virusCheckEventIdentifier,
-                    EVENT + String.format(EVENT_NUMBER_FORMAT, eventCounter++),
-                    issue.isSolvedByConfig(), virusCheckAgentIdentifier, eventDetail, "virus check",
-                    issue.getUpdated().truncatedTo(ChronoUnit.SECONDS).toString());
-        }
-
-        //quarantine event
-        if (variables.get(BpmConstants.Quarantine.success) != null) {
-            events.add(QUARANTINE_EVENT);
-            addEvent(amdSecForEventsElement, QUARANTINE_EVENT, EVENT + String.format("%03d", eventCounter++),
-                    (Boolean) variables.get(BpmConstants.Quarantine.success),
-                    arclibEventAgentIdentifier, null, "quarantine",
-                    (String) variables.get(BpmConstants.Quarantine.dateTime));
-        }
-
-        //message digest calculation event
-        if (variables.get(BpmConstants.MessageDigestCalculation.success) != null) {
-            events.add(MESSAGE_DIGEST_CALCULATION_EVENT);
-            addEvent(amdSecForEventsElement, MESSAGE_DIGEST_CALCULATION_EVENT,
-                    EVENT + String.format(EVENT_NUMBER_FORMAT, eventCounter++),
-                    (Boolean) variables.get(BpmConstants.MessageDigestCalculation.success),
-                    arclibEventAgentIdentifier, null, "message digest calculation",
-                    (String) variables.get(BpmConstants.MessageDigestCalculation.dateTime));
-        }
-
         return amdSecElement;
     }
 
     /**
      * @param position position of the amdSecElement to be created in withing METS file
      */
-    private void addPremisObject(Element metsElement, Map<String, Object> variables, int position) {
+    private void addPremisObject(Element metsElement, Map<String, Object> variables, int position, Set<String> eventIdentifiers) {
         Element amdSecElement = metsElement.addElement("METS:amdSec");
 
         //move created amdSecElement to the given position in the METS file
@@ -388,7 +278,7 @@ public class ArclibXmlGenerator {
             addFixity(objectCharacteristicsElement, "MD5", (String) variables.get(BpmConstants.MessageDigestCalculation.checksumMd5));
             addFixity(objectCharacteristicsElement, "CRC32", (String) variables.get(BpmConstants.MessageDigestCalculation.checksumCrc32));
             addFixity(objectCharacteristicsElement, "SHA-512", (String) variables.get(BpmConstants.MessageDigestCalculation.checksumSha512));
-    }
+        }
 
         Element sizeElement = objectCharacteristicsElement.addElement("premis:size");
         long sizeInBytes = (long) (variables.get(BpmConstants.Ingestion.sizeInBytes));
@@ -409,7 +299,7 @@ public class ArclibXmlGenerator {
 
         addAggregatedFormats(xmlDataElement, variables);
 
-        for (String eventIdentifier : events) {
+        for (String eventIdentifier: eventIdentifiers) {
             Element linkingEventIdentifierElement = objectElement.addElement("premis:linkingEventIdentifier");
             Element linkingEventIdentifierTypeElement = linkingEventIdentifierElement.addElement("premis:linkingEventIdentifierType");
             linkingEventIdentifierTypeElement.addText("EventId");
@@ -424,7 +314,6 @@ public class ArclibXmlGenerator {
         structMapElement.addAttribute("TYPE", "PHYSICAL");
 
         Element aipDivElement = structMapElement.addElement("METS:div");
-        aipDivElement.addAttribute("TYPE", "Archival Information Package");
 
         FolderStructure sipFolderStructure = sip.getFolderStructure();
         addStructMapDivElementsRecursively(aipDivElement, sipFolderStructure, sipFolderStructure.getCaption());
@@ -445,8 +334,6 @@ public class ArclibXmlGenerator {
         } else {
             //folder structure represents a directory
             Element divElement = parentDivElement.addElement("METS:div");
-            divElement.addAttribute("TYPE", "directory");
-
             divElement.addAttribute("LABEL", parentFolderStructurePath);
             children.stream()
                     .sorted(Comparator.comparing(fs -> fs.getChildren() != null))
@@ -590,30 +477,33 @@ public class ArclibXmlGenerator {
                     computeAggregatedCount(identifiedFormats.values());
 
             aggregatedFormats.keySet()
-                .forEach(formatToIdentifier -> {
-                    Element arclibFormatElement = arclibFormatsElement.addElement("ARCLIB:format");
+                    .forEach(formatToIdentifier -> {
+                        Element arclibFormatElement = arclibFormatsElement.addElement("ARCLIB:format");
 
-                    Element formatRegistryKeyElement = arclibFormatElement.addElement("ARCLIB:formatRegistryKey");
-                    formatRegistryKeyElement.setText(formatToIdentifier.getL());
+                        Element formatRegistryKeyElement = arclibFormatElement.addElement("ARCLIB:formatRegistryKey");
+                        formatRegistryKeyElement.setText(formatToIdentifier.getL());
 
-                    Element formatRegistryNameElement = arclibFormatElement.addElement("ARCLIB:formatRegistryName");
-                    formatRegistryNameElement.setText("PRONOM");
+                        Element formatRegistryNameElement = arclibFormatElement.addElement("ARCLIB:formatRegistryName");
+                        formatRegistryNameElement.setText("PRONOM");
 
-                    Element creatingApplicationNameElement =
-                            arclibFormatElement.addElement("ARCLIB:creatingApplicationName");
-                    creatingApplicationNameElement.setText((String) variables.get(BpmConstants.FormatIdentification.toolName));
+                        String formatIdentificationToolId = (String) variables.get(BpmConstants.FormatIdentification.toolId);
+                        Tool formatIdentificationTool = toolService.find(formatIdentificationToolId);
 
-                    Element creatingApplicationVersionElement =
-                            arclibFormatElement.addElement("ARCLIB:creatingApplicationVersion");
-                    creatingApplicationVersionElement.setText((String) variables.get(BpmConstants.FormatIdentification.toolVersion));
+                        Element creatingApplicationNameElement =
+                                arclibFormatElement.addElement("ARCLIB:creatingApplicationName");
+                        creatingApplicationNameElement.setText(formatIdentificationTool.getName());
 
-                    Element dateCreatedByApplicationElement =
-                            arclibFormatElement.addElement("ARCLIB:dateCreatedByApplication");
-                    dateCreatedByApplicationElement.setText(((String) variables.get(BpmConstants.FormatIdentification.dateTime)).substring(0, 10));
+                        Element creatingApplicationVersionElement =
+                                arclibFormatElement.addElement("ARCLIB:creatingApplicationVersion");
+                        creatingApplicationVersionElement.setText(formatIdentificationTool.getVersion());
 
-                    Element fileCountElement = arclibFormatElement.addElement("ARCLIB:fileCount");
-                    fileCountElement.setText(Long.toString(aggregatedFormats.get(formatToIdentifier)));
-                });
+                        Element dateCreatedByApplicationElement =
+                                arclibFormatElement.addElement("ARCLIB:dateCreatedByApplication");
+                        dateCreatedByApplicationElement.setText(((String) variables.get(BpmConstants.FormatIdentification.dateTime)).substring(0, 10));
+
+                        Element fileCountElement = arclibFormatElement.addElement("ARCLIB:fileCount");
+                        fileCountElement.setText(Long.toString(aggregatedFormats.get(formatToIdentifier)));
+                    });
         }
     }
 
@@ -668,7 +558,11 @@ public class ArclibXmlGenerator {
 
         XPath digiprovMdIdPath = doc.createXPath("/mets:mets/mets:amdSec/mets:digiprovMD[mets:mdWrap/mets:xmlData/premis:event]/@ID");
         digiprovMdIdPath.setNamespaceURIs(uris);
-        List<DefaultAttribute> digiprovMdIds = (List<DefaultAttribute>) digiprovMdIdPath.selectNodes(doc);
+        List<Node> nodes = digiprovMdIdPath.selectNodes(doc);
+        List<DefaultAttribute> digiprovMdIds = new ArrayList<>();
+        for (Node node : nodes) {
+            digiprovMdIds.add((DefaultAttribute) node);
+        }
 
         int eventNumber = 1;
         Optional<DefaultAttribute> highestNumberEvent = digiprovMdIds.stream()
@@ -684,12 +578,35 @@ public class ArclibXmlGenerator {
         Element amdSecForEventsElement = (Element) amdSecPath.selectSingleNode(doc);
 
         String eventDetail = "XML was modified by user " + username + " from the reason: " + reason;
-        addEvent(amdSecForEventsElement, METADATA_MODIFICATION_EVENT, eventIdentifier, true, AGENT_ARCLIB,
+        addEvent(amdSecForEventsElement, IngestToolFunction.metadata_modification.toString(), eventIdentifier, true, AGENT_ARCLIB,
                 eventDetail, "metadata modification", Instant.now().truncatedTo(ChronoUnit.SECONDS).toString());
 
         xml = prettyPrint(doc);
-        log.info("Updated ARCLib XML: \n" + xml);
+        log.debug("Updated ARCLib XML: \n" + xml);
         return xml;
+    }
+
+    private String toEventId(IngestToolFunction f) {
+        return f + "_event";
+    }
+
+    private String toAgentId(Tool tool) {
+        return "agent_" + tool.getName();
+    }
+
+    @Inject
+    public void setIngestWorkflowStore(IngestWorkflowStore ingestWorkflowStore) {
+        this.ingestWorkflowStore = ingestWorkflowStore;
+    }
+
+    @Inject
+    public void setToolService(ToolService toolService) {
+        this.toolService = toolService;
+    }
+
+    @Inject
+    public void setIngestEventStore(IngestEventStore ingestEventStore) {
+        this.ingestEventStore = ingestEventStore;
     }
 
     @Inject
@@ -705,16 +622,6 @@ public class ArclibXmlGenerator {
         uris.put(DCTERMS, dcterms);
 
         this.uris = uris;
-    }
-
-    @Inject
-    public void setIngestWorkflowStore(IngestWorkflowStore ingestWorkflowStore) {
-        this.ingestWorkflowStore = ingestWorkflowStore;
-    }
-
-    @Inject
-    public void setIngestIssueStore(IngestIssueStore ingestIssueStore) {
-        this.ingestIssueStore = ingestIssueStore;
     }
 
     @Inject

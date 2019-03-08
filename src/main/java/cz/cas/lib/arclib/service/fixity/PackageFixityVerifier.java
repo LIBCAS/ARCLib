@@ -3,33 +3,43 @@ package cz.cas.lib.arclib.service.fixity;
 import com.fasterxml.jackson.databind.JsonNode;
 import cz.cas.lib.arclib.bpm.BpmConstants;
 import cz.cas.lib.arclib.bpm.FixityCheckerDelegate;
+import cz.cas.lib.arclib.bpm.IngestTool;
 import cz.cas.lib.arclib.domain.ingestWorkflow.IngestIssue;
 import cz.cas.lib.arclib.domain.ingestWorkflow.IngestWorkflow;
 import cz.cas.lib.arclib.domain.packages.PackageType;
+import cz.cas.lib.arclib.domain.preservationPlanning.FormatDefinition;
+import cz.cas.lib.arclib.domain.preservationPlanning.IngestIssueDefinitionCode;
 import cz.cas.lib.arclib.exception.bpm.IncidentException;
-import cz.cas.lib.arclib.store.IngestIssueStore;
+import cz.cas.lib.arclib.service.IngestIssueService;
+import cz.cas.lib.arclib.service.preservationPlanning.FormatDefinitionService;
+import cz.cas.lib.arclib.service.preservationPlanning.ToolService;
+import cz.cas.lib.arclib.store.IngestIssueDefinitionStore;
 import cz.cas.lib.arclib.store.IngestWorkflowStore;
 import cz.cas.lib.arclib.utils.ArclibUtils;
 import cz.cas.lib.core.store.Transactional;
 import cz.cas.lib.core.util.Utils;
+import lombok.extern.slf4j.Slf4j;
 import org.camunda.bpm.engine.delegate.BpmnError;
 import org.springframework.stereotype.Service;
 
 import javax.inject.Inject;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
+@Slf4j
 @Service
-public abstract class PackageFixityVerifier {
+public abstract class PackageFixityVerifier implements IngestTool {
 
     Md5Counter md5Counter;
     Sha512Counter sha512Counter;
     Sha256Counter sha256Counter;
     Sha1Counter sha1Counter;
-    private IngestIssueStore ingestIssueStore;
+    private IngestIssueService ingestIssueService;
     private IngestWorkflowStore ingestWorkflowStore;
+    private ToolService toolService;
+    private IngestIssueDefinitionStore ingestIssueDefinitionStore;
+    private FormatDefinitionService formatDefinitionService;
 
     /**
      * Verifies fixity of every file specified in metadata file(s) of the package.
@@ -37,70 +47,124 @@ public abstract class PackageFixityVerifier {
      * Currently supports MD5, SHA-1, SHA-256 and SHA-512.
      * May invoke three types of issue in following order:
      * <ol>
-     * <li>unsupported checksum type: description contains {@link Map<String,List<Path>} with checksum type and corresponding files (even if the file does not exist)</li>
+     * <li>unsupported checksum type: description contains {@link Map<String,List<Path>} with checksum type and
+     * corresponding files (even if the file does not exist)</li>
      * <li>files not found: description contains {@link List<Path>} of files which does not exist</li>
      * <li>invalid checksums: description contains {@link List<Path>} of files with invalid fixites</li>
      * </ol>
      * The first issue which is not automatically solved by config stops process and invokes new Incident
      *
+     * @param sipWsPath        path to SIP in workspace
      * @param pathToFixityFile Path to a file which contains fixity information of files of the package.
      * @param externalId       used in case of issue
      * @param configRoot       used in case of issue
      * @return list of associated values in triplets: file path, type of fixity, fixity value.
      */
-    public abstract List<Utils.Triplet<String, String, String>> verifySIP(Path pathToFixityFile, String externalId, JsonNode configRoot)
+    public abstract List<Utils.Triplet<String, String, String>> verifySIP(Path sipWsPath, Path pathToFixityFile,
+                                                                          String externalId, JsonNode configRoot,
+                                                                          Map<String, Utils.Pair<String, String>> formatIdentificationResult)
             throws IOException, IncidentException;
 
     @Transactional
-    public void invokeUnsupportedChecksumTypeIssue(Map<String, List<Path>> files, String externalId, JsonNode configRoot)
+    public void invokeUnsupportedChecksumTypeIssue(Path pathToSip, Map<String, List<Path>> files, String externalId,
+                                                   JsonNode configRoot, Map<String, Utils.Pair<String, String>> formatIdentificationResult)
             throws IncidentException {
-        StringBuilder issueMessage = new StringBuilder();
+        log.warn("Invoked unsupported checksum type issue for ingest workflow " + externalId + " .");
+        IngestWorkflow ingestWorkflow = ingestWorkflowStore.findByExternalId(externalId);
+        Utils.Pair<Boolean, String> parsedConfigValue = ArclibUtils.parseBooleanConfig(configRoot,
+                FixityCheckerDelegate.CONFIG_UNSUPPORTED_CHECKSUM_TYPE);
+        List<IngestIssue> issues = new ArrayList<>();
+
         for (String algorithm : files.keySet()) {
-            issueMessage.append("unsupported checksum algorithm: " + algorithm + " used for files: " + Utils.toString(files.get(algorithm)) + "; ");
+            for (Path filePath : files.get(algorithm)) {
+                log.info("unsupported checksum algorithm: " + algorithm + " used for file: " + filePath);
+                Utils.Pair<String, FormatDefinition> fileFormat = ArclibUtils.findFormat(pathToSip, filePath,
+                        formatIdentificationResult, formatDefinitionService);
+                issues.add(new IngestIssue(
+                        ingestWorkflow,
+                        toolService.findByNameAndVersion(getToolName(), getToolVersion()),
+                        ingestIssueDefinitionStore.findByCode(IngestIssueDefinitionCode.FILE_UNSUPPORTED_CHECKSUM_TYPE),
+                        fileFormat.getR(),
+                        "unsupported checksum algorithm: " + algorithm + " used for file: " + fileFormat.getL() +
+                                ". " + parsedConfigValue.getR(),
+                        parsedConfigValue.getL() != null)
+                );
+            }
         }
-        IngestWorkflow ingestWorkflow = ingestWorkflowStore.findByExternalId(externalId);
-        IngestIssue issue = new IngestIssue(
-                ingestWorkflow,
-                BpmConstants.FixityCheck.class, issueMessage.toString()
-        );
-        Boolean value = ArclibUtils.parseBooleanConfig(configRoot, FixityCheckerDelegate.CONFIG_UNSUPPORTED_CHECKSUM_TYPE, issue);
-        ingestIssueStore.save(issue);
-        if (value == null)
-            throw new IncidentException(issue);
-        if (!value)
-            throw new BpmnError(BpmConstants.ErrorCodes.ProcessFailure, issue.toString());
+        ingestIssueService.save(issues);
+
+        Path[] problemFiles = files.values().stream().flatMap(Collection::stream).toArray(Path[]::new);
+        String errorMsg = IngestIssueDefinitionCode.FILE_UNSUPPORTED_CHECKSUM_TYPE +
+                " issue occurred, unsupported checksum types: " + Arrays.toString(files.keySet().toArray()) +
+                " files: " + Arrays.toString(problemFiles);
+
+        if (parsedConfigValue.getL() == null)
+            throw new IncidentException(errorMsg);
+        if (!parsedConfigValue.getL())
+            throw new BpmnError(BpmConstants.ErrorCodes.ProcessFailure, errorMsg);
     }
 
     @Transactional
-    public void invokeInvalidChecksumsIssue(List<Path> files, String externalId, JsonNode configRoot)
+    public void invokeInvalidChecksumsIssue(Path pathToSip, List<Path> files, String externalId, JsonNode configRoot,
+                                            Map<String, Utils.Pair<String, String>> formatIdentificationResult)
             throws IncidentException {
+        log.warn("Invoked invalid checksums issue for ingest workflow " + externalId + " .");
         IngestWorkflow ingestWorkflow = ingestWorkflowStore.findByExternalId(externalId);
-        IngestIssue issue = new IngestIssue(
-                ingestWorkflow,
-                BpmConstants.FixityCheck.class, "invalid checksum of files: " + Utils.toString(files)
-        );
-        Boolean value = ArclibUtils.parseBooleanConfig(configRoot, FixityCheckerDelegate.CONFIG_INVALID_CHECKSUMS, issue);
-        ingestIssueStore.save(issue);
-        if (value == null)
-            throw new IncidentException(issue);
-        if (!value)
-            throw new BpmnError(BpmConstants.ErrorCodes.ProcessFailure, issue.toString());
+        Utils.Pair<Boolean, String> parsedConfigValue = ArclibUtils.parseBooleanConfig(configRoot,
+                FixityCheckerDelegate.CONFIG_INVALID_CHECKSUMS);
+        List<IngestIssue> issues = new ArrayList<>();
+
+        for (Path filePath : files) {
+            log.info("invalid checksum of file: " + filePath);
+            Utils.Pair<String, FormatDefinition> fileFormat = ArclibUtils.findFormat(pathToSip, filePath,
+                    formatIdentificationResult, formatDefinitionService);
+            issues.add(new IngestIssue(
+                    ingestWorkflow,
+                    toolService.findByNameAndVersion(getToolName(), getToolVersion()),
+                    ingestIssueDefinitionStore.findByCode(IngestIssueDefinitionCode.FILE_INVALID_CHECKSUM),
+                    fileFormat.getR(),
+                    "invalid checksum of file: " + fileFormat.getL() + ". " + parsedConfigValue.getR(),
+                    parsedConfigValue.getL() != null)
+            );
+        }
+        ingestIssueService.save(issues);
+        String errorMsg = IngestIssueDefinitionCode.FILE_INVALID_CHECKSUM + " issue occurred, files: " + Arrays.toString(files.toArray());
+
+        if (parsedConfigValue.getL() == null)
+            throw new IncidentException(errorMsg);
+        if (!parsedConfigValue.getL())
+            throw new BpmnError(BpmConstants.ErrorCodes.ProcessFailure, errorMsg);
     }
 
     @Transactional
-    public void invokeMissingFilesIssue(List<Path> files, String externalId, JsonNode configRoot)
+    public void invokeMissingFilesIssue(Path pathToSip, List<Path> files, String externalId, JsonNode configRoot,
+                                        Map<String, Utils.Pair<String, String>> formatIdentificationResult)
             throws IncidentException {
+        log.warn("Invoked missing files issue for ingest workflow " + externalId + " .");
         IngestWorkflow ingestWorkflow = ingestWorkflowStore.findByExternalId(externalId);
-        IngestIssue issue = new IngestIssue(
-                ingestWorkflow,
-                BpmConstants.FixityCheck.class, "missing files: " + Utils.toString(files)
-        );
-        Boolean value = ArclibUtils.parseBooleanConfig(configRoot, FixityCheckerDelegate.CONFIG_MISSING_FILES, issue);
-        ingestIssueStore.save(issue);
-        if (value == null)
-            throw new IncidentException(issue);
-        if (!value)
-            throw new BpmnError(BpmConstants.ErrorCodes.ProcessFailure, issue.toString());
+        Utils.Pair<Boolean, String> parsedConfigValue = ArclibUtils.parseBooleanConfig(configRoot, FixityCheckerDelegate.CONFIG_MISSING_FILES);
+        List<IngestIssue> issues = new ArrayList<>();
+
+        for (Path filePath : files) {
+            log.info("missing file: " + filePath);
+            Utils.Pair<String, FormatDefinition> fileFormat = ArclibUtils.findFormat(pathToSip, filePath,
+                    formatIdentificationResult, formatDefinitionService);
+            issues.add(new IngestIssue(
+                    ingestWorkflow,
+                    toolService.findByNameAndVersion(getToolName(), getToolVersion()),
+                    ingestIssueDefinitionStore.findByCode(IngestIssueDefinitionCode.FILE_MISSING),
+                    fileFormat.getR(),
+                    "missing file: " + fileFormat.getL() + ". " + parsedConfigValue.getR(),
+                    parsedConfigValue.getL() != null)
+            );
+        }
+        ingestIssueService.save(issues);
+        String errorMsg = IngestIssueDefinitionCode.FILE_MISSING + " issue occurred, files: " + Arrays.toString(files.toArray());
+
+        if (parsedConfigValue.getL() == null)
+            throw new IncidentException(errorMsg);
+        if (!parsedConfigValue.getL())
+            throw new BpmnError(BpmConstants.ErrorCodes.ProcessFailure, errorMsg);
     }
 
     @Inject
@@ -129,7 +193,22 @@ public abstract class PackageFixityVerifier {
     }
 
     @Inject
-    public void setIngestIssueStore(IngestIssueStore ingestIssueStore) {
-        this.ingestIssueStore = ingestIssueStore;
+    public void setIngestIssueService(IngestIssueService ingestIssueService) {
+        this.ingestIssueService = ingestIssueService;
+    }
+
+    @Inject
+    public void setFormatDefinitionService(FormatDefinitionService formatDefinitionService) {
+        this.formatDefinitionService = formatDefinitionService;
+    }
+
+    @Inject
+    public void setToolService(ToolService toolService) {
+        this.toolService = toolService;
+    }
+
+    @Inject
+    public void setIngestIssueDefinitionStore(IngestIssueDefinitionStore ingestIssueDefinitionStore) {
+        this.ingestIssueDefinitionStore = ingestIssueDefinitionStore;
     }
 }

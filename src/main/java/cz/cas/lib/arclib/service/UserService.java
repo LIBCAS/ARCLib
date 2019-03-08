@@ -13,6 +13,7 @@ import cz.cas.lib.core.exception.MissingObject;
 import cz.cas.lib.core.rest.data.DelegateAdapter;
 import cz.cas.lib.core.store.Transactional;
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import javax.inject.Inject;
@@ -24,6 +25,7 @@ import java.util.stream.Collectors;
 import static cz.cas.lib.arclib.utils.ArclibUtils.hasRole;
 import static cz.cas.lib.core.util.Utils.notNull;
 
+@Slf4j
 @Service
 public class UserService implements DelegateAdapter<User> {
 
@@ -42,12 +44,16 @@ public class UserService implements DelegateAdapter<User> {
      */
     @Transactional
     public void saveRoles(String userId, Set<Role> roles) throws BadRequestException, ForbiddenException {
+        log.debug("Saving assigned roles to user " + userId + ".");
+
         User user = userStore.find(userId);
         notNull(user, () -> new MissingObject(User.class, userId));
         //if user does not have producer and the roles contains at least one role different to SUPER_ADMIN
         if (user.getProducer() == null &&
                 !(roles.isEmpty() || (roles.size() == 1 && Roles.SUPER_ADMIN.equals(roles.iterator().next().getName())))) {
-            throw new BadRequestException("User has to have producer assigned. Only users without any role or only with one role equal to " + Roles.SUPER_ADMIN + " does not have to be bound with producer.");
+            throw new BadRequestException(
+                    "User has to have producer assigned. Only users without any role or only with one role equal to " +
+                            Roles.SUPER_ADMIN + " does not have to be bound with producer.");
         }
         if (!hasRole(userDetails, Roles.SUPER_ADMIN)) {
             List<Role> rolesInDb = roleStore.findAllInList(roles.stream().map(Role::getId).collect(Collectors.toList()));
@@ -68,6 +74,11 @@ public class UserService implements DelegateAdapter<User> {
         assignedRoleService.saveAssignedRoles(u.getId(),new HashSet<>());
         delegate.delete(u);
     }
+
+    public User findUserByUsername(String username) {
+        return userStore.findUserByUsername(username);
+    }
+
 
     @Inject
     public void setAssignedRoleService(AssignedRoleService assignedRoleService) {

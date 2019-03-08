@@ -1,23 +1,32 @@
 package cz.cas.lib.core.index;
 
 import cz.cas.lib.arclib.domain.Batch;
+import cz.cas.lib.arclib.index.solr.SolrQueryUtils;
+import cz.cas.lib.arclib.index.solr.arclibxml.SolrArclibXmlDocument;
 import cz.cas.lib.arclib.store.BatchStore;
 import cz.cas.lib.core.exception.BadArgument;
 import cz.cas.lib.core.index.dto.*;
 import helper.SrDbTest;
+import org.apache.solr.client.solrj.SolrServerException;
+import org.apache.solr.common.SolrInputDocument;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
+import org.springframework.data.domain.Page;
+import org.springframework.data.solr.core.query.Criteria;
+import org.springframework.data.solr.core.query.SimpleFilterQuery;
+import org.springframework.data.solr.core.query.SimpleQuery;
 
+import java.io.IOException;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
-import static cz.cas.lib.core.util.Utils.asList;
-import static cz.cas.lib.core.util.Utils.reverse;
+import static cz.cas.lib.core.util.Utils.*;
 import static helper.ThrowableAssertion.assertThrown;
 import static java.util.Collections.emptyList;
+import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.*;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
@@ -44,18 +53,15 @@ public class SolrStoreTest extends SrDbTest {
     private TestEntity[] entities;
 
     @Before
-    public void setUp() throws Exception {
-        super.testSetUp();
+    public void setUpSolrStoreTest() throws Exception {
         initializeStores(batchStore, store);
         entities = new TestEntity[]{new TestEntity(), new TestEntity(), new TestEntity()};
     }
 
     @Test
     public void saveSingleTest() {
-        store.reindex();
         store.save(entities[0]);
 
-        flushCache();
 
         Result<TestEntity> result = store.findAll(new Params());
         assertThat(result.getCount(), is(1L));
@@ -64,10 +70,8 @@ public class SolrStoreTest extends SrDbTest {
 
     @Test
     public void saveMultipleTest() {
-        store.reindex();
         store.save(asList(entities));
 
-        flushCache();
 
         Result<TestEntity> result = store.findAll(new Params());
         assertThat(result.getCount(), is(3L));
@@ -76,10 +80,8 @@ public class SolrStoreTest extends SrDbTest {
 
     @Test
     public void saveEmptyTest() {
-        store.reindex();
         store.save(emptyList());
 
-        flushCache();
 
         Result<TestEntity> result = store.findAll(new Params());
         assertThat(result.getCount(), is(0L));
@@ -88,11 +90,9 @@ public class SolrStoreTest extends SrDbTest {
 
     @Test
     public void deleteTest() {
-        store.reindex();
         store.save(asList(entities));
         store.delete(entities[0]);
 
-        flushCache();
 
         Result<TestEntity> result = store.findAll(new Params());
         assertThat(result.getCount(), is(2L));
@@ -101,12 +101,10 @@ public class SolrStoreTest extends SrDbTest {
 
     @Test
     public void orderingTest() {
-        store.reindex();
         store.save(entities[0]);
         store.save(entities[1]);
         store.save(entities[2]);
 
-        flushCache();
 
         // ASC
         Params params = new Params();
@@ -127,8 +125,6 @@ public class SolrStoreTest extends SrDbTest {
 
     @Test
     public void multisortTest() {
-        store.reindex();
-
         TestEntity[] entities = new TestEntity[]{new TestEntity(), new TestEntity(), new TestEntity()};
         entities[0].setStringAttribute("holmes");
         entities[0].setIntAttribute(3);
@@ -139,7 +135,6 @@ public class SolrStoreTest extends SrDbTest {
 
         store.save(asList(entities));
 
-        flushCache();
 
         // ASC ASC
         Params params = new Params();
@@ -188,8 +183,6 @@ public class SolrStoreTest extends SrDbTest {
 
     @Test
     public void sortingStringTestWithMultisortEmpty() {
-        store.reindex();
-
         TestEntity[] entities = new TestEntity[]{new TestEntity(), new TestEntity(), new TestEntity()};
         entities[0].setStringAttribute("holmes");
         entities[1].setStringAttribute("string");
@@ -197,7 +190,6 @@ public class SolrStoreTest extends SrDbTest {
 
         store.save(asList(entities));
 
-        flushCache();
 
         // ASC
         Params params = new Params();
@@ -226,8 +218,6 @@ public class SolrStoreTest extends SrDbTest {
 
     @Test
     public void sortingStringTest() {
-        store.reindex();
-
         TestEntity[] entities = new TestEntity[]{new TestEntity(), new TestEntity(), new TestEntity()};
         entities[0].setStringAttribute("holmes");
         entities[1].setStringAttribute("string");
@@ -235,7 +225,6 @@ public class SolrStoreTest extends SrDbTest {
 
         store.save(asList(entities));
 
-        flushCache();
 
         // ASC
         Params params = new Params();
@@ -258,8 +247,6 @@ public class SolrStoreTest extends SrDbTest {
 
     @Test
     public void sortingIntTest() {
-        store.reindex();
-
         TestEntity[] entities = new TestEntity[]{new TestEntity(), new TestEntity(), new TestEntity()};
         entities[0].setIntAttribute(2);
         entities[1].setIntAttribute(0);
@@ -267,7 +254,6 @@ public class SolrStoreTest extends SrDbTest {
 
         store.save(asList(entities));
 
-        flushCache();
 
         // ASC
         Params params = new Params();
@@ -290,8 +276,6 @@ public class SolrStoreTest extends SrDbTest {
 
     @Test
     public void sortingDoubleTest() {
-        store.reindex();
-
         TestEntity[] entities = new TestEntity[]{new TestEntity(), new TestEntity(), new TestEntity()};
         entities[0].setDoubleAttribute(5.0);
         entities[1].setDoubleAttribute(4.0);
@@ -299,7 +283,6 @@ public class SolrStoreTest extends SrDbTest {
 
         store.save(asList(entities));
 
-        flushCache();
 
         // ASC
         Params params = new Params();
@@ -322,8 +305,6 @@ public class SolrStoreTest extends SrDbTest {
 
     @Test
     public void sortingLocalDateTest() {
-        store.reindex();
-
         TestEntity[] entities = new TestEntity[]{new TestEntity(), new TestEntity(), new TestEntity()};
         LocalDate now = LocalDate.now();
 
@@ -336,7 +317,6 @@ public class SolrStoreTest extends SrDbTest {
         store.save(entities[1]);
         store.save(entities[2]);
 
-        flushCache();
 
         // ASC
         Params params = new Params();
@@ -359,8 +339,6 @@ public class SolrStoreTest extends SrDbTest {
 
     @Test
     public void sortingInstantTest() {
-        store.reindex();
-
         TestEntity[] entities = new TestEntity[]{new TestEntity(), new TestEntity(), new TestEntity()};
         Instant now = Instant.now();
         entities[0].setInstantAttribute(now.plusMillis(2000));
@@ -369,7 +347,6 @@ public class SolrStoreTest extends SrDbTest {
 
         store.save(asList(entities));
 
-        flushCache();
 
         // ASC
         Params params = new Params();
@@ -393,8 +370,6 @@ public class SolrStoreTest extends SrDbTest {
     @Test
     @Ignore
     public void sortingDependentTest() {
-        store.reindex();
-
         DependentEntity[] dependents = new DependentEntity[]{new DependentEntity(), new DependentEntity(), new DependentEntity()};
         dependents[0].setName("holmes");
         dependents[1].setName("string");
@@ -407,7 +382,6 @@ public class SolrStoreTest extends SrDbTest {
 
         store.save(asList(entities));
 
-        flushCache();
 
         // ASC
         Params params = new Params();
@@ -430,8 +404,6 @@ public class SolrStoreTest extends SrDbTest {
 
     @Test
     public void filteringStringTest() {
-        store.reindex();
-
         TestEntity[] entities = new TestEntity[]{new TestEntity(), new TestEntity(), new TestEntity(), new TestEntity()};
         entities[0].setStringAttribute("abrasive");
         entities[1].setStringAttribute("kadabra");
@@ -439,7 +411,6 @@ public class SolrStoreTest extends SrDbTest {
 
         store.save(asList(entities));
 
-        flushCache();
 
         // EQ
         Params params = new Params();
@@ -467,7 +438,7 @@ public class SolrStoreTest extends SrDbTest {
 
         // STARTSWITH
         params = new Params();
-        params.setFilter(asList(new Filter("stringAttribute", FilterOperation.ENDWITH, "abra", null)));
+        params.setFilter(asList(new Filter("foldingAttribute", FilterOperation.ENDWITH, "abra", null)));
 
         result = store.findAll(params);
         assertThat(result.getCount(), is(2L));
@@ -500,8 +471,6 @@ public class SolrStoreTest extends SrDbTest {
 
     @Test
     public void filteringIntTest() {
-        store.reindex();
-
         TestEntity[] entities = new TestEntity[]{new TestEntity(), new TestEntity(), new TestEntity(), new TestEntity()};
         entities[0].setIntAttribute(5);
         entities[1].setIntAttribute(10);
@@ -509,7 +478,6 @@ public class SolrStoreTest extends SrDbTest {
 
         store.save(asList(entities));
 
-        flushCache();
 
         // EQ
         Params params = new Params();
@@ -578,8 +546,6 @@ public class SolrStoreTest extends SrDbTest {
 
     @Test
     public void filteringDoubleTest() {
-        store.reindex();
-
         TestEntity[] entities = new TestEntity[]{new TestEntity(), new TestEntity(), new TestEntity(), new TestEntity()};
         entities[0].setDoubleAttribute(5.0);
         entities[1].setDoubleAttribute(10.0);
@@ -587,7 +553,6 @@ public class SolrStoreTest extends SrDbTest {
 
         store.save(asList(entities));
 
-        flushCache();
 
         // EQ
         Params params = new Params();
@@ -656,8 +621,6 @@ public class SolrStoreTest extends SrDbTest {
 
     @Test
     public void filteringLocalDateTest() {
-        store.reindex();
-
         TestEntity[] entities = new TestEntity[]{new TestEntity(), new TestEntity(), new TestEntity(), new TestEntity()};
         LocalDate now = LocalDate.parse("2016-11-21");
         entities[0].setLocalDateAttribute(now.plusDays(5));
@@ -666,7 +629,6 @@ public class SolrStoreTest extends SrDbTest {
 
         store.save(asList(entities));
 
-        flushCache();
 
         // EQ
         Params params = new Params();
@@ -735,8 +697,6 @@ public class SolrStoreTest extends SrDbTest {
 
     @Test
     public void filteringInstantTest() {
-        store.reindex();
-
         TestEntity[] entities = new TestEntity[]{new TestEntity(), new TestEntity(), new TestEntity(), new TestEntity()};
         Instant now = Instant.parse("2016-11-21T00:00:00Z");
         entities[0].setInstantAttribute(now.plusSeconds(5));
@@ -745,7 +705,6 @@ public class SolrStoreTest extends SrDbTest {
 
         store.save(asList(entities));
 
-        flushCache();
 
         // EQ
         Params params = new Params();
@@ -815,8 +774,6 @@ public class SolrStoreTest extends SrDbTest {
     @Test
     @Ignore
     public void filteringDependentTest() {
-        store.reindex();
-
         DependentEntity[] dependents = new DependentEntity[]{new DependentEntity(), new DependentEntity(), new DependentEntity(), new DependentEntity()};
         dependents[0].setName("abrasive");
         dependents[1].setName("kadabra");
@@ -830,7 +787,6 @@ public class SolrStoreTest extends SrDbTest {
 
         store.save(asList(entities));
 
-        flushCache();
 
         // EQ
         Params params = new Params();
@@ -893,8 +849,6 @@ public class SolrStoreTest extends SrDbTest {
     @Ignore
     public void filteringDependentTestsMultiValue() {
         //getTemplate().putMapping(SolrTestEntity.class);
-        store.reindex();
-
         DependentEntity[] dependents = new DependentEntity[]{new DependentEntity(), new DependentEntity(), new DependentEntity(), new DependentEntity()};
         dependents[0].setName("abrasive");
         dependents[1].setName("kadabra");
@@ -908,7 +862,6 @@ public class SolrStoreTest extends SrDbTest {
 
         store.save(asList(entities));
 
-        flushCache();
 
         Filter nameFilter = new Filter("dependents.name", FilterOperation.EQ, "kadabra", null);
 
@@ -931,8 +884,6 @@ public class SolrStoreTest extends SrDbTest {
 
     @Test
     public void filteringANDORMultipleTest() {
-        store.reindex();
-
         TestEntity[] entities = new TestEntity[]{new TestEntity(), new TestEntity(), new TestEntity()};
         entities[0].setStringAttribute("abrasive");
         entities[1].setStringAttribute("kadabra");
@@ -940,7 +891,6 @@ public class SolrStoreTest extends SrDbTest {
 
         store.save(asList(entities));
 
-        flushCache();
 
         // Multiple
         Params params = new Params();
@@ -979,8 +929,6 @@ public class SolrStoreTest extends SrDbTest {
 
     @Test
     public void filteringEmptyValueTest() {
-        store.reindex();
-
         TestEntity[] entities = new TestEntity[]{new TestEntity(), new TestEntity(), new TestEntity()};
         entities[0].setStringAttribute("abrasive");
         entities[1].setStringAttribute("kadabra");
@@ -988,7 +936,6 @@ public class SolrStoreTest extends SrDbTest {
 
         store.save(asList(entities));
 
-        flushCache();
 
         // EQ
         Params params = new Params();
@@ -1000,8 +947,6 @@ public class SolrStoreTest extends SrDbTest {
 
     @Test
     public void filteringEmptyTest() {
-        store.reindex();
-
         TestEntity[] entities = new TestEntity[]{new TestEntity(), new TestEntity(), new TestEntity()};
         entities[0].setStringAttribute("abrasive");
         entities[1].setStringAttribute("kadabra");
@@ -1009,7 +954,6 @@ public class SolrStoreTest extends SrDbTest {
 
         store.save(asList(entities));
 
-        flushCache();
 
         // IN
         List<String> result = store.findEmptyInFilter();
@@ -1022,8 +966,6 @@ public class SolrStoreTest extends SrDbTest {
 
     @Test
     public void filteringEmptyOperationTest() {
-        store.reindex();
-
         TestEntity[] entities = new TestEntity[]{new TestEntity(), new TestEntity(), new TestEntity()};
         entities[0].setStringAttribute("abrasive");
         entities[1].setStringAttribute("kadabra");
@@ -1031,7 +973,6 @@ public class SolrStoreTest extends SrDbTest {
 
         store.save(asList(entities));
 
-        flushCache();
 
         // EQ
         Params params = new Params();
@@ -1047,8 +988,6 @@ public class SolrStoreTest extends SrDbTest {
 
     @Test
     public void filteringNoFilterTest() {
-        store.reindex();
-
         TestEntity[] entities = new TestEntity[]{new TestEntity(), new TestEntity(), new TestEntity()};
         entities[0].setStringAttribute("abrasive");
         entities[1].setStringAttribute("kadabra");
@@ -1056,7 +995,6 @@ public class SolrStoreTest extends SrDbTest {
 
         store.save(asList(entities));
 
-        flushCache();
 
         // EQ
         Params params = new Params();
@@ -1069,8 +1007,6 @@ public class SolrStoreTest extends SrDbTest {
 
     @Test
     public void filteringFoldingTest() {
-        store.reindex();
-
         TestEntity[] entities = new TestEntity[]{new TestEntity(), new TestEntity(), new TestEntity(), new TestEntity()};
         entities[0].setStringAttribute("Čenko");
         entities[1].setStringAttribute("čenko");
@@ -1078,7 +1014,6 @@ public class SolrStoreTest extends SrDbTest {
 
         store.save(asList(entities));
 
-        flushCache();
 
         // EQ exact
         Params params = new Params();
@@ -1105,7 +1040,7 @@ public class SolrStoreTest extends SrDbTest {
 
         // EQ folding
         params = new Params();
-        params.setFilter(asList(new Filter("foldingAttribute", FilterOperation.EQ, "čenko", null)));
+        params.setFilter(asList(new Filter("foldingAttribute", FilterOperation.EQ, "cenko", null)));
 
         result = store.findAll(params);
         assertThat(result.getCount(), is(2L));
@@ -1132,8 +1067,6 @@ public class SolrStoreTest extends SrDbTest {
     @Ignore
     public void filteringNestedFolding() {
         //getTemplate().putMapping(SolrTestEntity.class);
-        store.reindex();
-
         DependentEntity[] dependents = new DependentEntity[]{new DependentEntity(), new DependentEntity(), new DependentEntity(), new DependentEntity()};
         dependents[0].setId("Čenko");
         dependents[1].setId("čenko");
@@ -1149,8 +1082,6 @@ public class SolrStoreTest extends SrDbTest {
 //        entities[2].setDependent(dependents[2]);
 
         store.save(asList(entities));
-
-        flushCache();
 
 
         // EQ exact
@@ -1203,8 +1134,6 @@ public class SolrStoreTest extends SrDbTest {
 
     @Test
     public void pagingTest() {
-        store.reindex();
-
         TestEntity[] entities = new TestEntity[]{new TestEntity(), new TestEntity(), new TestEntity()};
         entities[0].setStringAttribute("holmes");
         entities[1].setStringAttribute("string");
@@ -1212,7 +1141,6 @@ public class SolrStoreTest extends SrDbTest {
 
         store.save(asList(entities));
 
-        flushCache();
 
         Params params = new Params();
         params.setPage(0);
@@ -1233,8 +1161,6 @@ public class SolrStoreTest extends SrDbTest {
 
     @Test
     public void pagingOverPage() {
-        store.reindex();
-
         TestEntity[] entities = new TestEntity[]{new TestEntity(), new TestEntity(), new TestEntity()};
         entities[0].setStringAttribute("holmes");
         entities[1].setStringAttribute("string");
@@ -1242,7 +1168,6 @@ public class SolrStoreTest extends SrDbTest {
 
         store.save(asList(entities));
 
-        flushCache();
 
         Params params = new Params();
         params.setPage(2);
@@ -1255,8 +1180,6 @@ public class SolrStoreTest extends SrDbTest {
 
     @Test
     public void pagingWrongPage() {
-        store.reindex();
-
         TestEntity[] entities = new TestEntity[]{new TestEntity(), new TestEntity(), new TestEntity()};
         entities[0].setStringAttribute("holmes");
         entities[1].setStringAttribute("string");
@@ -1264,7 +1187,6 @@ public class SolrStoreTest extends SrDbTest {
 
         store.save(asList(entities));
 
-        flushCache();
 
         Params params = new Params();
         params.setPage(-1);
@@ -1275,28 +1197,7 @@ public class SolrStoreTest extends SrDbTest {
     }
 
     @Test
-    public void pagingWrongPageSize() {
-        store.reindex();
-
-        TestEntity[] entities = new TestEntity[]{new TestEntity(), new TestEntity(), new TestEntity()};
-        entities[0].setStringAttribute("holmes");
-        entities[1].setStringAttribute("string");
-        entities[2].setStringAttribute("abraka-dabra");
-
-        store.save(asList(entities));
-
-        flushCache();
-
-        Params params = new Params();
-        params.setPage(0);
-        params.setPageSize(-1);
-
-        assertThrown(() -> store.findAll(params))
-                .isInstanceOf(BadArgument.class);
-    }
-
-    @Test
-    public void batchUserIdHandlingTest() {
+    public void batchUserIdHandlingTest() throws IOException, SolrServerException {
         batchStore.reindex();
         Batch b = new Batch();
         Batch b2 = new Batch();
@@ -1305,7 +1206,159 @@ public class SolrStoreTest extends SrDbTest {
         Params p = new Params();
         p.setFilter(asList(new Filter("userId", FilterOperation.EQ, "userid", null)));
         Result<Batch> all = batchStore.findAll(p);
+        getClient().deleteByQuery("batch", "id:(" + b.getId() + " " + b2.getId() + ")");
+        getClient().commit("batch");
         assertThat(all.getItems(), hasSize(1));
         assertThat(all.getItems().get(0).getId(), is(b.getId()));
+    }
+
+    @Test
+    public void emptyEqNeqTest() {
+        TestEntity[] entities = new TestEntity[]{new TestEntity(), new TestEntity(), new TestEntity()};
+        entities[0].setStringAttribute("holmes");
+        entities[1].setStringAttribute("string");
+        entities[2].setStringAttribute("abraka-dabra");
+
+        store.save(asList(entities));
+        SimpleQuery q = new SimpleQuery();
+        q.addCriteria(Criteria.where(SolrArclibXmlDocument.ID));
+        q.addProjectionOnField("id");
+        q.addFilterQuery(new SimpleFilterQuery(SolrQueryUtils.inQuery("id", asSet())));
+        Page<SolrTestEntity> res = getTemplate().query(store.getIndexCore(), q, store.getUType());
+        assertThat(res.getTotalElements(), is(0L));
+
+        q = new SimpleQuery();
+        q.addCriteria(Criteria.where(SolrArclibXmlDocument.ID));
+        q.addProjectionOnField("id");
+        q.addFilterQuery(new SimpleFilterQuery(SolrQueryUtils.notInQuery("id", asSet())));
+        res = getTemplate().query(store.getIndexCore(), q, store.getUType());
+        assertThat(res.getTotalElements(), is(3L));
+    }
+
+    @Test
+    public void nestedNeqQueries() {
+        TestEntity[] entities = new TestEntity[]{new TestEntity(), new TestEntity(), new TestEntity(), new TestEntity(), new TestEntity(), new TestEntity()};
+        entities[0].setIntAttribute(0);
+        entities[1].setIntAttribute(0);
+        entities[2].setIntAttribute(10);
+        entities[3].setIntAttribute(1);
+        entities[4].setIntAttribute(1);
+        entities[5].setIntAttribute(1);
+        entities[0].setDoubleAttribute(0.0);
+        entities[1].setDoubleAttribute(1.0);
+        entities[2].setDoubleAttribute(1.0);
+        entities[3].setDoubleAttribute(1.0);
+        entities[4].setDoubleAttribute(1.0);
+        entities[5].setDoubleAttribute(1.0);
+        store.save(asList(entities));
+
+        Params params = new Params();
+
+        //except 1st
+        Filter orNeqFilter = new Filter(null, FilterOperation.OR, null, asList(
+                new Filter("intAttribute", FilterOperation.NEQ, "0", null),
+                new Filter("doubleAttribute", FilterOperation.NEQ, "0", null)
+        ));
+
+        //all except 1st 5th 6th
+        Filter andFilter = new Filter(null, FilterOperation.AND, null, asList(
+                new Filter("id", FilterOperation.NEQ, entities[5].getId(), null),
+                new Filter("id", FilterOperation.NEQ, entities[4].getId(), null),
+                new Filter("id", FilterOperation.NEQ, entities[0].getId(), null)
+        ));
+
+        params.setFilter(asList(orNeqFilter, andFilter));
+
+        //except 3rd
+        addPrefilter(params, new Filter("intAttribute", FilterOperation.LTE, "5", null));
+        addPrefilter(params, new Filter("intAttribute", FilterOperation.GTE, "-5", null));
+
+        Result<TestEntity> result = store.findAll(params);
+        assertThat(result.getCount(), is(2L));
+        assertThat(result.getItems(), containsInAnyOrder(entities[1],entities[3]));
+    }
+
+    @Test
+    public void multiWordQuery() {
+        TestEntity[] entities = new TestEntity[]{new TestEntity(), new TestEntity(), new TestEntity()};
+        entities[0].setStringAttribute("Začátek krátký dlouhý Konec");
+        entities[1].setStringAttribute("Začátek dlouhý Konec");
+        entities[2].setStringAttribute("Začátek krátký Konec");
+
+        store.save(asList(entities));
+
+        Params params = new Params();
+        params.setFilter(asList(new Filter("foldingAttribute", FilterOperation.CONTAINS, "krátký dlouhý", null)));
+        Result<TestEntity> result = store.findAll(params);
+        assertThat(result.getCount(), is(1L));
+        assertThat(result.getItems(), containsInAnyOrder(entities[0]));
+
+        params = new Params();
+        params.setFilter(asList(new Filter("textAttribute", FilterOperation.STARTWITH, "začátek krátký ", null)));
+        result = store.findAll(params);
+        assertThat(result.getCount(), is(2L));
+        assertThat(result.getItems(), containsInAnyOrder(entities[0], entities[2]));
+
+        params = new Params();
+        params.setFilter(asList(new Filter("textAttribute", FilterOperation.ENDWITH, "dlouhý konec", null)));
+        result = store.findAll(params);
+        assertThat(result.getCount(), is(2L));
+        assertThat(result.getItems(), containsInAnyOrder(entities[0], entities[1]));
+
+        //keyword tokenizer allows only full words search
+        params = new Params();
+        params.setFilter(asList(new Filter("textAttribute", FilterOperation.CONTAINS, "ký dlo", null)));
+        result = store.findAll(params);
+        assertThat(result.getCount(), is(0L));
+
+        params = new Params();
+        params.setFilter(asList(new Filter("foldingAttribute", FilterOperation.CONTAINS, "ký dlo", null)));
+        result = store.findAll(params);
+        assertThat(result.getCount(), is(0L));
+    }
+
+    @Test
+    public void testPunctation() {
+        TestEntity[] entities = new TestEntity[]{new TestEntity(), new TestEntity(), new TestEntity(), new TestEntity()};
+        entities[0].setStringAttribute("chleba");
+        entities[1].setStringAttribute("chleba.");
+        entities[2].setStringAttribute("chle'ba");
+        entities[3].setStringAttribute("chle ba");
+
+        store.save(asList(entities));
+
+        Params params = new Params();
+        params.setFilter(asList(new Filter("foldingAttribute", FilterOperation.EQ, "chleba", null)));
+        Result<TestEntity> result = store.findAll(params);
+        assertThat(result.getCount(), is(2L));
+        assertThat(result.getItems(), containsInAnyOrder(entities[0], entities[1]));
+
+        params = new Params();
+        params.setFilter(asList(new Filter("textAttribute", FilterOperation.EQ, "chleba", null)));
+        result = store.findAll(params);
+        assertThat(result.getCount(), is(2L));
+        assertThat(result.getItems(), containsInAnyOrder(entities[0], entities[1]));
+
+        params = new Params();
+        params.setFilter(asList(new Filter("textAttribute", FilterOperation.EQ, "chleba.", null)));
+        result = store.findAll(params);
+        assertThat(result.getCount(), is(2L));
+        assertThat(result.getItems(), containsInAnyOrder(entities[0], entities[1]));
+
+        params = new Params();
+        params.setFilter(asList(new Filter("foldingAttribute", FilterOperation.EQ, "chleba.", null)));
+        result = store.findAll(params);
+        assertThat(result.getCount(), is(2L));
+        assertThat(result.getItems(), containsInAnyOrder(entities[0], entities[1]));
+
+        params = new Params();
+        params.setFilter(asList(new Filter("textAttribute", FilterOperation.EQ, "chle'ba", null)));
+        result = store.findAll(params);
+        assertThat(result.getCount(), is(1L));
+
+        params = new Params();
+        params.setFilter(asList(new Filter("foldingAttribute", FilterOperation.EQ, "chle'ba.", null)));
+        result = store.findAll(params);
+        assertThat(result.getCount(), is(1L));
     }
 }

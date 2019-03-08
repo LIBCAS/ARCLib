@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no" ?>
 <METS:mets LABEL="Z dějin malenovického hradu , [1953]" TYPE="Monograph" OBJID="TEST_OBJ_ID"
-           xmlns:ARCLIB="http://arclib.lib.cas.cz/ARCLIB_XML"
+           xmlns:ARCLIB="http://arclib.lib.cas.cz/ARCLIB_XSD"
            xmlns:METS="http://www.loc.gov/METS/"
            xmlns:xlink="http://www.w3.org/1999/xlink"
            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"

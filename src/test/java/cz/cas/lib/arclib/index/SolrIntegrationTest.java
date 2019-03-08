@@ -19,7 +19,9 @@ import cz.cas.lib.core.index.dto.Filter;
 import cz.cas.lib.core.index.dto.FilterOperation;
 import helper.ApiTest;
 import helper.DbTest;
+import helper.TransformerFactoryWorkaroundTest;
 import org.apache.solr.client.solrj.SolrServerException;
+import org.apache.solr.common.SolrInputDocument;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -55,11 +57,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @RunWith(SpringRunner.class)
 @SpringBootTest
-public class SolrIntegrationTest implements ApiTest {
+public class SolrIntegrationTest extends TransformerFactoryWorkaroundTest implements ApiTest {
 
     private Producer producer = new Producer(PRODUCER_ID);
     private User user = new User(USER_ID, producer);
-    private UserDelegate userDelegate = new UserDelegate(user,asList(new SimpleGrantedAuthority(Roles.ADMIN)));
+    private UserDelegate userDelegate = new UserDelegate(user, asList(new SimpleGrantedAuthority(Roles.ADMIN)));
 
     @Value("${solr.arclibxml.corename}")
     private String coreName;
@@ -134,18 +136,17 @@ public class SolrIntegrationTest implements ApiTest {
     @Test
     public void testCreateIndexInvalidFieldValue() throws Exception {
         String arclibXml = new String(Files.readAllBytes(Paths.get("src/test/resources/arclibXmls/invalidValue.xml")), StandardCharsets.UTF_8);
-        assertThrown(() -> indexArclibXmlStore.createIndex(arclibXml, PRODUCER_ID, USER_ID, IndexedArclibXmlDocumentState.PROCESSED)).isInstanceOf(BadArgument.class);
+        assertThrown(() -> indexArclibXmlStore.createIndex(arclibXml, new Producer(PRODUCER_ID), new User(USER_ID), IndexedArclibXmlDocumentState.PROCESSED, false)).isInstanceOf(BadArgument.class);
     }
 
     @Test
     public void testCreateIndex() throws Exception {
-        String arclibXml = new String(Files.readAllBytes(Paths.get("src/main/resources/sampleData/arclibXml4.xml")), StandardCharsets.UTF_8);
-        indexArclibXmlStore.createIndex(arclibXml, "otherproducer", "otheruser", IndexedArclibXmlDocumentState.PROCESSED);
+        String arclibXml = new String(Files.readAllBytes(Paths.get("src/main/resources/sampleData/8b2efafd-b637-4b97-a8f7-1b97dd4ee622_xml_2.xml")), StandardCharsets.UTF_8);
+        indexArclibXmlStore.createIndex(arclibXml, new Producer("otherproducer"), new User("otheruser"), IndexedArclibXmlDocumentState.PROCESSED, false);
         SimpleQuery q = new SimpleQuery();
-        q.addCriteria(Criteria.where(SolrArclibXmlDocument.PRODUCER_ID).in("otherproducer").and("premis_event_type").in("validation"));
+        q.addCriteria(Criteria.where(SolrArclibXmlDocument.PRODUCER_ID).in("otherproducer").and("type").in("Periodical"));
         List<SolrArclibXmlDocument> content = solrTemplate.query(coreName, q, SolrArclibXmlDocument.class).getContent();
         assertThat(content, hasSize(1));
-        assertThat(content.get(0).getCreated().toInstant(), equalTo(Instant.parse("2018-07-30T11:54:38Z")));
     }
 
     /**
@@ -169,7 +170,7 @@ public class SolrIntegrationTest implements ApiTest {
                 .param("filter[0].operation", "NEQ")
                 .param("filter[0].value", "blah")
                 .param("save", "true")
-        )
+                .param("queryName", "test query"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.items", hasSize(5)));
         List<AipQuery> all = aipQueryStore.findQueriesOfUser(USER_ID);
@@ -188,17 +189,60 @@ public class SolrIntegrationTest implements ApiTest {
      */
     @Test
     public void testQueryMultiValues() throws Exception {
+        String arclibXml = new String(Files.readAllBytes(Paths.get("src/main/resources/sampleData/8b2efafd-b637-4b97-a8f7-1b97dd4ee622_xml_2.xml")), StandardCharsets.UTF_8);
+        indexArclibXmlStore.createIndex(arclibXml, new Producer(PRODUCER_ID), new User(USER_ID), IndexedArclibXmlDocumentState.PROCESSED, false);
         mvc(api).perform(get("/api/aip/list")
-                .param("filter[0].field", "premis_event_type")
-                .param("filter[0].operation", "EQ")
-                .param("filter[0].value", "validation")
-
-                .param("filter[1].field", "premis_event_type")
-                .param("filter[1].operation", "EQ")
-                .param("filter[1].value", "ingestion")
+                .param("filter[0].field", "dublin_core")
+                .param("filter[0].operation", "CONTAINS")
+                .param("filter[0].value", "model:periodicalvolume")
+                .param("filter[1].field", "dublin_core")
+                .param("filter[1].operation", "CONTAINS")
+                .param("filter[1].value", "model:periodicalitem")
         )
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.items", hasSize(2)));
+                .andExpect(jsonPath("$.items", hasSize(1)));
+    }
+
+    /**
+     * Tests that field with multiple values can be queried.
+     */
+    @Test
+    public void nestedQuery() throws Exception {
+        String arclibXml = new String(Files.readAllBytes(Paths.get("src/test/resources/arclibXmls/validSimple.xml")), StandardCharsets.UTF_8);
+        indexArclibXmlStore.createIndex(arclibXml, new Producer(PRODUCER_ID), new User(USER_ID), IndexedArclibXmlDocumentState.PROCESSED, false);
+        mvc(api).perform(get("/api/aip/list")
+                .param("filter[0].field", "premis_event")
+                .param("filter[0].operation", "NESTED")
+                .param("filter[0].filter[0].field", "premis_event_type")
+                .param("filter[0].filter[0].operation", "EQ")
+                .param("filter[0].filter[0].value", "ingestion")
+                .param("filter[0].filter[1].field", "premis_event_detail")
+                .param("filter[0].filter[1].operation", "EQ")
+                .param("filter[0].filter[1].value", "validation detail")
+        )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.items", hasSize(0)));
+
+        mvc(api).perform(get("/api/aip/list")
+                .param("filter[0].field", "premis_event")
+                .param("filter[0].operation", "NESTED")
+                .param("filter[0].filter[0].field", "premis_event_type")
+                .param("filter[0].filter[0].operation", "EQ")
+                .param("filter[0].filter[0].value", "ingestion")
+                .param("filter[0].filter[1].field", "premis_event_detail")
+                .param("filter[0].filter[1].operation", "EQ")
+                .param("filter[0].filter[1].value", "ingestion detail")
+                .param("filter[1].field", "premis_event")
+                .param("filter[1].operation", "NESTED")
+                .param("filter[1].filter[0].field", "premis_event_type")
+                .param("filter[1].filter[0].operation", "EQ")
+                .param("filter[1].filter[0].value", "validation")
+                .param("filter[1].filter[1].field", "premis_event_detail")
+                .param("filter[1].filter[1].operation", "EQ")
+                .param("filter[1].filter[1].value", "validation detail")
+        )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.items", hasSize(1)));
     }
 
     /**
@@ -206,8 +250,8 @@ public class SolrIntegrationTest implements ApiTest {
      */
     @Test
     public void testQueryMultiProducers() throws Exception {
-        SolrArclibXmlDocument doc = new SolrArclibXmlDocument("uuid", new Date(), "producerId", "userId", "authorialId", "sipId", 1, 1, "initial version", "initial version", "doc", IndexedArclibXmlDocumentState.PROCESSED, new HashMap<>());
-        solrTemplate.saveBean(coreName, doc);
+        SolrInputDocument doc = SolrArclibXmlDocument.createDocument("uuid", new Date(), "producerName", "producerId", "userName", "authorialId", "sipId", 1, 1, "initial version", "initial version", "doc", IndexedArclibXmlDocumentState.PROCESSED, true, "parent", new HashMap<>());
+        solrTemplate.saveDocument(coreName, doc);
         solrTemplate.commit(coreName);
 
         mvc(api).perform(get("/api/aip/list"))

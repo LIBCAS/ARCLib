@@ -13,7 +13,7 @@
     <!--Path to main XML record (METS in the root folder) of SIP passed from the Java code-->
     <xsl:param name="sipMetadataPath"/>
 
-    <xsl:variable name="sipMetadata" select="document(concat('file:///', $pathToSip, $sipMetadataPath))/*"/>
+    <xsl:variable name="sipMetadata" select="document(concat('file:///', $sipMetadataPath))/*"/>
 
     <!--Collection of documents-->
     <xsl:variable name="amdSecs"
@@ -241,7 +241,7 @@
                                 <xsl:for-each-group
                                         select="collection($amdSecs)/METS:mets/METS:amdSec/METS:techMD/METS:mdWrap/
                                         METS:xmlData/mix:mix/mix:ImageCaptureMetadata"
-                                        group-by="concat(mix:GeneralCaptureInformation/mix:dateTimeCreated,
+                                        group-by="concat(substring(mix:GeneralCaptureInformation/mix:dateTimeCreated, 1, 10),
                                                     mix:GeneralCaptureInformation/mix:imageProducer,
                                                     mix:ScannerCapture/mix:ScannerModel/mix:scannerModelSerialNo)">
                                     <xsl:element name="ARCLib:ImageCaptureMetadata">
@@ -276,7 +276,7 @@
                         <xsl:attribute name="MDTYPE">OTHER</xsl:attribute>
 
                         <xsl:element name="METS:xmlData">
-                            <xsl:element name="ARCLib:creatingApplication">
+                            <xsl:element name="ARCLib:creatingApplications">
                                 <xsl:for-each-group
                                         select="collection($amdSecs)/METS:mets/METS:amdSec/METS:techMD/METS:mdWrap/
                                         METS:xmlData/premis:object"

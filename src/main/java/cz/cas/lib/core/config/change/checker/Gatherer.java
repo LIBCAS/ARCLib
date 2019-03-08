@@ -8,7 +8,7 @@ import com.fasterxml.jackson.databind.ser.*;
 import com.fasterxml.jackson.databind.ser.impl.SimpleBeanPropertyFilter;
 import com.fasterxml.jackson.databind.ser.impl.SimpleFilterProvider;
 import org.springframework.beans.BeansException;
-import org.springframework.boot.context.properties.ConfigurationBeanFactoryMetaData;
+import org.springframework.boot.context.properties.ConfigurationBeanFactoryMetadata;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
@@ -62,7 +62,7 @@ public class Gatherer implements ApplicationContextAware {
 
     private Map<String, Object> extract(ApplicationContext context, ObjectMapper mapper) {
         Map<String, Object> result = new LinkedHashMap<>();
-        ConfigurationBeanFactoryMetaData beanFactoryMetaData = getBeanFactoryMetaData(
+        ConfigurationBeanFactoryMetadata beanFactoryMetaData = getBeanFactoryMetaData(
                 context);
         Map<String, Object> beans = getConfigurationPropertiesBeans(context,
                 beanFactoryMetaData);
@@ -81,10 +81,10 @@ public class Gatherer implements ApplicationContextAware {
         return result;
     }
 
-    private ConfigurationBeanFactoryMetaData getBeanFactoryMetaData(
+    private ConfigurationBeanFactoryMetadata getBeanFactoryMetaData(
             ApplicationContext context) {
-        Map<String, ConfigurationBeanFactoryMetaData> beans = context
-                .getBeansOfType(ConfigurationBeanFactoryMetaData.class);
+        Map<String, ConfigurationBeanFactoryMetadata> beans = context
+                .getBeansOfType(ConfigurationBeanFactoryMetadata.class);
         if (beans.size() == 1) {
             return beans.values().iterator().next();
         }
@@ -93,7 +93,7 @@ public class Gatherer implements ApplicationContextAware {
 
     private Map<String, Object> getConfigurationPropertiesBeans(
             ApplicationContext context,
-            ConfigurationBeanFactoryMetaData beanFactoryMetaData) {
+            ConfigurationBeanFactoryMetadata beanFactoryMetaData) {
         Map<String, Object> beans = new LinkedHashMap<String, Object>();
         beans.putAll(context.getBeansWithAnnotation(ConfigurationProperties.class));
         if (beanFactoryMetaData != null) {
@@ -171,7 +171,7 @@ public class Gatherer implements ApplicationContextAware {
      * @return the prefix
      */
     private String extractPrefix(ApplicationContext context,
-                                 ConfigurationBeanFactoryMetaData beanFactoryMetaData, String beanName,
+                                 ConfigurationBeanFactoryMetadata beanFactoryMetaData, String beanName,
                                  Object bean) {
         ConfigurationProperties annotation = context.findAnnotationOnBean(beanName,
                 ConfigurationProperties.class);

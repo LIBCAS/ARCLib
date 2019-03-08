@@ -2,6 +2,7 @@ package cz.cas.lib.arclib.bpm;
 
 import cz.cas.lib.arclib.domain.Hash;
 import cz.cas.lib.arclib.domain.HashType;
+import cz.cas.lib.arclib.domain.IngestToolFunction;
 import cz.cas.lib.arclib.domain.ingestWorkflow.IngestWorkflow;
 import cz.cas.lib.arclib.index.IndexArclibXmlStore;
 import cz.cas.lib.arclib.index.solr.arclibxml.SolrArclibXmlDocument;
@@ -10,11 +11,12 @@ import cz.cas.lib.arclib.service.archivalStorage.ArchivalStorageServiceDebug;
 import cz.cas.lib.arclib.store.IngestWorkflowStore;
 import cz.cas.lib.core.exception.GeneralException;
 import cz.cas.lib.core.store.Transactional;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.camunda.bpm.engine.delegate.DelegateExecution;
 import org.camunda.bpm.engine.delegate.JavaDelegate;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
 import javax.inject.Inject;
 import java.io.ByteArrayInputStream;
@@ -24,12 +26,14 @@ import java.util.ArrayList;
 import java.util.Map;
 
 @Slf4j
-@Component
+@Service
 public class ArchivalStorageDelegate extends ArclibDelegate implements JavaDelegate {
     private ArchivalStorageService archivalStorageService;
     private ArchivalStorageServiceDebug archivalStorageServiceDebug;
     private IngestWorkflowStore ingestWorkflowStore;
     private IndexArclibXmlStore indexArclibXmlStore;
+    @Getter
+    private String toolName = "ARCLib_" + IngestToolFunction.transfer;
 
     /**
      * Stores SIP to archival storage.
@@ -43,7 +47,7 @@ public class ArchivalStorageDelegate extends ArclibDelegate implements JavaDeleg
     @Override
     public void execute(DelegateExecution execution) throws IOException {
         String ingestWorkflowExternalId = getIngestWorkflowExternalId(execution);
-        log.info("Execution of Archival storage delegate started for ingest workflow " + ingestWorkflowExternalId + ".");
+        log.debug("Execution of Archival storage delegate started for ingest workflow " + ingestWorkflowExternalId + ".");
         IngestWorkflow ingestWorkflow = ingestWorkflowStore.findByExternalId(ingestWorkflowExternalId);
 
         Map<String, Object> indexedFields = indexArclibXmlStore.findArclibXmlIndexDocument(ingestWorkflow.getExternalId());
@@ -53,7 +57,7 @@ public class ArchivalStorageDelegate extends ArclibDelegate implements JavaDeleg
         String sipHashValue = (String) execution.getVariable(BpmConstants.MessageDigestCalculation.checksumSha512);
         Hash sipHash = new Hash(sipHashValue, HashType.Sha512);
         String sipId = (String) execution.getVariable(BpmConstants.ProcessVariables.sipId);
-        Boolean debuggingModeActive = (Boolean) execution.getVariable(BpmConstants.ProcessVariables.debuggingModeActive);
+        boolean debuggingModeActive = isInDebugMode(execution);
 
         try (FileInputStream sip = new FileInputStream(getSipZipPath(execution).toFile());
              ByteArrayInputStream xml = new ByteArrayInputStream(arclibXml.getBytes())) {
@@ -88,7 +92,7 @@ public class ArchivalStorageDelegate extends ArclibDelegate implements JavaDeleg
                     throw new GeneralException("Unknown type of ingest workflow versioning level.");
             }
         }
-        log.info("Execution of Archival storage delegate finished for ingest workflow " + ingestWorkflowExternalId + ".");
+        log.debug("Execution of Archival storage delegate finished for ingest workflow " + ingestWorkflowExternalId + ".");
     }
 
 

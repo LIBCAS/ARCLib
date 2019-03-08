@@ -11,6 +11,7 @@ import cz.cas.lib.arclib.index.solr.arclibxml.SolrArclibXmlDocument;
 import cz.cas.lib.arclib.security.authorization.Roles;
 import cz.cas.lib.arclib.security.user.UserDetails;
 import cz.cas.lib.arclib.service.AipService;
+import cz.cas.lib.arclib.service.archivalStorage.ArchivalStoragePipe;
 import cz.cas.lib.arclib.store.AipQueryStore;
 import cz.cas.lib.arclib.utils.ArclibUtils;
 import cz.cas.lib.core.exception.ForbiddenObject;
@@ -22,9 +23,12 @@ import cz.cas.lib.core.index.dto.Result;
 import cz.cas.lib.core.store.Transactional;
 import io.swagger.annotations.*;
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.dom4j.DocumentException;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.ClientHttpResponse;
 import org.springframework.web.bind.annotation.*;
@@ -32,10 +36,10 @@ import org.xml.sax.SAXException;
 
 import javax.annotation.security.RolesAllowed;
 import javax.inject.Inject;
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.xml.parsers.ParserConfigurationException;
 import java.io.ByteArrayInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
@@ -46,20 +50,20 @@ import static cz.cas.lib.arclib.utils.ArclibUtils.hasRole;
 import static cz.cas.lib.core.util.Utils.*;
 
 @RestController
-@Api(value = "aip", description = "Api for searching within ARCLib XML index and retrieving from Archival Storage")
+@Api(value = "aip", description = "Api for searching within ARCLib XML index, retrieving from Archival Storage and editing of ArclibXml")
 @RequestMapping("/api/aip")
+@Slf4j
 @Transactional
-public class AipApi {
+public class AipApi extends ArchivalStoragePipe {
 
     @Getter
     private IndexArclibXmlStore indexArclibXmlStore;
     private AipService aipService;
     private AipQueryStore aipQueryStore;
-    private UserDetails userDetails;
     private int keepAliveUpdateTimeout;
 
     @ApiOperation(value = "Gets partially filled ARCLib XML index records. The result of query as well as the query " +
-            "itself is saved if requested.",
+            "itself is saved if the queryName param is filled.",
             notes = "If the calling user is not Roles.SUPER_ADMIN, only the respective records of the users producer are returned." +
                     "Records with state REMOVED and DELETED are returned only to the user with role Roles.SUPER_ADMIN or Roles.ADMIN.\n" +
                     "Filter/Sort fields: producer_id, user_id, state, label, type, sip_id, created, id, authorial_id," +
@@ -89,7 +93,9 @@ public class AipApi {
             @ApiParam(value = "Parameters to comply with", required = true)
             @ModelAttribute Params params,
             @ApiParam(value = "Save query")
-            @RequestParam(value = "save", defaultValue = "false") boolean save) {
+            @RequestParam(value = "save", defaultValue = "false") boolean save,
+            @ApiParam(value = "Query name")
+            @RequestParam(value = "queryName", defaultValue = "", required = false) String queryName) {
         if (!hasRole(userDetails, Roles.SUPER_ADMIN)) {
             addPrefilter(params, new Filter(SolrArclibXmlDocument.PRODUCER_ID, FilterOperation.EQ, userDetails.getProducerId(), null));
         }
@@ -99,7 +105,7 @@ public class AipApi {
                     new Filter(SolrArclibXmlDocument.STATE, FilterOperation.NEQ, IndexedArclibXmlDocumentState.DELETED.toString(), null)))
             );
         }
-        return indexArclibXmlStore.findAll(params, save);
+        return indexArclibXmlStore.findAll(params, queryName);
     }
 
     @ApiOperation(value = "Gets all fields of ARCLib XML index record together with corresponding IW entity containing SIPs folder structure.",
@@ -134,18 +140,14 @@ public class AipApi {
             @RequestParam(value = "all", defaultValue = "false") boolean all,
             HttpServletResponse response) throws IOException, URISyntaxException {
         checkUUID(aipId);
-        response.setContentType("application/zip");
-        response.setStatus(200);
-        response.addHeader("Content-Disposition", "attachment; filename=" + ArclibUtils.getAipExportName(aipId));
         ClientHttpResponse clientHttpResponse = aipService.exportSingleAip(aipId, all);
-        try {
-            IOUtils.copyLarge(clientHttpResponse.getBody(), response.getOutputStream());
-        } catch (IOException e) {
-            if (!(e instanceof FileNotFoundException))
-                throw e;
-        } finally {
-            response.setStatus(clientHttpResponse.getStatusCode().value());
+        HttpStatus status = clientHttpResponse.getStatusCode();
+        if (status.is2xxSuccessful()) {
+            response.setContentType("application/zip");
+            response.addHeader("Content-Disposition", "attachment; filename=" + ArclibUtils.getAipExportName(aipId));
         }
+        response.setStatus(status.value());
+        IOUtils.copyLarge(clientHttpResponse.getBody(), response.getOutputStream());
     }
 
     @ApiOperation(value = "Returns specified AIP XML")
@@ -160,18 +162,30 @@ public class AipApi {
             @RequestParam(value = "v", defaultValue = "") Integer version,
             HttpServletResponse response) throws URISyntaxException, IOException {
         checkUUID(aipId);
-        response.setContentType("application/xml");
-        response.setStatus(200);
-        response.addHeader("Content-Disposition", "attachment; filename=" + ArclibUtils.getXmlExportName(aipId, version));
         ClientHttpResponse clientHttpResponse = aipService.exportSingleXml(aipId, version);
-        try {
-            IOUtils.copyLarge(clientHttpResponse.getBody(), response.getOutputStream());
-        } catch (IOException e) {
-            if (!(e instanceof FileNotFoundException))
-                throw e;
-        } finally {
-            response.setStatus(clientHttpResponse.getStatusCode().value());
+        HttpStatus status = clientHttpResponse.getStatusCode();
+        if (status.is2xxSuccessful()) {
+            response.setContentType("application/xml");
+            response.addHeader("Content-Disposition", "attachment; filename=" + ArclibUtils.getXmlExportName(aipId, version));
         }
+        response.setStatus(status.value());
+        IOUtils.copyLarge(clientHttpResponse.getBody(), response.getOutputStream());
+    }
+
+    @ApiOperation(notes = "If the AIP is in PROCESSING state or the storage is not reachable, the storage checksums are not filled and the consistent flag is set to false", value = "Retrieves information about AIP containing state, whether is consistent etc from the given storage.")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "AIP successfully deleted"),
+            @ApiResponse(code = 400, message = "bad request, e.g. the specified id is not a valid UUID"),
+            @ApiResponse(code = 500, message = "internal server error")
+    })
+    @RolesAllowed({Roles.SUPER_ADMIN})
+    @RequestMapping(value = "/{aipId}/info", method = RequestMethod.GET)
+    public void getAipInfo(
+            @ApiParam(value = "AIP id", required = true) @PathVariable("aipId") String aipId,
+            @ApiParam(value = "id of the logical storage", required = true) @RequestParam(value = "storageId") String storageId,
+            HttpServletResponse response, HttpServletRequest request) {
+        checkUUID(aipId);
+        passToArchivalStorage(response, request, "/storage/" + aipId + "/info?storageId=" + storageId, HttpMethod.GET, "retrieve info about AIP: " + aipId + "at storage: " + storageId, AccessTokenType.READ);
     }
 
     @ApiOperation(value = "Gets all saved queries of the user",
@@ -199,6 +213,7 @@ public class AipApi {
                 !userDetails.getProducerId().equals(query.getUser().getProducer().getId()))
             throw new ForbiddenObject(AipQuery.class, id);
         aipQueryStore.delete(query);
+        log.debug("Aip query: " + id + " has been deleted.");
     }
 
     @ApiOperation(value = "Logically removes AIP at archival storage. Roles.ADMIN, Roles.SUPER_ADMIN, Roles.ARCHIVIST")
@@ -215,9 +230,6 @@ public class AipApi {
         ClientHttpResponse clientHttpResponse = aipService.removeAip(aipId);
         try {
             IOUtils.copy(clientHttpResponse.getBody(), response.getOutputStream());
-        } catch (IOException e) {
-            if (!(e instanceof FileNotFoundException))
-                throw e;
         } finally {
             response.setStatus(clientHttpResponse.getStatusCode().value());
         }
@@ -238,9 +250,6 @@ public class AipApi {
         ClientHttpResponse clientHttpResponse = aipService.renewAip(aipId);
         try {
             IOUtils.copy(clientHttpResponse.getBody(), response.getOutputStream());
-        } catch (IOException e) {
-            if (!(e instanceof FileNotFoundException))
-                throw e;
         } finally {
             response.setStatus(clientHttpResponse.getStatusCode().value());
         }
@@ -259,35 +268,34 @@ public class AipApi {
             @PathVariable("aipId") String aipId) {
         checkUUID(aipId);
         aipService.createDeletionRequest(aipId);
-
     }
 
-    @ApiOperation(value = "Registers update of Arclib Xml of AIP. Roles.SUPER_ADMIN, Roles.EDITOR")
+    @ApiOperation(value = "Registers update of Arclib Xml of authorial package. Roles.SUPER_ADMIN, Roles.EDITOR")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "AIP update successfully registered"),
-            @ApiResponse(code = 404, message = "AIP with the specified id not found"),
-            @ApiResponse(code = 500, message = "Another update process of the AIP is already in progress")
+            @ApiResponse(code = 200, message = "Xml update successfully registered"),
+            @ApiResponse(code = 404, message = "Authorial package with the specified id not found"),
+            @ApiResponse(code = 423, message = "Another update process of the XML is already in progress")
     })
     @RolesAllowed({Roles.SUPER_ADMIN, Roles.EDITOR})
-    @RequestMapping(value = "/{aipId}/register_update", method = RequestMethod.PUT)
+    @RequestMapping(value = "/{authorialPackageId}/register_update", method = RequestMethod.PUT)
     public void registerXmlUpdate(
-            @ApiParam(value = "AIP id", required = true)
-            @PathVariable("aipId") String aipId) throws IOException {
-        aipService.registerXmlUpdate(aipId);
+            @ApiParam(value = "Authorial package id", required = true)
+            @PathVariable("authorialPackageId") String authorialPackageId) throws IOException {
+        aipService.registerXmlUpdate(authorialPackageId);
     }
 
-    @ApiOperation(value = "Cancels update of Arclib Xml of AIP. Roles.SUPER_ADMIN, Roles.EDITOR")
+    @ApiOperation(value = "Cancels update of Arclib Xml of authorial package. Roles.SUPER_ADMIN, Roles.EDITOR")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "AIP update successfully canceled"),
-            @ApiResponse(code = 404, message = "AIP with the specified id not found"),
-            @ApiResponse(code = 500, message = "Specified AIP is not being updated")
+            @ApiResponse(code = 200, message = "Xml update successfully canceled"),
+            @ApiResponse(code = 404, message = "Authorial package with the specified id not found"),
+            @ApiResponse(code = 500, message = "Specified XML is not being updated")
     })
     @RolesAllowed({Roles.SUPER_ADMIN, Roles.EDITOR})
-    @RequestMapping(value = "/{aipId}/cancel_update", method = RequestMethod.PUT)
+    @RequestMapping(value = "/{authorialPackageId}/cancel_update", method = RequestMethod.PUT)
     public void cancelXmlUpdate(
-            @ApiParam(value = "AIP id", required = true)
-            @PathVariable("aipId") String aipId) {
-        aipService.cancelXmlUpdate(aipId);
+            @ApiParam(value = "Authorial package id", required = true)
+            @PathVariable("authorialPackageId") String authorialPackageId) {
+        aipService.cancelXmlUpdate(authorialPackageId);
     }
 
     @ApiOperation(value = "Returns keep alive timeout in seconds used during the update process.")
@@ -299,17 +307,17 @@ public class AipApi {
         return keepAliveUpdateTimeout;
     }
 
-    @ApiOperation(value = "Refreshes keep alive update of Arclib Xml of AIP. Roles.SUPER_ADMIN, Roles.EDITOR")
+    @ApiOperation(value = "Refreshes keep alive update of Arclib Xml of authorial package. Roles.SUPER_ADMIN, Roles.EDITOR")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Successful response"),
-            @ApiResponse(code = 404, message = "AIP with the specified id not found"),
-            @ApiResponse(code = 500, message = "Specified AIP is not being updated")
+            @ApiResponse(code = 404, message = "Authorial package with the specified id not found"),
+            @ApiResponse(code = 500, message = "Specified XML is not being updated")
     })
     @RolesAllowed({Roles.SUPER_ADMIN, Roles.EDITOR})
-    @RequestMapping(value = "/{aipId}/keep_alive_update", method = RequestMethod.PUT)
+    @RequestMapping(value = "/{authorialPackageId}/keep_alive_update", method = RequestMethod.PUT)
     public void refreshKeepAliveUpdate(
-            @ApiParam(value = "AIP id", required = true) @PathVariable("aipId") String aipId) {
-        aipService.refreshKeepAliveUpdate(aipId);
+            @ApiParam(value = "AIP id", required = true) @PathVariable("authorialPackageId") String authorialPackageId) {
+        aipService.refreshKeepAliveUpdate(authorialPackageId);
     }
 
     @ApiOperation(value = "Updates Arclib XML of AIP. Register update must be called prior to calling this method. " +
@@ -340,9 +348,6 @@ public class AipApi {
         try {
             String body = archivalStorageResponse.getBody();
             if (body != null) IOUtils.copy(new ByteArrayInputStream(body.getBytes()), response.getOutputStream());
-        } catch (IOException e) {
-            if (!(e instanceof FileNotFoundException))
-                throw e;
         } finally {
             response.setStatus(archivalStorageResponse.getStatusCode().value());
         }

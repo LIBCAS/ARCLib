@@ -1,6 +1,6 @@
 package cz.cas.lib.arclib.domain.preservationPlanning;
 
-import cz.cas.lib.core.domain.DomainObject;
+import cz.cas.lib.core.domain.DatedObject;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -10,9 +10,10 @@ import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
 import javax.persistence.Table;
+import java.util.Objects;
 
 /**
- * Identifikátoru formátu
+ * Identifikátor formátu
  */
 @Getter
 @Setter
@@ -20,15 +21,29 @@ import javax.persistence.Table;
 @Entity
 @Table(name = "arclib_format_identifier")
 @NoArgsConstructor
-public class FormatIdentifier extends DomainObject {
+public class FormatIdentifier extends DatedObject {
     /**
      * Typ identifikátora formátu
      */
     @Enumerated(EnumType.STRING)
-    private FormatIdentifierType type;
+    private FormatIdentifierType identifierType;
 
     /**
      * Hodnota identifikátora formátu
      */
-    private String value;
+    private String identifier;
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        FormatIdentifier that = (FormatIdentifier) o;
+        return identifierType == that.identifierType &&
+                Objects.equals(identifier, that.identifier);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(identifierType, identifier);
+    }
 }

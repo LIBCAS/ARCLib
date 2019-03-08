@@ -26,11 +26,13 @@ import org.springframework.jms.core.JmsTemplate;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.Properties;
 
 @Deployment(resources = "bpmn/archivalStorage.bpmn")
 public class StorageSuccessVerifierDelegateTest extends DelegateTest {
 
     private static final String PROCESS_INSTANCE_KEY = "storageSuccessVerifierProcess";
+    private static Properties props = new Properties();
 
     private Generator generator;
 
@@ -61,6 +63,8 @@ public class StorageSuccessVerifierDelegateTest extends DelegateTest {
 
     @Before
     public void before() throws IOException {
+        props.load(ClassLoader.getSystemResourceAsStream("application.properties"));
+
         aipQueryStore = new AipQueryStore();
         sequenceStore = new SequenceStore();
 
@@ -103,7 +107,7 @@ public class StorageSuccessVerifierDelegateTest extends DelegateTest {
         archivalStorageService.setBaseEndpoint("");
 
         archivalStorageServiceDebug = new ArchivalStorageServiceDebug();
-        archivalStorageServiceDebug.setWorkspace(WS.toString());
+        archivalStorageServiceDebug.setWorkspace(WS.toString(), props.getProperty("archivalStorage.debugLocation"));
 
         producerProfileStore.setGenerator(generator);
         ingestWorkflowStore.setGenerator(generator);

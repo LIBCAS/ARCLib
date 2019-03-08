@@ -1,10 +1,8 @@
 package cz.cas.lib.arclib.service.antivirus;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import cz.cas.lib.arclib.domain.ingestWorkflow.IngestWorkflow;
 import cz.cas.lib.arclib.exception.bpm.CommandLineProcessException;
 import cz.cas.lib.arclib.exception.bpm.IncidentException;
-import cz.cas.lib.arclib.store.IngestIssueStore;
-import cz.cas.lib.arclib.store.IngestWorkflowStore;
 import cz.cas.lib.core.util.Utils;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -25,6 +23,7 @@ import static cz.cas.lib.core.util.Utils.notNull;
 public class ClamAntivirus extends Antivirus {
 
     private static final String PATH_TO_INFECTED_FILE_REGEX = "(.+): .+ FOUND";
+    public static final String ANTIVIRUS_NAME = AntivirusType.CLAMAV.toString();
 
     /**
      * command to be executed
@@ -32,10 +31,7 @@ public class ClamAntivirus extends Antivirus {
     @Getter
     private String[] cmd;
 
-    public ClamAntivirus(String[] cmd, IngestIssueStore ingestIssueStore, IngestWorkflowStore ingestWorkflowStore, Path quarantinePath) {
-        super.setIngestIssueStore(ingestIssueStore);
-        super.setIngestWorkflowStore(ingestWorkflowStore);
-        super.setQuarantinePath(quarantinePath);
+    public ClamAntivirus(String[] cmd) {
         this.cmd = cmd;
     }
 
@@ -43,14 +39,12 @@ public class ClamAntivirus extends Antivirus {
      * Scans SIP package for viruses.
      *
      * @param pathToSIP  absoulte path to SIP
-     * @param externalId external id of the ingest workflow
-     * @param configRoot JSON config
-     * @return list with paths to infected files if threat was detected, empty list otherwise
+     * @param iw external ingest workflow
      * @throws FileNotFoundException       if the SIP is not found
      * @throws CommandLineProcessException
      */
     @Override
-    public void scan(Path pathToSIP, String externalId, JsonNode configRoot) throws FileNotFoundException, IncidentException {
+    public void scan(Path pathToSIP, IngestWorkflow iw) throws FileNotFoundException, IncidentException {
         log.info("scanning file at path: " + pathToSIP);
         notNull(pathToSIP, () -> {
             throw new IllegalArgumentException("null path to SIP package");
@@ -62,7 +56,7 @@ public class ClamAntivirus extends Antivirus {
 
         log.info("running '" + String.join(" ", fullCmd) + "' process");
         List<Path> infectedFiles = new ArrayList<>();
-        Utils.Pair<Integer, List<String>> result = executeProcessCustomResultHandle(fullCmd);
+        Utils.Pair<Integer, List<String>> result = executeProcessCustomResultHandle(true, fullCmd);
         switch (result.getL()) {
             case 0:
                 log.info("no infected file found");
@@ -79,14 +73,21 @@ public class ClamAntivirus extends Antivirus {
                         }
                 );
                 log.info(infectedFiles.size() + " infected file/s found");
-                invokeInfectedFilesIssue(infectedFiles, externalId, configRoot, pathToSIP);
+                invokeInfectedFilesIssue(infectedFiles, iw, pathToSIP);
                 break;
             default:
                 throw new CommandLineProcessException("scan process error: " + String.join(System.lineSeparator(), result.getR()));
         }
     }
 
+    public String getToolName() {
+        return ANTIVIRUS_NAME;
+    }
+
     public String getToolVersion() {
-        return "CLAMAV version: " + executeProcessCustomResultHandle(cmd[0], "-V").getR();
+        Utils.Pair<Integer, List<String>> result = executeProcessCustomResultHandle(false, cmd[0], "-V");
+        if (result.getL() != 0)
+            throw new IllegalStateException("CLAMAV version CMD has failed: " + result.getR());
+        return "" + result.getR();
     }
 }

@@ -20,6 +20,7 @@ public class Report extends DomainObject implements Serializable {
 
     @Column(columnDefinition = "LONGVARCHAR")
     private String template;
+    @Column(length = 10485760)
     private byte[] compiled;
 
     public Report() {

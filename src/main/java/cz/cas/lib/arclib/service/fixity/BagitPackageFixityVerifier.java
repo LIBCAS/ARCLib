@@ -1,8 +1,10 @@
 package cz.cas.lib.arclib.service.fixity;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import cz.cas.lib.arclib.domain.IngestToolFunction;
 import cz.cas.lib.arclib.exception.bpm.IncidentException;
 import cz.cas.lib.core.util.Utils;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -24,11 +26,16 @@ public class BagitPackageFixityVerifier extends PackageFixityVerifier {
 
     private static final String FILENAME_PATTERN = "[tag]?manifest-(.+)\\.txt";
     private static final String FILE_LINE_PATTERN = "(\\w+)\\s+\\*?\\s*(\\S+)\\s*";
+    @Getter
+    private String toolName = "ARCLib_bagit_" + IngestToolFunction.fixity_check;
+    @Getter
+    private String toolVersion = null;
 
     /**
      * Verifies fixity of every file specified in manifest files of the package.
      * Currently supports MD5, SHA-1, SHA-256 and SHA-512.
      *
+     * @param sipWsPath       path to SIP in workspace
      * @param packageRootPath path to the root of the package
      * @param externalId      external id of the ingest workflow
      * @param configRoot      root node of the ingest workflow JSON config containing configuration of the behaviour
@@ -36,9 +43,9 @@ public class BagitPackageFixityVerifier extends PackageFixityVerifier {
      * @return list of associated values in triplets: file path, type of fixity, fixity value.
      */
     @Override
-    public List<Utils.Triplet<String, String, String>> verifySIP(Path packageRootPath, String externalId, JsonNode configRoot)
+    public List<Utils.Triplet<String, String, String>> verifySIP(Path sipWsPath, Path packageRootPath, String externalId, JsonNode configRoot, Map<String, Utils.Pair<String, String>> formatIdentificationResult)
             throws IncidentException, IOException {
-        log.info("Verifying fixity of SIP of type Bagit, package root path: " + packageRootPath);
+        log.debug("Verifying fixity of SIP of type Bagit, package root path: " + packageRootPath);
 
         List<Path> missingFiles = new ArrayList<>();
         List<Path> invalidFixities = new ArrayList<>();
@@ -102,11 +109,11 @@ public class BagitPackageFixityVerifier extends PackageFixityVerifier {
             }
         }
         if (!unsupportedChecksumTypes.isEmpty())
-            invokeUnsupportedChecksumTypeIssue(unsupportedChecksumTypes, externalId, configRoot);
+            invokeUnsupportedChecksumTypeIssue(sipWsPath, unsupportedChecksumTypes, externalId, configRoot, formatIdentificationResult);
         if (!missingFiles.isEmpty())
-            invokeMissingFilesIssue(missingFiles, externalId, configRoot);
+            invokeMissingFilesIssue(sipWsPath, missingFiles, externalId, configRoot, formatIdentificationResult);
         if (!invalidFixities.isEmpty())
-            invokeInvalidChecksumsIssue(invalidFixities, externalId, configRoot);
+            invokeInvalidChecksumsIssue(sipWsPath, invalidFixities, externalId, configRoot, formatIdentificationResult);
 
         return filePathsAndFixities;
     }

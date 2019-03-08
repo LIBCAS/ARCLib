@@ -26,8 +26,8 @@ import java.util.Map;
 public class ArchivalStorageService {
 
     private String baseEndpoint;
-    private String readBearerToken;
-    private String readWriteBearerToken;
+    private String readKeypair;
+    private String readWriteKeypair;
 
     /**
      * Exports AIP from archival storage.
@@ -39,11 +39,14 @@ public class ArchivalStorageService {
      * @throws URISyntaxException if the URI format of the request is wrong
      */
     public ClientHttpResponse exportSingleAip(String aipId, boolean allXmls) throws IOException, URISyntaxException {
+        if (allXmls) log.debug("Exporting AIP: " + aipId + " with all its XML versions.");
+        else log.debug("Exporting AIP: " + aipId + " with the latest XML version.");
+
         String queryParam = allXmls ? "?all=true" : "";
         HttpComponentsClientHttpRequestFactory f = new HttpComponentsClientHttpRequestFactory();
         f.setBufferRequestBody(false);
         ClientHttpRequest request = f.createRequest(new URI(baseEndpoint + "/storage/" + aipId + queryParam), HttpMethod.GET);
-        request.getHeaders().add("Authorization", "Bearer " + readWriteBearerToken);
+        request.getHeaders().add("Authorization", "Basic " + readWriteKeypair);
         return request.execute();
     }
 
@@ -57,11 +60,13 @@ public class ArchivalStorageService {
      * @throws IOException        in case of I/O errors
      */
     public ClientHttpResponse exportSingleXml(String aipId, Integer version) throws URISyntaxException, IOException {
+        log.debug("Exporting XML of version: " + version + " of AIP: " + aipId + ".");
+
         String queryParam = version != null ? "?v=" + version : "";
         HttpComponentsClientHttpRequestFactory f = new HttpComponentsClientHttpRequestFactory();
         f.setBufferRequestBody(false);
         ClientHttpRequest request = f.createRequest(new URI(baseEndpoint + "/storage/" + aipId + "/xml" + queryParam), HttpMethod.GET);
-        request.getHeaders().add("Authorization", "Bearer " + readWriteBearerToken);
+        request.getHeaders().add("Authorization", "Basic " + readWriteKeypair);
         return request.execute();
     }
 
@@ -76,6 +81,8 @@ public class ArchivalStorageService {
      * @return response with the storage result
      */
     public ResponseEntity<String> storeAip(String sipId, InputStream sipStream, InputStream xmlStream, Hash sipChecksum, Hash xmlChecksum) {
+        log.debug("Storing AIP " + sipId + " to archival storage.");
+
         InputStreamResource sipStreamResource = new MultipartInputStreamFileResource(sipStream, "");
         InputStreamResource xmlStreamResource = new MultipartInputStreamFileResource(xmlStream, "");
 
@@ -92,7 +99,7 @@ public class ArchivalStorageService {
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.MULTIPART_FORM_DATA);
-        headers.add("Authorization", "Bearer " + readWriteBearerToken);
+        headers.add("Authorization", "Basic " + readWriteKeypair);
 
         HttpEntity<MultiValueMap<String, Object>> requestEntity = new HttpEntity<>(map, headers);
         return restTemplate.exchange(baseEndpoint + "/storage/save", HttpMethod.POST, requestEntity, String.class);
@@ -110,6 +117,8 @@ public class ArchivalStorageService {
      * @return response with the result of the xml update
      */
     public ResponseEntity<String> updateXml(String sipId, InputStream xmlStream, Hash xmlChecksum, int xmlVersion, boolean sync) {
+        log.debug("Updating XML of version " + xmlVersion + " of AIP: " + sipId + " at archival storage.");
+
         InputStreamResource xmlStreamResource = new MultipartInputStreamFileResource(xmlStream, "s");
 
         MultiValueMap<String, Object> map = new LinkedMultiValueMap<>();
@@ -123,7 +132,7 @@ public class ArchivalStorageService {
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.MULTIPART_FORM_DATA);
-        headers.add("Authorization", "Bearer " + readWriteBearerToken);
+        headers.add("Authorization", "Basic " + readWriteKeypair);
 
         Map<String, String> vars = new HashMap<>();
         vars.put("aipId", sipId);
@@ -135,16 +144,18 @@ public class ArchivalStorageService {
     /**
      * Returns the AIP state at the archival storage.
      *
-     * @param aipId
+     * @param aipId id of the AIP package
      * @return state of the AIP stored at archival storage
      * @throws IOException        in case of I/O errors
      * @throws URISyntaxException if the URI format of the request is wrong
      */
     public ClientHttpResponse getAipState(String aipId) throws IOException, URISyntaxException {
+        log.debug("Retrieving AIP state of AIP: " + aipId + " at archival storage.");
+
         HttpComponentsClientHttpRequestFactory f = new HttpComponentsClientHttpRequestFactory();
         f.setBufferRequestBody(false);
         ClientHttpRequest request = f.createRequest(new URI(baseEndpoint + "/storage/" + aipId + "/state"), HttpMethod.GET);
-        request.getHeaders().add("Authorization", "Bearer " + readBearerToken);
+        request.getHeaders().add("Authorization", "Basic " + readKeypair);
 
         return request.execute();
     }
@@ -158,12 +169,12 @@ public class ArchivalStorageService {
      * @throws URISyntaxException if the URI format of the request is wrong
      */
     public ClientHttpResponse delete(String aipId) throws URISyntaxException, IOException {
-        log.info("Deleting aip " + aipId + " from archival storage.");
+        log.debug("Deleting aip " + aipId + " from archival storage.");
 
         HttpComponentsClientHttpRequestFactory f = new HttpComponentsClientHttpRequestFactory();
         f.setBufferRequestBody(false);
         ClientHttpRequest request = f.createRequest(new URI(baseEndpoint + "/storage/" + aipId), HttpMethod.DELETE);
-        request.getHeaders().add("Authorization", "Bearer " + readWriteBearerToken);
+        request.getHeaders().add("Authorization", "Basic " + readWriteKeypair);
 
         return request.execute();
     }
@@ -177,10 +188,12 @@ public class ArchivalStorageService {
      * @throws URISyntaxException if the URI format of the request is wrong
      */
     public ClientHttpResponse remove(String aipId) throws IOException, URISyntaxException {
+        log.debug("Removing aip " + aipId + " from archival storage.");
+
         HttpComponentsClientHttpRequestFactory f = new HttpComponentsClientHttpRequestFactory();
         f.setBufferRequestBody(false);
         ClientHttpRequest request = f.createRequest(new URI(baseEndpoint + "/storage/" + aipId + "/remove"), HttpMethod.PUT);
-        request.getHeaders().add("Authorization", "Bearer " + readWriteBearerToken);
+        request.getHeaders().add("Authorization", "Basic " + readWriteKeypair);
 
         return request.execute();
     }
@@ -194,10 +207,12 @@ public class ArchivalStorageService {
      * @throws URISyntaxException if the URI format of the request is wrong
      */
     public ClientHttpResponse renew(String aipId) throws URISyntaxException, IOException {
+        log.debug("Renewing aip " + aipId + " at archival storage.");
+
         HttpComponentsClientHttpRequestFactory f = new HttpComponentsClientHttpRequestFactory();
         f.setBufferRequestBody(false);
         ClientHttpRequest request = f.createRequest(new URI(baseEndpoint + "/storage/" + aipId + "/renew"), HttpMethod.PUT);
-        request.getHeaders().add("Authorization", "Bearer " + readWriteBearerToken);
+        request.getHeaders().add("Authorization", "Basic " + readWriteKeypair);
 
         return request.execute();
     }
@@ -208,12 +223,12 @@ public class ArchivalStorageService {
     }
 
     @Inject
-    public void setReadBearerToken(@Value("${archivalStorage.authorization.bearer.read}") String readBearerToken) {
-        this.readBearerToken = readBearerToken;
+    public void setReadKeypair(@Value("${archivalStorage.authorization.basic.read}") String readKeypair) {
+        this.readKeypair = readKeypair;
     }
 
     @Inject
-    public void setReadWriteBearerToken(@Value("${archivalStorage.authorization.bearer.readWrite}") String readWriteBearerToken) {
-        this.readWriteBearerToken = readWriteBearerToken;
+    public void setReadWriteKeypair(@Value("${archivalStorage.authorization.basic.readWrite}") String readWriteKeypair) {
+        this.readWriteKeypair = readWriteKeypair;
     }
 }

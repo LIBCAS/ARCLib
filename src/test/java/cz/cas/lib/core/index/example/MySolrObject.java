@@ -8,7 +8,7 @@ import org.apache.solr.client.solrj.beans.Field;
 import org.springframework.data.solr.core.mapping.Indexed;
 import org.springframework.data.solr.core.mapping.SolrDocument;
 
-@SolrDocument(solrCoreName = "test")
+@SolrDocument(collection = "test")
 @Getter
 @Setter
 public class MySolrObject extends SolrDictionaryObject {

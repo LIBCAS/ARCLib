@@ -9,6 +9,7 @@ import cz.cas.lib.arclib.domain.profiles.ProducerProfile;
 import cz.cas.lib.arclib.store.ProducerProfileStore;
 import cz.cas.lib.arclib.utils.ZipUtils;
 import helper.ApiTest;
+import helper.TransformerFactoryWorkaroundTest;
 import helper.auth.WithMockCustomUser;
 import org.apache.commons.io.FileUtils;
 import org.camunda.bpm.engine.HistoryService;
@@ -38,7 +39,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @RunWith(SpringRunner.class)
 @SpringBootTest
-public class IngestIntegrationTest implements ApiTest {
+public class IngestIntegrationTest extends TransformerFactoryWorkaroundTest implements ApiTest {
 
     private static final String SIP_MD5 = "6f1ed002ab5595859014ebf0951522d9";
     private static final Path BPMN_TEST_PATH = Paths.get("src/main/resources/bpmn/ingestWorkflow.bpmn");

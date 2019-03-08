@@ -6,7 +6,7 @@ import cz.cas.lib.arclib.security.authorization.assign.audit.RoleAddEvent;
 import cz.cas.lib.arclib.security.authorization.assign.audit.RoleDelEvent;
 import cz.cas.lib.arclib.security.authorization.role.Role;
 import cz.cas.lib.arclib.security.user.UserDetails;
-import cz.cas.lib.arclib.store.UserStore;
+import cz.cas.lib.arclib.service.UserService;
 import cz.cas.lib.core.audit.AuditLogger;
 import cz.cas.lib.core.store.Transactional;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 import javax.inject.Inject;
 import java.time.Instant;
 import java.util.Collection;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -30,7 +31,7 @@ public class AssignedRoleService {
     private AuditLogger logger;
 
     private UserDetails userDetails;
-    private UserStore userStore;
+    private UserService userService;
 
     @Transactional
     public Set<Role> getAssignedRoles(String userId) {
@@ -71,7 +72,11 @@ public class AssignedRoleService {
     }
 
     public Collection<User> getUsersWithRole(String roleName) {
-        return userStore.findAllInList(store.getUsersWithRole(roleName));
+        return userService.findAllInList(store.getUsersWithRole(roleName));
+    }
+
+    public Collection<String> getEmailsOfUsersWithRole(String roleName) {
+        return userService.findAllInList(store.getUsersWithRole(roleName)).stream().map(User::getEmail).filter(Objects::nonNull).collect(Collectors.toList());
     }
 
     @Transactional
@@ -101,7 +106,7 @@ public class AssignedRoleService {
     }
 
     @Inject
-    public void setUserStore(UserStore userStore) {
-        this.userStore = userStore;
+    public void setUserService(UserService userService) {
+        this.userService = userService;
     }
 }

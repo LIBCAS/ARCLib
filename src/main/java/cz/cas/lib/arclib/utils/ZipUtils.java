@@ -19,12 +19,14 @@ public class ZipUtils {
      *
      * @param zipInput
      * @param destDirectory
+     * @return name of the root folder (if the content is a directory) or the name of the extracted file
      * @throws IOException
      */
-    public static void unzip(InputStream zipInput, Path destDirectory) throws IOException {
+    public static String unzip(InputStream zipInput, Path destDirectory) throws IOException {
         Files.createDirectories(destDirectory);
         ZipInputStream zipIn = new ZipInputStream(zipInput);
         ZipEntry entry = zipIn.getNextEntry();
+        String rootFolderName = entry.getName();
         while (entry != null) {
             Path filePath = destDirectory.resolve(entry.getName());
             if (!entry.isDirectory()) {
@@ -37,6 +39,7 @@ public class ZipUtils {
             entry = zipIn.getNextEntry();
         }
         zipIn.close();
+        return rootFolderName;
     }
 
     /**

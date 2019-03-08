@@ -13,7 +13,7 @@ import org.springframework.data.solr.core.mapping.SolrDocument;
  */
 @Getter
 @Setter
-@SolrDocument(solrCoreName = "job")
+@SolrDocument(collection = "job")
 public class SolrJob extends SolrDatedObject {
     @Field
     @Indexed(type = FieldType.FOLDING)

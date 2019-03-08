@@ -5,8 +5,10 @@ import cz.cas.lib.arclib.domain.Batch;
 import cz.cas.lib.arclib.domain.ingestWorkflow.IngestIssue;
 import cz.cas.lib.arclib.domain.ingestWorkflow.IngestWorkflow;
 import cz.cas.lib.arclib.domain.packages.FolderStructure;
+import cz.cas.lib.arclib.domain.preservationPlanning.FormatDefinition;
 import cz.cas.lib.arclib.exception.bpm.ConfigParserException;
 import cz.cas.lib.arclib.security.user.UserDetails;
+import cz.cas.lib.arclib.service.preservationPlanning.FormatDefinitionService;
 import cz.cas.lib.core.util.Utils;
 import org.apache.commons.io.FileUtils;
 import org.dom4j.Document;
@@ -30,6 +32,7 @@ import static java.util.stream.Collectors.groupingBy;
 public class ArclibUtils {
 
     public static final String ZIP_EXTENSION = ".zip";
+    public static final String XML_EXTENSION = ".xml";
     public static final String SUMS_EXTENSION = ".sums";
 
     public static final String METS = "mets";
@@ -86,7 +89,7 @@ public class ArclibUtils {
      */
     public static Path getSipZipTransferAreaPath(IngestWorkflow ingestWorkflow) {
         Batch batch = ingestWorkflow.getBatch();
-        return Paths.get(batch.getTransferAreaPath(), ingestWorkflow.getOriginalFileName() + ZIP_EXTENSION);
+        return Paths.get(batch.getTransferAreaPath(), ingestWorkflow.getFileName());
     }
 
     /**
@@ -99,18 +102,6 @@ public class ArclibUtils {
         String sipSumsTransferAreaPathString = sipZipTransferAreaPath.toString()
                 .replace(ZIP_EXTENSION, SUMS_EXTENSION);
         return Paths.get(sipSumsTransferAreaPathString);
-    }
-
-    /**
-     * Computes path to the workspace with the extracted version of SIP
-     *
-     * @param externalId          external id of ingest workflow
-     * @param workspace           path to workspace
-     * @param originalSipFileName original file name of SIP
-     * @return computed path
-     */
-    public static Path getSipFolderWorkspacePath(String externalId, String workspace, String originalSipFileName) {
-        return getIngestWorkflowWorkspacePath(externalId, workspace).resolve(originalSipFileName);
     }
 
     /**
@@ -167,29 +158,31 @@ public class ArclibUtils {
     }
 
     /**
-     * Parses boolean config and fills issue {@link IngestIssue#configNote} & {@link IngestIssue#solvedByConfig} attributes of issue
+     * Parses boolean config
+     * <p>
+     * examples:
+     * </p>
+     * <ol>
+     * <li>the config entry to be parsed is not contained in the config -> method returns Pair<null,text> where text
+     * contains the information that the config value is missing</li>
+     * <li>the config entry to be parsed is present and contains valid boolean value -> method returns Pair<value,text>
+     * where the value=value parsed from config entry and text contains information that the parsed value from the config entry was used to solve the issue</li>
+     * </ol>
      *
      * @param configRoot root of JSON config
      * @param configPath path to config field
-     * @param issue      issue to be filled
-     * @return boolean value or null if config field is missing or not parsable as boolean
+     * @return config value together with string to be used in {@link IngestIssue#description} if this parsing was done to solve an issue
      */
-    public static Boolean parseBooleanConfig(JsonNode configRoot, String configPath, IngestIssue issue) {
+    public static Utils.Pair<Boolean, String> parseBooleanConfig(JsonNode configRoot, String configPath) {
         JsonNode configValue = configRoot.at(configPath);
         String stringValue = configValue.toString();
         if (configValue.isMissingNode()) {
-            issue.setSolvedByConfig(false);
-            issue.setMissingConfigNote(configPath);
-            return null;
+            return new Utils.Pair<>(null, IngestIssue.createMissingConfigNote(configPath));
         }
         if (!configValue.isBoolean()) {
-            issue.setSolvedByConfig(false);
-            issue.setInvalidConfigNote(configPath, stringValue, "true", "false");
-            return null;
+            return new Utils.Pair<>(null, IngestIssue.createInvalidConfigNote(configPath, stringValue, "true", "false"));
         }
-        issue.setSolvedByConfig(true);
-        issue.setUsedConfigNote(configPath, stringValue);
-        return configValue.booleanValue();
+        return new Utils.Pair<>(configValue.booleanValue(), IngestIssue.createUsedConfigNote(configPath, stringValue));
     }
 
     public static boolean hasRole(UserDetails userDetails, String permission) {
@@ -205,8 +198,8 @@ public class ArclibUtils {
     public static List<Utils.Pair<String, String>> listSipFilePathsAndFileSizes(Path pathToSipFolder) {
         Collection<File> files = FileUtils.listFiles(pathToSipFolder.toFile(), null, true);
         return files.stream().map(file -> new Utils.Pair<>(
-                    (file.toPath().toUri()).toString().replaceAll(pathToSipFolder.toUri().toString(), ""),
-                    String.valueOf(file.length())))
+                (file.toPath().toUri()).toString().replaceAll(pathToSipFolder.toUri().toString(), ""),
+                String.valueOf(file.length())))
                 .collect(Collectors.toList());
     }
 
@@ -240,21 +233,53 @@ public class ArclibUtils {
 
     /**
      * Gets file name of the exported AIP
+     *
      * @param aipId id of the AIP to export
      * @return
      */
     public static String getAipExportName(String aipId) {
-        return aipId + ".zip";
+        return aipId + ZIP_EXTENSION;
     }
 
     /**
      * Gets file name of the exported XML
-     * @param aipId id of the AIP of XML to export
+     *
+     * @param aipId   id of the AIP of XML to export
      * @param version version of the XML to export
      * @return
      */
     public static String getXmlExportName(String aipId, Integer version) {
         String versionSuffix = version != null ? String.valueOf(version) : "latest";
-        return aipId + "_xml_" + versionSuffix + ".xml";
+        return aipId + "_xml_" + versionSuffix + XML_EXTENSION;
+    }
+
+    public static String enumLabelToEnumName(String label) {
+        return label.toUpperCase()
+                .replace(" ", "_")
+                .replace("(", "")
+                .replace(")", "")
+                .replace("-", "");
+    }
+
+    /**
+     * returns relative path of file in sip and its corresponding format entity
+     *
+     * @param wsSipPath
+     * @param filePath
+     * @param formatIdentificationResult
+     * @param formatDefinitionService
+     * @return
+     */
+    public static Utils.Pair<String, FormatDefinition> findFormat(Path wsSipPath, Path filePath, Map<String,
+            Utils.Pair<String, String>> formatIdentificationResult, FormatDefinitionService formatDefinitionService) {
+        String pathToSipStr = wsSipPath.toAbsolutePath().toString().replace("\\", "/");
+        String fileRelativePath = filePath.toAbsolutePath().toString().replace("\\", "/").replace(pathToSipStr, "");
+        FormatDefinition formatDefinition;
+        Utils.Pair<String, String> fileIdentification = formatIdentificationResult.get("file:/" + fileRelativePath);
+        if (fileIdentification == null)
+            formatDefinition = null;
+        else
+            formatDefinition = formatDefinitionService.findPreferredDefinitionsByPuid(fileIdentification.getL());
+        return new Utils.Pair<>(fileRelativePath, formatDefinition);
     }
 }

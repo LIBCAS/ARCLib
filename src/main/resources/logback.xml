@@ -1,12 +1,129 @@
 <configuration>
-    <include resource="org/springframework/boot/logging/logback/base.xml"/>
-    <appender name="ARCLIB" class="ch.qos.logback.core.ConsoleAppender">
+    <logger name="org.hibernate" level="WARN"/>
+    <logger name="org.hibernate.SQL" level="WARN"/>
+    <logger name="com.mysema" level="WARN"/>
+    <!--<logger name="org.springframework.data.solr.core.SolrTemplate" level="DEBUG"/>-->
+
+    <!--<property name="AUDIT_LOG_PATTERN" value="${AUDIT_LOG_PATTERN:-%clr(%d{yyyy-MM-dd HH:mm:ss.SSS} ${LOG_LEVEL_PATTERN:-%5p} ${PID:- } -&#45;&#45; [%15.15t] %-40.40logger{39} : %m%n${LOG_EXCEPTION_CONVERSION_WORD:-%wEx}}){red}"/>-->
+
+    <!--<appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">-->
+    <!--<filter class="ch.qos.logback.core.filter.EvaluatorFilter">-->
+    <!--<evaluator class="ch.qos.logback.classic.boolex.OnMarkerEvaluator">-->
+    <!--<marker>AUDIT</marker>-->
+    <!--</evaluator>-->
+    <!--<onMismatch>NEUTRAL</onMismatch>-->
+    <!--<onMatch>DENY</onMatch>-->
+    <!--</filter>-->
+    <!--<encoder>-->
+    <!--<pattern>${CONSOLE_LOG_PATTERN}</pattern>-->
+    <!--</encoder>-->
+    <!--</appender>-->
+
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>debug</level>
+        </filter>
         <encoder>
-            <pattern>%boldGreen(${CONSOLE_LOG_PATTERN})</pattern>
+            <pattern>%date %level [%thread] %logger{10} [%file:%line] %msg%n</pattern>
             <charset>utf8</charset>
         </encoder>
     </appender>
+
+    <appender name="AUDIT" class="ch.qos.logback.core.ConsoleAppender">
+        <filter class="ch.qos.logback.core.filter.EvaluatorFilter">
+            <evaluator class="ch.qos.logback.classic.boolex.OnMarkerEvaluator">
+                <marker>AUDIT</marker>
+            </evaluator>
+            <onMismatch>DENY</onMismatch>
+            <onMatch>NEUTRAL</onMatch>
+        </filter>
+        <encoder>
+            <pattern>${AUDIT_LOG_PATTERN}</pattern>
+        </encoder>
+    </appender>
+
+    <appender name="ARCLIB" class="ch.qos.logback.core.ConsoleAppender">
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>debug</level>
+        </filter>
+        <encoder>
+            <charset>utf8</charset>
+            <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %boldGreen(%msg%n)</pattern>
+        </encoder>
+    </appender>
+
+    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>../logs/arclib.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <!-- daily rollover -->
+            <fileNamePattern>../logs/arclib.%d{yyyy-MM-dd}.log</fileNamePattern>
+
+            <!-- keep 30 days' worth of history capped at 500MB total size -->
+            <maxHistory>30</maxHistory>
+            <!--<totalSizeCap>500MB</totalSizeCap> needs logback 1.1.7-->
+        </rollingPolicy>
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>info</level>
+        </filter>
+        <encoder>
+            <pattern>%date %level [%thread] %logger{10} [%file:%line] %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <appender name="ERRORFILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>../logs/arclib.error.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <!-- daily rollover -->
+            <fileNamePattern>../logs/arclib.error.%d{yyyy-MM-dd}.log</fileNamePattern>
+
+            <!-- keep 30 days' worth of history capped at 500MB total size -->
+            <maxHistory>30</maxHistory>
+            <!--<totalSizeCap>500MB</totalSizeCap> needs logback 1.1.7-->
+        </rollingPolicy>
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>error</level>
+        </filter>
+        <encoder>
+            <pattern>%date %level [%thread] %logger{10} [%file:%line] %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <appender name="DEBUGFILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>../logs/arclib.debug.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <!-- daily rollover -->
+            <fileNamePattern>../logs/arclib.debug.%d{yyyy-MM-dd}.log</fileNamePattern>
+
+            <!-- keep 10 days' worth of history capped at 500MB total size -->
+            <maxHistory>10</maxHistory>
+            <!--<totalSizeCap>500MB</totalSizeCap>-->
+        </rollingPolicy>
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>debug</level>
+        </filter>
+        <encoder>
+            <pattern>%date %level [%thread] %logger{10} [%file:%line] %msg%n</pattern>
+        </encoder>
+    </appender>
+
     <logger name="cz.cas.lib.arclib" level="TRACE" additivity="false">
         <appender-ref ref="ARCLIB"/>
     </logger>
+    <logger name="cz.cas.lib.arclib" level="INFO">
+    </logger>
+    <logger name="cz.cas.lib.arclib" level="DEBUG">
+        <appender-ref ref="DEBUGFILE"/>
+    </logger>
+    <logger name="cz.cas.lib.arclib.error" level="ERROR">
+        <appender-ref ref="ERRORFILE"/>
+    </logger>
+
+    <!-- Setup the root category, add the appenders and set the default level -->
+    <root level="INFO">
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="FILE"/>
+        <appender-ref ref="ERRORFILE"/>
+        <appender-ref ref="DEBUGFILE"/>
+        <appender-ref ref="AUDIT"/>
+    </root>
 </configuration>

@@ -1,5 +1,6 @@
 package cz.cas.lib.arclib.index;
 
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -8,6 +9,7 @@ import lombok.Setter;
  */
 @Getter
 @Setter
+@AllArgsConstructor
 public class IndexFieldConfig {
 
     private String fieldName;
@@ -17,20 +19,23 @@ public class IndexFieldConfig {
      */
     private String xpath;
     /**
-     * True if whole element and all its descendants has to be indexed as text,
-     * false if only element text or attribute value has to be indexed.
+     * false if the whole element and all its descendants has to be indexed as text,
+     * true if only element text or attribute value has to be indexed.
      */
-    private boolean fullText;
+    private boolean simple;
 
-    public IndexFieldConfig(String fieldName, String fieldType, String xpath, boolean fullText) {
+
+    public IndexFieldConfig(String fieldName, String fieldType, String xpath, boolean simple) {
         this.fieldName = fieldName;
         this.xpath = xpath;
-        this.fullText = fullText;
-        try {
-            this.fieldType = FieldType.valueOf(fieldType.toUpperCase().trim());
-        } catch (IllegalArgumentException e) {
-            this.fieldType = FieldType.OTHER;
+        this.simple = simple;
+        this.fieldType = null;
+        for (FieldType value : FieldType.values()) {
+            if (value.toString().equals(fieldType.toUpperCase().trim()))
+                this.fieldType = value;
         }
+        if (this.fieldType == null)
+            this.fieldType = FieldType.OTHER;
     }
 
     @Override

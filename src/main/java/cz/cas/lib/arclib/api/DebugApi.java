@@ -1,11 +1,12 @@
 package cz.cas.lib.arclib.api;
 
 import cz.cas.lib.arclib.security.authorization.Roles;
-import cz.cas.lib.arclib.service.BatchService;
+import cz.cas.lib.arclib.service.AuthorialPackageService;
 import cz.cas.lib.arclib.service.archivalStorage.ArchivalStorageServiceDebug;
 import cz.cas.lib.core.exception.MissingObject;
 import cz.cas.lib.core.store.Transactional;
 import io.swagger.annotations.*;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.springframework.web.bind.annotation.*;
 
@@ -22,10 +23,11 @@ import static cz.cas.lib.core.util.Utils.notNull;
 @Api(value = "debug", description = "Api for various debugging task, e.g. for retrieval of AIPs which were result of Ingest in debug mode")
 @RequestMapping("/api/debug")
 @Transactional
+@Slf4j
 public class DebugApi {
 
     private ArchivalStorageServiceDebug archivalStorage;
-    private BatchService batchService;
+    private AuthorialPackageService authorialPackageService;
 
     @ApiOperation(value = "Gets AIP data in a .zip")
     @ApiResponses(value = {
@@ -76,16 +78,17 @@ public class DebugApi {
         IOUtils.copyLarge(xml, response.getOutputStream());
     }
 
-    @ApiOperation(value = "Deletes batch and all its respective ingest workflows. Roles.ADMIN, Roles.SUPER_ADMIN, Roles.ARCHIVIST",
-            notes = "Applicable only for batches processed using a producer profile in the debugging mode.")
+    @ApiOperation(value = "Deletes authorial package. " +
+            "Also deletes all child entities (SIPs, IWs) and for each IW, if it was the only one in the batch deletes also the batch. Roles.ADMIN, Roles.SUPER_ADMIN, Roles.ARCHIVIST",
+            notes = "Applicable only for authorial packages processed using a producer profile in the debugging mode.")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Successful response"),
             @ApiResponse(code = 404, message = "Instance does not exist")})
     @RolesAllowed({Roles.ADMIN, Roles.SUPER_ADMIN, Roles.ARCHIVIST})
-    @RequestMapping(value = "/{batchId}/forget", method = RequestMethod.PUT)
-    public void forget(@ApiParam(value = "Id of the batch to forget", required = true)
-                       @PathVariable("batchId") String batchId) {
-        batchService.forget(batchId);
+    @RequestMapping(value = "/authorial_package/{authorialPackageId}/forget", method = RequestMethod.PUT)
+    public void forgetAuthorialPackage(@ApiParam(value = "Id of the authorial package to forget", required = true)
+                                       @PathVariable("authorialPackageId") String authorialPackageId) {
+        authorialPackageService.forgetAuthorialPackage(authorialPackageId);
     }
 
     @Inject
@@ -94,7 +97,7 @@ public class DebugApi {
     }
 
     @Inject
-    public void setBatchService(BatchService batchService) {
-        this.batchService = batchService;
+    public void setAuthorialPackageService(AuthorialPackageService authorialPackageService) {
+        this.authorialPackageService = authorialPackageService;
     }
 }

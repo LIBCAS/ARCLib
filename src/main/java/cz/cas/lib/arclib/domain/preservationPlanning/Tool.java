@@ -1,15 +1,14 @@
 package cz.cas.lib.arclib.domain.preservationPlanning;
 
+import cz.cas.lib.arclib.domain.IngestToolFunction;
 import cz.cas.lib.core.domain.NamedObject;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.BatchSize;
 
-import javax.persistence.Entity;
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
-import javax.persistence.Table;
+import javax.persistence.*;
+import java.util.Set;
 
 /**
  *
@@ -24,7 +23,7 @@ public class Tool extends NamedObject {
     /**
      * Verzia
      */
-    private Integer version;
+    private String version;
 
     /**
      * Popis
@@ -32,10 +31,16 @@ public class Tool extends NamedObject {
     private String description;
 
     /**
+     * True pro tool reprezentujici ARLib IW delegát např. {@link cz.cas.lib.arclib.bpm.ValidatorDelegate}),
+     * false pro externí tool, např. DROID
+     */
+    private boolean internal;
+
+    /**
      * Funkcia
      */
     @Enumerated(EnumType.STRING)
-    private ToolFunction toolFunction;
+    private IngestToolFunction toolFunction;
 
     /**
      * Informácia o licencii
@@ -46,4 +51,21 @@ public class Tool extends NamedObject {
      * Dokumentácia
      */
     private String documentation;
+
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(name = "arclib_tool_ingest_issue_definition", joinColumns = {
+            @JoinColumn(name = "tool_id", nullable = false, updatable = false)},
+            inverseJoinColumns = {@JoinColumn(name = "ingest_issue_definition_id",
+                    nullable = false, updatable = false)})
+    private Set<IngestIssueDefinition> possibleIssues;
+
+
+    @Enumerated(EnumType.STRING)
+    private FormatRelationType formatRelationType;
+
+    private String formatRelationValue;
+
+    public enum FormatRelationType{
+        ALL
+    }
 }

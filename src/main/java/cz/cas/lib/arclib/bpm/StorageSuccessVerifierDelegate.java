@@ -1,11 +1,11 @@
 package cz.cas.lib.arclib.bpm;
 
+import cz.cas.lib.arclib.domain.IngestToolFunction;
 import cz.cas.lib.arclib.domain.ingestWorkflow.IngestWorkflow;
 import cz.cas.lib.arclib.domain.ingestWorkflow.IngestWorkflowState;
 import cz.cas.lib.arclib.dto.JmsDto;
 import cz.cas.lib.arclib.index.IndexArclibXmlStore;
 import cz.cas.lib.arclib.index.solr.arclibxml.IndexedArclibXmlDocumentState;
-import cz.cas.lib.arclib.index.solr.arclibxml.SolrArclibXmlDocument;
 import cz.cas.lib.arclib.service.AipService;
 import cz.cas.lib.arclib.service.archivalStorage.ArchivalStorageService;
 import cz.cas.lib.arclib.service.archivalStorage.ArchivalStorageServiceDebug;
@@ -13,6 +13,7 @@ import cz.cas.lib.arclib.service.archivalStorage.ObjectState;
 import cz.cas.lib.arclib.store.IngestWorkflowStore;
 import cz.cas.lib.core.exception.GeneralException;
 import cz.cas.lib.core.store.Transactional;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.camunda.bpm.engine.delegate.DelegateExecution;
@@ -20,7 +21,7 @@ import org.camunda.bpm.engine.delegate.JavaDelegate;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.client.ClientHttpResponse;
 import org.springframework.jms.core.JmsTemplate;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 import org.springframework.util.FileSystemUtils;
 
 import javax.inject.Inject;
@@ -28,14 +29,12 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.util.ArrayList;
-import java.util.Map;
 
 import static cz.cas.lib.arclib.utils.ArclibUtils.*;
 import static cz.cas.lib.core.util.Utils.asList;
 
 @Slf4j
-@Component
+@Service
 public class StorageSuccessVerifierDelegate extends ArclibDelegate implements JavaDelegate {
     private ArchivalStorageService archivalStorageService;
     private ArchivalStorageServiceDebug archivalStorageServiceDebug;
@@ -44,6 +43,8 @@ public class StorageSuccessVerifierDelegate extends ArclibDelegate implements Ja
     private IndexArclibXmlStore indexArclibXmlStore;
     private Boolean deleteSipFromTransferArea;
     private AipService aipService;
+    @Getter
+    private String toolName = "ARCLib_" + IngestToolFunction.transfer;
 
     /**
      * Verifies that archival storage has succeeded to persist the SIP (update the ArclibXml).
@@ -68,11 +69,11 @@ public class StorageSuccessVerifierDelegate extends ArclibDelegate implements Ja
     @Override
     public void execute(DelegateExecution execution) throws IOException, URISyntaxException {
         String ingestWorkflowExternalId = (String) execution.getVariable(BpmConstants.ProcessVariables.ingestWorkflowExternalId);
-        log.info("Execution of Storage success verifier delegate started for ingest workflow " + ingestWorkflowExternalId + ".");
+        log.debug("Execution of Storage success verifier delegate started for ingest workflow " + ingestWorkflowExternalId + ".");
 
         IngestWorkflow ingestWorkflow = ingestWorkflowStore.findByExternalId(ingestWorkflowExternalId);
         String aipId = ingestWorkflow.getSip().getId();
-        Boolean debuggingModeActive = (Boolean) execution.getVariable(BpmConstants.ProcessVariables.debuggingModeActive);
+        boolean debuggingModeActive = isInDebugMode(execution);
 
         //check that the aip has been successfully stored
         ObjectState aipState;
@@ -87,7 +88,7 @@ public class StorageSuccessVerifierDelegate extends ArclibDelegate implements Ja
         } else {
             aipState = archivalStorageServiceDebug.getAipState(aipId);
         }
-        log.info("State of AIP with ID " + aipId + " at archival storage has been successfully retrieved." +
+        log.debug("State of AIP with ID " + aipId + " at archival storage has been successfully retrieved." +
                 " State is: " + aipState.toString() + ".");
         execution.setVariable(BpmConstants.ArchivalStorage.aipState, aipState.toString());
 
@@ -102,13 +103,8 @@ public class StorageSuccessVerifierDelegate extends ArclibDelegate implements Ja
                     ingestWorkflowStore.save(relatedWorkflow);
                 }
 
-                Map<String, Object> arclibXmlIndexDocument = indexArclibXmlStore.findArclibXmlIndexDocument(ingestWorkflowExternalId);
-                String document = (String) ((ArrayList) arclibXmlIndexDocument.get(SolrArclibXmlDocument.DOCUMENT)).get(0);
-
-                String producerId = getStringVariable(execution, BpmConstants.ProcessVariables.producerId);
-                String assigneeId = getStringVariable(execution, BpmConstants.ProcessVariables.assignee);
-
-                indexArclibXmlStore.createIndex(document, producerId, assigneeId, IndexedArclibXmlDocumentState.PERSISTED);
+                String responsiblePersonId = getStringVariable(execution, BpmConstants.ProcessVariables.responsiblePerson);
+                indexArclibXmlStore.changeState(ingestWorkflowExternalId, IndexedArclibXmlDocumentState.PERSISTED);
                 log.info("Index of XML of ingest workflow " + ingestWorkflowExternalId + " has been updated with the ingest workflow state PERSISTED.");
 
                 ingestWorkflowStore.save(asList(ingestWorkflow));
@@ -116,17 +112,17 @@ public class StorageSuccessVerifierDelegate extends ArclibDelegate implements Ja
                         + " has finished. The ingest workflow state changed to " + IngestWorkflowState.PERSISTED.toString() + ".");
 
                 //inform batch that the ingest workflow process has finished an try to finish it as well
-                template.convertAndSend("finish", new JmsDto(ingestWorkflow.getBatch().getId(), assigneeId));
+                template.convertAndSend("finish", new JmsDto(ingestWorkflow.getBatch().getId(), responsiblePersonId));
 
                 //delete sip from workspace
                 FileSystemUtils.deleteRecursively(getIngestWorkflowWorkspacePath(ingestWorkflow.getExternalId(), workspace).toAbsolutePath().toFile());
-                log.info("Sip of ingest workflow with external id " + ingestWorkflow.getExternalId() + " has been deleted from workspace.");
+                log.debug("Sip of ingest workflow with external id " + ingestWorkflow.getExternalId() + " has been deleted from workspace.");
 
                 //delete sip from transfer area
                 if (deleteSipFromTransferArea) {
                     Files.deleteIfExists(getSipZipTransferAreaPath(ingestWorkflow).toAbsolutePath());
                     Files.deleteIfExists(getSipSumsTransferAreaPath(getSipZipTransferAreaPath(ingestWorkflow)).toAbsolutePath());
-                    log.info("Sip of ingest workflow with external id " + ingestWorkflow.getExternalId() + " has been deleted from transfer area.");
+                    log.debug("Sip of ingest workflow with external id " + ingestWorkflow.getExternalId() + " has been deleted from transfer area.");
                 }
                 aipService.deactivateLock(ingestWorkflow.getSip().getAuthorialPackage().getId());
                 break;
@@ -134,13 +130,13 @@ public class StorageSuccessVerifierDelegate extends ArclibDelegate implements Ja
             case PRE_PROCESSING:
                 Integer aipSavedCheckRetries = (Integer) execution.getVariable(BpmConstants.ArchivalStorage.aipSavedCheckRetries);
                 execution.setVariable(BpmConstants.ArchivalStorage.aipSavedCheckRetries, aipSavedCheckRetries - 1);
-                log.info("Number of remaining retries to check the AIP state is " + aipSavedCheckRetries + ".");
+                log.debug("Number of remaining retries to check the AIP state is " + aipSavedCheckRetries + ".");
                 break;
             case ARCHIVAL_FAILURE:
             case ROLLED_BACK:
                 Integer aipStoreRetries = (Integer) execution.getVariable(BpmConstants.ArchivalStorage.aipStoreRetries);
                 execution.setVariable(BpmConstants.ArchivalStorage.aipStoreRetries, aipStoreRetries - 1);
-                log.info("Number of remaining retries to store the AIP is " + aipStoreRetries + ".");
+                log.debug("Number of remaining retries to store the AIP is " + aipStoreRetries + ".");
                 break;
             default:
                 log.error("AIP saved in the archival storage is in an unexpected state.");

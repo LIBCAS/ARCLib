@@ -89,7 +89,7 @@ public class ArclibXmlXsltExtractorTest extends SrDbTest {
         ingestWorkflowStore.setGenerator(generator);
 
         ingestWorkflow = new IngestWorkflow();
-        ingestWorkflow.setOriginalFileName(ORIGINAL_SIP_FILE_NAME);
+        ingestWorkflow.setFileName(ORIGINAL_SIP_FILE_NAME);
         ingestWorkflow.setExternalId(EXTERNAL_ID);
         ingestWorkflowStore.save(ingestWorkflow);
 
@@ -101,22 +101,20 @@ public class ArclibXmlXsltExtractorTest extends SrDbTest {
         String sipProfileXml = Resources.toString(this.getClass().getResource(
                 "/sipProfiles/comprehensiveSipProfile.xsl"), StandardCharsets.UTF_8);
         sipProfile.setXsl(sipProfileXml);
-        sipProfile.setSipMetadataPath(PATH_TO_METS);
+        sipProfile.setSipMetadataPathGlobPattern(PATH_TO_METS);
         sipProfileStore.save(sipProfile);
 
-
         arclibXmlXsltExtractor = new ArclibXmlXsltExtractor();
-        arclibXmlXsltExtractor.setWorkspace(WS.toString());
         arclibXmlXsltExtractor.setSipProfileStore(sipProfileStore);
     }
 
     @Test
-    public void extractMetadataTest() throws TransformerException {
+    public void extractMetadataTest() throws TransformerException, IOException {
         Map<String, Object> variables = asMap(BpmConstants.ProcessVariables.batchId, batch.getId());
         variables.put(BpmConstants.ProcessVariables.sipProfileId, sipProfile.getId());
         variables.put(BpmConstants.ProcessVariables.ingestWorkflowExternalId, ingestWorkflow.getExternalId());
-        variables.put(BpmConstants.Ingestion.originalSipFileName, ingestWorkflow.getOriginalFileName());
-
+        variables.put(BpmConstants.Ingestion.sipFileName, ingestWorkflow.getFileName());
+        variables.put(BpmConstants.ProcessVariables.sipFolderWorkspacePath,SIP.toAbsolutePath().toString());
         String extractionResult = arclibXmlXsltExtractor.extractMetadata(variables).replace("\\", "");
         assertThat(extractionResult.contains("mets:mets"), is(true));
         assertThat(extractionResult.contains("ARCLib:eventAgents"), is(true));

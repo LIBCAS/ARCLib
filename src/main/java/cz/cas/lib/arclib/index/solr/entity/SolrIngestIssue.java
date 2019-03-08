@@ -10,7 +10,7 @@ import org.springframework.data.solr.core.mapping.SolrDocument;
 
 @Getter
 @Setter
-@SolrDocument(solrCoreName = "ingestIssue")
+@SolrDocument(collection = "ingestIssue")
 public class SolrIngestIssue extends SolrDatedObject {
 
     @Field
@@ -26,6 +26,26 @@ public class SolrIngestIssue extends SolrDatedObject {
     private boolean solvedByConfig;
 
     @Field
-    @Indexed(type = FieldType.TEXT)
-    private String configNote;
+    @Indexed(type = FieldType.FOLDING)
+    private String toolName;
+
+    @Field
+    @Indexed(type = FieldType.STRING)
+    private String toolId;
+
+    @Field
+    @Indexed(type = FieldType.FOLDING)
+    private String ingestIssueDefinitionName;
+
+    @Field
+    @Indexed(type = FieldType.STRING)
+    private String ingestIssueDefinitionId;
+
+    @Field
+    @Indexed(type = FieldType.FOLDING)
+    private String formatName;
+
+    @Field
+    @Indexed(type = FieldType.STRING)
+    private String formatPuid;
 }

@@ -1,464 +1,1155 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
-<METS:mets LABEL="Z dějin malenovického hradu , [1953]" TYPE="Monograph" OBJID="TEST_OBJ_ID"
-           xmlns:ARCLIB="http://arclib.lib.cas.cz/ARCLIB_XML"
-           xmlns:METS="http://www.loc.gov/METS/"
-           xmlns:xlink="http://www.w3.org/1999/xlink"
-           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-           xsi:schemaLocation="http://www.loc.gov/METS/ http://www.loc.gov/standards/mets/mets.xsd
-                       info:lc/xmlns/premis-v2
-                       http://www.loc.gov/standards/premis/v2/premis-v2-2.xsd">
-    <METS:dmdSec ID="MODSMD_VOLUME_0001">
-        <METS:mdWrap MDTYPE="MODS" MIMETYPE="text/xml">
+<?xml version="1.0" encoding="UTF-8"?>
+
+<METS:mets xmlns:METS="http://www.loc.gov/METS/" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:mods="http://www.loc.gov/mods/v3" xmlns:oai_dc="http://www.openarchives.org/OAI/2.0/oai_dc/" xmlns:premis="info:lc/xmlns/premis-v2" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" LABEL="Hlasy ze Siona, 1861-1916" TYPE="Periodical" OBJID="4b66655a-819a-474f-8203-6c432815df1f">
+    <METS:dmdSec ID="MODSMD_TITLE_0001">
+        <METS:mdWrap MDTYPE="MODS" MDTYPEVERSION="3.5" MIMETYPE="text/xml">
             <METS:xmlData>
-                <mods ID="MODS_VOLUME_0001" version="3.4" xsi:schemaLocation="http://www.loc.gov/mods/v3
-                 http://www.loc.gov/standards/mods/v3/mods-3-4.xsd"
-                      xmlns="http://www.loc.gov/mods/v3"
-                      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-                    <titleInfo>
-                        <title>Z dějin malenovického hradu</title>
-                    </titleInfo>
-                    <typeOfResource>text</typeOfResource>
-                    <genre authority="czenas">informační publikace</genre>
-                    <originInfo>
-                        <place>
-                            <placeTerm type="code" authority="marccountry">xr</placeTerm>
-                        </place>
-                        <place>
-                            <placeTerm type="text">Gottwaldov</placeTerm>
-                        </place>
-                        <publisher>[s.n.]</publisher>
-                        <dateIssued>[1953]</dateIssued>
-                        <dateIssued encoding="marc" point="start" qualifier="questionable">1953</dateIssued>
-                        <dateIssued encoding="marc" point="end" qualifier="questionable">1953</dateIssued>
-                        <issuance>monographic</issuance>
-                    </originInfo>
-                    <language>
-                        <languageTerm authority="iso639-2b" type="code">cze</languageTerm>
-                    </language>
-                    <physicalDescription>
-                        <form authority="marccategory">text</form>
-                        <form authority="marcsmd">regular print</form>
-                        <extent>8 s.</extent>
-                    </physicalDescription>
-                    <subject authority="czenas">
-                        <geographic>Malenovice (Zlín, Česko)</geographic>
-                    </subject>
-                    <subject authority="czenas">
-                        <geographic>Zlín-oblast (Česko)</geographic>
-                    </subject>
-                    <subject authority="czenas">
-                        <geographic>Zlínský kraj (Česko)</geographic>
-                    </subject>
-                    <classification authority="udc">728.81(437.323)</classification>
-                    <classification authority="udc">94(437.323)</classification>
-                    <classification authority="udc">(437.323)</classification>
-                    <classification authority="udc">(036)</classification>
-                    <location>
-                        <physicalLocation authority="siglaADR">ZLG001</physicalLocation>
-                    </location>
-                    <recordInfo>
-                        <recordContentSource authority="marcorg">ABE310</recordContentSource>
-                        <recordCreationDate encoding="iso8601">2007-10-04T00:00:00Z</recordCreationDate>
-                        <recordChangeDate encoding="iso8601">2012-06-29T09:24:17Z</recordChangeDate>
-                        <recordIdentifier source="CZ-ZlKKF">kpw01169310</recordIdentifier>
-                        <recordOrigin>Converted from MARCXML to MODS version 3.4</recordOrigin>
-                        <languageOfCataloging>
-                            <languageTerm authority="iso639-2b" type="code">cze</languageTerm>
-                        </languageOfCataloging>
-                    </recordInfo>
-                    <identifier type="uuid">50c9791d-16b6-4c07-813c-250afd6a6244</identifier>
-                    <genre>volume</genre>
-                    <identifier type="urnnbn">urn:nbn:cz:zlg001-000019</identifier>
-                </mods>
+                <mods:mods ID="MODS_TITLE_0001">
+                    <mods:titleInfo>
+                        <mods:title>Hlasy ze Siona</mods:title>
+                        <mods:subTitle>časopis pro lid evanjelický</mods:subTitle>
+                    </mods:titleInfo>
+                    <mods:name type="personal">
+                        <mods:namePart>Šubert, Václav</mods:namePart>
+                        <mods:namePart type="date">ca 1825-1885</mods:namePart>
+                        <mods:role>
+                            <mods:roleTerm authority="marcrelator" type="code">edt</mods:roleTerm>
+                        </mods:role>
+                        <mods:role>
+                            <mods:roleTerm authority="marcrelator" type="code">pbl</mods:roleTerm>
+                        </mods:role>
+                    </mods:name>
+                    <mods:typeOfResource>text</mods:typeOfResource>
+                    <mods:genre>title</mods:genre>
+                    <mods:originInfo>
+                        <mods:place>
+                            <mods:placeTerm authority="marccountry" type="code">xr</mods:placeTerm>
+                        </mods:place>
+                        <mods:place>
+                            <mods:placeTerm type="text">V Praze</mods:placeTerm>
+                        </mods:place>
+                        <mods:publisher>Karel Seyfried</mods:publisher>
+                        <mods:dateIssued encoding="marc" point="start">1861</mods:dateIssued>
+                        <mods:dateIssued encoding="marc" point="end">1916</mods:dateIssued>
+                        <mods:issuance>continuing</mods:issuance>
+                        <mods:frequency authority="marcfrequency">2x měsíčně 1862-1874,1876-</mods:frequency>
+                        <mods:frequency authority="marcfrequency">1x týdně 1861-1862,1875</mods:frequency>
+                        <mods:frequency>Weekly</mods:frequency>
+                    </mods:originInfo>
+                    <mods:language>
+                        <mods:languageTerm authority="iso639-2b" type="code">cze</mods:languageTerm>
+                    </mods:language>
+                    <mods:physicalDescription>
+                        <mods:form authority="marcform">print</mods:form>
+                        <mods:extent>56 sv.</mods:extent>
+                    </mods:physicalDescription>
+                    <mods:note type="date/sequential designation">Roč. 1 (1861)-roč. 56 (1916)</mods:note>
+                    <mods:note>Změny podnázvu: Evanjelický časopis, Časopis reformované církve (od 1873), později bez podnázvu</mods:note>
+                    <mods:note>Zanikl v červenci 1865 po sebevraždě tiskaře Seyfrieda, znovu vychází od srpna 1865 v Hořátvi u Nymburka</mods:note>
+                    <mods:note>Změny vydavatele: Václav Šubert, pak Bedřich Fleischer (od 1868), Čeněk Dušek (od 1873), pak Richard Novák, Fr. Hoblík (od 1881)</mods:note>
+                    <mods:note>Změny místa vydání: Kolín, Choceň, Pardubice, Hořátev u Nymburka</mods:note>
+                    <mods:note>Příloha: Evangelické besedy pro zábavu</mods:note>
+                    <mods:classification authority="udc">050</mods:classification>
+                    <mods:location>
+                        <mods:physicalLocation authority="siglaADR">ABA001</mods:physicalLocation>
+                        <mods:shelfLocator>54 B 294</mods:shelfLocator>
+                    </mods:location>
+                    <mods:identifier type="barCode">1001149769</mods:identifier>
+                    <mods:identifier type="ccnb">cnb001315579</mods:identifier>
+                    <mods:recordInfo>
+                        <mods:recordContentSource authority="marcorg">ABA001</mods:recordContentSource>
+                        <mods:recordCreationDate encoding="iso8601">2004-05-17T00:00:00Z</mods:recordCreationDate>
+                        <mods:recordChangeDate>2004-05-17T10:34:21Z</mods:recordChangeDate>
+                        <mods:recordIdentifier source="CZ-PrNK">cps20041315579</mods:recordIdentifier>
+                        <mods:recordOrigin>machine generated</mods:recordOrigin>
+                        <mods:languageOfCataloging>
+                            <mods:languageTerm authority="iso639-2b">cze</mods:languageTerm>
+                        </mods:languageOfCataloging>
+                    </mods:recordInfo>
+                    <mods:identifier type="uuid">470f8af0-0377-11e4-9789-005056827e52</mods:identifier>
+                </mods:mods>
+            </METS:xmlData>
+        </METS:mdWrap>
+    </METS:dmdSec>
+    <METS:dmdSec ID="DCMD_TITLE_0001">
+        <METS:mdWrap MDTYPE="DC" MIMETYPE="text/xml">
+            <METS:xmlData>
+                <oai_dc:dc>
+                    <dc:title>Hlasy ze Siona: časopis pro lid evanjelický</dc:title>
+                    <dc:date>1861-1916</dc:date>
+                    <dc:date>1861-1916</dc:date>
+                    <dc:date>1861</dc:date>
+                    <dc:date>1916</dc:date>
+                    <dc:publisher>Karel Seyfried</dc:publisher>
+                    <dc:language>cze</dc:language>
+                    <dc:format>56 sv.</dc:format>
+                    <dc:format>print</dc:format>
+                    <dc:description>Roč. 1 (1861)-roč. 56 (1916)</dc:description>
+                    <dc:description>Změny podnázvu: Evanjelický časopis, Časopis reformované církve (od 1873), později bez podnázvu</dc:description>
+                    <dc:description>Zanikl v červenci 1865 po sebevraždě tiskaře Seyfrieda, znovu vychází od srpna 1865 v Hořátvi u Nymburka</dc:description>
+                    <dc:description>Změny vydavatele: Václav Šubert, pak Bedřich Fleischer (od 1868), Čeněk Dušek (od 1873), pak Richard Novák, Fr. Hoblík (od 1881)</dc:description>
+                    <dc:description>Změny místa vydání: Kolín, Choceň, Pardubice, Hořátev u Nymburka</dc:description>
+                    <dc:description>Příloha: Evangelické besedy pro zábavu</dc:description>
+                    <dc:subject>050</dc:subject>
+                    <dc:type>model:periodical</dc:type>
+                    <dc:identifier>uuid:470f8af0-0377-11e4-9789-005056827e52</dc:identifier>
+                    <dc:identifier>barCode:1001149769</dc:identifier>
+                    <dc:identifier>ccnb:cnb001315579</dc:identifier>
+                    <dc:source>ABA001</dc:source>
+                    <dc:source>54 B 294</dc:source>
+                </oai_dc:dc>
+                <dcterms:sipVersionNumber xmlns:dcterms="http://purl.org/dc/terms/">1</dcterms:sipVersionNumber>
+                <dcterms:sipVersionOf xmlns:dcterms="http://purl.org/dc/terms/">initial version</dcterms:sipVersionOf>
+                <dcterms:xmlVersionNumber xmlns:dcterms="http://purl.org/dc/terms/">2</dcterms:xmlVersionNumber>
+                <dcterms:xmlVersionOf xmlns:dcterms="http://purl.org/dc/terms/">ARCLIB_900000003</dcterms:xmlVersionOf>
+            </METS:xmlData>
+        </METS:mdWrap>
+    </METS:dmdSec>
+    <METS:dmdSec ID="MODSMD_VOLUME_0001">
+        <METS:mdWrap MDTYPE="MODS" MDTYPEVERSION="3.5" MIMETYPE="text/xml">
+            <METS:xmlData>
+                <mods:mods ID="MODS_VOLUME_0001">
+                    <mods:genre>volume</mods:genre>
+                    <mods:titleInfo>
+                        <mods:partNumber>29-30</mods:partNumber>
+                    </mods:titleInfo>
+                    <mods:originInfo>
+                        <mods:dateIssued>1889-1890</mods:dateIssued>
+                    </mods:originInfo>
+                    <mods:identifier type="uuid">6d5a1810-0377-11e4-9806-005056825209</mods:identifier>
+                </mods:mods>
+            </METS:xmlData>
+        </METS:mdWrap>
+    </METS:dmdSec>
+    <METS:dmdSec ID="MODSMD_ISSUE_0001">
+        <METS:mdWrap MDTYPE="MODS" MDTYPEVERSION="3.5" MIMETYPE="text/xml">
+            <METS:xmlData>
+                <mods:mods ID="MODS_ISSUE_0001">
+                    <mods:genre type="normal">issue</mods:genre>
+                    <mods:titleInfo>
+                        <mods:title>Hlasy ze Siona</mods:title>
+                        <mods:partNumber>1</mods:partNumber>
+                    </mods:titleInfo>
+                    <mods:originInfo>
+                        <mods:place>
+                            <mods:placeTerm>V Praze</mods:placeTerm>
+                        </mods:place>
+                        <mods:publisher>Karel Seyfried</mods:publisher>
+                        <mods:dateIssued>10.1.1889</mods:dateIssued>
+                    </mods:originInfo>
+                    <mods:language>
+                        <mods:languageTerm authority="iso639-2b" type="code">cze</mods:languageTerm>
+                    </mods:language>
+                    <mods:identifier type="urnnbn">urn:nbn:cz:nk-0016ke</mods:identifier>
+                    <mods:identifier type="uuid">7033d800-0935-11e4-beed-5ef3fc9ae867</mods:identifier>
+                    <mods:location>
+                        <mods:physicalLocation authority="siglaADR">ABA001</mods:physicalLocation>
+                        <mods:shelfLocator>54 B 294</mods:shelfLocator>
+                    </mods:location>
+                </mods:mods>
+            </METS:xmlData>
+        </METS:mdWrap>
+    </METS:dmdSec>
+    <METS:dmdSec ID="DCMD_ISSUE_0001">
+        <METS:mdWrap MDTYPE="DC" MIMETYPE="text/xml">
+            <METS:xmlData>
+                <oai_dc:dc>
+                    <dc:type>model:periodicalitem</dc:type>
+                    <dc:creator>ghghgh</dc:creator>
+                    <dc:title>Hlasy ze Siona</dc:title>
+                    <dc:description>1</dc:description>
+                    <dc:date>10.1.1889</dc:date>
+                    <dc:publisher>Karel Seyfried</dc:publisher>
+                    <dc:language>cze</dc:language>
+                    <dc:identifier>urnnbn:urn:nbn:cz:nk-0016ke</dc:identifier>
+                    <dc:identifier>uuid:7033d800-0935-11e4-beed-5ef3fc9ae867</dc:identifier>
+                    <dc:source>ABA001</dc:source>
+                    <dc:source>54 B 294</dc:source>
+                </oai_dc:dc>
             </METS:xmlData>
         </METS:mdWrap>
     </METS:dmdSec>
     <METS:dmdSec ID="DCMD_VOLUME_0001">
         <METS:mdWrap MDTYPE="DC" MIMETYPE="text/xml">
             <METS:xmlData>
-                <oai_dc:dc
-                        xsi:schemaLocation="http://purl.org/dc/terms/ http://dublincore.org/schemas/xmls/qdc/dcterms.xsd"
-                        xmlns:oai_dc="http://purl.org/dc/terms/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-                    <oai_dc:isVersionOf></oai_dc:isVersionOf>
+                <oai_dc:dc>
+                    <dc:type>model:periodicalvolume</dc:type>
+                    <dc:description>29-30</dc:description>
+                    <dc:date>1889-1890</dc:date>
+                    <dc:identifier>uuid:6d5a1810-0377-11e4-9806-005056825209</dc:identifier>
                 </oai_dc:dc>
             </METS:xmlData>
         </METS:mdWrap>
     </METS:dmdSec>
     <METS:amdSec>
-        <METS:techMD ID="TEST_ID">
+        <METS:techMD ID="ARCLIB_001">
+            <METS:mdWrap MDTYPE="OTHER">
+                <METS:xmlData>
+                    <ARCLib:formats xmlns:ARCLib="http://arclib.lib.cas.cz/ARCLIB_XSD">
+                        <ARCLib:format>
+                            <ARCLib:fileFormat>image/tiff</ARCLib:fileFormat>
+                            <ARCLib:formatRegistryKey>fmt/353</ARCLib:formatRegistryKey>
+                            <ARCLib:formatRegistryName>PRONOM</ARCLib:formatRegistryName>
+                            <ARCLib:creatingApplicationName>Copinet</ARCLib:creatingApplicationName>
+                            <ARCLib:creatingApplicationVersion>2.0.4451.21664</ARCLib:creatingApplicationVersion>
+                            <ARCLib:dateCreatedByApplication>2014-06-26</ARCLib:dateCreatedByApplication>
+                            <ARCLib:preservationLevelValue>deleted</ARCLib:preservationLevelValue>
+                            <ARCLib:scannerModelSerialNo>2012.04.04</ARCLib:scannerModelSerialNo>
+                            <ARCLib:fileCount>10</ARCLib:fileCount>
+                        </ARCLib:format>
+                        <ARCLib:format>
+                            <ARCLib:fileFormat>image/jp2</ARCLib:fileFormat>
+                            <ARCLib:formatRegistryKey>x-fmt/392</ARCLib:formatRegistryKey>
+                            <ARCLib:formatRegistryName>PRONOM</ARCLib:formatRegistryName>
+                            <ARCLib:creatingApplicationName>Kakadu</ARCLib:creatingApplicationName>
+                            <ARCLib:creatingApplicationVersion>7.0</ARCLib:creatingApplicationVersion>
+                            <ARCLib:dateCreatedByApplication>2014-07-05</ARCLib:dateCreatedByApplication>
+                            <ARCLib:preservationLevelValue>preservation</ARCLib:preservationLevelValue>
+                            <ARCLib:fileCount>6</ARCLib:fileCount>
+                        </ARCLib:format>
+                        <ARCLib:format>
+                            <ARCLib:fileFormat>text/xml</ARCLib:fileFormat>
+                            <ARCLib:formatRegistryKey>fmt/101</ARCLib:formatRegistryKey>
+                            <ARCLib:formatRegistryName>PRONOM</ARCLib:formatRegistryName>
+                            <ARCLib:creatingApplicationName>ABBYY</ARCLib:creatingApplicationName>
+                            <ARCLib:creatingApplicationVersion>3.5</ARCLib:creatingApplicationVersion>
+                            <ARCLib:dateCreatedByApplication>2014-07-09</ARCLib:dateCreatedByApplication>
+                            <ARCLib:preservationLevelValue>preservation</ARCLib:preservationLevelValue>
+                            <ARCLib:fileCount>10</ARCLib:fileCount>
+                        </ARCLib:format>
+                        <ARCLib:format>
+                            <ARCLib:fileFormat>image/jp2</ARCLib:fileFormat>
+                            <ARCLib:formatRegistryKey>x-fmt/392</ARCLib:formatRegistryKey>
+                            <ARCLib:formatRegistryName>PRONOM</ARCLib:formatRegistryName>
+                            <ARCLib:creatingApplicationName>Kakadu</ARCLib:creatingApplicationName>
+                            <ARCLib:creatingApplicationVersion>7.0</ARCLib:creatingApplicationVersion>
+                            <ARCLib:dateCreatedByApplication>2014-07-03</ARCLib:dateCreatedByApplication>
+                            <ARCLib:preservationLevelValue>preservation</ARCLib:preservationLevelValue>
+                            <ARCLib:fileCount>4</ARCLib:fileCount>
+                        </ARCLib:format>
+                    </ARCLib:formats>
+                </METS:xmlData>
+            </METS:mdWrap>
+        </METS:techMD>
+    </METS:amdSec>
+    <METS:amdSec>
+        <METS:techMD ID="ARCLIB_002">
+            <METS:mdWrap MDTYPE="OTHER">
+                <METS:xmlData>
+                    <ARCLib:devices xmlns:ARCLib="http://arclib.lib.cas.cz/ARCLIB_XSD">
+                        <ARCLib:device>
+                            <ARCLib:deviceId>DL 3003-flatData</ARCLib:deviceId>
+                            <ARCLib:fileCount>10</ARCLib:fileCount>
+                        </ARCLib:device>
+                        <ARCLib:device>
+                            <ARCLib:deviceId>Scantailor-postprocessingData</ARCLib:deviceId>
+                            <ARCLib:fileCount>20</ARCLib:fileCount>
+                        </ARCLib:device>
+                        <ARCLib:device>
+                            <ARCLib:deviceId>TM-postprocessingData</ARCLib:deviceId>
+                            <ARCLib:fileCount>20</ARCLib:fileCount>
+                        </ARCLib:device>
+                        <ARCLib:device>
+                            <ARCLib:deviceId>Kakadu-masterCopy</ARCLib:deviceId>
+                            <ARCLib:fileCount>10</ARCLib:fileCount>
+                        </ARCLib:device>
+                        <ARCLib:device>
+                            <ARCLib:deviceId>ABBYY-ALTO</ARCLib:deviceId>
+                            <ARCLib:fileCount>10</ARCLib:fileCount>
+                        </ARCLib:device>
+                    </ARCLib:devices>
+                </METS:xmlData>
+            </METS:mdWrap>
+        </METS:techMD>
+    </METS:amdSec>
+    <METS:amdSec>
+        <METS:techMD ID="ARCLIB_003">
+            <METS:mdWrap MDTYPE="OTHER">
+                <METS:xmlData>
+                    <ARCLib:eventAgents xmlns:ARCLib="http://arclib.lib.cas.cz/ARCLIB_XSD">
+                        <ARCLib:eventAgent>
+                            <ARCLib:eventType>capture</ARCLib:eventType>
+                            <ARCLib:agentName>DL 3003-DL 3003</ARCLib:agentName>
+                            <ARCLib:linkingDeviceID>DL 3003-flatData</ARCLib:linkingDeviceID>
+                            <ARCLib:scannerModelSerialNo>2012.04.04</ARCLib:scannerModelSerialNo>
+                            <ARCLib:scanningSoftwareName>Copinet</ARCLib:scanningSoftwareName>
+                            <ARCLib:eventDate>2014-06-26</ARCLib:eventDate>
+                            <ARCLib:eventCount>10</ARCLib:eventCount>
+                        </ARCLib:eventAgent>
+                        <ARCLib:eventAgent>
+                            <ARCLib:eventType>derivation</ARCLib:eventType>
+                            <ARCLib:agentName>Scantailor-Aug 12 2012</ARCLib:agentName>
+                            <ARCLib:linkingDeviceID>Scantailor-postprocessingData</ARCLib:linkingDeviceID>
+                            <ARCLib:scannerModelSerialNo>2012.04.04</ARCLib:scannerModelSerialNo>
+                            <ARCLib:scanningSoftwareName>Copinet</ARCLib:scanningSoftwareName>
+                            <ARCLib:eventDate>2014-07-03</ARCLib:eventDate>
+                            <ARCLib:eventCount>10</ARCLib:eventCount>
+                        </ARCLib:eventAgent>
+                        <ARCLib:eventAgent>
+                            <ARCLib:eventType>deletion</ARCLib:eventType>
+                            <ARCLib:agentName>TM-1.4.1-SNAPSHOT</ARCLib:agentName>
+                            <ARCLib:linkingDeviceID>TM-postprocessingData</ARCLib:linkingDeviceID>
+                            <ARCLib:scannerModelSerialNo>2012.04.04</ARCLib:scannerModelSerialNo>
+                            <ARCLib:scanningSoftwareName>Copinet</ARCLib:scanningSoftwareName>
+                            <ARCLib:eventDate>2014-07-06</ARCLib:eventDate>
+                            <ARCLib:eventCount>10</ARCLib:eventCount>
+                        </ARCLib:eventAgent>
+                        <ARCLib:eventAgent>
+                            <ARCLib:eventType>derivation</ARCLib:eventType>
+                            <ARCLib:agentName>Scantailor-Aug 12 2012</ARCLib:agentName>
+                            <ARCLib:linkingDeviceID>Scantailor-postprocessingData</ARCLib:linkingDeviceID>
+                            <ARCLib:scannerModelSerialNo>2012.04.04</ARCLib:scannerModelSerialNo>
+                            <ARCLib:scanningSoftwareName>Copinet</ARCLib:scanningSoftwareName>
+                            <ARCLib:eventDate>2014-07-05</ARCLib:eventDate>
+                            <ARCLib:eventCount>10</ARCLib:eventCount>
+                        </ARCLib:eventAgent>
+                        <ARCLib:eventAgent>
+                            <ARCLib:eventType>deletion</ARCLib:eventType>
+                            <ARCLib:agentName>TM-1.4.1-SNAPSHOT</ARCLib:agentName>
+                            <ARCLib:linkingDeviceID>TM-postprocessingData</ARCLib:linkingDeviceID>
+                            <ARCLib:scannerModelSerialNo>2012.04.04</ARCLib:scannerModelSerialNo>
+                            <ARCLib:scanningSoftwareName>Copinet</ARCLib:scanningSoftwareName>
+                            <ARCLib:eventDate>2014-07-04</ARCLib:eventDate>
+                            <ARCLib:eventCount>10</ARCLib:eventCount>
+                        </ARCLib:eventAgent>
+                        <ARCLib:eventAgent>
+                            <ARCLib:eventType>migration</ARCLib:eventType>
+                            <ARCLib:agentName>Kakadu-7.0</ARCLib:agentName>
+                            <ARCLib:linkingDeviceID>Kakadu-masterCopy</ARCLib:linkingDeviceID>
+                            <ARCLib:eventDate>2014-07-05</ARCLib:eventDate>
+                            <ARCLib:eventCount>6</ARCLib:eventCount>
+                        </ARCLib:eventAgent>
+                        <ARCLib:eventAgent>
+                            <ARCLib:eventType>capture</ARCLib:eventType>
+                            <ARCLib:agentName>ABBYY-3.5</ARCLib:agentName>
+                            <ARCLib:linkingDeviceID>ABBYY-ALTO</ARCLib:linkingDeviceID>
+                            <ARCLib:eventDate>2014-07-09</ARCLib:eventDate>
+                            <ARCLib:eventCount>10</ARCLib:eventCount>
+                        </ARCLib:eventAgent>
+                        <ARCLib:eventAgent>
+                            <ARCLib:eventType>migration</ARCLib:eventType>
+                            <ARCLib:agentName>Kakadu-7.0</ARCLib:agentName>
+                            <ARCLib:linkingDeviceID>Kakadu-masterCopy</ARCLib:linkingDeviceID>
+                            <ARCLib:eventDate>2014-07-03</ARCLib:eventDate>
+                            <ARCLib:eventCount>4</ARCLib:eventCount>
+                        </ARCLib:eventAgent>
+                    </ARCLib:eventAgents>
+                </METS:xmlData>
+            </METS:mdWrap>
+        </METS:techMD>
+    </METS:amdSec>
+    <METS:amdSec>
+        <METS:techMD ID="ARCLIB_004">
+            <METS:mdWrap MDTYPE="OTHER">
+                <METS:xmlData>
+                    <ARCLib:ImageCaptureInformation xmlns:ARCLib="http://arclib.lib.cas.cz/ARCLIB_XSD">
+                        <ARCLib:ImageCaptureMetadata>
+                            <ARCLib:dateCreated>2014-06-26</ARCLib:dateCreated>
+                            <ARCLib:imageProducer>The National Library of the Czech Republic, A3993</ARCLib:imageProducer>
+                            <ARCLib:scannerModelSerialNo>2012.04.04</ARCLib:scannerModelSerialNo>
+                            <ARCLib:eventCount>10</ARCLib:eventCount>
+                        </ARCLib:ImageCaptureMetadata>
+                    </ARCLib:ImageCaptureInformation>
+                </METS:xmlData>
+            </METS:mdWrap>
+        </METS:techMD>
+    </METS:amdSec>
+    <METS:amdSec>
+        <METS:techMD ID="ARCLIB_005">
+            <METS:mdWrap MDTYPE="OTHER">
+                <METS:xmlData>
+                    <ARCLib:creatingApplications xmlns:ARCLib="http://arclib.lib.cas.cz/ARCLIB_XSD">
+                        <ARCLib:creatingApplication>
+                            <ARCLib:creatingApplicationName>Copinet</ARCLib:creatingApplicationName>
+                            <ARCLib:creatingApplicationVersion>2.0.4451.21664</ARCLib:creatingApplicationVersion>
+                            <ARCLib:dateCreatedByApplication>2014-06-26</ARCLib:dateCreatedByApplication>
+                            <ARCLib:eventCount>10</ARCLib:eventCount>
+                        </ARCLib:creatingApplication>
+                        <ARCLib:creatingApplication>
+                            <ARCLib:creatingApplicationName>Kakadu</ARCLib:creatingApplicationName>
+                            <ARCLib:creatingApplicationVersion>7.0</ARCLib:creatingApplicationVersion>
+                            <ARCLib:dateCreatedByApplication>2014-07-05</ARCLib:dateCreatedByApplication>
+                            <ARCLib:eventCount>6</ARCLib:eventCount>
+                        </ARCLib:creatingApplication>
+                        <ARCLib:creatingApplication>
+                            <ARCLib:creatingApplicationName>ABBYY</ARCLib:creatingApplicationName>
+                            <ARCLib:creatingApplicationVersion>3.5</ARCLib:creatingApplicationVersion>
+                            <ARCLib:dateCreatedByApplication>2014-07-09</ARCLib:dateCreatedByApplication>
+                            <ARCLib:eventCount>10</ARCLib:eventCount>
+                        </ARCLib:creatingApplication>
+                        <ARCLib:creatingApplication>
+                            <ARCLib:creatingApplicationName>Kakadu</ARCLib:creatingApplicationName>
+                            <ARCLib:creatingApplicationVersion>7.0</ARCLib:creatingApplicationVersion>
+                            <ARCLib:dateCreatedByApplication>2014-07-03</ARCLib:dateCreatedByApplication>
+                            <ARCLib:eventCount>4</ARCLib:eventCount>
+                        </ARCLib:creatingApplication>
+                    </ARCLib:creatingApplications>
+                </METS:xmlData>
+            </METS:mdWrap>
+        </METS:techMD>
+    </METS:amdSec>
+    <METS:amdSec>
+        <METS:techMD ID="techMD_1">
             <METS:mdWrap MDTYPE="PREMIS">
                 <METS:xmlData>
-                    <premis:object xsi:type="premis:file" xmlns:premis="info:lc/xmlns/premis-v2">
+                    <premis:object xsi:type="premis:file">
                         <premis:objectIdentifier>
-                            <premis:objectIdentifierType>ObjectID</premis:objectIdentifierType>
-                            <premis:objectIdentifierValue>Object_4550</premis:objectIdentifierValue>
+                            <premis:objectIdentifierType>local</premis:objectIdentifierType>
+                            <premis:objectIdentifierValue>obj-package</premis:objectIdentifierValue>
                         </premis:objectIdentifier>
-                        <premis:preservationLevel>
-                            <premis:preservationLevelValue>preservation</premis:preservationLevelValue>
-                            <premis:preservationLevelDateAssigned>2013-01-14</premis:preservationLevelDateAssigned>
-                        </premis:preservationLevel>
                         <premis:objectCharacteristics>
                             <premis:compositionLevel>0</premis:compositionLevel>
                             <premis:fixity>
-                                <premis:messageDigestAlgorithm>CRC32</premis:messageDigestAlgorithm>
-                                <premis:messageDigest>4b052dba</premis:messageDigest>
-                                <premis:messageDigestOriginator>JHOVE</premis:messageDigestOriginator>
-                            </premis:fixity>
-                            <premis:fixity>
-                                <premis:messageDigestAlgorithm>SHA-1</premis:messageDigestAlgorithm>
-                                <premis:messageDigest>2ed227b0c8ac8f3cdb7ebf3755c406179d2907ce</premis:messageDigest>
-                                <premis:messageDigestOriginator>JHOVE</premis:messageDigestOriginator>
-                            </premis:fixity>
-                            <premis:fixity>
                                 <premis:messageDigestAlgorithm>MD5</premis:messageDigestAlgorithm>
-                                <premis:messageDigest>84beb79e0926f48f68b0daa93a0b43be</premis:messageDigest>
-                                <premis:messageDigestOriginator>JHOVE</premis:messageDigestOriginator>
+                                <premis:messageDigest>8501e49e4a2a5fa4bd1843e674c1b1d5</premis:messageDigest>
                             </premis:fixity>
-                            <premis:size>7380</premis:size>
+                            <premis:fixity>
+                                <premis:messageDigestAlgorithm>CRC32</premis:messageDigestAlgorithm>
+                                <premis:messageDigest>52a06064</premis:messageDigest>
+                            </premis:fixity>
+                            <premis:fixity>
+                                <premis:messageDigestAlgorithm>SHA-512</premis:messageDigestAlgorithm>
+                                <premis:messageDigest>0cf660e223e0c200f789a168d0a87e5c415bb7f00555d25af3f4915122bf0d3fbc2b0033968fa353f95ae1fb4dd48bca836d003ac8c1eb5c947d279665ba5f39</premis:messageDigest>
+                            </premis:fixity>
+                            <premis:size>132006009</premis:size>
                             <premis:format>
                                 <premis:formatDesignation>
-                                    <premis:formatName>text/xml</premis:formatName>
-                                    <premis:formatVersion>1.0</premis:formatVersion>
+                                    <premis:formatName>application/zip</premis:formatName>
                                 </premis:formatDesignation>
                                 <premis:formatRegistry>
                                     <premis:formatRegistryName>PRONOM</premis:formatRegistryName>
-                                    <premis:formatRegistryKey>fmt/101</premis:formatRegistryKey>
+                                    <premis:formatRegistryKey>x-fmt/263</premis:formatRegistryKey>
                                 </premis:formatRegistry>
-                                <premis:formatNote>this is a format note</premis:formatNote>
                             </premis:format>
-                            <premis:creatingApplication>
-                                <premis:creatingApplicationName>Recognition Server</premis:creatingApplicationName>
-                                <premis:creatingApplicationVersion>3.0</premis:creatingApplicationVersion>
-                                <premis:dateCreatedByApplication>2013-01-11T14:17:31Z</premis:dateCreatedByApplication>
-                            </premis:creatingApplication>
                         </premis:objectCharacteristics>
-                        <premis:originalName>ALTO_KPW01169310_0001.XML</premis:originalName>
-                        <premis:relationship>
-                            <premis:relationshipType>derivation</premis:relationshipType>
-                            <premis:relationshipSubType>created from</premis:relationshipSubType>
-                            <premis:relatedObjectIdentification>
-                                <premis:relatedObjectIdentifierType>temporary filepath
-                                </premis:relatedObjectIdentifierType>
-                                <premis:relatedObjectIdentifierValue>
-                                    C:\Digi_linka\Procyon_Projekty\kpw01169310\PS_KPW01169310_0001.TIF
-                                </premis:relatedObjectIdentifierValue>
-                            </premis:relatedObjectIdentification>
-                            <premis:relatedEventIdentification>
-                                <premis:relatedEventIdentifierType>EventID</premis:relatedEventIdentifierType>
-                                <premis:relatedEventIdentifierValue>Event_4550</premis:relatedEventIdentifierValue>
-                                <premis:relatedEventSequence>4550</premis:relatedEventSequence>
-                            </premis:relatedEventIdentification>
-                        </premis:relationship>
+                        <premis:linkingEventIdentifier>
+                            <premis:linkingEventIdentifierType>EventId</premis:linkingEventIdentifierType>
+                            <premis:linkingEventIdentifierValue>virus_check_event_001</premis:linkingEventIdentifierValue>
+                        </premis:linkingEventIdentifier>
+                        <premis:linkingEventIdentifier>
+                            <premis:linkingEventIdentifierType>EventId</premis:linkingEventIdentifierType>
+                            <premis:linkingEventIdentifierValue>format_identification_event_001</premis:linkingEventIdentifierValue>
+                        </premis:linkingEventIdentifier>
+                        <premis:linkingEventIdentifier>
+                            <premis:linkingEventIdentifierType>EventId</premis:linkingEventIdentifierType>
+                            <premis:linkingEventIdentifierValue>fixity_check_event_007</premis:linkingEventIdentifierValue>
+                        </premis:linkingEventIdentifier>
+                        <premis:linkingEventIdentifier>
+                            <premis:linkingEventIdentifierType>EventId</premis:linkingEventIdentifierType>
+                            <premis:linkingEventIdentifierValue>fixity_check_event_006</premis:linkingEventIdentifierValue>
+                        </premis:linkingEventIdentifier>
+                        <premis:linkingEventIdentifier>
+                            <premis:linkingEventIdentifierType>EventId</premis:linkingEventIdentifierType>
+                            <premis:linkingEventIdentifierValue>fixity_check_event_009</premis:linkingEventIdentifierValue>
+                        </premis:linkingEventIdentifier>
+                        <premis:linkingEventIdentifier>
+                            <premis:linkingEventIdentifierType>EventId</premis:linkingEventIdentifierType>
+                            <premis:linkingEventIdentifierValue>fixity_check_event_008</premis:linkingEventIdentifierValue>
+                        </premis:linkingEventIdentifier>
+                        <premis:linkingEventIdentifier>
+                            <premis:linkingEventIdentifierType>EventId</premis:linkingEventIdentifierType>
+                            <premis:linkingEventIdentifierValue>fixity_check_event_003</premis:linkingEventIdentifierValue>
+                        </premis:linkingEventIdentifier>
+                        <premis:linkingEventIdentifier>
+                            <premis:linkingEventIdentifierType>EventId</premis:linkingEventIdentifierType>
+                            <premis:linkingEventIdentifierValue>validation_event_001</premis:linkingEventIdentifierValue>
+                        </premis:linkingEventIdentifier>
+                        <premis:linkingEventIdentifier>
+                            <premis:linkingEventIdentifierType>EventId</premis:linkingEventIdentifierType>
+                            <premis:linkingEventIdentifierValue>fixity_check_event_002</premis:linkingEventIdentifierValue>
+                        </premis:linkingEventIdentifier>
+                        <premis:linkingEventIdentifier>
+                            <premis:linkingEventIdentifierType>EventId</premis:linkingEventIdentifierType>
+                            <premis:linkingEventIdentifierValue>fixity_check_event_005</premis:linkingEventIdentifierValue>
+                        </premis:linkingEventIdentifier>
+                        <premis:linkingEventIdentifier>
+                            <premis:linkingEventIdentifierType>EventId</premis:linkingEventIdentifierType>
+                            <premis:linkingEventIdentifierValue>fixity_check_event_004</premis:linkingEventIdentifierValue>
+                        </premis:linkingEventIdentifier>
+                        <premis:linkingEventIdentifier>
+                            <premis:linkingEventIdentifierType>EventId</premis:linkingEventIdentifierType>
+                            <premis:linkingEventIdentifierValue>fixity_check_event_010</premis:linkingEventIdentifierValue>
+                        </premis:linkingEventIdentifier>
+                        <premis:linkingEventIdentifier>
+                            <premis:linkingEventIdentifierType>EventId</premis:linkingEventIdentifierType>
+                            <premis:linkingEventIdentifierValue>fixity_check_event_001</premis:linkingEventIdentifierValue>
+                        </premis:linkingEventIdentifier>
+                        <premis:linkingEventIdentifier>
+                            <premis:linkingEventIdentifierType>EventId</premis:linkingEventIdentifierType>
+                            <premis:linkingEventIdentifierValue>fixity_check_event_011</premis:linkingEventIdentifierValue>
+                        </premis:linkingEventIdentifier>
+                        <premis:linkingEventIdentifier>
+                            <premis:linkingEventIdentifierType>EventId</premis:linkingEventIdentifierType>
+                            <premis:linkingEventIdentifierValue>message_digest_calculation_event_001</premis:linkingEventIdentifierValue>
+                        </premis:linkingEventIdentifier>
+                        <premis:linkingEventIdentifier>
+                            <premis:linkingEventIdentifierType>EventId</premis:linkingEventIdentifierType>
+                            <premis:linkingEventIdentifierValue>metadata_extraction_event_001</premis:linkingEventIdentifierValue>
+                        </premis:linkingEventIdentifier>
                     </premis:object>
-                </METS:xmlData>
-            </METS:mdWrap>
-        </METS:techMD>
-        <METS:techMD ID="TEST_ID_2">
-            <METS:mdWrap MDTYPE="OTHER">
-                <METS:xmlData>
-                    <ARCLIB:formats>
+                    <ARCLIB:formats xmlns:ARCLIB="http://arclib.lib.cas.cz/ARCLIB_XSD">
                         <ARCLIB:format>
-                            <ARCLIB:fileFormat></ARCLIB:fileFormat>
-                            <ARCLIB:fileCount></ARCLIB:fileCount>
-                            <ARCLIB:identificationTool></ARCLIB:identificationTool>
+                            <ARCLIB:formatRegistryKey>x-fmt/392</ARCLIB:formatRegistryKey>
+                            <ARCLIB:formatRegistryName>PRONOM</ARCLIB:formatRegistryName>
+                            <ARCLIB:creatingApplicationName>DROID</ARCLIB:creatingApplicationName>
+                            <ARCLIB:creatingApplicationVersion>DROID: version: 6.4, Signature files: 1. Type: Container Version: 20171130 File name: container-signature-20171130.xml 2. Type: Binary Version: 93 File name: DROID_SignatureFile_V93.xml</ARCLIB:creatingApplicationVersion>
+                            <ARCLIB:dateCreatedByApplication>2019-03-05</ARCLIB:dateCreatedByApplication>
+                            <ARCLIB:fileCount>20</ARCLIB:fileCount>
+                        </ARCLIB:format>
+                        <ARCLIB:format>
+                            <ARCLIB:formatRegistryKey>fmt/101</ARCLIB:formatRegistryKey>
+                            <ARCLIB:formatRegistryName>PRONOM</ARCLIB:formatRegistryName>
+                            <ARCLIB:creatingApplicationName>DROID</ARCLIB:creatingApplicationName>
+                            <ARCLIB:creatingApplicationVersion>DROID: version: 6.4, Signature files: 1. Type: Container Version: 20171130 File name: container-signature-20171130.xml 2. Type: Binary Version: 93 File name: DROID_SignatureFile_V93.xml</ARCLIB:creatingApplicationVersion>
+                            <ARCLIB:dateCreatedByApplication>2019-03-05</ARCLIB:dateCreatedByApplication>
+                            <ARCLIB:fileCount>22</ARCLIB:fileCount>
+                        </ARCLIB:format>
+                        <ARCLIB:format>
+                            <ARCLIB:formatRegistryKey>x-fmt/111</ARCLIB:formatRegistryKey>
+                            <ARCLIB:formatRegistryName>PRONOM</ARCLIB:formatRegistryName>
+                            <ARCLIB:creatingApplicationName>DROID</ARCLIB:creatingApplicationName>
+                            <ARCLIB:creatingApplicationVersion>DROID: version: 6.4, Signature files: 1. Type: Container Version: 20171130 File name: container-signature-20171130.xml 2. Type: Binary Version: 93 File name: DROID_SignatureFile_V93.xml</ARCLIB:creatingApplicationVersion>
+                            <ARCLIB:dateCreatedByApplication>2019-03-05</ARCLIB:dateCreatedByApplication>
+                            <ARCLIB:fileCount>10</ARCLIB:fileCount>
+                        </ARCLIB:format>
+                        <ARCLIB:format>
+                            <ARCLIB:formatRegistryKey>fmt/993</ARCLIB:formatRegistryKey>
+                            <ARCLIB:formatRegistryName>PRONOM</ARCLIB:formatRegistryName>
+                            <ARCLIB:creatingApplicationName>DROID</ARCLIB:creatingApplicationName>
+                            <ARCLIB:creatingApplicationVersion>DROID: version: 6.4, Signature files: 1. Type: Container Version: 20171130 File name: container-signature-20171130.xml 2. Type: Binary Version: 93 File name: DROID_SignatureFile_V93.xml</ARCLIB:creatingApplicationVersion>
+                            <ARCLIB:dateCreatedByApplication>2019-03-05</ARCLIB:dateCreatedByApplication>
+                            <ARCLIB:fileCount>1</ARCLIB:fileCount>
                         </ARCLIB:format>
                     </ARCLIB:formats>
-                    <ARCLIB:devices>
-                        <ARCLIB:device>
-                            <ARCLIB:deviceId></ARCLIB:deviceId>
-                            <ARCLIB:fileCount></ARCLIB:fileCount>
-                        </ARCLIB:device>
-                    </ARCLIB:devices>
                 </METS:xmlData>
             </METS:mdWrap>
         </METS:techMD>
-        <METS:rightsMD ID="TEST_ID_7"/>
-        <METS:sourceMD ID="TEST_ID_5"/>
-        <METS:digiprovMD ID="TEST_ID_3">
+    </METS:amdSec>
+    <METS:amdSec>
+        <METS:digiprovMD ID="AGENT_001">
             <METS:mdWrap MDTYPE="PREMIS">
                 <METS:xmlData>
-                    <premis:event xmlns:premis="info:lc/xmlns/premis-v2">
+                    <premis:agent>
+                        <premis:agentIdentifier>
+                            <premis:agentIdentifierType>AgentID</premis:agentIdentifierType>
+                            <premis:agentIdentifierValue>agent_ARCLIB</premis:agentIdentifierValue>
+                        </premis:agentIdentifier>
+                        <premis:agentName>ARCLIB</premis:agentName>
+                        <premis:agentType>software</premis:agentType>
+                        <premis:agentNote>Version 1.1</premis:agentNote>
+                    </premis:agent>
+                </METS:xmlData>
+            </METS:mdWrap>
+        </METS:digiprovMD>
+        <METS:digiprovMD ID="AGENT_002">
+            <METS:mdWrap MDTYPE="PREMIS">
+                <METS:xmlData>
+                    <premis:agent>
+                        <premis:agentIdentifier>
+                            <premis:agentIdentifierType>AgentID</premis:agentIdentifierType>
+                            <premis:agentIdentifierValue>agent_DROID</premis:agentIdentifierValue>
+                        </premis:agentIdentifier>
+                        <premis:agentName>DROID</premis:agentName>
+                        <premis:agentType>software</premis:agentType>
+                        <premis:agentNote>Version: DROID: version: 6.4, Signature files: 1. Type: Container Version: 20171130 File name: container-signature-20171130.xml 2. Type: Binary Version: 93 File name: DROID_SignatureFile_V93.xml</premis:agentNote>
+                    </premis:agent>
+                </METS:xmlData>
+            </METS:mdWrap>
+        </METS:digiprovMD>
+        <METS:digiprovMD ID="AGENT_003">
+            <METS:mdWrap MDTYPE="PREMIS">
+                <METS:xmlData>
+                    <premis:agent>
+                        <premis:agentIdentifier>
+                            <premis:agentIdentifierType>AgentID</premis:agentIdentifierType>
+                            <premis:agentIdentifierValue>agent_CLAMAV</premis:agentIdentifierValue>
+                        </premis:agentIdentifier>
+                        <premis:agentName>CLAMAV</premis:agentName>
+                        <premis:agentType>software</premis:agentType>
+                        <premis:agentNote>Version: [ClamAV 0.99.2/23871/Mon Sep 25 10:44:09 2017], Description: Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla erat augue, tincidunt vitae elementum quis, ultricies a augue. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Suspendisse potenti. Praesent rhoncus enim ac sem posuere, eget rhoncus lectus ullamcorper. Phasellus orci sapien, viverra at mauris quis, sollicitudin convallis mi. Ut fermentum vehicula neque, a ultrices tellus vulputate at. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec sit amet ligula viverra, consectetur magna in, scelerisque nisl. Nunc semper placerat risus id fermentum.</premis:agentNote>
+                    </premis:agent>
+                </METS:xmlData>
+            </METS:mdWrap>
+        </METS:digiprovMD>
+    </METS:amdSec>
+    <METS:amdSec>
+        <METS:digiprovMD ID="EVENT_001">
+            <METS:mdWrap MDTYPE="PREMIS">
+                <METS:xmlData>
+                    <premis:event>
                         <premis:eventIdentifier>
                             <premis:eventIdentifierType>EventId</premis:eventIdentifierType>
-                            <premis:eventIdentifierValue>Event_4550</premis:eventIdentifierValue>
+                            <premis:eventIdentifierValue>format_identification_event_001</premis:eventIdentifierValue>
                         </premis:eventIdentifier>
-                        <premis:eventType>capture</premis:eventType>
-                        <premis:eventDateTime>2013-01-11T14:17:31Z</premis:eventDateTime>
-                        <premis:eventDetail>capture/XML_creation</premis:eventDetail>
+                        <premis:eventType>format identification</premis:eventType>
+                        <premis:eventDateTime>2019-03-05T14:08:38Z</premis:eventDateTime>
                         <premis:eventOutcomeInformation>
                             <premis:eventOutcome>successful</premis:eventOutcome>
                         </premis:eventOutcomeInformation>
                         <premis:linkingAgentIdentifier>
                             <premis:linkingAgentIdentifierType>AgentId</premis:linkingAgentIdentifierType>
-                            <premis:linkingAgentIdentifierValue>agent_Recognition_Server_3.0
-                            </premis:linkingAgentIdentifierValue>
+                            <premis:linkingAgentIdentifierValue>agent_DROID</premis:linkingAgentIdentifierValue>
                         </premis:linkingAgentIdentifier>
-                        <premis:linkingObjectIdentifier>
-                            <premis:linkingObjectIdentifierType>URN</premis:linkingObjectIdentifierType>
-                            <premis:linkingObjectIdentifierValue>URN:NBN:cz_0011#0001
-                            </premis:linkingObjectIdentifierValue>
-                        </premis:linkingObjectIdentifier>
                     </premis:event>
                 </METS:xmlData>
             </METS:mdWrap>
         </METS:digiprovMD>
-        <METS:digiprovMD ID="TEST_ID_4">
-            <METS:mdWrap MDTYPE="OTHER">
+        <METS:digiprovMD ID="EVENT_002">
+            <METS:mdWrap MDTYPE="PREMIS">
                 <METS:xmlData>
-                    <ARCLIB:eventAgents>
-                        <ARCLIB:eventAgent>
-                            <ARCLIB:agentName>TEST AGENT NAME</ARCLIB:agentName>
-                            <ARCLIB:eventCount>3</ARCLIB:eventCount>
-                            <ARCLIB:eventDate>2017-05-30T09:30:10.5</ARCLIB:eventDate>
-                            <ARCLIB:eventType>ingestion</ARCLIB:eventType>
-                        </ARCLIB:eventAgent>
-                        <ARCLIB:eventAgent>
-                            <ARCLIB:agentName>TEST AGENT NAME 2</ARCLIB:agentName>
-                            <ARCLIB:eventCount>2</ARCLIB:eventCount>
-                            <ARCLIB:eventDate>2017-05-30T09:30:10.5</ARCLIB:eventDate>
-                            <ARCLIB:eventType>validation</ARCLIB:eventType>
-                        </ARCLIB:eventAgent>
-                    </ARCLIB:eventAgents>
+                    <premis:event>
+                        <premis:eventIdentifier>
+                            <premis:eventIdentifierType>EventId</premis:eventIdentifierType>
+                            <premis:eventIdentifierValue>virus_check_event_001</premis:eventIdentifierValue>
+                        </premis:eventIdentifier>
+                        <premis:eventType>virus check</premis:eventType>
+                        <premis:eventDateTime>2019-03-05T14:09:04Z</premis:eventDateTime>
+                        <premis:eventOutcomeInformation>
+                            <premis:eventOutcome>successful</premis:eventOutcome>
+                        </premis:eventOutcomeInformation>
+                        <premis:linkingAgentIdentifier>
+                            <premis:linkingAgentIdentifierType>AgentId</premis:linkingAgentIdentifierType>
+                            <premis:linkingAgentIdentifierValue>agent_CLAMAV</premis:linkingAgentIdentifierValue>
+                        </premis:linkingAgentIdentifier>
+                    </premis:event>
+                </METS:xmlData>
+            </METS:mdWrap>
+        </METS:digiprovMD>
+        <METS:digiprovMD ID="EVENT_003">
+            <METS:mdWrap MDTYPE="PREMIS">
+                <METS:xmlData>
+                    <premis:event>
+                        <premis:eventIdentifier>
+                            <premis:eventIdentifierType>EventId</premis:eventIdentifierType>
+                            <premis:eventIdentifierValue>fixity_check_event_001</premis:eventIdentifierValue>
+                        </premis:eventIdentifier>
+                        <premis:eventType>fixity check</premis:eventType>
+                        <premis:eventDateTime>2019-03-05T14:09:05Z</premis:eventDateTime>
+                        <premis:eventDetail>IngestIssueDefinition{number='5', name='invalid checksum', code=FILE_INVALID_CHECKSUM}, FormatDefinition{puid=fmt/101, formatVersion=1.0, localDefinition=false, internalInformationFilled=false}, Issue details: invalid checksum of file: /amdsec/amd_mets_7033d800-0935-11e4-beed-5ef3fc9ae867_0001.xml. used config: true at: /fixityCheck/continueOnInvalidChecksums</premis:eventDetail>
+                        <premis:eventOutcomeInformation>
+                            <premis:eventOutcome>successful</premis:eventOutcome>
+                        </premis:eventOutcomeInformation>
+                        <premis:linkingAgentIdentifier>
+                            <premis:linkingAgentIdentifierType>AgentId</premis:linkingAgentIdentifierType>
+                            <premis:linkingAgentIdentifierValue>agent_ARCLIB</premis:linkingAgentIdentifierValue>
+                        </premis:linkingAgentIdentifier>
+                    </premis:event>
+                </METS:xmlData>
+            </METS:mdWrap>
+        </METS:digiprovMD>
+        <METS:digiprovMD ID="EVENT_004">
+            <METS:mdWrap MDTYPE="PREMIS">
+                <METS:xmlData>
+                    <premis:event>
+                        <premis:eventIdentifier>
+                            <premis:eventIdentifierType>EventId</premis:eventIdentifierType>
+                            <premis:eventIdentifierValue>fixity_check_event_002</premis:eventIdentifierValue>
+                        </premis:eventIdentifier>
+                        <premis:eventType>fixity check</premis:eventType>
+                        <premis:eventDateTime>2019-03-05T14:09:05Z</premis:eventDateTime>
+                        <premis:eventDetail>IngestIssueDefinition{number='5', name='invalid checksum', code=FILE_INVALID_CHECKSUM}, FormatDefinition{puid=fmt/101, formatVersion=1.0, localDefinition=false, internalInformationFilled=false}, Issue details: invalid checksum of file: /amdsec/amd_mets_7033d800-0935-11e4-beed-5ef3fc9ae867_0002.xml. used config: true at: /fixityCheck/continueOnInvalidChecksums</premis:eventDetail>
+                        <premis:eventOutcomeInformation>
+                            <premis:eventOutcome>successful</premis:eventOutcome>
+                        </premis:eventOutcomeInformation>
+                        <premis:linkingAgentIdentifier>
+                            <premis:linkingAgentIdentifierType>AgentId</premis:linkingAgentIdentifierType>
+                            <premis:linkingAgentIdentifierValue>agent_ARCLIB</premis:linkingAgentIdentifierValue>
+                        </premis:linkingAgentIdentifier>
+                    </premis:event>
+                </METS:xmlData>
+            </METS:mdWrap>
+        </METS:digiprovMD>
+        <METS:digiprovMD ID="EVENT_005">
+            <METS:mdWrap MDTYPE="PREMIS">
+                <METS:xmlData>
+                    <premis:event>
+                        <premis:eventIdentifier>
+                            <premis:eventIdentifierType>EventId</premis:eventIdentifierType>
+                            <premis:eventIdentifierValue>fixity_check_event_003</premis:eventIdentifierValue>
+                        </premis:eventIdentifier>
+                        <premis:eventType>fixity check</premis:eventType>
+                        <premis:eventDateTime>2019-03-05T14:09:05Z</premis:eventDateTime>
+                        <premis:eventDetail>IngestIssueDefinition{number='5', name='invalid checksum', code=FILE_INVALID_CHECKSUM}, FormatDefinition{puid=fmt/101, formatVersion=1.0, localDefinition=false, internalInformationFilled=false}, Issue details: invalid checksum of file: /amdsec/amd_mets_7033d800-0935-11e4-beed-5ef3fc9ae867_0003.xml. used config: true at: /fixityCheck/continueOnInvalidChecksums</premis:eventDetail>
+                        <premis:eventOutcomeInformation>
+                            <premis:eventOutcome>successful</premis:eventOutcome>
+                        </premis:eventOutcomeInformation>
+                        <premis:linkingAgentIdentifier>
+                            <premis:linkingAgentIdentifierType>AgentId</premis:linkingAgentIdentifierType>
+                            <premis:linkingAgentIdentifierValue>agent_ARCLIB</premis:linkingAgentIdentifierValue>
+                        </premis:linkingAgentIdentifier>
+                    </premis:event>
+                </METS:xmlData>
+            </METS:mdWrap>
+        </METS:digiprovMD>
+        <METS:digiprovMD ID="EVENT_006">
+            <METS:mdWrap MDTYPE="PREMIS">
+                <METS:xmlData>
+                    <premis:event>
+                        <premis:eventIdentifier>
+                            <premis:eventIdentifierType>EventId</premis:eventIdentifierType>
+                            <premis:eventIdentifierValue>fixity_check_event_004</premis:eventIdentifierValue>
+                        </premis:eventIdentifier>
+                        <premis:eventType>fixity check</premis:eventType>
+                        <premis:eventDateTime>2019-03-05T14:09:05Z</premis:eventDateTime>
+                        <premis:eventDetail>IngestIssueDefinition{number='5', name='invalid checksum', code=FILE_INVALID_CHECKSUM}, FormatDefinition{puid=fmt/101, formatVersion=1.0, localDefinition=false, internalInformationFilled=false}, Issue details: invalid checksum of file: /amdsec/amd_mets_7033d800-0935-11e4-beed-5ef3fc9ae867_0004.xml. used config: true at: /fixityCheck/continueOnInvalidChecksums</premis:eventDetail>
+                        <premis:eventOutcomeInformation>
+                            <premis:eventOutcome>successful</premis:eventOutcome>
+                        </premis:eventOutcomeInformation>
+                        <premis:linkingAgentIdentifier>
+                            <premis:linkingAgentIdentifierType>AgentId</premis:linkingAgentIdentifierType>
+                            <premis:linkingAgentIdentifierValue>agent_ARCLIB</premis:linkingAgentIdentifierValue>
+                        </premis:linkingAgentIdentifier>
+                    </premis:event>
+                </METS:xmlData>
+            </METS:mdWrap>
+        </METS:digiprovMD>
+        <METS:digiprovMD ID="EVENT_007">
+            <METS:mdWrap MDTYPE="PREMIS">
+                <METS:xmlData>
+                    <premis:event>
+                        <premis:eventIdentifier>
+                            <premis:eventIdentifierType>EventId</premis:eventIdentifierType>
+                            <premis:eventIdentifierValue>fixity_check_event_005</premis:eventIdentifierValue>
+                        </premis:eventIdentifier>
+                        <premis:eventType>fixity check</premis:eventType>
+                        <premis:eventDateTime>2019-03-05T14:09:05Z</premis:eventDateTime>
+                        <premis:eventDetail>IngestIssueDefinition{number='5', name='invalid checksum', code=FILE_INVALID_CHECKSUM}, FormatDefinition{puid=fmt/101, formatVersion=1.0, localDefinition=false, internalInformationFilled=false}, Issue details: invalid checksum of file: /amdsec/amd_mets_7033d800-0935-11e4-beed-5ef3fc9ae867_0005.xml. used config: true at: /fixityCheck/continueOnInvalidChecksums</premis:eventDetail>
+                        <premis:eventOutcomeInformation>
+                            <premis:eventOutcome>successful</premis:eventOutcome>
+                        </premis:eventOutcomeInformation>
+                        <premis:linkingAgentIdentifier>
+                            <premis:linkingAgentIdentifierType>AgentId</premis:linkingAgentIdentifierType>
+                            <premis:linkingAgentIdentifierValue>agent_ARCLIB</premis:linkingAgentIdentifierValue>
+                        </premis:linkingAgentIdentifier>
+                    </premis:event>
+                </METS:xmlData>
+            </METS:mdWrap>
+        </METS:digiprovMD>
+        <METS:digiprovMD ID="EVENT_008">
+            <METS:mdWrap MDTYPE="PREMIS">
+                <METS:xmlData>
+                    <premis:event>
+                        <premis:eventIdentifier>
+                            <premis:eventIdentifierType>EventId</premis:eventIdentifierType>
+                            <premis:eventIdentifierValue>fixity_check_event_006</premis:eventIdentifierValue>
+                        </premis:eventIdentifier>
+                        <premis:eventType>fixity check</premis:eventType>
+                        <premis:eventDateTime>2019-03-05T14:09:05Z</premis:eventDateTime>
+                        <premis:eventDetail>IngestIssueDefinition{number='5', name='invalid checksum', code=FILE_INVALID_CHECKSUM}, FormatDefinition{puid=fmt/101, formatVersion=1.0, localDefinition=false, internalInformationFilled=false}, Issue details: invalid checksum of file: /amdsec/amd_mets_7033d800-0935-11e4-beed-5ef3fc9ae867_0006.xml. used config: true at: /fixityCheck/continueOnInvalidChecksums</premis:eventDetail>
+                        <premis:eventOutcomeInformation>
+                            <premis:eventOutcome>successful</premis:eventOutcome>
+                        </premis:eventOutcomeInformation>
+                        <premis:linkingAgentIdentifier>
+                            <premis:linkingAgentIdentifierType>AgentId</premis:linkingAgentIdentifierType>
+                            <premis:linkingAgentIdentifierValue>agent_ARCLIB</premis:linkingAgentIdentifierValue>
+                        </premis:linkingAgentIdentifier>
+                    </premis:event>
+                </METS:xmlData>
+            </METS:mdWrap>
+        </METS:digiprovMD>
+        <METS:digiprovMD ID="EVENT_009">
+            <METS:mdWrap MDTYPE="PREMIS">
+                <METS:xmlData>
+                    <premis:event>
+                        <premis:eventIdentifier>
+                            <premis:eventIdentifierType>EventId</premis:eventIdentifierType>
+                            <premis:eventIdentifierValue>fixity_check_event_007</premis:eventIdentifierValue>
+                        </premis:eventIdentifier>
+                        <premis:eventType>fixity check</premis:eventType>
+                        <premis:eventDateTime>2019-03-05T14:09:05Z</premis:eventDateTime>
+                        <premis:eventDetail>IngestIssueDefinition{number='5', name='invalid checksum', code=FILE_INVALID_CHECKSUM}, FormatDefinition{puid=fmt/101, formatVersion=1.0, localDefinition=false, internalInformationFilled=false}, Issue details: invalid checksum of file: /amdsec/amd_mets_7033d800-0935-11e4-beed-5ef3fc9ae867_0007.xml. used config: true at: /fixityCheck/continueOnInvalidChecksums</premis:eventDetail>
+                        <premis:eventOutcomeInformation>
+                            <premis:eventOutcome>successful</premis:eventOutcome>
+                        </premis:eventOutcomeInformation>
+                        <premis:linkingAgentIdentifier>
+                            <premis:linkingAgentIdentifierType>AgentId</premis:linkingAgentIdentifierType>
+                            <premis:linkingAgentIdentifierValue>agent_ARCLIB</premis:linkingAgentIdentifierValue>
+                        </premis:linkingAgentIdentifier>
+                    </premis:event>
+                </METS:xmlData>
+            </METS:mdWrap>
+        </METS:digiprovMD>
+        <METS:digiprovMD ID="EVENT_010">
+            <METS:mdWrap MDTYPE="PREMIS">
+                <METS:xmlData>
+                    <premis:event>
+                        <premis:eventIdentifier>
+                            <premis:eventIdentifierType>EventId</premis:eventIdentifierType>
+                            <premis:eventIdentifierValue>fixity_check_event_008</premis:eventIdentifierValue>
+                        </premis:eventIdentifier>
+                        <premis:eventType>fixity check</premis:eventType>
+                        <premis:eventDateTime>2019-03-05T14:09:05Z</premis:eventDateTime>
+                        <premis:eventDetail>IngestIssueDefinition{number='5', name='invalid checksum', code=FILE_INVALID_CHECKSUM}, FormatDefinition{puid=fmt/101, formatVersion=1.0, localDefinition=false, internalInformationFilled=false}, Issue details: invalid checksum of file: /amdsec/amd_mets_7033d800-0935-11e4-beed-5ef3fc9ae867_0009.xml. used config: true at: /fixityCheck/continueOnInvalidChecksums</premis:eventDetail>
+                        <premis:eventOutcomeInformation>
+                            <premis:eventOutcome>successful</premis:eventOutcome>
+                        </premis:eventOutcomeInformation>
+                        <premis:linkingAgentIdentifier>
+                            <premis:linkingAgentIdentifierType>AgentId</premis:linkingAgentIdentifierType>
+                            <premis:linkingAgentIdentifierValue>agent_ARCLIB</premis:linkingAgentIdentifierValue>
+                        </premis:linkingAgentIdentifier>
+                    </premis:event>
+                </METS:xmlData>
+            </METS:mdWrap>
+        </METS:digiprovMD>
+        <METS:digiprovMD ID="EVENT_011">
+            <METS:mdWrap MDTYPE="PREMIS">
+                <METS:xmlData>
+                    <premis:event>
+                        <premis:eventIdentifier>
+                            <premis:eventIdentifierType>EventId</premis:eventIdentifierType>
+                            <premis:eventIdentifierValue>fixity_check_event_009</premis:eventIdentifierValue>
+                        </premis:eventIdentifier>
+                        <premis:eventType>fixity check</premis:eventType>
+                        <premis:eventDateTime>2019-03-05T14:09:05Z</premis:eventDateTime>
+                        <premis:eventDetail>IngestIssueDefinition{number='5', name='invalid checksum', code=FILE_INVALID_CHECKSUM}, FormatDefinition{puid=fmt/101, formatVersion=1.0, localDefinition=false, internalInformationFilled=false}, Issue details: invalid checksum of file: /amdsec/amd_mets_7033d800-0935-11e4-beed-5ef3fc9ae867_0008.xml. used config: true at: /fixityCheck/continueOnInvalidChecksums</premis:eventDetail>
+                        <premis:eventOutcomeInformation>
+                            <premis:eventOutcome>successful</premis:eventOutcome>
+                        </premis:eventOutcomeInformation>
+                        <premis:linkingAgentIdentifier>
+                            <premis:linkingAgentIdentifierType>AgentId</premis:linkingAgentIdentifierType>
+                            <premis:linkingAgentIdentifierValue>agent_ARCLIB</premis:linkingAgentIdentifierValue>
+                        </premis:linkingAgentIdentifier>
+                    </premis:event>
+                </METS:xmlData>
+            </METS:mdWrap>
+        </METS:digiprovMD>
+        <METS:digiprovMD ID="EVENT_012">
+            <METS:mdWrap MDTYPE="PREMIS">
+                <METS:xmlData>
+                    <premis:event>
+                        <premis:eventIdentifier>
+                            <premis:eventIdentifierType>EventId</premis:eventIdentifierType>
+                            <premis:eventIdentifierValue>fixity_check_event_010</premis:eventIdentifierValue>
+                        </premis:eventIdentifier>
+                        <premis:eventType>fixity check</premis:eventType>
+                        <premis:eventDateTime>2019-03-05T14:09:05Z</premis:eventDateTime>
+                        <premis:eventDetail>IngestIssueDefinition{number='5', name='invalid checksum', code=FILE_INVALID_CHECKSUM}, FormatDefinition{puid=fmt/101, formatVersion=1.0, localDefinition=false, internalInformationFilled=false}, Issue details: invalid checksum of file: /amdsec/amd_mets_7033d800-0935-11e4-beed-5ef3fc9ae867_0010.xml. used config: true at: /fixityCheck/continueOnInvalidChecksums</premis:eventDetail>
+                        <premis:eventOutcomeInformation>
+                            <premis:eventOutcome>successful</premis:eventOutcome>
+                        </premis:eventOutcomeInformation>
+                        <premis:linkingAgentIdentifier>
+                            <premis:linkingAgentIdentifierType>AgentId</premis:linkingAgentIdentifierType>
+                            <premis:linkingAgentIdentifierValue>agent_ARCLIB</premis:linkingAgentIdentifierValue>
+                        </premis:linkingAgentIdentifier>
+                    </premis:event>
+                </METS:xmlData>
+            </METS:mdWrap>
+        </METS:digiprovMD>
+        <METS:digiprovMD ID="EVENT_013">
+            <METS:mdWrap MDTYPE="PREMIS">
+                <METS:xmlData>
+                    <premis:event>
+                        <premis:eventIdentifier>
+                            <premis:eventIdentifierType>EventId</premis:eventIdentifierType>
+                            <premis:eventIdentifierValue>fixity_check_event_011</premis:eventIdentifierValue>
+                        </premis:eventIdentifier>
+                        <premis:eventType>fixity check</premis:eventType>
+                        <premis:eventDateTime>2019-03-05T14:09:05Z</premis:eventDateTime>
+                        <premis:eventOutcomeInformation>
+                            <premis:eventOutcome>successful</premis:eventOutcome>
+                        </premis:eventOutcomeInformation>
+                        <premis:linkingAgentIdentifier>
+                            <premis:linkingAgentIdentifierType>AgentId</premis:linkingAgentIdentifierType>
+                            <premis:linkingAgentIdentifierValue>agent_ARCLIB</premis:linkingAgentIdentifierValue>
+                        </premis:linkingAgentIdentifier>
+                    </premis:event>
+                </METS:xmlData>
+            </METS:mdWrap>
+        </METS:digiprovMD>
+        <METS:digiprovMD ID="EVENT_014">
+            <METS:mdWrap MDTYPE="PREMIS">
+                <METS:xmlData>
+                    <premis:event>
+                        <premis:eventIdentifier>
+                            <premis:eventIdentifierType>EventId</premis:eventIdentifierType>
+                            <premis:eventIdentifierValue>validation_event_001</premis:eventIdentifierValue>
+                        </premis:eventIdentifier>
+                        <premis:eventType>validation</premis:eventType>
+                        <premis:eventDateTime>2019-03-05T14:09:05Z</premis:eventDateTime>
+                        <premis:eventOutcomeInformation>
+                            <premis:eventOutcome>successful</premis:eventOutcome>
+                        </premis:eventOutcomeInformation>
+                        <premis:linkingAgentIdentifier>
+                            <premis:linkingAgentIdentifierType>AgentId</premis:linkingAgentIdentifierType>
+                            <premis:linkingAgentIdentifierValue>agent_ARCLIB</premis:linkingAgentIdentifierValue>
+                        </premis:linkingAgentIdentifier>
+                    </premis:event>
+                </METS:xmlData>
+            </METS:mdWrap>
+        </METS:digiprovMD>
+        <METS:digiprovMD ID="EVENT_015">
+            <METS:mdWrap MDTYPE="PREMIS">
+                <METS:xmlData>
+                    <premis:event>
+                        <premis:eventIdentifier>
+                            <premis:eventIdentifierType>EventId</premis:eventIdentifierType>
+                            <premis:eventIdentifierValue>message_digest_calculation_event_001</premis:eventIdentifierValue>
+                        </premis:eventIdentifier>
+                        <premis:eventType>message digest calculation</premis:eventType>
+                        <premis:eventDateTime>2019-03-05T14:09:07Z</premis:eventDateTime>
+                        <premis:eventOutcomeInformation>
+                            <premis:eventOutcome>successful</premis:eventOutcome>
+                        </premis:eventOutcomeInformation>
+                        <premis:linkingAgentIdentifier>
+                            <premis:linkingAgentIdentifierType>AgentId</premis:linkingAgentIdentifierType>
+                            <premis:linkingAgentIdentifierValue>agent_ARCLIB</premis:linkingAgentIdentifierValue>
+                        </premis:linkingAgentIdentifier>
+                    </premis:event>
+                </METS:xmlData>
+            </METS:mdWrap>
+        </METS:digiprovMD>
+        <METS:digiprovMD ID="EVENT_016">
+            <METS:mdWrap MDTYPE="PREMIS">
+                <METS:xmlData>
+                    <premis:event>
+                        <premis:eventIdentifier>
+                            <premis:eventIdentifierType>EventId</premis:eventIdentifierType>
+                            <premis:eventIdentifierValue>metadata_extraction_event_001</premis:eventIdentifierValue>
+                        </premis:eventIdentifier>
+                        <premis:eventType>metadata extraction</premis:eventType>
+                        <premis:eventDateTime>2019-03-05T14:09:09Z</premis:eventDateTime>
+                        <premis:eventOutcomeInformation>
+                            <premis:eventOutcome>successful</premis:eventOutcome>
+                        </premis:eventOutcomeInformation>
+                        <premis:linkingAgentIdentifier>
+                            <premis:linkingAgentIdentifierType>AgentId</premis:linkingAgentIdentifierType>
+                            <premis:linkingAgentIdentifierValue>agent_ARCLIB</premis:linkingAgentIdentifierValue>
+                        </premis:linkingAgentIdentifier>
+                    </premis:event>
                 </METS:xmlData>
             </METS:mdWrap>
         </METS:digiprovMD>
     </METS:amdSec>
     <METS:fileSec>
-        <METS:fileGrp ID="MC_IMGGRP" USE="Images">
-            <METS:file SEQ="0001" CREATED="2013-01-09T12:43:17Z" ID="JP210001" MIMETYPE="image/jp2"
-                       CHECKSUM="4228324C12DF6300FCE3D684D1771031" CHECKSUMTYPE="MD5" SIZE="5741925">
-                <METS:FLocat LOCTYPE="URL" xlink:href="./masterCopy/MC_KPW01169310_0001.JP2"/>
+        <METS:fileGrp USE="file">
+            <METS:file ID="obj-001" CHECKSUMTYPE="MD5" CHECKSUM="a65c46920066c298151642e7196179e7" SIZE="90238">
+                <METS:FLocat LOCTYPE="OTHER" xlink:href="alto/alto_7033d800-0935-11e4-beed-5ef3fc9ae867_0001.xml"/>
             </METS:file>
-            <METS:file SEQ="0002" CREATED="2013-01-09T12:43:16Z" ID="JP210002" MIMETYPE="image/jp2"
-                       CHECKSUM="144EB3A77FDCC2961C4C761694511295" CHECKSUMTYPE="MD5" SIZE="5961831">
-                <METS:FLocat LOCTYPE="URL" xlink:href="./masterCopy/MC_KPW01169310_0002.JP2"/>
+            <METS:file ID="obj-002" CHECKSUMTYPE="MD5" CHECKSUM="40c79ffaca11b8408001f3eac63adcd2" SIZE="116801">
+                <METS:FLocat LOCTYPE="OTHER" xlink:href="alto/alto_7033d800-0935-11e4-beed-5ef3fc9ae867_0002.xml"/>
             </METS:file>
-            <METS:file SEQ="0003" CREATED="2013-01-09T12:43:16Z" ID="JP210003" MIMETYPE="image/jp2"
-                       CHECKSUM="2514C7B107BFFB649370A8FDF83E69D7" CHECKSUMTYPE="MD5" SIZE="6797631">
-                <METS:FLocat LOCTYPE="URL" xlink:href="./masterCopy/MC_KPW01169310_0003.JP2"/>
+            <METS:file ID="obj-003" CHECKSUMTYPE="MD5" CHECKSUM="a3d716d379d60ede1790e4340af0b890" SIZE="126086">
+                <METS:FLocat LOCTYPE="OTHER" xlink:href="alto/alto_7033d800-0935-11e4-beed-5ef3fc9ae867_0003.xml"/>
             </METS:file>
-            <METS:file SEQ="0004" CREATED="2013-01-09T12:43:17Z" ID="JP210004" MIMETYPE="image/jp2"
-                       CHECKSUM="5938608293A0FDD6A3CBE5F99356B51A" CHECKSUMTYPE="MD5" SIZE="7169641">
-                <METS:FLocat LOCTYPE="URL" xlink:href="./masterCopy/MC_KPW01169310_0004.JP2"/>
+            <METS:file ID="obj-004" CHECKSUMTYPE="MD5" CHECKSUM="48b12ade87435ad93e4591c4836461cf" SIZE="135152">
+                <METS:FLocat LOCTYPE="OTHER" xlink:href="alto/alto_7033d800-0935-11e4-beed-5ef3fc9ae867_0004.xml"/>
             </METS:file>
-            <METS:file SEQ="0005" CREATED="2013-01-09T12:43:19Z" ID="JP210005" MIMETYPE="image/jp2"
-                       CHECKSUM="8589F9569577BF66F587603B44875ED6" CHECKSUMTYPE="MD5" SIZE="7216735">
-                <METS:FLocat LOCTYPE="URL" xlink:href="./masterCopy/MC_KPW01169310_0005.JP2"/>
+            <METS:file ID="obj-005" CHECKSUMTYPE="MD5" CHECKSUM="6902ac048836db360cc26ddd6f17e497" SIZE="143019">
+                <METS:FLocat LOCTYPE="OTHER" xlink:href="alto/alto_7033d800-0935-11e4-beed-5ef3fc9ae867_0005.xml"/>
             </METS:file>
-            <METS:file SEQ="0006" CREATED="2013-01-09T12:43:16Z" ID="JP210006" MIMETYPE="image/jp2"
-                       CHECKSUM="606BDC107A4A7E7AC2A3170302BC2586" CHECKSUMTYPE="MD5" SIZE="7401153">
-                <METS:FLocat LOCTYPE="URL" xlink:href="./masterCopy/MC_KPW01169310_0006.JP2"/>
+            <METS:file ID="obj-006" CHECKSUMTYPE="MD5" CHECKSUM="f049b674282a26a5f2c5093be215318e" SIZE="142860">
+                <METS:FLocat LOCTYPE="OTHER" xlink:href="alto/alto_7033d800-0935-11e4-beed-5ef3fc9ae867_0006.xml"/>
             </METS:file>
-            <METS:file SEQ="0007" CREATED="2013-01-09T12:43:17Z" ID="JP210007" MIMETYPE="image/jp2"
-                       CHECKSUM="28DDF085352EC3FEAAA313FC674CE4C9" CHECKSUMTYPE="MD5" SIZE="7075493">
-                <METS:FLocat LOCTYPE="URL" xlink:href="./masterCopy/MC_KPW01169310_0007.JP2"/>
+            <METS:file ID="obj-007" CHECKSUMTYPE="MD5" CHECKSUM="d852fc88c8d7f1699f9e04fa80bac969" SIZE="151301">
+                <METS:FLocat LOCTYPE="OTHER" xlink:href="alto/alto_7033d800-0935-11e4-beed-5ef3fc9ae867_0007.xml"/>
             </METS:file>
-            <METS:file SEQ="0008" CREATED="2013-01-09T12:43:19Z" ID="JP210008" MIMETYPE="image/jp2"
-                       CHECKSUM="4E124BE41529216A4F79F1EA6D9DBA7A" CHECKSUMTYPE="MD5" SIZE="6665582">
-                <METS:FLocat LOCTYPE="URL" xlink:href="./masterCopy/MC_KPW01169310_0008.JP2"/>
+            <METS:file ID="obj-008" CHECKSUMTYPE="MD5" CHECKSUM="a72c2ece89f5ebe1abfa1fe9da8b25f5" SIZE="146920">
+                <METS:FLocat LOCTYPE="OTHER" xlink:href="alto/alto_7033d800-0935-11e4-beed-5ef3fc9ae867_0008.xml"/>
             </METS:file>
-        </METS:fileGrp>
-        <METS:fileGrp ID="UC_IMGGRP" USE="Images">
-            <METS:file SEQ="0001" CREATED="2013-01-09T12:43:17Z" ID="JP220001" MIMETYPE="image/jp2"
-                       CHECKSUM="4228324C12DF6300FCE3D684D1771031" CHECKSUMTYPE="MD5" SIZE="653520">
-                <METS:FLocat LOCTYPE="URL" xlink:href="./userCopy/UC_KPW01169310_0001.JP2"/>
+            <METS:file ID="obj-009" CHECKSUMTYPE="MD5" CHECKSUM="bfedefcffa4ddbbcc886a97d9f7fc939" SIZE="176343">
+                <METS:FLocat LOCTYPE="OTHER" xlink:href="alto/alto_7033d800-0935-11e4-beed-5ef3fc9ae867_0009.xml"/>
             </METS:file>
-            <METS:file SEQ="0002" CREATED="2013-01-09T12:43:17Z" ID="JP220002" MIMETYPE="image/jp2"
-                       CHECKSUM="144EB3A77FDCC2961C4C761694511295" CHECKSUMTYPE="MD5" SIZE="638279">
-                <METS:FLocat LOCTYPE="URL" xlink:href="./userCopy/UC_KPW01169310_0002.JP2"/>
+            <METS:file ID="obj-010" CHECKSUMTYPE="MD5" CHECKSUM="e30a62ad60344ccbfac1bad589950777" SIZE="169667">
+                <METS:FLocat LOCTYPE="OTHER" xlink:href="alto/alto_7033d800-0935-11e4-beed-5ef3fc9ae867_0010.xml"/>
             </METS:file>
-            <METS:file SEQ="0003" CREATED="2013-01-09T12:43:17Z" ID="JP220003" MIMETYPE="image/jp2"
-                       CHECKSUM="2514C7B107BFFB649370A8FDF83E69D7" CHECKSUMTYPE="MD5" SIZE="653214">
-                <METS:FLocat LOCTYPE="URL" xlink:href="./userCopy/UC_KPW01169310_0003.JP2"/>
+            <METS:file ID="obj-011" CHECKSUMTYPE="MD5" CHECKSUM="3a7b4e748b2208480c973e26e24ee2ce" SIZE="36884">
+                <METS:FLocat LOCTYPE="OTHER" xlink:href="amdsec/amd_mets_7033d800-0935-11e4-beed-5ef3fc9ae867_0001.xml"/>
             </METS:file>
-            <METS:file SEQ="0004" CREATED="2013-01-09T12:43:17Z" ID="JP220004" MIMETYPE="image/jp2"
-                       CHECKSUM="5938608293A0FDD6A3CBE5F99356B51A" CHECKSUMTYPE="MD5" SIZE="645047">
-                <METS:FLocat LOCTYPE="URL" xlink:href="./userCopy/UC_KPW01169310_0004.JP2"/>
+            <METS:file ID="obj-012" CHECKSUMTYPE="MD5" CHECKSUM="407341fa4faa536eb4b22ba8e7628d68" SIZE="36893">
+                <METS:FLocat LOCTYPE="OTHER" xlink:href="amdsec/amd_mets_7033d800-0935-11e4-beed-5ef3fc9ae867_0002.xml"/>
             </METS:file>
-            <METS:file SEQ="0005" CREATED="2013-01-09T12:43:20Z" ID="JP220005" MIMETYPE="image/jp2"
-                       CHECKSUM="8589F9569577BF66F587603B44875ED6" CHECKSUMTYPE="MD5" SIZE="644709">
-                <METS:FLocat LOCTYPE="URL" xlink:href="./userCopy/UC_KPW01169310_0005.JP2"/>
+            <METS:file ID="obj-013" CHECKSUMTYPE="MD5" CHECKSUM="97b3e6dd178bbaa2e39e8ac467bf7154" SIZE="36893">
+                <METS:FLocat LOCTYPE="OTHER" xlink:href="amdsec/amd_mets_7033d800-0935-11e4-beed-5ef3fc9ae867_0003.xml"/>
             </METS:file>
-            <METS:file SEQ="0006" CREATED="2013-01-09T12:43:19Z" ID="JP220006" MIMETYPE="image/jp2"
-                       CHECKSUM="606BDC107A4A7E7AC2A3170302BC2586" CHECKSUMTYPE="MD5" SIZE="646402">
-                <METS:FLocat LOCTYPE="URL" xlink:href="./userCopy/UC_KPW01169310_0006.JP2"/>
+            <METS:file ID="obj-014" CHECKSUMTYPE="MD5" CHECKSUM="419a659aede304b3bd19e407161d0609" SIZE="36893">
+                <METS:FLocat LOCTYPE="OTHER" xlink:href="amdsec/amd_mets_7033d800-0935-11e4-beed-5ef3fc9ae867_0004.xml"/>
             </METS:file>
-            <METS:file SEQ="0007" CREATED="2013-01-09T12:43:19Z" ID="JP220007" MIMETYPE="image/jp2"
-                       CHECKSUM="28DDF085352EC3FEAAA313FC674CE4C9" CHECKSUMTYPE="MD5" SIZE="642454">
-                <METS:FLocat LOCTYPE="URL" xlink:href="./userCopy/UC_KPW01169310_0007.JP2"/>
+            <METS:file ID="obj-015" CHECKSUMTYPE="MD5" CHECKSUM="2a6d072e0f741b52148abe308bb506d8" SIZE="36893">
+                <METS:FLocat LOCTYPE="OTHER" xlink:href="amdsec/amd_mets_7033d800-0935-11e4-beed-5ef3fc9ae867_0005.xml"/>
             </METS:file>
-            <METS:file SEQ="0008" CREATED="2013-01-09T12:43:20Z" ID="JP220008" MIMETYPE="image/jp2"
-                       CHECKSUM="4E124BE41529216A4F79F1EA6D9DBA7A" CHECKSUMTYPE="MD5" SIZE="650691">
-                <METS:FLocat LOCTYPE="URL" xlink:href="./userCopy/UC_KPW01169310_0008.JP2"/>
+            <METS:file ID="obj-016" CHECKSUMTYPE="MD5" CHECKSUM="d906978fbcd8c9488d604ccc30f323fd" SIZE="36893">
+                <METS:FLocat LOCTYPE="OTHER" xlink:href="amdsec/amd_mets_7033d800-0935-11e4-beed-5ef3fc9ae867_0006.xml"/>
             </METS:file>
-        </METS:fileGrp>
-        <METS:fileGrp ID="TXTGRP" USE="Text">
-            <METS:file SEQ="0001" CREATED="2013-01-09T12:43:16Z" ID="TXT30001" MIMETYPE="text/plain"
-                       CHECKSUM="7e36ec75699bbd99c06192db46f5f915" CHECKSUMTYPE="MD5" SIZE="166">
-                <METS:FLocat LOCTYPE="URL" xlink:href="./TXT/TXT_KPW01169310_0001.TXT"/>
+            <METS:file ID="obj-017" CHECKSUMTYPE="MD5" CHECKSUM="e4b3c5adf26ebe80cf0a718be5ace66f" SIZE="36892">
+                <METS:FLocat LOCTYPE="OTHER" xlink:href="amdsec/amd_mets_7033d800-0935-11e4-beed-5ef3fc9ae867_0007.xml"/>
             </METS:file>
-            <METS:file SEQ="0002" CREATED="2013-01-09T12:43:19Z" ID="TXT30002" MIMETYPE="text/plain"
-                       CHECKSUM="ef9c643c2b4c740d9868086b4514c30e" CHECKSUMTYPE="MD5" SIZE="44">
-                <METS:FLocat LOCTYPE="URL" xlink:href="./TXT/TXT_KPW01169310_0002.TXT"/>
+            <METS:file ID="obj-018" CHECKSUMTYPE="MD5" CHECKSUM="7cae2751ff751b834c2976b85df04b8c" SIZE="36893">
+                <METS:FLocat LOCTYPE="OTHER" xlink:href="amdsec/amd_mets_7033d800-0935-11e4-beed-5ef3fc9ae867_0008.xml"/>
             </METS:file>
-            <METS:file SEQ="0003" CREATED="2013-01-09T12:43:19Z" ID="TXT30003" MIMETYPE="text/plain"
-                       CHECKSUM="e858790dc606e3e921f402a0f903442d" CHECKSUMTYPE="MD5" SIZE="2506">
-                <METS:FLocat LOCTYPE="URL" xlink:href="./TXT/TXT_KPW01169310_0003.TXT"/>
+            <METS:file ID="obj-019" CHECKSUMTYPE="MD5" CHECKSUM="c6659986aa4e2b4b3b954e3c09bed441" SIZE="36892">
+                <METS:FLocat LOCTYPE="OTHER" xlink:href="amdsec/amd_mets_7033d800-0935-11e4-beed-5ef3fc9ae867_0009.xml"/>
             </METS:file>
-            <METS:file SEQ="0004" CREATED="2013-01-09T12:43:20Z" ID="TXT30004" MIMETYPE="text/plain"
-                       CHECKSUM="6c4354ee6df851c56c2fb43ddce89685" CHECKSUMTYPE="MD5" SIZE="3117">
-                <METS:FLocat LOCTYPE="URL" xlink:href="./TXT/TXT_KPW01169310_0004.TXT"/>
+            <METS:file ID="obj-020" CHECKSUMTYPE="MD5" CHECKSUM="14b61119c4d992a0e7d237d5f663e284" SIZE="36880">
+                <METS:FLocat LOCTYPE="OTHER" xlink:href="amdsec/amd_mets_7033d800-0935-11e4-beed-5ef3fc9ae867_0010.xml"/>
             </METS:file>
-            <METS:file SEQ="0005" CREATED="2013-01-09T12:43:19Z" ID="TXT30005" MIMETYPE="text/plain"
-                       CHECKSUM="9f54af5b0a08b8738dcad95320174b91" CHECKSUMTYPE="MD5" SIZE="2517">
-                <METS:FLocat LOCTYPE="URL" xlink:href="./TXT/TXT_KPW01169310_0005.TXT"/>
+            <METS:file ID="obj-021" CHECKSUMTYPE="MD5" CHECKSUM="c9fead282a43a46e0431e79fcb4b2004" SIZE="5330">
+                <METS:FLocat LOCTYPE="OTHER" xlink:href="info_7033d800-0935-11e4-beed-5ef3fc9ae867.xml"/>
             </METS:file>
-            <METS:file SEQ="0006" CREATED="2013-01-09T12:43:15Z" ID="TXT30006" MIMETYPE="text/plain"
-                       CHECKSUM="1bea6a29d45ad160889090060d637257" CHECKSUMTYPE="MD5" SIZE="2772">
-                <METS:FLocat LOCTYPE="URL" xlink:href="./TXT/TXT_KPW01169310_0006.TXT"/>
+            <METS:file ID="obj-022" CHECKSUMTYPE="MD5" CHECKSUM="e258931db9f4044b9dc2267a2f2d7e6d" SIZE="9264304">
+                <METS:FLocat LOCTYPE="OTHER" xlink:href="mastercopy/mc_7033d800-0935-11e4-beed-5ef3fc9ae867_0001.jp2"/>
             </METS:file>
-            <METS:file SEQ="0007" CREATED="2013-01-09T12:43:18Z" ID="TXT30007" MIMETYPE="text/plain"
-                       CHECKSUM="6b866382fd75877fc53be42eea11c718" CHECKSUMTYPE="MD5" SIZE="2909">
-                <METS:FLocat LOCTYPE="URL" xlink:href="./TXT/TXT_KPW01169310_0007.TXT"/>
+            <METS:file ID="obj-023" CHECKSUMTYPE="MD5" CHECKSUM="61bc065544747cf54f36215c635dace0" SIZE="9839569">
+                <METS:FLocat LOCTYPE="OTHER" xlink:href="mastercopy/mc_7033d800-0935-11e4-beed-5ef3fc9ae867_0002.jp2"/>
             </METS:file>
-            <METS:file SEQ="0008" CREATED="2013-01-09T12:43:16Z" ID="TXT30008" MIMETYPE="text/plain"
-                       CHECKSUM="7875ad0dd2578b3151164b87ef1e2474" CHECKSUMTYPE="MD5" SIZE="3389">
-                <METS:FLocat LOCTYPE="URL" xlink:href="./TXT/TXT_KPW01169310_0008.TXT"/>
+            <METS:file ID="obj-024" CHECKSUMTYPE="MD5" CHECKSUM="4b43276fcb8a0e26000381792b120ebc" SIZE="9768613">
+                <METS:FLocat LOCTYPE="OTHER" xlink:href="mastercopy/mc_7033d800-0935-11e4-beed-5ef3fc9ae867_0003.jp2"/>
             </METS:file>
-        </METS:fileGrp>
-        <METS:fileGrp ID="ALTOGRP" USE="Layout">
-            <METS:file SEQ="0001" CREATED="2013-01-09T12:43:16Z" ID="XML40001" MIMETYPE="text/xml"
-                       CHECKSUM="84beb79e0926f48f68b0daa93a0b43be" CHECKSUMTYPE="MD5" SIZE="7380">
-                <METS:FLocat LOCTYPE="URL" xlink:href="./ALTO/ALTO_KPW01169310_0001.XML"/>
+            <METS:file ID="obj-025" CHECKSUMTYPE="MD5" CHECKSUM="68bf0739ec998955dce6b17745ba7a8e" SIZE="9730204">
+                <METS:FLocat LOCTYPE="OTHER" xlink:href="mastercopy/mc_7033d800-0935-11e4-beed-5ef3fc9ae867_0004.jp2"/>
             </METS:file>
-            <METS:file SEQ="0002" CREATED="2013-01-09T12:43:15Z" ID="XML40002" MIMETYPE="text/xml"
-                       CHECKSUM="1dedf4800c6e764e4dd3816c3d104539" CHECKSUMTYPE="MD5" SIZE="3099">
-                <METS:FLocat LOCTYPE="URL" xlink:href="./ALTO/ALTO_KPW01169310_0002.XML"/>
+            <METS:file ID="obj-026" CHECKSUMTYPE="MD5" CHECKSUM="326670802eae7b5888206797762ade43" SIZE="10007164">
+                <METS:FLocat LOCTYPE="OTHER" xlink:href="mastercopy/mc_7033d800-0935-11e4-beed-5ef3fc9ae867_0005.jp2"/>
             </METS:file>
-            <METS:file SEQ="0003" CREATED="2013-01-09T12:43:20Z" ID="XML40003" MIMETYPE="text/xml"
-                       CHECKSUM="013d2b77a653827b4f517e54ab60b4f7" CHECKSUMTYPE="MD5" SIZE="52204">
-                <METS:FLocat LOCTYPE="URL" xlink:href="./ALTO/ALTO_KPW01169310_0003.XML"/>
+            <METS:file ID="obj-027" CHECKSUMTYPE="MD5" CHECKSUM="e0b24cbb29d9d6eb2f10ee049ed19b1a" SIZE="10031727">
+                <METS:FLocat LOCTYPE="OTHER" xlink:href="mastercopy/mc_7033d800-0935-11e4-beed-5ef3fc9ae867_0006.jp2"/>
             </METS:file>
-            <METS:file SEQ="0004" CREATED="2013-01-09T12:43:17Z" ID="XML40004" MIMETYPE="text/xml"
-                       CHECKSUM="4b07adff1bb448040d075711fa5d54c1" CHECKSUMTYPE="MD5" SIZE="70781">
-                <METS:FLocat LOCTYPE="URL" xlink:href="./ALTO/ALTO_KPW01169310_0004.XML"/>
+            <METS:file ID="obj-028" CHECKSUMTYPE="MD5" CHECKSUM="d933d5d221cae3042c4604f675f09201" SIZE="10023213">
+                <METS:FLocat LOCTYPE="OTHER" xlink:href="mastercopy/mc_7033d800-0935-11e4-beed-5ef3fc9ae867_0007.jp2"/>
             </METS:file>
-            <METS:file SEQ="0005" CREATED="2013-01-09T12:43:19Z" ID="XML40005" MIMETYPE="text/xml"
-                       CHECKSUM="123966ecdeb7a8b7d30b42e9adf6519d" CHECKSUMTYPE="MD5" SIZE="50407">
-                <METS:FLocat LOCTYPE="URL" xlink:href="./ALTO/ALTO_KPW01169310_0005.XML"/>
+            <METS:file ID="obj-029" CHECKSUMTYPE="MD5" CHECKSUM="0f632cff70495b1a52669b48b98a1ace" SIZE="10264745">
+                <METS:FLocat LOCTYPE="OTHER" xlink:href="mastercopy/mc_7033d800-0935-11e4-beed-5ef3fc9ae867_0008.jp2"/>
             </METS:file>
-            <METS:file SEQ="0006" CREATED="2013-01-09T12:43:19Z" ID="XML40006" MIMETYPE="text/xml"
-                       CHECKSUM="7891787b1b5b0f3ffa6ebca9a78b3e4b" CHECKSUMTYPE="MD5" SIZE="56589">
-                <METS:FLocat LOCTYPE="URL" xlink:href="./ALTO/ALTO_KPW01169310_0006.XML"/>
+            <METS:file ID="obj-030" CHECKSUMTYPE="MD5" CHECKSUM="2c5dbef921ac4b8a1ca52fbf6dc655db" SIZE="9810439">
+                <METS:FLocat LOCTYPE="OTHER" xlink:href="mastercopy/mc_7033d800-0935-11e4-beed-5ef3fc9ae867_0009.jp2"/>
             </METS:file>
-            <METS:file SEQ="0007" CREATED="2013-01-09T12:43:17Z" ID="XML40007" MIMETYPE="text/xml"
-                       CHECKSUM="2a07a947abdda0ca0d7a84b853261b3e" CHECKSUMTYPE="MD5" SIZE="62644">
-                <METS:FLocat LOCTYPE="URL" xlink:href="./ALTO/ALTO_KPW01169310_0007.XML"/>
+            <METS:file ID="obj-031" CHECKSUMTYPE="MD5" CHECKSUM="c6804710789af30e665436d6eff80cd8" SIZE="9718064">
+                <METS:FLocat LOCTYPE="OTHER" xlink:href="mastercopy/mc_7033d800-0935-11e4-beed-5ef3fc9ae867_0010.jp2"/>
             </METS:file>
-            <METS:file SEQ="0008" CREATED="2013-01-09T12:43:20Z" ID="XML40008" MIMETYPE="text/xml"
-                       CHECKSUM="776503fc9b2f151f1b53a6bdc5831cfe" CHECKSUMTYPE="MD5" SIZE="69316">
-                <METS:FLocat LOCTYPE="URL" xlink:href="./ALTO/ALTO_KPW01169310_0008.XML"/>
+            <METS:file ID="obj-032" CHECKSUMTYPE="MD5" CHECKSUM="2b2ef2d75296f2d993c284dc8a926971" SIZE="4731">
+                <METS:FLocat LOCTYPE="OTHER" xlink:href="md5_7033d800-0935-11e4-beed-5ef3fc9ae867.md5"/>
             </METS:file>
-        </METS:fileGrp>
-        <METS:fileGrp ID="TECHMDGRP" USE="Technical Metadata">
-            <METS:file SEQ="0001" CREATED="2013-01-22T10:55:20Z" ID="XML50001" MIMETYPE="text/xml"
-                       CHECKSUM="994fa07770797ee258fcd37a4da4aa09" CHECKSUMTYPE="MD5" SIZE="22778">
-                <METS:FLocat LOCTYPE="URL" xlink:href="./amdSec/AMD_METS_KPW01169310_0001.xml"/>
+            <METS:file ID="obj-033" CHECKSUMTYPE="MD5" CHECKSUM="e697ce1dcd8a0729b72850cc197a014d" SIZE="29959">
+                <METS:FLocat LOCTYPE="OTHER" xlink:href="mets_7033d800-0935-11e4-beed-5ef3fc9ae867.xml"/>
             </METS:file>
-            <METS:file SEQ="0002" CREATED="2013-01-22T10:55:20Z" ID="XML50002" MIMETYPE="text/xml"
-                       CHECKSUM="2f1ad986f0c8397c3cd1e6a81b3aa3d3" CHECKSUMTYPE="MD5" SIZE="22777">
-                <METS:FLocat LOCTYPE="URL" xlink:href="./amdSec/AMD_METS_KPW01169310_0002.xml"/>
+            <METS:file ID="obj-034" CHECKSUMTYPE="MD5" CHECKSUM="faeba5cd4c11149aa9483fff78788d97" SIZE="4523">
+                <METS:FLocat LOCTYPE="OTHER" xlink:href="txt/txt_7033d800-0935-11e4-beed-5ef3fc9ae867_0001.txt"/>
             </METS:file>
-            <METS:file SEQ="0003" CREATED="2013-01-22T10:55:20Z" ID="XML50003" MIMETYPE="text/xml"
-                       CHECKSUM="a59367e74b094bc3acc80a9e87efdf65" CHECKSUMTYPE="MD5" SIZE="22781">
-                <METS:FLocat LOCTYPE="URL" xlink:href="./amdSec/AMD_METS_KPW01169310_0003.xml"/>
+            <METS:file ID="obj-035" CHECKSUMTYPE="MD5" CHECKSUM="687e97228a9a095e7415b34ccfe5c6a0" SIZE="6878">
+                <METS:FLocat LOCTYPE="OTHER" xlink:href="txt/txt_7033d800-0935-11e4-beed-5ef3fc9ae867_0002.txt"/>
             </METS:file>
-            <METS:file SEQ="0004" CREATED="2013-01-22T10:55:20Z" ID="XML50004" MIMETYPE="text/xml"
-                       CHECKSUM="5c653e8196b9417277d27d30913d65ea" CHECKSUMTYPE="MD5" SIZE="22781">
-                <METS:FLocat LOCTYPE="URL" xlink:href="./amdSec/AMD_METS_KPW01169310_0004.xml"/>
+            <METS:file ID="obj-036" CHECKSUMTYPE="MD5" CHECKSUM="cf07c7fb9fef6c9f5aaa33e306bcaa72" SIZE="7226">
+                <METS:FLocat LOCTYPE="OTHER" xlink:href="txt/txt_7033d800-0935-11e4-beed-5ef3fc9ae867_0003.txt"/>
             </METS:file>
-            <METS:file SEQ="0005" CREATED="2013-01-22T10:55:20Z" ID="XML50005" MIMETYPE="text/xml"
-                       CHECKSUM="fc54453183933e4c12bbfdd638d3a542" CHECKSUMTYPE="MD5" SIZE="22781">
-                <METS:FLocat LOCTYPE="URL" xlink:href="./amdSec/AMD_METS_KPW01169310_0005.xml"/>
+            <METS:file ID="obj-037" CHECKSUMTYPE="MD5" CHECKSUM="19aec6de5d9461681fc84de23d70f5e7" SIZE="7426">
+                <METS:FLocat LOCTYPE="OTHER" xlink:href="txt/txt_7033d800-0935-11e4-beed-5ef3fc9ae867_0004.txt"/>
             </METS:file>
-            <METS:file SEQ="0006" CREATED="2013-01-22T10:55:20Z" ID="XML50006" MIMETYPE="text/xml"
-                       CHECKSUM="acb08bf4d7289336fb112e952b2baabf" CHECKSUMTYPE="MD5" SIZE="22781">
-                <METS:FLocat LOCTYPE="URL" xlink:href="./amdSec/AMD_METS_KPW01169310_0006.xml"/>
+            <METS:file ID="obj-038" CHECKSUMTYPE="MD5" CHECKSUM="df0ecaebb25c6b8ba25ddd093f27300a" SIZE="8734">
+                <METS:FLocat LOCTYPE="OTHER" xlink:href="txt/txt_7033d800-0935-11e4-beed-5ef3fc9ae867_0005.txt"/>
             </METS:file>
-            <METS:file SEQ="0007" CREATED="2013-01-22T10:55:20Z" ID="XML50007" MIMETYPE="text/xml"
-                       CHECKSUM="becc3f206d7e8c00726ea024c70f1b49" CHECKSUMTYPE="MD5" SIZE="22781">
-                <METS:FLocat LOCTYPE="URL" xlink:href="./amdSec/AMD_METS_KPW01169310_0007.xml"/>
+            <METS:file ID="obj-039" CHECKSUMTYPE="MD5" CHECKSUM="8f4214201f8b4d58a3425007d1433529" SIZE="8657">
+                <METS:FLocat LOCTYPE="OTHER" xlink:href="txt/txt_7033d800-0935-11e4-beed-5ef3fc9ae867_0006.txt"/>
+            </METS:file>
+            <METS:file ID="obj-040" CHECKSUMTYPE="MD5" CHECKSUM="7d46a89a8368c74817036bcfc5724ba1" SIZE="8764">
+                <METS:FLocat LOCTYPE="OTHER" xlink:href="txt/txt_7033d800-0935-11e4-beed-5ef3fc9ae867_0007.txt"/>
+            </METS:file>
+            <METS:file ID="obj-041" CHECKSUMTYPE="MD5" CHECKSUM="1228f10933082152c0043882b56b5a11" SIZE="8472">
+                <METS:FLocat LOCTYPE="OTHER" xlink:href="txt/txt_7033d800-0935-11e4-beed-5ef3fc9ae867_0008.txt"/>
+            </METS:file>
+            <METS:file ID="obj-042" CHECKSUMTYPE="MD5" CHECKSUM="f92428818a34addafb1c611535b86056" SIZE="8923">
+                <METS:FLocat LOCTYPE="OTHER" xlink:href="txt/txt_7033d800-0935-11e4-beed-5ef3fc9ae867_0009.txt"/>
+            </METS:file>
+            <METS:file ID="obj-043" CHECKSUMTYPE="MD5" CHECKSUM="e985dc57aaecade4488e146ec08ca426" SIZE="8303">
+                <METS:FLocat LOCTYPE="OTHER" xlink:href="txt/txt_7033d800-0935-11e4-beed-5ef3fc9ae867_0010.txt"/>
+            </METS:file>
+            <METS:file ID="obj-044" CHECKSUMTYPE="MD5" CHECKSUM="da84c17dec364c4799b3514dfe6860f3" SIZE="3338208">
+                <METS:FLocat LOCTYPE="OTHER" xlink:href="usercopy/uc_7033d800-0935-11e4-beed-5ef3fc9ae867_0001.jp2"/>
+            </METS:file>
+            <METS:file ID="obj-045" CHECKSUMTYPE="MD5" CHECKSUM="00d60b59e6983bc04d16f676c1da3a3a" SIZE="3298022">
+                <METS:FLocat LOCTYPE="OTHER" xlink:href="usercopy/uc_7033d800-0935-11e4-beed-5ef3fc9ae867_0002.jp2"/>
+            </METS:file>
+            <METS:file ID="obj-046" CHECKSUMTYPE="MD5" CHECKSUM="014911a4e4ed020025d9b36d60106eb3" SIZE="3338261">
+                <METS:FLocat LOCTYPE="OTHER" xlink:href="usercopy/uc_7033d800-0935-11e4-beed-5ef3fc9ae867_0003.jp2"/>
+            </METS:file>
+            <METS:file ID="obj-047" CHECKSUMTYPE="MD5" CHECKSUM="e2fde93ee434c79b303b7b60265d4567" SIZE="3298022">
+                <METS:FLocat LOCTYPE="OTHER" xlink:href="usercopy/uc_7033d800-0935-11e4-beed-5ef3fc9ae867_0004.jp2"/>
+            </METS:file>
+            <METS:file ID="obj-048" CHECKSUMTYPE="MD5" CHECKSUM="98065a2a59a3b7af086b9782c0c22700" SIZE="3338213">
+                <METS:FLocat LOCTYPE="OTHER" xlink:href="usercopy/uc_7033d800-0935-11e4-beed-5ef3fc9ae867_0005.jp2"/>
+            </METS:file>
+            <METS:file ID="obj-049" CHECKSUMTYPE="MD5" CHECKSUM="0b8ac72c9b320ae33fc22cd87397b9c7" SIZE="3297848">
+                <METS:FLocat LOCTYPE="OTHER" xlink:href="usercopy/uc_7033d800-0935-11e4-beed-5ef3fc9ae867_0006.jp2"/>
+            </METS:file>
+            <METS:file ID="obj-050" CHECKSUMTYPE="MD5" CHECKSUM="75579d9327453e15e4a75196a1b3f21f" SIZE="3338242">
+                <METS:FLocat LOCTYPE="OTHER" xlink:href="usercopy/uc_7033d800-0935-11e4-beed-5ef3fc9ae867_0007.jp2"/>
+            </METS:file>
+            <METS:file ID="obj-051" CHECKSUMTYPE="MD5" CHECKSUM="080a6c98908d5879ad3208192b874f0b" SIZE="3383330">
+                <METS:FLocat LOCTYPE="OTHER" xlink:href="usercopy/uc_7033d800-0935-11e4-beed-5ef3fc9ae867_0008.jp2"/>
+            </METS:file>
+            <METS:file ID="obj-052" CHECKSUMTYPE="MD5" CHECKSUM="953d573f3715bf0ed49a638a345f9339" SIZE="3338173">
+                <METS:FLocat LOCTYPE="OTHER" xlink:href="usercopy/uc_7033d800-0935-11e4-beed-5ef3fc9ae867_0009.jp2"/>
+            </METS:file>
+            <METS:file ID="obj-053" CHECKSUMTYPE="MD5" CHECKSUM="9d4a1c752f2968a28d69f89d2ced6be8" SIZE="3297971">
+                <METS:FLocat LOCTYPE="OTHER" xlink:href="usercopy/uc_7033d800-0935-11e4-beed-5ef3fc9ae867_0010.jp2"/>
             </METS:file>
         </METS:fileGrp>
     </METS:fileSec>
-    <METS:structMap LABEL="Physical_Structure" TYPE="PHYSICAL">
-        <METS:div ID="DIV_M_0000" DMDID="MODSMD_VOLUME_0001" ORDER="0" TYPE="monograph"
-                  LABEL="Z dějin malenovického hradu , [1953]">
-            <METS:div ID="PageID_0001" ORDER="0001" ORDERLABEL="[1]" TYPE="TitlePage">
-                <METS:fptr FILEID="JP210001"/>
-                <METS:fptr FILEID="JP220001"/>
-                <METS:fptr FILEID="TXT30001"/>
-                <METS:fptr FILEID="XML40001"/>
-                <METS:fptr FILEID="XML50001"/>
-            </METS:div>
-            <METS:div ID="PageID_0002" ORDER="0002" ORDERLABEL="[2]" TYPE="Blank">
-                <METS:fptr FILEID="JP210002"/>
-                <METS:fptr FILEID="JP220002"/>
-                <METS:fptr FILEID="TXT30002"/>
-                <METS:fptr FILEID="XML40002"/>
-                <METS:fptr FILEID="XML50002"/>
-            </METS:div>
-            <METS:div ID="PageID_0003" ORDER="0003" ORDERLABEL="3" TYPE="NormalPage">
-                <METS:fptr FILEID="JP210003"/>
-                <METS:fptr FILEID="JP220003"/>
-                <METS:fptr FILEID="TXT30003"/>
-                <METS:fptr FILEID="XML40003"/>
-                <METS:fptr FILEID="XML50003"/>
-            </METS:div>
-            <METS:div ID="PageID_0004" ORDER="0004" ORDERLABEL="4" TYPE="NormalPage">
-                <METS:fptr FILEID="JP210004"/>
-                <METS:fptr FILEID="JP220004"/>
-                <METS:fptr FILEID="TXT30004"/>
-                <METS:fptr FILEID="XML40004"/>
-                <METS:fptr FILEID="XML50004"/>
-            </METS:div>
-            <METS:div ID="PageID_0005" ORDER="0005" ORDERLABEL="5" TYPE="NormalPage">
-                <METS:fptr FILEID="JP210005"/>
-                <METS:fptr FILEID="JP220005"/>
-                <METS:fptr FILEID="TXT30005"/>
-                <METS:fptr FILEID="XML40005"/>
-                <METS:fptr FILEID="XML50005"/>
-            </METS:div>
-            <METS:div ID="PageID_0006" ORDER="0006" ORDERLABEL="6" TYPE="NormalPage">
-                <METS:fptr FILEID="JP210006"/>
-                <METS:fptr FILEID="JP220006"/>
-                <METS:fptr FILEID="TXT30006"/>
-                <METS:fptr FILEID="XML40006"/>
-                <METS:fptr FILEID="XML50006"/>
-            </METS:div>
-            <METS:div ID="PageID_0007" ORDER="0007" ORDERLABEL="7" TYPE="NormalPage">
-                <METS:fptr FILEID="JP210007"/>
-                <METS:fptr FILEID="JP220007"/>
-                <METS:fptr FILEID="TXT30007"/>
-                <METS:fptr FILEID="XML40007"/>
-                <METS:fptr FILEID="XML50007"/>
-            </METS:div>
-            <METS:div ID="PageID_0008" ORDER="0008" ORDERLABEL="8" TYPE="NormalPage">
-                <METS:fptr FILEID="JP210008"/>
-                <METS:fptr FILEID="JP220008"/>
-                <METS:fptr FILEID="TXT30008"/>
-                <METS:fptr FILEID="XML40008"/>
+    <METS:structMap ID="Physical_Structure" TYPE="PHYSICAL">
+        <METS:div>
+            <METS:div LABEL="7033d800-0935-11e4-beed-5ef3fc9ae867">
+                <METS:fptr FILEID="obj-021"/>
+                <METS:fptr FILEID="obj-033"/>
+                <METS:fptr FILEID="obj-032"/>
+                <METS:div LABEL="7033d800-0935-11e4-beed-5ef3fc9ae867/amdsec">
+                    <METS:fptr FILEID="obj-012"/>
+                    <METS:fptr FILEID="obj-016"/>
+                    <METS:fptr FILEID="obj-011"/>
+                    <METS:fptr FILEID="obj-013"/>
+                    <METS:fptr FILEID="obj-014"/>
+                    <METS:fptr FILEID="obj-015"/>
+                    <METS:fptr FILEID="obj-017"/>
+                    <METS:fptr FILEID="obj-019"/>
+                    <METS:fptr FILEID="obj-020"/>
+                    <METS:fptr FILEID="obj-018"/>
+                </METS:div>
+                <METS:div LABEL="7033d800-0935-11e4-beed-5ef3fc9ae867/mastercopy">
+                    <METS:fptr FILEID="obj-026"/>
+                    <METS:fptr FILEID="obj-031"/>
+                    <METS:fptr FILEID="obj-022"/>
+                    <METS:fptr FILEID="obj-024"/>
+                    <METS:fptr FILEID="obj-023"/>
+                    <METS:fptr FILEID="obj-025"/>
+                    <METS:fptr FILEID="obj-027"/>
+                    <METS:fptr FILEID="obj-029"/>
+                    <METS:fptr FILEID="obj-030"/>
+                    <METS:fptr FILEID="obj-028"/>
+                </METS:div>
+                <METS:div LABEL="7033d800-0935-11e4-beed-5ef3fc9ae867/alto">
+                    <METS:fptr FILEID="obj-008"/>
+                    <METS:fptr FILEID="obj-007"/>
+                    <METS:fptr FILEID="obj-001"/>
+                    <METS:fptr FILEID="obj-006"/>
+                    <METS:fptr FILEID="obj-002"/>
+                    <METS:fptr FILEID="obj-005"/>
+                    <METS:fptr FILEID="obj-009"/>
+                    <METS:fptr FILEID="obj-010"/>
+                    <METS:fptr FILEID="obj-003"/>
+                    <METS:fptr FILEID="obj-004"/>
+                </METS:div>
+                <METS:div LABEL="7033d800-0935-11e4-beed-5ef3fc9ae867/usercopy">
+                    <METS:fptr FILEID="obj-051"/>
+                    <METS:fptr FILEID="obj-045"/>
+                    <METS:fptr FILEID="obj-050"/>
+                    <METS:fptr FILEID="obj-049"/>
+                    <METS:fptr FILEID="obj-052"/>
+                    <METS:fptr FILEID="obj-048"/>
+                    <METS:fptr FILEID="obj-046"/>
+                    <METS:fptr FILEID="obj-053"/>
+                    <METS:fptr FILEID="obj-047"/>
+                    <METS:fptr FILEID="obj-044"/>
+                </METS:div>
+                <METS:div LABEL="7033d800-0935-11e4-beed-5ef3fc9ae867/txt">
+                    <METS:fptr FILEID="obj-038"/>
+                    <METS:fptr FILEID="obj-036"/>
+                    <METS:fptr FILEID="obj-034"/>
+                    <METS:fptr FILEID="obj-042"/>
+                    <METS:fptr FILEID="obj-039"/>
+                    <METS:fptr FILEID="obj-040"/>
+                    <METS:fptr FILEID="obj-043"/>
+                    <METS:fptr FILEID="obj-037"/>
+                    <METS:fptr FILEID="obj-041"/>
+                    <METS:fptr FILEID="obj-035"/>
+                </METS:div>
             </METS:div>
         </METS:div>
     </METS:structMap>
-    <METS:structLink>
-        <METS:smLink xlink:from="VOLUME_0001" xlink:to="PageID_0001"/>
-        <METS:smLink xlink:from="VOLUME_0001" xlink:to="PageID_0002"/>
-        <METS:smLink xlink:from="VOLUME_0001" xlink:to="PageID_0003"/>
-        <METS:smLink xlink:from="VOLUME_0001" xlink:to="PageID_0004"/>
-        <METS:smLink xlink:from="VOLUME_0001" xlink:to="PageID_0005"/>
-        <METS:smLink xlink:from="VOLUME_0001" xlink:to="PageID_0006"/>
-        <METS:smLink xlink:from="VOLUME_0001" xlink:to="PageID_0007"/>
-        <METS:smLink xlink:from="VOLUME_0001" xlink:to="PageID_0008"/>
-    </METS:structLink>
 </METS:mets>

@@ -1,14 +1,14 @@
 <profile xmlns="http://www.arclib.lib.cas.cz/VALIDATION_PROFILE">
     <rule>
         <nodeCheck>
-            <filePath>amdsec/amd_mets_7033d800-0935-11e4-beed-5ef3fc9ae867_0001.xml</filePath>
+            <filePathGlobPattern>amdsec/amd_mets_7033d800-0935-11e4-beed-5ef3fc9ae867_0001.xml</filePathGlobPattern>
             <xPath>/mets/metsHdr/agent/name</xPath>
             <value>ABA001</value>
         </nodeCheck>
     </rule>
     <rule>
         <nodeCheck>
-            <filePath>info_7033d800-0935-11e4-beed-5ef3fc9ae867.xml</filePath>
+            <filePathGlobPattern>info_7033d800-0935-11e4-beed-5ef3fc9ae867.xml</filePathGlobPattern>
             <xPath>/info/creator</xPath>
             <regex>.*001</regex>
         </nodeCheck>

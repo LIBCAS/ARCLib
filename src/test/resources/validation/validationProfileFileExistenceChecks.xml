@@ -1,12 +1,12 @@
 <profile xmlns="http://www.arclib.lib.cas.cz/VALIDATION_PROFILE">
     <rule>
         <fileExistenceCheck>
-            <filePath>mets_7033d800-0935-11e4-beed-5ef3fc9ae867.xml</filePath>
+            <filePathGlobPattern>mets_7033d800-0935-11e4-beed-5ef3fc9ae867.xml</filePathGlobPattern>
         </fileExistenceCheck>
     </rule>
     <rule>
         <fileExistenceCheck>
-            <filePath>info_7033d800-0935-11e4-beed-5ef3fc9ae867.xml</filePath>
+            <filePathGlobPattern>info_7033d800-0935-11e4-beed-5ef3fc9ae867.xml</filePathGlobPattern>
         </fileExistenceCheck>
     </rule>
 </profile>

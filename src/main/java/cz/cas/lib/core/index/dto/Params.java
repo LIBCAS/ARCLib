@@ -1,8 +1,10 @@
 package cz.cas.lib.core.index.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 import lombok.Setter;
 
+import javax.persistence.Transient;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
@@ -74,8 +76,16 @@ public class Params implements Serializable {
     @Valid
     protected List<Filter> filter = new ArrayList<>();
 
+    @JsonIgnore
+    @Transient
+    protected boolean prefilterAdded = false;
+
     public void addFilter(Filter filter) {
-        this.filter.add(filter);
+        List<Filter> newList = new ArrayList<>();
+        newList.addAll(getFilter());
+        newList.add(filter);
+        setFilter(newList);
+
     }
 
     public void addSorting(SortSpecification sort) {

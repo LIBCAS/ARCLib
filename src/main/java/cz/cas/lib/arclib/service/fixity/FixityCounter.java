@@ -35,7 +35,7 @@ public abstract class FixityCounter {
         notNull(pathToFile, () -> {
             throw new IllegalArgumentException();
         });
-        log.trace(getClass().getSimpleName() + " computing checksum");
+        log.debug(getClass().getSimpleName() + " computing checksum");
         if (pathToFile.toFile().isDirectory()) {
             throw new IllegalArgumentException("trying to compute digest on a folder");
         }
@@ -83,8 +83,8 @@ public abstract class FixityCounter {
 
     private boolean compare(String expectedDigest, byte[] computedDigest) {
         String computedDigestStr = bytesToHexString(computedDigest);
-        log.trace("expected digest: " + expectedDigest);
-        log.trace("computed digest: " + computedDigestStr);
+        log.debug("expected digest: " + expectedDigest);
+        log.debug("computed digest: " + computedDigestStr);
         expectedDigest = expectedDigest.toLowerCase();
         boolean matches = computedDigestStr.equals(expectedDigest);
         log.debug("digests matches: " + matches);

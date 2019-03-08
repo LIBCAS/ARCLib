@@ -3,6 +3,7 @@ package cz.cas.lib.arclib.report;
 import cz.cas.lib.arclib.api.ReportApi;
 import cz.cas.lib.core.store.Transactional;
 import helper.ApiTest;
+import helper.TransformerFactoryWorkaroundTest;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -30,7 +31,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @Transactional
 @Rollback(false)
-public class ReportApiTests implements ApiTest {
+public class ReportApiTests extends TransformerFactoryWorkaroundTest implements ApiTest {
 
     @Inject
     private ReportApi api;

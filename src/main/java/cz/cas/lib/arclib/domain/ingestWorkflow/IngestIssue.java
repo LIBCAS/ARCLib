@@ -1,72 +1,72 @@
 package cz.cas.lib.arclib.domain.ingestWorkflow;
 
 
-import cz.cas.lib.core.domain.DatedObject;
-import lombok.AllArgsConstructor;
+import cz.cas.lib.arclib.domain.preservationPlanning.FormatDefinition;
+import cz.cas.lib.arclib.domain.preservationPlanning.IngestIssueDefinition;
+import cz.cas.lib.arclib.domain.preservationPlanning.Tool;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.BatchSize;
 
-import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
+import javax.validation.constraints.NotNull;
 import java.util.Arrays;
 
 @Getter
 @Setter
 @BatchSize(size = 100)
 @Entity
-@AllArgsConstructor
 @NoArgsConstructor
 @Table(name = "arclib_ingest_issue")
-public class IngestIssue extends DatedObject {
+public class IngestIssue extends IngestEvent {
 
+    public IngestIssue(IngestWorkflow iw, Tool tool, IngestIssueDefinition def, FormatDefinition f, String description, boolean solvedByConfig) {
+        super(iw, tool, solvedByConfig, description);
+        this.ingestIssueDefinition = def;
+        this.formatDefinition = f;
+    }
+
+    /**
+     * type of the issue
+     */
     @ManyToOne
-    private IngestWorkflow ingestWorkflow;
+    @NotNull
+    private IngestIssueDefinition ingestIssueDefinition;
 
-    private Class<?> taskExecutor;
+    /**
+     * format of the file during which processing the issue has occurred, null if the issue does not relate to a one specific file of one specific format
+     */
+    @ManyToOne
+    private FormatDefinition formatDefinition;
 
-    @Column(length = 10485760)
-    private String issue;
-
-    private boolean solvedByConfig;
-
-    @Column(length = 10485760)
-    private String configNote;
-
-    public IngestIssue(IngestWorkflow ingestWorkflow, Class<?> taskExecutor, String issue) {
-        this.ingestWorkflow = ingestWorkflow;
-        this.issue = issue;
-        this.taskExecutor = taskExecutor;
+    public static String createMissingConfigNote(String configPath) {
+        return "missing config at: " + configPath;
     }
 
-    public void setMissingConfigNote(String configPath) {
-        this.configNote = "missing config at: " + configPath;
+    public static String createInvalidConfigNote(String configPath, String nodeValue, Class<? extends Enum> supportedValues) {
+        return "invalid config: " + nodeValue + " at: " + configPath + " supported values: " + Arrays.toString(supportedValues.getEnumConstants());
     }
 
-    public void setInvalidConfigNote(String configPath, String nodeValue, Class<? extends Enum> supportedValues) {
-        this.configNote = "invalid config: " + nodeValue + " at: " + configPath + " supported values: " + Arrays.toString(supportedValues.getEnumConstants());
+    public static String createInvalidConfigNote(String configPath, String nodeValue, String... supportedValues) {
+        return "invalid config: " + nodeValue + " at: " + configPath + " supported values: " + Arrays.toString(supportedValues);
     }
 
-    public void setInvalidConfigNote(String configPath, String nodeValue, String... supportedValues) {
-        this.configNote = "invalid config: " + nodeValue + " at: " + configPath + " supported values: " + Arrays.toString(supportedValues);
-    }
-
-    public void setUsedConfigNote(String configPath, String configValue) {
-        this.configNote = "used config: " + configValue + " at: " + configPath;
+    public static String createUsedConfigNote(String configPath, String configValue) {
+        return "used config: " + configValue + " at: " + configPath;
     }
 
     @Override
     public String toString() {
-        return
-                "IngestIssue{" +
-                        "ingestWorkflow=" + ingestWorkflow.getExternalId() +
-                        ", taskExecutor=" + taskExecutor +
-                        ", issue='" + issue + '\'' +
-                        ", solvedByConfig=" + solvedByConfig +
-                        ", configNote='" + configNote + '\'' +
-                        '}';
+        return "IngestIssue{" +
+                "ingestWorkflow=" + super.getIngestWorkflow() +
+                ", tool=" + super.getTool() +
+                ", ingestIssueDefinition=" + ingestIssueDefinition +
+                ", formatDefinition=" + formatDefinition +
+                ", issue='" + super.getDescription() + '\'' +
+                ", solvedByConfig=" + super.isSuccess() +
+                '}';
     }
 }

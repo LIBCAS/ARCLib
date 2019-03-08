@@ -11,7 +11,7 @@ import org.springframework.data.solr.core.mapping.SolrDocument;
 
 @Getter
 @Setter
-@SolrDocument(solrCoreName = "batch")
+@SolrDocument(collection = "batch")
 public class SolrBatch extends SolrDatedObject {
 
     @Field

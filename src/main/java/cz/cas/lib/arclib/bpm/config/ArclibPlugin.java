@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
 
-import static org.codehaus.groovy.runtime.InvokerHelper.asList;
+import static cz.cas.lib.core.util.Utils.asList;
 
 @ConditionalOnProperty(prefix = "bpm", name = "enabled", havingValue = "true")
 @Component

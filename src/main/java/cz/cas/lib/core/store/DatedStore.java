@@ -43,7 +43,13 @@ public abstract class DatedStore<T extends DatedObject, Q extends EntityPathBase
 
             entityManager.flush();
             detachAll();
+
+            logDeleteEvent(entity);
         }
+    }
+
+    public void hardDelete(T entity) {
+        super.delete(entity);
     }
 
     @Override

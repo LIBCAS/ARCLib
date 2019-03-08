@@ -1,6 +1,6 @@
 package cz.cas.lib.arclib.domain.preservationPlanning;
 
-import cz.cas.lib.core.domain.DatedObject;
+import cz.cas.lib.core.domain.NamedObject;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -18,9 +18,9 @@ import javax.persistence.Table;
 @Entity
 @Table(name = "arclib_risk")
 @NoArgsConstructor
-public class Risk extends DatedObject {
+public class Risk extends NamedObject {
     /**
-     * Popois
+     * Popis
      */
     private String description;
 }

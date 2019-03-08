@@ -22,6 +22,11 @@ import javax.persistence.*;
 @AllArgsConstructor
 @NoArgsConstructor
 public class ProducerProfile extends NamedObject {
+
+    public ProducerProfile(String id){
+        this.id=id;
+    }
+
     /**
      * Externé id
      */
@@ -60,5 +65,5 @@ public class ProducerProfile extends NamedObject {
     /**
      * Aktivovaný režim ladenia profilu dodávateľa
      */
-    private Boolean debuggingModeActive;
+    private boolean debuggingModeActive;
 }

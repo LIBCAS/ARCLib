@@ -1,6 +1,8 @@
 package cz.cas.lib.core.store;
 
+import cz.cas.lib.arclib.exception.bpm.IncidentException;
 import cz.cas.lib.core.exception.GeneralException;
+import org.camunda.bpm.engine.delegate.BpmnError;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -12,6 +14,6 @@ import java.lang.annotation.Target;
  */
 @Target({ElementType.METHOD, ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
-@org.springframework.transaction.annotation.Transactional(noRollbackFor = GeneralException.class)
+@org.springframework.transaction.annotation.Transactional(noRollbackFor = {GeneralException.class, IncidentException.class, BpmnError.class})
 public @interface Transactional {
 }

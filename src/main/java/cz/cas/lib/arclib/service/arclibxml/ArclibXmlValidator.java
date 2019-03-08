@@ -52,9 +52,9 @@ public class ArclibXmlValidator {
      */
     public void validateArclibXml(ByteArrayInputStream xml, String aipId, String authorialId, Integer sipVersionNumber,
                                   String sipVersionOf) throws IOException, SAXException, ParserConfigurationException {
-        log.info("Starting validation of ARCLib XML.");
+        log.debug("Starting validation of ARCLib XML.");
 
-        log.info("Validating using XML schemas.");
+        log.debug("Validating using XML schemas.");
         xml.reset();
         InputStream[] xsdSchemas = new InputStream[]{
                 arclibXmlSchema.getInputStream(),
@@ -62,42 +62,42 @@ public class ArclibXmlValidator {
                 premisSchema.getInputStream()};
         XmlUtils.validateWithXMLSchema(xml, xsdSchemas);
 
-        log.info("Checking existence of required nodes.");
+        log.debug("Checking existence of required nodes.");
         List<String> xPaths = readLinesOfInputStreamToList(arclibXmlValidationChecks.getInputStream());
         for (String xPath : xPaths) {
             xml.reset();
             XmlUtils.checkNodeExists(xml, xPath);
         }
 
-        log.info("Checking content of node with AIP id at XPath " + pathToAipId + ".");
+        log.debug("Checking content of node with AIP id at XPath " + pathToAipId + ".");
         xml.reset();
         NodeList list1 = XmlUtils.findWithXPath(xml, pathToAipId);
         Utils.ne(list1.getLength(), 0, () -> new MissingNode(pathToAipId));
         Utils.eq(list1.item(0).getTextContent(), aipId, () -> new InvalidXmlNodeValue(aipId,
                 list1.item(0).getTextContent(), pathToAipId));
 
-        log.info("Checking content of node with authorial id at XPath " + pathToAuthorialId + ".");
+        log.debug("Checking content of node with authorial id at XPath " + pathToAuthorialId + ".");
         xml.reset();
         NodeList list2 = XmlUtils.findWithXPath(xml, pathToAuthorialId);
         Utils.ne(list2.getLength(), 0, () -> new MissingNode(pathToAuthorialId));
         Utils.eq(list2.item(0).getTextContent(), authorialId, () -> new InvalidXmlNodeValue(authorialId,
                 list2.item(0).getTextContent(), pathToAuthorialId));
 
-        log.info("Checking content of node with sipVersionNumber id at XPath " + pathToSipVersionNumber + ".");
+        log.debug("Checking content of node with sipVersionNumber id at XPath " + pathToSipVersionNumber + ".");
         xml.reset();
         NodeList list3 = XmlUtils.findWithXPath(xml, pathToSipVersionNumber);
         Utils.ne(list3.getLength(), 0, () -> new MissingNode(pathToSipVersionNumber));
         Utils.eq(Integer.valueOf(list3.item(0).getTextContent()), sipVersionNumber, () -> new InvalidXmlNodeValue(
                 String.valueOf(sipVersionNumber), list3.item(0).getTextContent(), pathToSipVersionNumber));
 
-        log.info("Checking content of node with sipVersionOf id at XPath " + pathToPhysicalVersionOf + ".");
+        log.debug("Checking content of node with sipVersionOf id at XPath " + pathToPhysicalVersionOf + ".");
         xml.reset();
         NodeList list4 = XmlUtils.findWithXPath(xml, pathToPhysicalVersionOf);
         Utils.ne(list4.getLength(), 0, () -> new MissingNode(pathToPhysicalVersionOf));
         Utils.eq(list4.item(0).getTextContent(), sipVersionOf, () -> new InvalidXmlNodeValue(sipVersionOf,
                 list4.item(0).getTextContent(), pathToPhysicalVersionOf));
 
-        log.info("Validation of ArclibXml succeeded.");
+        log.debug("Validation of ArclibXml succeeded.");
     }
 
     @Inject

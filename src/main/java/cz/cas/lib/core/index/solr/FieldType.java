@@ -8,9 +8,9 @@ package cz.cas.lib.core.index.solr;
  */
 public class FieldType {
     public static final String FOLDING = "folding";
-    public static final String DATE = "date";
-    public static final String INT = "int";
+    public static final String DATE = "pdate";
+    public static final String INT = "pint";
     public static final String STRING = "string";
     public static final String TEXT = "text_general";
-    public static final String DOUBLE = "double";
+    public static final String DOUBLE = "pdouble";
 }

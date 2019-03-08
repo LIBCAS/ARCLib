@@ -113,14 +113,14 @@ public class CoordinatorIntegrationTest extends SrDbTest implements ApiTest {
         sipProfile = new SipProfile();
 
         PathToSipId pathToSipId = new PathToSipId();
-        pathToSipId.setPathToXml(PATH_TO_XML);
+        pathToSipId.setPathToXmlGlobPattern(PATH_TO_XML);
         pathToSipId.setXPathToId(PATH_TO_AUTHORIAL_ID);
         sipProfile.setPathToSipId(pathToSipId);
 
         sipProfileXslt = Resources.toString(getClass().getResource(SIP_PROFILE_XSLT_PATH), StandardCharsets.UTF_8);
         sipProfile.setXsl(sipProfileXslt);
 
-        sipProfile.setSipMetadataPath(PATH_TO_METADATA);
+        sipProfile.setSipMetadataPathGlobPattern(PATH_TO_METADATA);
         sipProfileStore.save(sipProfile);
 
         validationProfile = new ValidationProfile("xml");

@@ -15,6 +15,7 @@ import cz.cas.lib.core.index.dto.RootFilterOperation;
 import cz.cas.lib.core.index.solr.SolrDictionaryObject;
 import cz.cas.lib.core.index.solr.SolrReference;
 import lombok.AllArgsConstructor;
+import org.apache.commons.io.IOUtils;
 import org.springframework.aop.framework.Advised;
 import org.springframework.aop.support.AopUtils;
 
@@ -22,20 +23,23 @@ import java.io.*;
 import java.math.BigDecimal;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.nio.file.*;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.text.Normalizer;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.time.temporal.TemporalUnit;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
 
 public class Utils {
     public static <T, U> List<U> map(List<T> objects, Function<T, U> func) {
@@ -69,6 +73,29 @@ public class Utils {
         map.put(key1, value1);
         map.put(key2, value2);
         return map;
+    }
+
+    public static byte[] compress(byte[] content){
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        try{
+            GZIPOutputStream gzipOutputStream = new GZIPOutputStream(byteArrayOutputStream);
+            gzipOutputStream.write(content);
+            gzipOutputStream.close();
+        } catch(IOException e){
+            throw new RuntimeException(e);
+        }
+        System.out.printf("Compression ratio %f\n", (1.0f * content.length/byteArrayOutputStream.size()));
+        return byteArrayOutputStream.toByteArray();
+    }
+
+    public static byte[] decompress(byte[] contentBytes){
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        try{
+            IOUtils.copy(new GZIPInputStream(new ByteArrayInputStream(contentBytes)), out);
+        } catch(IOException e){
+            throw new RuntimeException(e);
+        }
+        return out.toByteArray();
     }
 
     public static <T> List<T> asList(Collection<T> a) {
@@ -534,12 +561,18 @@ public class Utils {
      * @param preFilter Prefilter to apply
      */
     public static void addPrefilter(Params params, Filter preFilter) {
+        if (params.isPrefilterAdded()) {
+            params.addFilter(preFilter);
+            return;
+        }
         Filter oldRootFilter = new Filter();
         oldRootFilter.setOperation(params.getOperation() == RootFilterOperation.AND ? FilterOperation.AND : FilterOperation.OR);
         oldRootFilter.setFilter(params.getFilter());
 
         params.setOperation(RootFilterOperation.AND);
         params.setFilter(asList(oldRootFilter, preFilter));
+        params.setPrefilterAdded(true);
+
     }
 
     public static String bytesToHexString(byte[] bytes) {
@@ -646,12 +679,29 @@ public class Utils {
         }
     }
 
-    public static File[] listFilesMatchingRegex(File root, String regex) {
-        if (!root.isDirectory()) {
-            throw new IllegalArgumentException(root + " is no directory.");
-        }
-        final Pattern p = Pattern.compile(regex); // careful: could also throw an exception!
-        return root.listFiles(file -> p.matcher(file.getName()).matches());
+    /**
+     * Lists files matching glob pattern
+     *
+     * @param root        root directory
+     * @param globPattern glob pattern
+     * @throws IOException
+     * @return list of files matching glob pattern
+     */
+    public static List<File> listFilesMatchingGlobPattern(File root, String globPattern) throws IOException {
+        final List<File> result = new ArrayList<>();
+
+        final PathMatcher matcher = FileSystems.getDefault().getPathMatcher("glob:" + globPattern);
+        FileVisitor<Path> visitor = new SimpleFileVisitor<Path>() {
+            @Override
+            public FileVisitResult visitFile(Path file, BasicFileAttributes attribs) {
+                if (matcher.matches(root.toPath().relativize(file))) {
+                    result.add(new File(file.toAbsolutePath().toString()));
+                }
+                return FileVisitResult.CONTINUE;
+            }
+        };
+        Files.walkFileTree(root.toPath(), visitor);
+        return result;
     }
 
     public static List<String> readLinesOfInputStreamToList(InputStream inputStream) throws IOException {
@@ -668,6 +718,10 @@ public class Utils {
 
     public static InputStream stringToInputStream(String text) throws UnsupportedEncodingException {
         return new ByteArrayInputStream(text.getBytes(StandardCharsets.UTF_8.name()));
+    }
+
+    public static boolean isNullOrEmptyString(String value) {
+        return value == null || value.trim().isEmpty();
     }
 
     public static void executeProcessDefaultResultHandle(String... cmd) {
@@ -689,21 +743,33 @@ public class Utils {
         }
     }
 
-    public static Pair<Integer, List<String>> executeProcessCustomResultHandle(String... cmd) {
-        File tmp = null;
+    public static Pair<Integer, List<String>> executeProcessCustomResultHandle(boolean mergeOutputs, String... cmd) {
+        File stdFile = null;
+        File errFile = null;
         try {
-            tmp = File.createTempFile("out", null);
-            tmp.deleteOnExit();
+            stdFile = File.createTempFile("std.out", null);
+            errFile = File.createTempFile("err.out", null);
             final ProcessBuilder processBuilder = new ProcessBuilder(cmd);
-            processBuilder.redirectErrorStream(true).redirectOutput(tmp);
+            if (mergeOutputs)
+                processBuilder.redirectErrorStream(true);
+            else
+                processBuilder.redirectError(errFile);
+            processBuilder.redirectOutput(stdFile);
             final Process process = processBuilder.start();
             final int exitCode = process.waitFor();
-            return new Pair<>(exitCode, Files.readAllLines(tmp.toPath()));
+            List<String> output;
+            if (mergeOutputs || exitCode == 0)
+                output = Files.readAllLines(stdFile.toPath());
+            else
+                output = Files.readAllLines(errFile.toPath());
+            return new Pair<>(exitCode, output);
         } catch (InterruptedException | IOException ex) {
             throw new GeneralException("unexpected error while executing process", ex);
         } finally {
-            if (tmp != null)
-                tmp.delete();
+            if (stdFile != null)
+                stdFile.delete();
+            if (errFile != null)
+                errFile.delete();
         }
     }
 
@@ -788,5 +854,10 @@ public class Utils {
                 String.valueOf(localDateTime.getDayOfMonth()),
                 String.valueOf(localDateTime.getMonthValue()),
                 "?");
+    }
+
+    public static <T> Predicate<T> distinctByKey(Function<? super T, ?> keyExtractor) {
+        Set<Object> seen = ConcurrentHashMap.newKeySet();
+        return t -> seen.add(keyExtractor.apply(t));
     }
 }

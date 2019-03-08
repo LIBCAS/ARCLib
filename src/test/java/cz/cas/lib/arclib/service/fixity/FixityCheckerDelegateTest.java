@@ -9,10 +9,15 @@ import cz.cas.lib.arclib.domain.ingestWorkflow.IngestWorkflow;
 import cz.cas.lib.arclib.domain.packages.PackageType;
 import cz.cas.lib.arclib.domain.profiles.SipProfile;
 import cz.cas.lib.arclib.exception.bpm.IncidentException;
+import cz.cas.lib.arclib.service.IngestIssueService;
+import cz.cas.lib.arclib.service.preservationPlanning.FormatDefinitionService;
+import cz.cas.lib.arclib.service.preservationPlanning.ToolService;
+import cz.cas.lib.arclib.store.IngestIssueDefinitionStore;
 import cz.cas.lib.arclib.store.IngestIssueStore;
 import cz.cas.lib.arclib.store.IngestWorkflowStore;
 import cz.cas.lib.arclib.store.SipProfileStore;
 import cz.cas.lib.core.store.Transactional;
+import cz.cas.lib.core.util.Utils;
 import org.apache.commons.io.FileUtils;
 import org.camunda.bpm.engine.runtime.Job;
 import org.camunda.bpm.engine.test.Deployment;
@@ -34,7 +39,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 
 import static helper.ThrowableAssertion.assertThrown;
 import static org.hamcrest.Matchers.containsString;
@@ -84,17 +91,23 @@ public class FixityCheckerDelegateTest {
 
     @Mock
     private IngestWorkflowStore ingestWorkflowStore;
-
+    @Mock
+    private FormatDefinitionService formatDefinitionService;
+    @Mock
+    private ToolService toolService;
+    @Mock
+    private IngestIssueDefinitionStore ingestIssueDefinitionStore;
     @Spy
     private MetsPackageFixityVerifier metsFixityVerifier = new MetsPackageFixityVerifier();
     @Spy
     private BagitPackageFixityVerifier bagitPackageFixityVerifier = new BagitPackageFixityVerifier();
     private SipProfile bagProfile = new SipProfile();
     private SipProfile metsProfile = new SipProfile();
+    private TreeMap<String, Utils.Pair<String, String>> droidResult=new TreeMap<>();
     @Mock
     private IngestIssueStore ingestIssueStore;
     @Captor
-    ArgumentCaptor<IngestIssue> captor;
+    ArgumentCaptor<List<IngestIssue>> captor;
 
     /**
      * used for asynchronous process instances, start process instance and executes it job right afterwards
@@ -110,14 +123,13 @@ public class FixityCheckerDelegateTest {
         return id;
     }
 
-
     @Before
     @Transactional
     public void before() throws IOException {
         Files.createDirectories(WS);
 
         bagProfile.setPackageType(PackageType.BAGIT);
-        bagProfile.setSipMetadataPath("bag-info.txt");
+        bagProfile.setSipMetadataPathGlobPattern("bag-info.txt");
         when(sipProfileStore.find(eq(bagProfile.getId()))).thenReturn(bagProfile);
 
         IngestWorkflow ingestWorkflow = new IngestWorkflow();
@@ -126,7 +138,7 @@ public class FixityCheckerDelegateTest {
         when(ingestWorkflowStore.findByExternalId(EXTERNAL_ID)).thenReturn(ingestWorkflow);
 
         metsProfile.setPackageType(PackageType.METS);
-        metsProfile.setSipMetadataPath("METS_KPW01169310.xml");
+        metsProfile.setSipMetadataPathGlobPattern("METS_KPW01169310.xml");
         when(sipProfileStore.find(eq(metsProfile.getId()))).thenReturn(metsProfile);
 
         metsFixityVerifier.setMd5Counter(new Md5Counter());
@@ -135,11 +147,29 @@ public class FixityCheckerDelegateTest {
         bagitPackageFixityVerifier.setSha512Counter(new Sha512Counter());
         bagitPackageFixityVerifier.setIngestWorkflowStore(ingestWorkflowStore);
 
-        metsFixityVerifier.setIngestIssueStore(ingestIssueStore);
+        IngestIssueService iiservice = new IngestIssueService();
+        iiservice.setIngestIssueStore(ingestIssueStore);
+        metsFixityVerifier.setIngestIssueService(iiservice);
         metsFixityVerifier.setIngestWorkflowStore(ingestWorkflowStore);
+        metsFixityVerifier.setFormatDefinitionService(formatDefinitionService);
+        metsFixityVerifier.setIngestIssueDefinitionStore(ingestIssueDefinitionStore);
+        metsFixityVerifier.setToolService(toolService);
 
-        bagitPackageFixityVerifier.setIngestIssueStore(ingestIssueStore);
+        bagitPackageFixityVerifier.setIngestIssueService(iiservice);
         bagitPackageFixityVerifier.setIngestWorkflowStore(ingestWorkflowStore);
+        bagitPackageFixityVerifier.setFormatDefinitionService(formatDefinitionService);
+        bagitPackageFixityVerifier.setIngestIssueDefinitionStore(ingestIssueDefinitionStore);
+        bagitPackageFixityVerifier.setToolService(toolService);
+
+        droidResult.put("file://data/TXT/TXT_KPW01169310_0002.TXT", new Utils.Pair<>("txt", "mock"));
+        droidResult.put("file://data/amdSec/AMD_METS_KPW01169310_0004.xml", new Utils.Pair<>("xml", "mock"));
+        droidResult.put("file://data/amdSec/AMD_METS_KPW01169310_0008.xml", new Utils.Pair<>("xml", "mock"));
+        droidResult.put("file://data/ALTO/ALTO_KPW01169310_0006.XML", new Utils.Pair<>("xml", "mock"));
+
+        droidResult.put("file://TXT/TXT_KPW01169310_0002.TXT", new Utils.Pair<>("txt", "mock"));
+        droidResult.put("file://amdSec/AMD_METS_KPW01169310_0004.xml", new Utils.Pair<>("xml", "mock"));
+        droidResult.put("file://amdSec/AMD_METS_KPW01169310_0008.xml", new Utils.Pair<>("xml", "mock"));
+        droidResult.put("file://ALTO/ALTO_KPW01169310_0006.XML", new Utils.Pair<>("xml", "mock"));
 
         FixityCheckerDelegate fixityCheckerDelegate = new FixityCheckerDelegate();
         fixityCheckerDelegate.setObjectMapper(new ObjectMapper());
@@ -165,23 +195,27 @@ public class FixityCheckerDelegateTest {
         variables.put(BpmConstants.ProcessVariables.ingestWorkflowExternalId, EXTERNAL_ID);
         variables.put(BpmConstants.ProcessVariables.sipProfileId, metsProfile.getId());
         variables.put(BpmConstants.ProcessVariables.latestConfig, CONFIG1);
-        variables.put(BpmConstants.Ingestion.originalSipFileName, ORIGINAL_SIP_FILE_NAME);
+        variables.put(BpmConstants.Ingestion.sipFileName, ORIGINAL_SIP_FILE_NAME);
+        variables.put(BpmConstants.FormatIdentification.mapOfFilesToFormats, droidResult);
+        variables.put(BpmConstants.ProcessVariables.sipFolderWorkspacePath, WS_SIP_LOCATION.toAbsolutePath().toString());
         assertThrown(() -> startJob(PROCESS_INSTANCE_KEY, variables)).hasCauseInstanceOf(IncidentException.class);
         verify(ingestIssueStore, times(2)).save(captor.capture());
 
-        assertThat(captor.getAllValues().get(0).isSolvedByConfig(), is(true));
-        assertThat(captor.getAllValues().get(0).getConfigNote(), containsString(FixityCheckerDelegate.CONFIG_UNSUPPORTED_CHECKSUM_TYPE));
-        assertThat(captor.getAllValues().get(0).getIssue(), containsString("CRC"));
-        assertThat(captor.getAllValues().get(0).getIssue(), containsString(UNSUPPORTED_CHECKSUM_FILE));
+        assertThat(captor.getAllValues().get(0).get(0).isSuccess(), is(true));
+        assertThat(captor.getAllValues().get(0).get(0).getDescription(), containsString(FixityCheckerDelegate.CONFIG_UNSUPPORTED_CHECKSUM_TYPE));
+        assertThat(captor.getAllValues().get(0).get(0).getDescription(), containsString("CRC"));
+        assertThat(captor.getAllValues().get(0).get(0).getDescription(), containsString(UNSUPPORTED_CHECKSUM_FILE));
 
-        assertThat(captor.getAllValues().get(1).isSolvedByConfig(), is(false));
-        assertThat(captor.getAllValues().get(1).getConfigNote(), containsString(FixityCheckerDelegate.CONFIG_INVALID_CHECKSUMS));
-        assertThat(captor.getAllValues().get(1).getIssue(), containsString(INVALID_CHECKSUM_FILE_1));
-        assertThat(captor.getAllValues().get(1).getIssue(), containsString(INVALID_CHECKSUM_FILE_2));
+        assertThat(captor.getAllValues().get(1).get(0).isSuccess(), is(false));
+        assertThat(captor.getAllValues().get(1).get(0).getDescription(), containsString(FixityCheckerDelegate.CONFIG_INVALID_CHECKSUMS));
+        assertThat(captor.getAllValues().get(1).get(0).getDescription(), containsString(INVALID_CHECKSUM_FILE_1));
+        assertThat(captor.getAllValues().get(1).get(1).getDescription(), containsString(INVALID_CHECKSUM_FILE_2));
 
-        verify(metsFixityVerifier, times(1)).invokeUnsupportedChecksumTypeIssue(any(), any(), any());
-        verify(metsFixityVerifier, times(1)).invokeInvalidChecksumsIssue(any(), any(), any());
-        verify(metsFixityVerifier, never()).invokeMissingFilesIssue(any(), any(), any());
+        verify(metsFixityVerifier, times(1)).invokeUnsupportedChecksumTypeIssue(any(), any(), any(),any(),any());
+        verify(metsFixityVerifier, times(1)).invokeInvalidChecksumsIssue(any(), any(), any(),any(),any());
+        verify(metsFixityVerifier, never()).invokeMissingFilesIssue(any(), any(), any(),any(),any());
+        verify(formatDefinitionService,times(2)).findPreferredDefinitionsByPuid(eq("xml"));
+        verify(formatDefinitionService).findPreferredDefinitionsByPuid(eq("txt"));
     }
 
     @Test
@@ -194,24 +228,28 @@ public class FixityCheckerDelegateTest {
         variables.put(BpmConstants.ProcessVariables.ingestWorkflowId, INGEST_WORKFLOW_ID);
         variables.put(BpmConstants.ProcessVariables.ingestWorkflowExternalId, EXTERNAL_ID);
         variables.put(BpmConstants.ProcessVariables.sipProfileId, metsProfile.getId());
-        variables.put(BpmConstants.Ingestion.originalSipFileName, ORIGINAL_SIP_FILE_NAME);
+        variables.put(BpmConstants.Ingestion.sipFileName, ORIGINAL_SIP_FILE_NAME);
         variables.put(BpmConstants.ProcessVariables.latestConfig, CONFIG2);
+        variables.put(BpmConstants.FormatIdentification.mapOfFilesToFormats, droidResult);
+        variables.put(BpmConstants.ProcessVariables.sipFolderWorkspacePath, WS_SIP_LOCATION.toAbsolutePath().toString());
         startJob(PROCESS_INSTANCE_KEY, variables);
 
         verify(ingestIssueStore, times(2)).save(captor.capture());
 
-        assertThat(captor.getAllValues().get(0).isSolvedByConfig(), is(true));
-        assertThat(captor.getAllValues().get(0).getConfigNote(), containsString(FixityCheckerDelegate.CONFIG_UNSUPPORTED_CHECKSUM_TYPE));
-        assertThat(captor.getAllValues().get(0).getIssue(), containsString("CRC"));
-        assertThat(captor.getAllValues().get(0).getIssue(), containsString(UNSUPPORTED_CHECKSUM_FILE));
+        assertThat(captor.getAllValues().get(0).get(0).isSuccess(), is(true));
+        assertThat(captor.getAllValues().get(0).get(0).getDescription(), containsString(FixityCheckerDelegate.CONFIG_UNSUPPORTED_CHECKSUM_TYPE));
+        assertThat(captor.getAllValues().get(0).get(0).getDescription(), containsString("CRC"));
+        assertThat(captor.getAllValues().get(0).get(0).getDescription(), containsString(UNSUPPORTED_CHECKSUM_FILE));
 
-        assertThat(captor.getAllValues().get(1).isSolvedByConfig(), is(true));
-        assertThat(captor.getAllValues().get(1).getConfigNote(), containsString(FixityCheckerDelegate.CONFIG_MISSING_FILES));
-        assertThat(captor.getAllValues().get(1).getIssue(), containsString(missingFile.toString()));
+        assertThat(captor.getAllValues().get(1).get(0).isSuccess(), is(true));
+        assertThat(captor.getAllValues().get(1).get(0).getDescription(), containsString(FixityCheckerDelegate.CONFIG_MISSING_FILES));
+        assertThat(captor.getAllValues().get(1).get(0).getDescription(), containsString(MISSING_FILE));
 
-        verify(metsFixityVerifier, times(1)).invokeUnsupportedChecksumTypeIssue(any(), any(), any());
-        verify(metsFixityVerifier, times(1)).invokeMissingFilesIssue(any(), any(), any());
-        verify(metsFixityVerifier, never()).invokeInvalidChecksumsIssue(any(), any(), any());
+        verify(metsFixityVerifier, times(1)).invokeUnsupportedChecksumTypeIssue(any(), any(), any(), any(), any());
+        verify(metsFixityVerifier, times(1)).invokeMissingFilesIssue(any(), any(), any(), any(), any());
+        verify(metsFixityVerifier, never()).invokeInvalidChecksumsIssue(any(), any(), any(), any(), any());
+        verify(formatDefinitionService).findPreferredDefinitionsByPuid(eq("xml"));
+        verify(formatDefinitionService, times(0)).findPreferredDefinitionsByPuid(eq("txt"));
     }
 
     @Test
@@ -222,24 +260,28 @@ public class FixityCheckerDelegateTest {
         variables.put(BpmConstants.ProcessVariables.ingestWorkflowId, INGEST_WORKFLOW_ID);
         variables.put(BpmConstants.ProcessVariables.ingestWorkflowExternalId, EXTERNAL_ID);
         variables.put(BpmConstants.ProcessVariables.sipProfileId, bagProfile.getId());
-        variables.put(BpmConstants.Ingestion.originalSipFileName, ORIGINAL_SIP_BAG_FILE_NAME);
+        variables.put(BpmConstants.Ingestion.sipFileName, ORIGINAL_SIP_BAG_FILE_NAME);
         variables.put(BpmConstants.ProcessVariables.latestConfig, CONFIG1);
+        variables.put(BpmConstants.FormatIdentification.mapOfFilesToFormats, droidResult);
+        variables.put(BpmConstants.ProcessVariables.sipFolderWorkspacePath, WS_SIP_BAG_LOCATION.toAbsolutePath().toString());
         assertThrown(() -> startJob(PROCESS_INSTANCE_KEY, variables)).hasCauseInstanceOf(IncidentException.class);
         verify(ingestIssueStore, times(2)).save(captor.capture());
 
-        assertThat(captor.getAllValues().get(0).isSolvedByConfig(), is(true));
-        assertThat(captor.getAllValues().get(0).getConfigNote(), containsString(FixityCheckerDelegate.CONFIG_UNSUPPORTED_CHECKSUM_TYPE));
-        assertThat(captor.getAllValues().get(0).getIssue(), containsString("CRC"));
-        assertThat(captor.getAllValues().get(0).getIssue(), containsString(UNSUPPORTED_CHECKSUM_FILE));
+        assertThat(captor.getAllValues().get(0).get(0).isSuccess(), is(true));
+        assertThat(captor.getAllValues().get(0).get(0).getDescription(), containsString(FixityCheckerDelegate.CONFIG_UNSUPPORTED_CHECKSUM_TYPE));
+        assertThat(captor.getAllValues().get(0).get(0).getDescription(), containsString("CRC"));
+        assertThat(captor.getAllValues().get(0).get(0).getDescription(), containsString(UNSUPPORTED_CHECKSUM_FILE));
 
-        assertThat(captor.getAllValues().get(1).isSolvedByConfig(), is(false));
-        assertThat(captor.getAllValues().get(1).getConfigNote(), containsString(FixityCheckerDelegate.CONFIG_INVALID_CHECKSUMS));
-        assertThat(captor.getAllValues().get(1).getIssue(), containsString(INVALID_CHECKSUM_FILE_1));
-        assertThat(captor.getAllValues().get(1).getIssue(), containsString(INVALID_CHECKSUM_FILE_2));
+        assertThat(captor.getAllValues().get(1).get(0).isSuccess(), is(false));
+        assertThat(captor.getAllValues().get(1).get(0).getDescription(), containsString(FixityCheckerDelegate.CONFIG_INVALID_CHECKSUMS));
+        assertThat(captor.getAllValues().get(1).get(0).getDescription(), containsString(INVALID_CHECKSUM_FILE_2));
+        assertThat(captor.getAllValues().get(1).get(1).getDescription(), containsString(INVALID_CHECKSUM_FILE_1));
 
-        verify(bagitPackageFixityVerifier, times(1)).invokeUnsupportedChecksumTypeIssue(any(), any(), any());
-        verify(bagitPackageFixityVerifier, times(1)).invokeInvalidChecksumsIssue(any(), any(), any());
-        verify(bagitPackageFixityVerifier, never()).invokeMissingFilesIssue(any(), any(), any());
+        verify(bagitPackageFixityVerifier, times(1)).invokeUnsupportedChecksumTypeIssue(any(), any(), any(), any(), any());
+        verify(bagitPackageFixityVerifier, times(1)).invokeInvalidChecksumsIssue(any(), any(), any(), any(), any());
+        verify(bagitPackageFixityVerifier, never()).invokeMissingFilesIssue(any(), any(), any(), any(), any());
+        verify(formatDefinitionService,times(2)).findPreferredDefinitionsByPuid(eq("xml"));
+        verify(formatDefinitionService).findPreferredDefinitionsByPuid(eq("txt"));
     }
 
     @Test
@@ -252,23 +294,27 @@ public class FixityCheckerDelegateTest {
         variables.put(BpmConstants.ProcessVariables.ingestWorkflowId, INGEST_WORKFLOW_ID);
         variables.put(BpmConstants.ProcessVariables.ingestWorkflowExternalId, EXTERNAL_ID);
         variables.put(BpmConstants.ProcessVariables.sipProfileId, bagProfile.getId());
-        variables.put(BpmConstants.Ingestion.originalSipFileName, ORIGINAL_SIP_BAG_FILE_NAME);
+        variables.put(BpmConstants.Ingestion.sipFileName, ORIGINAL_SIP_BAG_FILE_NAME);
         variables.put(BpmConstants.ProcessVariables.latestConfig, CONFIG2);
+        variables.put(BpmConstants.FormatIdentification.mapOfFilesToFormats, droidResult);
+        variables.put(BpmConstants.ProcessVariables.sipFolderWorkspacePath, WS_SIP_BAG_LOCATION.toAbsolutePath().toString());
         startJob(PROCESS_INSTANCE_KEY, variables);
 
         verify(ingestIssueStore, times(2)).save(captor.capture());
 
-        assertThat(captor.getAllValues().get(0).isSolvedByConfig(), is(true));
-        assertThat(captor.getAllValues().get(0).getConfigNote(), containsString(FixityCheckerDelegate.CONFIG_UNSUPPORTED_CHECKSUM_TYPE));
-        assertThat(captor.getAllValues().get(0).getIssue(), containsString("CRC"));
-        assertThat(captor.getAllValues().get(0).getIssue(), containsString(UNSUPPORTED_CHECKSUM_FILE));
+        assertThat(captor.getAllValues().get(0).get(0).isSuccess(), is(true));
+        assertThat(captor.getAllValues().get(0).get(0).getDescription(), containsString(FixityCheckerDelegate.CONFIG_UNSUPPORTED_CHECKSUM_TYPE));
+        assertThat(captor.getAllValues().get(0).get(0).getDescription(), containsString("CRC"));
+        assertThat(captor.getAllValues().get(0).get(0).getDescription(), containsString(UNSUPPORTED_CHECKSUM_FILE));
 
-        assertThat(captor.getAllValues().get(1).isSolvedByConfig(), is(true));
-        assertThat(captor.getAllValues().get(1).getConfigNote(), containsString(FixityCheckerDelegate.CONFIG_MISSING_FILES));
-        assertThat(captor.getAllValues().get(1).getIssue(), containsString(missingFile.toString()));
+        assertThat(captor.getAllValues().get(1).get(0).isSuccess(), is(true));
+        assertThat(captor.getAllValues().get(1).get(0).getDescription(), containsString(FixityCheckerDelegate.CONFIG_MISSING_FILES));
+        assertThat(captor.getAllValues().get(1).get(0).getDescription(), containsString(MISSING_FILE));
 
-        verify(bagitPackageFixityVerifier, times(1)).invokeUnsupportedChecksumTypeIssue(any(), any(), any());
-        verify(bagitPackageFixityVerifier, times(1)).invokeMissingFilesIssue(any(), any(), any());
-        verify(bagitPackageFixityVerifier, never()).invokeInvalidChecksumsIssue(any(), any(), any());
+        verify(bagitPackageFixityVerifier, times(1)).invokeUnsupportedChecksumTypeIssue(any(), any(), any(), any(), any());
+        verify(bagitPackageFixityVerifier, times(1)).invokeMissingFilesIssue(any(), any(), any(), any(), any());
+        verify(bagitPackageFixityVerifier, never()).invokeInvalidChecksumsIssue(any(), any(), any(), any(), any());
+        verify(formatDefinitionService).findPreferredDefinitionsByPuid(eq("xml"));
+        verify(formatDefinitionService, times(0)).findPreferredDefinitionsByPuid(eq("txt"));
     }
 }

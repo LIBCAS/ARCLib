@@ -4,7 +4,6 @@ import cz.cas.lib.arclib.domain.IngestRoutine;
 import cz.cas.lib.arclib.security.authorization.Roles;
 import cz.cas.lib.arclib.service.IngestRoutineService;
 import cz.cas.lib.core.exception.BadArgument;
-import cz.cas.lib.core.exception.ConflictObject;
 import cz.cas.lib.core.store.Transactional;
 import io.swagger.annotations.*;
 import lombok.Getter;
@@ -37,11 +36,6 @@ public class IngestRoutineApi {
                               @ApiParam(value = "Single instance", required = true)
                               @RequestBody IngestRoutine ingestRoutine) {
         eq(id, ingestRoutine.getId(), () -> new BadArgument("id"));
-
-        IngestRoutine ingestRoutineByName = ingestRoutineService.findByName(ingestRoutine.getName());
-        if (ingestRoutineByName != null && !ingestRoutineByName.getId().equals(ingestRoutine.getId()))
-            throw new ConflictObject(IngestRoutine.class, ingestRoutine.getName());
-
         return ingestRoutineService.save(ingestRoutine);
     }
 

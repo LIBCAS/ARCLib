@@ -4,7 +4,6 @@ import cz.cas.lib.arclib.index.solr.arclibxml.SolrArclibXmlDocument;
 import cz.cas.lib.core.domain.NamedObject;
 import cz.cas.lib.core.index.dto.Params;
 import cz.cas.lib.core.index.dto.Result;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -19,10 +18,16 @@ import javax.persistence.*;
 @Entity
 @Table(name = "arclib_aip_query")
 @NoArgsConstructor
-@AllArgsConstructor
 public class AipQuery extends NamedObject {
     public AipQuery(String id) {
         setId(id);
+    }
+
+    public AipQuery(User user, Result<SolrArclibXmlDocument> result, Params query, String queryName) {
+        this.name=queryName;
+        this.user = user;
+        this.result = result;
+        this.query = query;
     }
 
     /**

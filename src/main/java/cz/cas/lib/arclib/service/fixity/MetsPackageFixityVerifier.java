@@ -1,9 +1,11 @@
 package cz.cas.lib.arclib.service.fixity;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import cz.cas.lib.arclib.domain.IngestToolFunction;
 import cz.cas.lib.arclib.exception.bpm.IncidentException;
 import cz.cas.lib.core.exception.GeneralException;
 import cz.cas.lib.core.util.Utils;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.w3c.dom.Document;
@@ -29,28 +31,35 @@ import static cz.cas.lib.core.util.Utils.notNull;
 @Service
 public class MetsPackageFixityVerifier extends PackageFixityVerifier {
 
+    @Getter
+    private String toolName = "ARCLib_mets_" + IngestToolFunction.fixity_check;
+    @Getter
+    private String toolVersion = null;
+
     /**
      * Verifies fixity of every file specified in METS file of the package.
      * Currently supports MD5, SHA-1, SHA-256 and SHA-512.
      *
+     * @param sipWsPath  path to SIP in workspace
      * @param pathToMets path to METS file
      * @param externalId external id of the ingest workflow
      * @param configRoot config
      * @return list of associated values in triplets: file path, type of fixity, fixity value.
      */
     @Override
-    public List<Utils.Triplet<String, String, String>> verifySIP(Path pathToMets, String externalId, JsonNode configRoot)
+    public List<Utils.Triplet<String, String, String>> verifySIP(Path sipWsPath, Path pathToMets, String externalId,
+                                                                 JsonNode configRoot, Map<String, Utils.Pair<String, String>> formatIdentificationResult)
             throws IOException, IncidentException {
-        log.info("Verifying fixity of SIP, METS path: " + pathToMets);
+        log.debug("Verifying fixity of SIP, METS path: " + pathToMets);
         notNull(pathToMets, () -> {
-            throw new IllegalArgumentException();
+            throw new IllegalArgumentException("Path to mets is null.");
         });
         List<Path> invalidFixities = new ArrayList<>();
         List<Path> missingFiles = new ArrayList<>();
         Map<String, List<Path>> unsupportedChecksumTypes = new HashMap<>();
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
         factory.setNamespaceAware(true);
-        Document xml = null;
+        Document xml;
         try {
             xml = factory.newDocumentBuilder().parse(pathToMets.toString());
         } catch (ParserConfigurationException | SAXException e) {
@@ -58,7 +67,7 @@ public class MetsPackageFixityVerifier extends PackageFixityVerifier {
         }
         XPath xpath = getMetsXpath();
 
-        NodeList elems = null;
+        NodeList elems;
         try {
             elems = (NodeList) xpath.evaluate("//METS:file", xml, XPathConstants.NODESET);
         } catch (XPathExpressionException e) {
@@ -114,11 +123,11 @@ public class MetsPackageFixityVerifier extends PackageFixityVerifier {
             }
         }
         if (!unsupportedChecksumTypes.isEmpty())
-            invokeUnsupportedChecksumTypeIssue(unsupportedChecksumTypes, externalId, configRoot);
+            invokeUnsupportedChecksumTypeIssue(sipWsPath, unsupportedChecksumTypes, externalId, configRoot, formatIdentificationResult);
         if (!missingFiles.isEmpty())
-            invokeMissingFilesIssue(missingFiles, externalId, configRoot);
+            invokeMissingFilesIssue(sipWsPath, missingFiles, externalId, configRoot, formatIdentificationResult);
         if (!invalidFixities.isEmpty())
-            invokeInvalidChecksumsIssue(invalidFixities, externalId, configRoot);
+            invokeInvalidChecksumsIssue(sipWsPath, invalidFixities, externalId, configRoot, formatIdentificationResult);
 
         return filePathsAndFixities;
     }

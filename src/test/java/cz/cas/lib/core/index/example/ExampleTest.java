@@ -7,15 +7,12 @@ import cz.cas.lib.core.index.dto.Params;
 import cz.cas.lib.core.index.dto.Result;
 import helper.SrDbTest;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.MockitoAnnotations;
-import org.xml.sax.SAXException;
 
-import javax.xml.parsers.ParserConfigurationException;
-import java.io.IOException;
-
+import static cz.cas.lib.core.util.Utils.asList;
 import static cz.cas.lib.core.util.Utils.asSet;
-import static org.codehaus.groovy.runtime.InvokerHelper.asList;
 
 
 public class ExampleTest extends SrDbTest {
@@ -35,7 +32,8 @@ public class ExampleTest extends SrDbTest {
     }
 
     @Test
-    public void test() throws IOException, SAXException, ParserConfigurationException {
+    @Ignore
+    public void test() {
         MyObject myObject1 = new MyObject();
         myObject1.setName("hofofogo");
         myObject1.setOrder(5L);

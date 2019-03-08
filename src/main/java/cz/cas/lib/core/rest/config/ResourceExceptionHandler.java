@@ -1,8 +1,13 @@
 package cz.cas.lib.core.rest.config;
 
+import cz.cas.lib.arclib.exception.AuthorialPackageLockedException;
 import cz.cas.lib.arclib.exception.BadRequestException;
 import cz.cas.lib.arclib.exception.ForbiddenException;
 import cz.cas.lib.core.exception.*;
+import lombok.extern.slf4j.Slf4j;
+import org.hibernate.exception.ConstraintViolationException;
+import org.postgresql.util.PSQLException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindException;
@@ -19,56 +24,79 @@ import org.springframework.web.bind.annotation.ResponseStatus;
  * annotations.
  * </p>
  */
+@Slf4j
 @ControllerAdvice
 public class ResourceExceptionHandler {
 
-    @ResponseStatus(value = HttpStatus.NOT_FOUND)
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity handleAnyException(Exception e) {
+        return errorResponse(e, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
     @ExceptionHandler(MissingObject.class)
-    public void missingObject() {
+    public ResponseEntity missingObject(MissingObject e) {
+        return errorResponse(e, HttpStatus.NOT_FOUND);
     }
 
-    @ResponseStatus(value = HttpStatus.NOT_FOUND)
     @ExceptionHandler(MissingAttribute.class)
-    public void missingAttribute() {
+    public ResponseEntity missingAttribute(MissingAttribute e) {
+        return errorResponse(e, HttpStatus.NOT_FOUND);
     }
 
-    @ResponseStatus(value = HttpStatus.BAD_REQUEST)
     @ExceptionHandler(InvalidAttribute.class)
-    public void invalidAttribute() {
+    public ResponseEntity invalidAttribute(BadRequestException e) {
+        return errorResponse(e, HttpStatus.BAD_REQUEST);
     }
 
-    @ResponseStatus(value = HttpStatus.BAD_REQUEST)
     @ExceptionHandler(BadArgument.class)
-    public void badArgument() {
+    public ResponseEntity badArgument(BadArgument e) {
+        return errorResponse(e, HttpStatus.BAD_REQUEST);
     }
 
-    @ResponseStatus(value = HttpStatus.FORBIDDEN)
     @ExceptionHandler(ForbiddenObject.class)
-    public void forbiddenObject() {
+    public ResponseEntity forbiddenObject(ForbiddenException e) {
+        return errorResponse(e, HttpStatus.FORBIDDEN);
     }
 
-    @ResponseStatus(value = HttpStatus.FORBIDDEN)
     @ExceptionHandler(ForbiddenOperation.class)
-    public void forbiddenOperation() {
+    public ResponseEntity forbiddenOperation(ForbiddenOperation e) {
+        return errorResponse(e, HttpStatus.FORBIDDEN);
     }
 
-    @ResponseStatus(value = HttpStatus.CONFLICT)
-    @ExceptionHandler(ConflictObject.class)
-    public void conflictObject() {
+    @ExceptionHandler(ConflictException.class)
+    public ResponseEntity conflictException(ConflictException e) {
+        return errorResponse(e, HttpStatus.CONFLICT);
     }
 
-    @ResponseStatus(value = HttpStatus.BAD_REQUEST)
     @ExceptionHandler(BindException.class)
-    public void bindException() {
+    public ResponseEntity bindException(BindException e) {
+        return errorResponse(e, HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(BadRequestException.class)
     public ResponseEntity badRequestException(BadRequestException e) {
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        return errorResponse(e, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity dataIntegrityViolationException(DataIntegrityViolationException e) {
+        if (e.getCause() instanceof ConstraintViolationException && e.getCause().getCause() instanceof PSQLException)
+            return errorResponse(e.getCause().getCause(), HttpStatus.CONFLICT);
+        return errorResponse(e, HttpStatus.CONFLICT);
     }
 
     @ExceptionHandler(ForbiddenException.class)
     public ResponseEntity forbiddenException(ForbiddenException e) {
-        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
+        return errorResponse(e, HttpStatus.FORBIDDEN);
+    }
+
+    @ExceptionHandler(AuthorialPackageLockedException.class)
+    public ResponseEntity authorialPackageLockedException(AuthorialPackageLockedException e) {
+        return errorResponse(e, HttpStatus.LOCKED);
+    }
+
+    private ResponseEntity errorResponse(Throwable throwable, HttpStatus status) {
+        log.error("error caught: " + throwable.getMessage(), throwable);
+        return ResponseEntity.status(status).body(throwable.toString());
     }
 }

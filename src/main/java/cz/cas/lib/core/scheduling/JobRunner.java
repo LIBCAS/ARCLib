@@ -40,8 +40,6 @@ public class JobRunner {
         run.setConsole(console.toString());
         run.setSuccess(success);
 
-        log.error("Job" + job.getName() + " has failed to run.");
-
         logger.log(run);
     }
 

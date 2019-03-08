@@ -10,17 +10,10 @@ import javax.transaction.Transactional;
 @Repository
 public class ProducerStore extends NamedStore<Producer, QProducer> {
 
+    @Override
     @Transactional
-    public Producer findByName(String name) {
-        QProducer producer = qObject();
-
-        Producer producerFound = query()
-                .select(producer)
-                .where(producer.name.eq(name))
-                .fetchFirst();
-
-        detachAll();
-        return producerFound;
+    public Producer save(Producer entity) {
+        return super.save(entity);
     }
 
     public ProducerStore() {

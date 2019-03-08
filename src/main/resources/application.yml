@@ -1,41 +1,41 @@
 spring.application.name: arclib
 spring:
-    datasource:
-      url: jdbc:postgresql://localhost:5432/arclib
-      username: arclib
-      password: vuji61oilo
-      driver-class-name: org.postgresql.Driver
-      name: mainPool
-    jpa:
-      show-sql: false
-      database-platform: org.hibernate.dialect.PostgreSQL9Dialect
-      hibernate:
-        ddl-auto: validate
-        naming-strategy: org.hibernate.cfg.ImprovedNamingStrategy
-        use-new-id-generator-mappings: true
-    http:
-      multipart:
-        maxFileSize: -1
-        maxRequestSize: -1
-    jackson:
-      serialization:
-        write-dates-as-timestamps: false
-    mail:
-      host: smtp.gmail.com
-      port: 465
-      username: noreply@inqool.cz
-      password: blah38espro
-      protocol: smtp
-      properties.mail.smtp:
-        auth: true
-        starttls.enable: false
-        ssl.trust: smtp.gmail.com
-        ssl.enable: true
-liquibase:
-  changeLog: classpath:/dbchangelog.arclib.xml
-  url: jdbc:postgresql://localhost:5432/arclib
-  user: arclib
-  password: vuji61oilo
+  datasource:
+    url: jdbc:postgresql://localhost:5432/arclib
+    username: arclib
+    password: vuji61oilo
+    driver-class-name: org.postgresql.Driver
+    name: mainPool
+  jpa:
+    show-sql: false
+    database-platform: org.hibernate.dialect.PostgreSQL9Dialect
+    hibernate:
+      ddl-auto: validate
+      naming-strategy: org.hibernate.cfg.ImprovedNamingStrategy
+      use-new-id-generator-mappings: true
+  servlet:
+    multipart:
+      max-file-size: -1
+      max-request-size: -1
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+  mail:
+    host: smtp.gmail.com
+    port: 465
+    username: noreply@inqool.cz
+    password: blah38espro
+    protocol: smtp
+    properties.mail.smtp:
+      auth: true
+      starttls.enable: false
+      ssl.trust: smtp.gmail.com
+      ssl.enable: true
+  liquibase:
+    changeLog: classpath:/dbchangelog.arclib.xml
+    url: jdbc:postgresql://localhost:5432/arclib
+    user: arclib
+    password: vuji61oilo
 camunda:
   bpm:
     application:
@@ -51,7 +51,7 @@ camunda:
       enabled: false
       db-reporter-activate: false
 arclib:
-  version: 1.0
+  version: 1.0.1
   path:
     workspace: workspace
     quarantine: workspace/quarantine
@@ -71,6 +71,9 @@ arclib:
   exportRoutineAipExportScript: classpath:aipExport.groovy
   exportRoutineXmlExportScript: classpath:xmlExport.groovy
   keepAliveUpdateScript: classpath:keepAliveUpdate.groovy
+  formatLibraryUpdateScript: classpath:formatLibraryUpdate.groovy
+  formatsRevisionNotificationScript: classpath:formatsRevisionNotification.groovy
+  formatLibraryUpdateCron: "0 0 0 1 * ?"
   deleteSipFromTransferArea: true
   aipStoreRetries: 3
   aipStoreTimeout: PT1M
@@ -79,7 +82,7 @@ arclib:
   keepAliveUpdateTimeout: 10
 namespaces:
   mets: http://www.loc.gov/METS/
-  arclib: http://arclib.lib.cas.cz/ARCLIB_XML
+  arclib: http://arclib.lib.cas.cz/ARCLIB_XSD
   premis: info:lc/xmlns/premis-v2
   oai_dc: http://www.openarchives.org/OAI/2.0/oai_dc/
   dc: http://purl.org/dc/elements/1.1/
@@ -105,27 +108,30 @@ security:
     internal:
       enabled: true
   ldap:
-    startTls: true
     enabled: true
-    server: ldap://inqooltest-arclib.libj.cas.cz
+    server: ldap://10.132.0.12:32670
     bind:
-      dn: cn=arclib,dc=libj,dc=cas,dc=cz
-      pwd: Welcome18
+      dn: uid=noreply,ou=people,dc=inqool,dc=cz
+      pwd: aura24grogs
     user:
       type: filter
       filter: (uid={0})
-      search-base: ou=users,ou=Archive,o=KNAV,dc=libj,dc=cas,dc=cz
+      search-base: ou=people,dc=inqool,dc=cz
 bpm:
   enabled: true
 solr:
   endpoint: http://localhost:8983/solr
   arclibxml:
     corename: arclibXml
-env: production
+env: staging
 archivalStorage:
   api: http://localhost:8081/api
   authorization:
-    bearer:
-      read: eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJkNjdmNGYyMi02NWVmLTQwMDUtOTRjYi1lYTg5MzNjZWRhMzMiLCJuYW1lIjoiYXJjbGliLXJlYWQiLCJhdXQiOlsiUk9MRV9SRUFEIl0sImlhdCI6MTUzMDY5MzY3MiwiZXhwIjoxNTYwNjkzNjcyfQ.DvRCR6SQS8ZjzQ6CIsAIMx2fmopEgN1LmAeVq8PQT2M
-      readWrite: eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiI3ODNkNDIyNC0zZWEyLTQ5N2MtOWEzMC02Nzg3ODg2MTljNDciLCJuYW1lIjoiYXJjbGliLXJlYWQtd3JpdGUiLCJhdXQiOlsiUk9MRV9SRUFEX1dSSVRFIl0sImlhdCI6MTUzMDY5MzQ5NSwiZXhwIjoxNTYwNjkzNDk1fQ.pEroOcl2agtSjv2TSykHOtakgBoZR5MLtPDcZOs1hR0
-      admin: eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJkZDVhZDJmMC00NDg2LTQ0MjktYTBlNS02NGY3OGRhYTkxOGQiLCJuYW1lIjoiYWRtaW4iLCJhdXQiOlsiUk9MRV9BRE1JTiJdLCJpYXQiOjE1MzM1MTE2ODUsImV4cCI6MTU2MzUxMTY4NX0.GseWdK1CEJ1J8QacXwEz_VX0iez7Fohu-rVX2_LDsCY
+    basic:
+      read: YXJjbGliLXJlYWQ6YXJjbGliLXJlYWQ=
+      readWrite: YXJjbGliLXJlYWQtd3JpdGU6YXJjbGliLXJlYWQtd3JpdGU=
+      admin: YWRtaW46YWRtaW4=
+  debugLocation: arcStorageData
+pronom:
+  formatDetailListUrl: http://www.nationalarchives.gov.uk/PRONOM/Format/proFormatListAction.aspx
+  formatListUrl: http://www.nationalarchives.gov.uk/PRONOM/Format/proFormatDetailListAction.aspx

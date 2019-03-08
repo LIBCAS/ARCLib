@@ -1,11 +1,9 @@
 package cz.cas.lib.arclib.api;
 
-import cz.cas.lib.arclib.domain.Producer;
 import cz.cas.lib.arclib.domain.profiles.SipProfile;
 import cz.cas.lib.arclib.security.authorization.Roles;
 import cz.cas.lib.arclib.store.SipProfileStore;
 import cz.cas.lib.core.exception.BadArgument;
-import cz.cas.lib.core.exception.ConflictObject;
 import cz.cas.lib.core.exception.MissingObject;
 import cz.cas.lib.core.store.Transactional;
 import io.swagger.annotations.*;
@@ -40,11 +38,6 @@ public class SipProfileApi {
                            @ApiParam(value = "Single instance", required = true)
                            @RequestBody SipProfile request) {
         eq(id, request.getId(), () -> new BadArgument("id"));
-
-        SipProfile sipProfileByName = store.findByName(request.getName());
-        if (sipProfileByName != null && !sipProfileByName.getId().equals(request.getId()))
-            throw new ConflictObject(SipProfile.class, request.getName());
-
         return store.save(request);
     }
 

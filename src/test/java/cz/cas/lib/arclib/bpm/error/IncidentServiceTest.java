@@ -2,11 +2,13 @@ package cz.cas.lib.arclib.bpm.error;
 
 import cz.cas.lib.arclib.bpm.BpmConstants;
 import cz.cas.lib.arclib.domain.Batch;
+import cz.cas.lib.arclib.domain.User;
 import cz.cas.lib.arclib.domain.ingestWorkflow.IngestWorkflow;
 import cz.cas.lib.arclib.domain.packages.AuthorialPackage;
 import cz.cas.lib.arclib.domain.packages.Sip;
 import cz.cas.lib.arclib.dto.IncidentInfoDto;
 import cz.cas.lib.arclib.service.IngestWorkflowService;
+import cz.cas.lib.arclib.service.UserService;
 import cz.cas.lib.arclib.service.incident.IncidentService;
 import cz.cas.lib.arclib.service.incident.IncidentSortField;
 import cz.cas.lib.arclib.store.AuthorialPackageUpdateLockStore;
@@ -14,6 +16,7 @@ import cz.cas.lib.arclib.store.IngestWorkflowStore;
 import cz.cas.lib.core.exception.MissingObject;
 import cz.cas.lib.core.index.dto.Order;
 import cz.cas.lib.core.store.Transactional;
+import helper.TransformerFactoryWorkaroundTest;
 import org.camunda.bpm.engine.HistoryService;
 import org.camunda.bpm.engine.RepositoryService;
 import org.camunda.bpm.engine.RuntimeService;
@@ -51,21 +54,18 @@ import static org.mockito.Mockito.when;
 @SpringBootTest
 /**
  * Tests incidents service with bpmn.
- * <p>
- *     todo: speed up test by removing springboot and using camunda in-memory possibilities, find out how to properly set jobExecutorActive property
- * </p>
  */
-public class IncidentServiceTest {
+public class IncidentServiceTest extends TransformerFactoryWorkaroundTest {
 
     private static final String CONFIG_OK = "{}";
     private static final String CONFIG_EX_INCIDENT = "{\"throw\":\"incident\"}";
     private static final String PROCESS_NAME = "process";
     private static final String BATCH_ID = "batchId";
-    private static final String INGEST_WORKFLOW_ID = "ingestWorkflowId";
     private static final String EXTERNAL_ID = "ARCLIB_000000003";
     private static final String EXTERNAL_ID_2 = "ARCLIB_000000004";
     private static final String ACTIVITY_ID_FST = "process1";
     private static final String ACTIVITY_ID_SND = "process2";
+    private static final User user = new User("user");
 
     @Inject
     private RepositoryService repositoryService;
@@ -92,13 +92,18 @@ public class IncidentServiceTest {
     private AuthorialPackageUpdateLockStore authorialPackageUpdateLockStore;
 
     @Mock
+    private UserService userService;
+
+    @Mock
     private JmsTemplate template;
 
     @Before
     @Transactional
     public void testSetUp() throws Exception {
+        when(userService.find(user.getId())).thenReturn(user);
         incidentService.getIngestErrorHandler().setIngestWorkflowService(ingestWorkflowService);
         incidentService.getIngestErrorHandler().setTemplate(template);
+        incidentService.setUserService(userService);
 
         Sip sip = new Sip();
         AuthorialPackage authorialPackage = new AuthorialPackage();
@@ -185,35 +190,6 @@ public class IncidentServiceTest {
     }
 
     @Test
-    public void incidentsByExternalId() throws Exception {
-        Map<String, Object> vars = new HashMap<>();
-        vars.put(BpmConstants.ProcessVariables.batchId, BATCH_ID);
-        vars.put(BpmConstants.ProcessVariables.ingestWorkflowId, INGEST_WORKFLOW_ID);
-        vars.put(BpmConstants.ProcessVariables.ingestWorkflowExternalId, EXTERNAL_ID);
-        vars.put(BpmConstants.ProcessVariables.latestConfig, CONFIG_EX_INCIDENT);
-        runtimeService.startProcessInstanceByKey(PROCESS_NAME, vars);
-        Map<String, Object> vars2 = new HashMap<>();
-        vars2.put(BpmConstants.ProcessVariables.batchId, BATCH_ID);
-        vars2.put(BpmConstants.ProcessVariables.ingestWorkflowId, "other");
-        vars2.put(BpmConstants.ProcessVariables.latestConfig, CONFIG_EX_INCIDENT);
-        runtimeService.startProcessInstanceByKey(PROCESS_NAME, vars2);
-        snooze();
-
-        List<IncidentInfoDto> incidents = incidentService.getIncidentsOfIngestWorkflow(EXTERNAL_ID);
-        assertThat(incidents, hasSize(1));
-        IncidentInfoDto fstIncident = incidents.get(0);
-        incidentService.solveIncidents(asList(fstIncident.getId()), CONFIG_EX_INCIDENT);
-        sleep();
-
-        incidents = incidentService.getIncidentsOfIngestWorkflow(EXTERNAL_ID);
-        assertThat(incidents, hasSize(2));
-        IncidentInfoDto sndIncident = incidents.get(1);
-        assertThat(sndIncident, not(is(fstIncident)));
-        assertThat(incidents.get(0), is(fstIncident));
-        assertThat(sndIncident.getExternalId(), is(EXTERNAL_ID));
-    }
-
-    @Test
     public void multipleIncidentsHalfSolved() throws Exception {
         Map<String, Object> vars = new HashMap<>();
         vars.put(BpmConstants.ProcessVariables.latestConfig, CONFIG_EX_INCIDENT);
@@ -292,7 +268,7 @@ public class IncidentServiceTest {
     @Test
     public void incidentFullDto() throws Exception {
         Map<String, Object> vars = new HashMap<>();
-        vars.put(BpmConstants.ProcessVariables.assignee, "user");
+        vars.put(BpmConstants.ProcessVariables.responsiblePerson, user.getId());
         vars.put(BpmConstants.ProcessVariables.batchId, BATCH_ID);
         vars.put(BpmConstants.ProcessVariables.ingestWorkflowId, "ingestWorkflowId");
         vars.put(BpmConstants.ProcessVariables.ingestWorkflowExternalId, EXTERNAL_ID);
@@ -303,7 +279,7 @@ public class IncidentServiceTest {
 
         IncidentInfoDto fstIncident = incidentService.getIncidentsOfBatch(BATCH_ID, IncidentSortField.TIMESTAMP, Order.DESC).get(0);
         assertThat(fstIncident.getActivityId(), is(ACTIVITY_ID_FST));
-        assertThat(fstIncident.getAssignee(), is("user"));
+        assertThat(fstIncident.getResponsiblePerson(), is(user));
         assertThat(fstIncident.getBatchId(), is(BATCH_ID));
         assertThat(fstIncident.getExternalId(), is(EXTERNAL_ID));
         assertThat(fstIncident.getConfig(), is(CONFIG_EX_INCIDENT));

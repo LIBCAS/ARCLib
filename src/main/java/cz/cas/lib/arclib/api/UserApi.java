@@ -1,5 +1,6 @@
 package cz.cas.lib.arclib.api;
 
+import cz.cas.lib.arclib.domain.Producer;
 import cz.cas.lib.arclib.domain.User;
 import cz.cas.lib.arclib.exception.BadRequestException;
 import cz.cas.lib.arclib.security.authorization.Roles;
@@ -8,6 +9,7 @@ import cz.cas.lib.arclib.security.authorization.role.Role;
 import cz.cas.lib.arclib.security.user.UserDetails;
 import cz.cas.lib.arclib.service.UserService;
 import cz.cas.lib.core.exception.BadArgument;
+import cz.cas.lib.core.exception.ConflictException;
 import cz.cas.lib.core.exception.MissingObject;
 import cz.cas.lib.core.index.dto.Filter;
 import cz.cas.lib.core.index.dto.FilterOperation;
@@ -52,12 +54,15 @@ public class UserApi {
     @RequestMapping(value = "/{id}", method = RequestMethod.PUT)
     @Transactional
     public User save(@ApiParam(value = "Id of the user", required = true) @PathVariable("id") String id,
-                     @ApiParam(value = "User", required = true) @RequestBody User user) {
+                     @ApiParam(value = "User", required = true) @RequestBody User user) throws ConflictException {
         Utils.notNull(user, () -> new BadArgument("user is null"));
         Utils.eq(id, user.getId(), () -> new BadArgument("id"));
         Utils.notNull(user.getUsername(), () -> new BadArgument("missing username"));
+        User existing = userService.find(id);
+        if (existing != null && !user.getUsername().equals(existing.getUsername()))
+            throw new ConflictException("Username can't be updated");
         if (!hasRole(userDetails, Roles.SUPER_ADMIN))
-            user.setProducer(userDetails.getProducerId());
+            user.setProducer(new Producer(userDetails.getProducerId()));
         else
             notNull(user.getProducer(), () -> new BadRequestException("user has to have producer assigned"));
         return userService.save(user);

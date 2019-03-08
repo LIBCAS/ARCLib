@@ -4,6 +4,7 @@ import cz.cas.lib.core.exception.GeneralException;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.io.File;
 import java.math.BigDecimal;
 import java.time.*;
 import java.time.temporal.ChronoUnit;

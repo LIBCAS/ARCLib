@@ -1,29 +1,31 @@
 package cz.cas.lib.arclib.bpm;
 
+import cz.cas.lib.arclib.domain.IngestToolFunction;
+import cz.cas.lib.arclib.domain.ingestWorkflow.IngestEvent;
 import cz.cas.lib.arclib.service.validator.Validator;
-import cz.cas.lib.arclib.utils.ArclibUtils;
 import cz.cas.lib.core.store.Transactional;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.camunda.bpm.engine.delegate.BpmnError;
 import org.camunda.bpm.engine.delegate.DelegateExecution;
 import org.camunda.bpm.engine.delegate.JavaDelegate;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 import org.xml.sax.SAXException;
 
 import javax.inject.Inject;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.xpath.XPathExpressionException;
 import java.io.IOException;
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 
 import static cz.cas.lib.core.util.Utils.notNull;
 
 @Slf4j
-@Component
+@Service
 public class ValidatorDelegate extends ArclibDelegate implements JavaDelegate {
 
     protected Validator service;
+    @Getter
+    private String toolName="ARCLib_"+ IngestToolFunction.validation;
 
     /**
      * Executes the validation process for the given SIP. In case of a validation error a BPMN error is thrown.
@@ -31,7 +33,7 @@ public class ValidatorDelegate extends ArclibDelegate implements JavaDelegate {
     @Transactional
     @Override
     public void execute(DelegateExecution execution) {
-        log.info("Execution of Validator delegate started.");
+        log.debug("Execution of Validator delegate started.");
         String validationProfileId = getStringVariable(execution, BpmConstants.Validation.validationProfileId);
         notNull(validationProfileId, () -> {
             throw new IllegalArgumentException("null id of the validation profile");
@@ -45,19 +47,18 @@ public class ValidatorDelegate extends ArclibDelegate implements JavaDelegate {
         String sipId = getStringVariable(execution, BpmConstants.ProcessVariables.sipId);
         notNull(sipId, () -> {
             throw new IllegalArgumentException("null id of the sip of ingest workflow with external id "
-                    + BpmConstants.ProcessVariables.ingestWorkflowExternalId);
+                    + externalId);
         });
 
         try {
-            String originalSipFileName = getStringVariable(execution, BpmConstants.Ingestion.originalSipFileName);
-            service.validateSip(sipId, ArclibUtils.getSipFolderWorkspacePath(externalId, workspace,
-                    originalSipFileName).toString(), validationProfileId);
+            service.validateSip(sipId, (String) execution.getVariable(BpmConstants.ProcessVariables.sipFolderWorkspacePath),
+                    validationProfileId);
+
         } catch (ParserConfigurationException | IOException | SAXException | XPathExpressionException e) {
             throw new BpmnError(BpmConstants.ErrorCodes.ProcessFailure, "SIP id: " + sipId + ". " + e.getMessage());
         }
-        execution.setVariable(BpmConstants.Validation.success, true);
-        execution.setVariable(BpmConstants.Validation.dateTime, Instant.now().truncatedTo(ChronoUnit.SECONDS).toString());
-        log.info("Execution of Validator delegate finished.");
+        ingestEventStore.save(new IngestEvent(ingestWorkflowStore.findByExternalId(externalId), toolService.findByNameAndVersion(getToolName(), getToolVersion()), true, null));
+        log.debug("Execution of Validator delegate finished.");
     }
 
     @Inject

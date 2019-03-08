@@ -1,6 +1,7 @@
 package cz.cas.lib.arclib.service.formatIdentification.droid;
 
 import cz.cas.lib.arclib.service.formatIdentification.FormatIdentificationTool;
+import cz.cas.lib.arclib.service.formatIdentification.FormatIdentificationToolType;
 import cz.cas.lib.core.exception.GeneralException;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -27,7 +28,7 @@ public class DroidFormatIdentificationTool extends FormatIdentificationTool {
 
     private static final String FILTER = "type any FILE CONTAINER";
     private static final String CMD;
-
+    public static final String FORMAT_IDENTIFIER_NAME = FormatIdentificationToolType.DROID.toString();
     static {
         if (SystemUtils.IS_OS_WINDOWS) {
             CMD = "droid.bat";
@@ -54,7 +55,7 @@ public class DroidFormatIdentificationTool extends FormatIdentificationTool {
             throw new FileNotFoundException("no file/folder found at: " + pathToSip);
         }
 
-        log.info("DROID format analysis for SIP at path " + pathToSip + " started.");
+        log.debug("DROID format analysis for SIP at path " + pathToSip + " started.");
 
         Path profileResultsPath = Paths.get(pathToSip + ".droid");
         Path exportResultsPath = Paths.get(pathToSip + ".csv");
@@ -62,7 +63,7 @@ public class DroidFormatIdentificationTool extends FormatIdentificationTool {
             runProfile(pathToSip, profileResultsPath);
             exportProfile(profileResultsPath, exportResultsPath);
 
-            log.info("DROID format analysis for SIP at path " + pathToSip + " finished.");
+            log.debug("DROID format analysis for SIP at path " + pathToSip + " finished.");
             return parseResults(exportResultsPath, parsedColumn, pathToSip);
         } finally {
             cleanUp(asList(profileResultsPath, exportResultsPath));
@@ -78,7 +79,7 @@ public class DroidFormatIdentificationTool extends FormatIdentificationTool {
     protected void runProfile(Path pathToSIP, Path pathToResult) {
         executeProcessDefaultResultHandle(CMD, "-R", "-a", pathToSIP.toAbsolutePath().toString(), "-p",
                 pathToResult.toAbsolutePath().toString());
-        log.info("File with DROID profile result created at " + pathToResult + ".");
+        log.debug("File with DROID profile result created at " + pathToResult + ".");
     }
 
     /**
@@ -95,7 +96,7 @@ public class DroidFormatIdentificationTool extends FormatIdentificationTool {
         }
         executeProcessDefaultResultHandle(CMD, "-p", pathToProfile.toAbsolutePath().toString(), "-f", FILTER, "-E",
                 pathToResult.toAbsolutePath().toString());
-        log.info("File with DROID export result created at " + pathToResult + ".");
+        log.debug("File with DROID export result created at " + pathToResult + ".");
     }
 
     /**
@@ -109,7 +110,7 @@ public class DroidFormatIdentificationTool extends FormatIdentificationTool {
      * @throws GeneralException CSV file with the results of the DROID format identification is inaccessible
      */
     protected Map<String, List<Pair<String, String>>> parseResults(Path pathToResultsCsv, CsvResultColumn parsedColumn, Path pathToSip) throws IOException {
-        log.info("Parsing of CSV file " + pathToResultsCsv + " started.");
+        log.debug("Parsing of CSV file " + pathToResultsCsv + " started.");
 
         Map<String, List<Pair<String, String>>> filePathsToParsedColumnValues = new HashMap<>();
 
@@ -139,7 +140,7 @@ public class DroidFormatIdentificationTool extends FormatIdentificationTool {
                 parsedColumnValues.add(new Pair(parsedColumnValue, method));
                 filePathsToParsedColumnValues.put(filePath, parsedColumnValues);
 
-                log.info("File at path \"" + filePath + "\" has been identified with format: " + parsedColumnValue +
+                log.debug("File at path \"" + filePath + "\" has been identified with format: " + parsedColumnValue +
                         ". Identification method: " + method + ".");
             }
         } catch (IOException e) {
@@ -151,20 +152,25 @@ public class DroidFormatIdentificationTool extends FormatIdentificationTool {
             }
         }
 
-        log.info("Parsing of CSV file " + pathToResultsCsv + " finished.");
+        log.debug("Parsing of CSV file " + pathToResultsCsv + " finished.");
         return filePathsToParsedColumnValues;
     }
 
     public String getToolName() {
-        return FormatIdentificationTool.DROID_FORMAT_IDENTIFIER_NAME;
+        return FORMAT_IDENTIFIER_NAME;
     }
 
+    /**
+     * Returns a string containing the version of format identifier together with the versions of the signature files.
+     *
+     * @return string with the format identifier version
+     */
     public String getToolVersion() {
         String toolVersion = "DROID: version: " + getDroidVersion().get(0) + ", Signature files: ";
         List<String> droidSignatureFilesVersions = getDroidSignatureFilesVersions();
         for (int i = 0; i < droidSignatureFilesVersions.size(); i++) {
             String sigFileVers = droidSignatureFilesVersions.get(i);
-            log.info(sigFileVers + " ");
+            log.debug(sigFileVers + " ");
             toolVersion += i + 1 + ". " + sigFileVers + " ";
         }
         return toolVersion;
@@ -176,7 +182,10 @@ public class DroidFormatIdentificationTool extends FormatIdentificationTool {
      * @return names of signature file and container signature
      */
     protected List<String> getDroidSignatureFilesVersions() {
-        return executeProcessCustomResultHandle(CMD, "-x").getR();
+        Pair<Integer, List<String>> result = executeProcessCustomResultHandle(false, CMD, "-x");
+        if (result.getL() != 0)
+            throw new IllegalStateException("Droid signature files version CMD has failed: " + result.getR());
+        return result.getR();
     }
 
     /**
@@ -185,7 +194,10 @@ public class DroidFormatIdentificationTool extends FormatIdentificationTool {
      * @return name of the current DROID version
      */
     protected List<String> getDroidVersion() {
-        return executeProcessCustomResultHandle(CMD, "-v").getR();
+        Pair<Integer, List<String>> result = executeProcessCustomResultHandle(false, CMD, "-v");
+        if (result.getL() != 0)
+            throw new IllegalStateException("Droid version CMD has failed: " + result.getR());
+        return result.getR();
     }
 
     /**

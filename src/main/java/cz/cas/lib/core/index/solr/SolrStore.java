@@ -5,10 +5,11 @@ import cz.cas.lib.core.domain.DomainObject;
 import cz.cas.lib.core.exception.BadArgument;
 import cz.cas.lib.core.exception.GeneralException;
 import cz.cas.lib.core.index.dto.*;
-import cz.cas.lib.core.index.solr.util.NestedCriteria;
 import cz.cas.lib.core.store.DatedStore;
 import cz.cas.lib.core.store.DomainStore;
 import org.apache.solr.client.solrj.beans.Field;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -49,6 +50,8 @@ import static cz.cas.lib.core.util.Utils.asSet;
  */
 @SuppressWarnings("WeakerAccess")
 public interface SolrStore<T extends DomainObject, U extends SolrDomainObject> {
+    Logger solrStoreLogger = LoggerFactory.getLogger(SolrStore.class);
+
     Collection<T> findAll();
 
     List<T> findAllInList(List<String> ids);
@@ -84,6 +87,18 @@ public interface SolrStore<T extends DomainObject, U extends SolrDomainObject> {
      */
     default void reindex() {
         Collection<T> instances = findAll();
+        if (instances.isEmpty())
+            return;
+        solrStoreLogger.debug("reindexing " + instances.size() + " records of core: " + getIndexCore());
+        int counter = 0;
+        for (T instance : instances) {
+            index(instance);
+            counter++;
+            if (counter % 20 == 0 || counter == instances.size()) {
+                solrStoreLogger.debug("reindexed " + counter + " records of core: " + getIndexCore());
+            }
+        }
+        solrStoreLogger.trace("reindexed all " + instances.size() + " records of core: " + getIndexCore());
         instances.forEach(this::index);
     }
 
@@ -91,6 +106,7 @@ public interface SolrStore<T extends DomainObject, U extends SolrDomainObject> {
      * Deletes all documents from SOLR and reindexes all records from DB
      */
     default void refresh() {
+        solrStoreLogger.debug("refreshing core: " + getIndexCore());
         removeAllIndexes();
         reindex();
     }
@@ -138,9 +154,10 @@ public interface SolrStore<T extends DomainObject, U extends SolrDomainObject> {
         SimpleQuery query = new SimpleQuery();
         query.addSort(new Sort(new Sort.Order(Sort.Direction.valueOf(params.getOrder().toString()), params.getSort())));
         query.addProjectionOnField("id");
-        query.setPageRequest(new PageRequest(params.getPage(), params.getPageSize()));
+        if (params.getPageSize() != null && params.getPageSize() > 0)
+            query.setPageRequest(new PageRequest(params.getPage(), params.getPageSize()));
         query.addFilterQuery(new SimpleFilterQuery(buildFilters(params)));
-        Page<U> page = getTemplate().query(query, getUType());
+        Page<U> page = getTemplate().query(getIndexCore(), query, getUType());
         return page.getTotalElements();
     }
 
@@ -162,26 +179,29 @@ public interface SolrStore<T extends DomainObject, U extends SolrDomainObject> {
         SolrDocument document = getUType().getAnnotation(SolrDocument.class);
 
         if (document != null) {
-            return document.solrCoreName();
+            return document.solrCoreName().equalsIgnoreCase("") ?  document.collection():document.solrCoreName();
         } else {
             throw new GeneralException("Missing Solr @SolrDocument.coreName for " + getUType().getSimpleName());
         }
     }
 
     default void removeIndex(T obj) {
-        getTemplate().deleteById(getIndexCore(), obj.getId());
+        getTemplate().deleteByIds(getIndexCore(), obj.getId());
         getTemplate().commit(getIndexCore());
     }
 
     default void removeAllIndexes() {
         SimpleQuery query = new SimpleQuery();
         query.addCriteria(Criteria.where("id"));
+        solrStoreLogger.trace("removing all records from core: " + getIndexCore());
         getTemplate().delete(getIndexCore(), query);
         getTemplate().commit(getIndexCore());
+        solrStoreLogger.trace("successfully removed all records of core: " + getIndexCore());
+
     }
 
     default T index(T obj) {
-        getTemplate().saveBean(this.toIndexObject(obj));
+        getTemplate().saveBean(getIndexCore(), this.toIndexObject(obj));
         getTemplate().commit(getIndexCore());
 
         return obj;
@@ -195,8 +215,7 @@ public interface SolrStore<T extends DomainObject, U extends SolrDomainObject> {
         List<U> indexObjects = objects.stream()
                 .map(this::toIndexObject)
                 .collect(Collectors.toList());
-        getTemplate().saveBeans(indexObjects);
-
+        getTemplate().saveBeans(getIndexCore(), indexObjects);
         getTemplate().commit(getIndexCore());
 
         return objects;
@@ -259,7 +278,7 @@ public interface SolrStore<T extends DomainObject, U extends SolrDomainObject> {
             case NOT_NULL:
                 return notNullQuery(filter.getField());
             case NESTED:
-                return nestedQuery(filter.getField(), filter.getFilter());
+                throw new UnsupportedOperationException();
         }
     }
 
@@ -293,24 +312,6 @@ public interface SolrStore<T extends DomainObject, U extends SolrDomainObject> {
                 .map(this::buildFilter)
                 .collect(Collectors.toList());
         return andQueryInternal(builders);
-    }
-
-    default Criteria nestedQuery(String name, List<Filter> filters) {
-        Criteria parentCriteria = Criteria.where("type").is(getIndexType());
-
-        try {
-            Class<?> childType = getUType().getDeclaredField(name).getType();
-            String childTypeName = childType.getName();
-            Criteria childTypeCriteria = Criteria.where("type").is(childTypeName);
-
-            Criteria childrenCriteria = andQuery(filters);
-            childrenCriteria.and(childTypeCriteria);
-
-            return new NestedCriteria(parentCriteria, childrenCriteria);
-
-        } catch (Exception e) {
-            throw new GeneralException(e);
-        }
     }
 
     /**

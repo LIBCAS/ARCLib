@@ -1,6 +1,7 @@
 package cz.cas.lib.arclib.dto;
 
 import cz.cas.lib.arclib.domain.Batch;
+import cz.cas.lib.arclib.domain.ingestWorkflow.IngestEvent;
 import cz.cas.lib.arclib.domain.ingestWorkflow.IngestWorkflow;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -17,6 +18,6 @@ import java.util.Map;
 public class IngestWorkflowDto {
     private IngestWorkflow ingestWorkflow;
     private Map<String, Object> processVariables;
-    private List<IncidentInfoDto> incidents;
+    private List<IngestEvent> events;
     private Batch batch;
 }

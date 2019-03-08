@@ -22,7 +22,6 @@ import java.util.zip.ZipOutputStream;
 @Service
 public class ArchivalStorageServiceDebug {
 
-    public static final String ARC_STORAGE_DATA = "arcStorageData";
     private Path arcStorageData;
 
     /**
@@ -35,6 +34,8 @@ public class ArchivalStorageServiceDebug {
      *                     does not exist
      */
     public InputStream exportSingleAip(String aipId, boolean allXmls) throws IOException {
+        log.debug("Exporting AIP " + aipId + " from archival storage.");
+
         Path sipPath = arcStorageData.resolve(aipId);
 
         boolean sipExists = sipPath.toFile().exists();
@@ -77,7 +78,6 @@ public class ArchivalStorageServiceDebug {
                 IOUtils.closeQuietly(xmlFis);
             }
         }
-        log.info("AIP " + aipId + " has been exported from archival storage.");
         return new FileInputStream(pathToZip.toFile());
     }
 
@@ -90,6 +90,8 @@ public class ArchivalStorageServiceDebug {
      * @throws IOException if the file with the ArclibXml content does not exist
      */
     public InputStream exportSingleXml(String aipId, Integer version) throws IOException {
+        log.debug("Exporting ArclibXml of AIP with ID " + aipId + " from archival storage.");
+
         File xmlFile = null;
         if (version == null) {
             int maxVersion = 0;
@@ -108,7 +110,6 @@ public class ArchivalStorageServiceDebug {
             xmlFile = arcStorageData.resolve(aipId + version).toFile();
         if (xmlFile == null || !xmlFile.exists())
             return null;
-        log.info("ArclibXml of AIP with ID " + aipId + " has been exported from archival storage.");
         return new FileInputStream(xmlFile);
     }
 
@@ -120,6 +121,8 @@ public class ArchivalStorageServiceDebug {
      * @param xmlStream stream with the ArclibXml content
      */
     public void storeAip(String sipId, InputStream sipStream, InputStream xmlStream) {
+        log.debug("Storing AIP with id " + sipId + " to archival storage.");
+
         try {
             FileUtils.copyInputStreamToFile(sipStream, arcStorageData.resolve(sipId).toFile());
             FileUtils.copyInputStreamToFile(xmlStream, arcStorageData.resolve(sipId + 1).toFile());
@@ -137,53 +140,61 @@ public class ArchivalStorageServiceDebug {
      * @param xmlVersion version of the ArclibXml
      */
     public void updateXml(String sipId, InputStream xmlStream, int xmlVersion) {
+        log.debug("Updating AIP: " + sipId + " at archival storage.");
+
         try {
             FileUtils.copyInputStreamToFile(xmlStream, arcStorageData.resolve(sipId + xmlVersion).toFile());
         } catch (IOException e) {
             throw new GeneralException("Failed storing of version number " + xmlVersion +
                     " of ArclibXml of SIP " + sipId + " to archival storage. " + "Reason: " + e.getMessage());
         }
+        log.debug("AIP: " + sipId + " successfully updated at archival storage.");
     }
 
-    /**
-     * Physicaly removes SIP from archival storage.
-     *
-     * @param aipId id of the AIP
-     */
-    public void delete(String aipId) {
-        try {
-            Files.delete(arcStorageData.resolve(aipId));
-        } catch (IOException e) {
-            throw new GeneralException("Deleting of SIP " + aipId + " at archival storage failed. Reason: " + e.getMessage());
-        }
-        log.info("SIP " + aipId + " has been deleted from archival storage.");
-    }
-
-    /**
-     * Logically removes SIP from archival storage.
-     *
-     * @param aipId id of the SIP
-     */
-    public void remove(String aipId) {
-        if (arcStorageData.resolve(aipId).toFile().renameTo(arcStorageData.resolve(aipId + ".REMOVED").toFile())) {
-            log.info("SIP " + aipId + " has been removed from archival storage.");
-        } else {
-            throw new GeneralException("SIP " + aipId + " has failed to be removed from archival storage.");
-        }
-    }
-
-    /**
-     * Renews logically removed AIP.
-     *
-     * @param aipId id of the AIP
-     */
-    public void renew(String aipId) {
-        if (arcStorageData.resolve(aipId + ".REMOVED").toFile().renameTo(arcStorageData.resolve(aipId).toFile())) {
-            log.info("SIP " + aipId + " has been renewed at archival storage.");
-        } else {
-            throw new GeneralException("SIP " + aipId + " has failed to be renewed at archival storage.");
-        }
-    }
+//    /**
+//     * Physicaly removes SIP from archival storage.
+//     *
+//     * @param aipId id of the AIP
+//     */
+//    public void delete(String aipId) {
+//        log.debug("Deleting AIP: " + aipId + " at archival storage.");
+//        try {
+//            Files.delete(arcStorageData.resolve(aipId));
+//        } catch (IOException e) {
+//            throw new GeneralException("Deleting of SIP " + aipId + " at archival storage failed. Reason: " + e.getMessage());
+//        }
+//        log.debug("SIP " + aipId + " has been deleted from archival storage.");
+//    }
+//
+//    /**
+//     * Logically removes SIP from archival storage.
+//     *
+//     * @param aipId id of the SIP
+//     */
+//    public void remove(String aipId) {
+//        log.debug("Removing AIP: " + aipId + " at archival storage.");
+//
+//        if (arcStorageData.resolve(aipId).toFile().renameTo(arcStorageData.resolve(aipId + ".REMOVED").toFile())) {
+//            log.info("SIP " + aipId + " has been removed from archival storage.");
+//        } else {
+//            throw new GeneralException("SIP " + aipId + " has failed to be removed from archival storage.");
+//        }
+//    }
+//
+//    /**
+//     * Renews logically removed AIP.
+//     *
+//     * @param aipId id of the AIP
+//     */
+//    public void renew(String aipId) {
+//        log.debug("Renewing AIP: " + aipId + " at archival storage.");
+//
+//        if (arcStorageData.resolve(aipId + ".REMOVED").toFile().renameTo(arcStorageData.resolve(aipId).toFile())) {
+//            log.debug("AIP " + aipId + " has been renewed at archival storage.");
+//        } else {
+//            throw new GeneralException("SIP " + aipId + " has failed to be renewed at archival storage.");
+//        }
+//    }
 
     /**
      * Returns the AIP state at the archival storage.
@@ -196,8 +207,7 @@ public class ArchivalStorageServiceDebug {
         File xml = new File(arcStorageData.resolve(aipId + 1).toString());
         Boolean isSaved = sip.exists() && xml.exists();
 
-        ObjectState state = isSaved ? ObjectState.ARCHIVED : ObjectState.PROCESSING;
-        return state;
+        return isSaved ? ObjectState.ARCHIVED : ObjectState.PROCESSING;
     }
 
     /**
@@ -217,8 +227,8 @@ public class ArchivalStorageServiceDebug {
     }
 
     @Inject
-    public void setWorkspace(@Value("${arclib.path.workspace}") String workspace) throws IOException {
-        arcStorageData = Paths.get(workspace).resolve(ARC_STORAGE_DATA);
+    public void setWorkspace(@Value("${arclib.path.workspace}") String workspace, @Value("${archivalStorage.debugLocation}") String debugLocation) throws IOException {
+        arcStorageData = Paths.get(workspace).resolve(debugLocation);
         Files.createDirectories(arcStorageData);
     }
 }

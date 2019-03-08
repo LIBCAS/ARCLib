@@ -14,7 +14,7 @@ import org.springframework.data.solr.repository.config.EnableSolrRepositories;
 import java.util.Collections;
 
 @Configuration
-@EnableSolrRepositories(basePackages = "cz.cas.lib.arclib.index.solr", multicoreSupport = true)
+@EnableSolrRepositories(basePackages = "cz.cas.lib.arclib.index.solr")
 public class SolrConfig {
 
     @Value("${solr.endpoint}")
@@ -22,7 +22,7 @@ public class SolrConfig {
 
     @Bean
     public SolrClient solrClient() {
-        return new HttpSolrClient(endpoint);
+        return new HttpSolrClient.Builder().withBaseSolrUrl(endpoint).build();
     }
 
     @Bean

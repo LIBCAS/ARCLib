@@ -39,7 +39,7 @@ public class IngestWorkflow extends DatedObject {
     /**
      * Názov súboru
      */
-    protected String originalFileName;
+    protected String fileName;
 
     /**
      * Stav spracovania

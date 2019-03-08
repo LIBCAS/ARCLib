@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import cz.cas.lib.arclib.domain.ingestWorkflow.IngestIssue;
 import cz.cas.lib.arclib.domain.packages.FolderStructure;
 import cz.cas.lib.arclib.utils.ArclibUtils;
+import cz.cas.lib.core.util.Utils;
 import org.junit.Test;
 import org.mockito.Mockito;
 
@@ -76,24 +77,20 @@ public class ArclibUtilsTest {
         String configPath = "/testKey/testValue";
         IngestIssue issue = Mockito.spy(new IngestIssue());
 
-        Boolean value = ArclibUtils.parseBooleanConfig(configTrue, configPath, issue);
-        assertThat(value, is(true));
-        assertThat(issue.isSolvedByConfig(), is(true));
+        Utils.Pair<Boolean,String> value = ArclibUtils.parseBooleanConfig(configTrue, configPath);
+        assertThat(value.getL(), is(true));
+        assertThat(value.getR(),startsWith("used config"));
 
-        value = ArclibUtils.parseBooleanConfig(configInvalid, configPath, issue);
-        assertThat(value, nullValue());
-        assertThat(issue.isSolvedByConfig(), is(false));
+        value = ArclibUtils.parseBooleanConfig(configInvalid, configPath);
+        assertThat(value.getL(), nullValue());
+        assertThat(value.getR(),startsWith("invalid config"));
 
-        value = ArclibUtils.parseBooleanConfig(configFalse, configPath, issue);
-        assertThat(value, is(false));
-        assertThat(issue.isSolvedByConfig(), is(true));
+        value = ArclibUtils.parseBooleanConfig(configFalse, configPath);
+        assertThat(value.getL(), is(false));
+        assertThat(value.getR(),startsWith("used config"));
 
-        value = ArclibUtils.parseBooleanConfig(configEmpty, configPath, issue);
-        assertThat(value, nullValue());
-        assertThat(issue.isSolvedByConfig(), is(false));
-
-        verify(issue, times(1)).setInvalidConfigNote(eq(configPath), anyString(), anyString(), anyString());
-        verify(issue, times(1)).setMissingConfigNote(eq(configPath));
-        verify(issue, times(2)).setUsedConfigNote(eq(configPath), anyString());
+        value = ArclibUtils.parseBooleanConfig(configEmpty, configPath);
+        assertThat(value.getL(), nullValue());
+        assertThat(value.getR(),startsWith("missing config"));
     }
 }

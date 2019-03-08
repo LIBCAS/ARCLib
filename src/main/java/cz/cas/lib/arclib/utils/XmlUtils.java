@@ -3,6 +3,7 @@ package cz.cas.lib.arclib.utils;
 import cz.cas.lib.arclib.exception.validation.MissingNode;
 import cz.cas.lib.core.exception.GeneralException;
 import cz.cas.lib.core.util.Utils;
+import net.sf.saxon.jaxp.SaxonTransformerFactory;
 import org.dom4j.InvalidXPathException;
 import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
@@ -13,7 +14,10 @@ import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.transform.*;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Source;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerException;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import javax.xml.transform.stream.StreamSource;
@@ -55,7 +59,7 @@ public class XmlUtils {
         try {
             return (NodeList) xPath.compile(expression).evaluate(doc, XPathConstants.NODESET);
         } catch (XPathExpressionException e) {
-            throw new InvalidXPathException(expression, e);
+            throw new InvalidXPathException(expression, e.getMessage());
         }
     }
 
@@ -94,7 +98,7 @@ public class XmlUtils {
         for (int i = 0; i < nodes.getLength(); i++) {
             nodes.item(i).setNodeValue(value);
         }
-        TransformerFactory.newInstance().newTransformer().transform(new DOMSource(doc), new StreamResult(stringWriter));
+        SaxonTransformerFactory.newInstance().newTransformer().transform(new DOMSource(doc), new StreamResult(stringWriter));
         return stringWriter.toString();
     }
 
@@ -108,7 +112,7 @@ public class XmlUtils {
     public static String nodeToString(org.w3c.dom.Node node) throws TransformerException {
         StringWriter sw = new StringWriter();
 
-        Transformer t = TransformerFactory.newInstance().newTransformer();
+        Transformer t = SaxonTransformerFactory.newInstance().newTransformer();
         t.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
         t.setOutputProperty(OutputKeys.INDENT, "yes");
         t.transform(new DOMSource(node), new StreamResult(sw));

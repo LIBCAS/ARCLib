@@ -21,6 +21,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 public class Initializer {
 
     public static void main(String[] args) {
+        System.setProperty("javax.xml.transform.TransformerFactory", "cz.cas.lib.arclib.config.ArclibTransformerFactory");
         SpringApplication.run(Initializer.class, args);
     }
 }

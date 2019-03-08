@@ -37,17 +37,21 @@ public class CustomIncidentHandler implements IncidentHandler {
     private IngestErrorHandler ingestErrorHandler;
 
     @Override
-    public void handleIncident(IncidentContext context, String message) {
-        createIncident(context, message);
+    public Incident handleIncident(IncidentContext context, String message) {
+        return createIncident(context, message);
     }
 
     private Incident createIncident(IncidentContext context, String message) {
         if (message == null || !message.contains(IncidentException.INCIDENT_MSG_PREFIX)) {
-            String externalId = (String) runtimeService.getVariable(context.getExecutionId(), BpmConstants.ProcessVariables.ingestWorkflowExternalId);
-            ProcessInstance processInstance = runtimeService.createProcessInstanceQuery().variableValueEquals(BpmConstants.ProcessVariables.ingestWorkflowExternalId, externalId).singleResult();
-            IngestWorkflowFailureInfo failureInfo = new IngestWorkflowFailureInfo(message, managementService.getJobExceptionStacktrace(context.getConfiguration()), IngestWorkflowFailureType.INTERNAL_ERROR);
-            String assignee = (String) runtimeService.getVariable(context.getExecutionId(), BpmConstants.ProcessVariables.assignee);
-            ingestErrorHandler.handleError(externalId, failureInfo, processInstance.getId(), assignee);
+            String externalId = (String) runtimeService
+                    .getVariable(context.getExecutionId(), BpmConstants.ProcessVariables.ingestWorkflowExternalId);
+            ProcessInstance processInstance = runtimeService.createProcessInstanceQuery()
+                    .variableValueEquals(BpmConstants.ProcessVariables.ingestWorkflowExternalId, externalId)
+                    .singleResult();
+            IngestWorkflowFailureInfo failureInfo = new IngestWorkflowFailureInfo(message,
+                    managementService.getJobExceptionStacktrace(context.getConfiguration()), IngestWorkflowFailureType.INTERNAL_ERROR);
+            String responsiblePerson = (String) runtimeService.getVariable(context.getExecutionId(), BpmConstants.ProcessVariables.responsiblePerson);
+            ingestErrorHandler.handleError(externalId, failureInfo, processInstance.getId(), responsiblePerson);
             return null;
         }
         IncidentEntity newIncident = IncidentEntity.createAndInsertIncident(INCIDENT_HANDLER_TYPE, context, message);
@@ -55,7 +59,7 @@ public class CustomIncidentHandler implements IncidentHandler {
 
         if (context.getExecutionId() != null) {
             newIncident.createRecursiveIncidents();
-            log.info("Created recursive incidents for incident ID " + newIncident.getId() + ".");
+            log.debug("Created recursive incidents for incident ID " + newIncident.getId() + ".");
         }
 
         return newIncident;

@@ -15,7 +15,7 @@ import org.springframework.data.solr.core.mapping.SolrDocument;
 @AllArgsConstructor
 @Getter
 @Setter
-@SolrDocument(solrCoreName = "test")
+@SolrDocument(collection = "test")
 public class SolrTestEntity extends SolrDatedObject {
 
     @Field
