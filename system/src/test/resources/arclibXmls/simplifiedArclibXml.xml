@@ -1,0 +1,191 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<METS:mets xmlns:METS="http://www.loc.gov/METS/" xmlns:premis="info:lc/xmlns/premis-v2"
+           xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+           LABEL="Hlasy ze Siona, 1861-1916" TYPE="Periodical" OBJID="b8959a84-3625-4ced-9f7f-c26fe46cbdb4">
+    <METS:metsHdr CREATEDATE="2019-05-15T20:59:38Z" LASTMODDATE="2019-05-15T20:59:39Z" ID="ARCLIB_000000002">
+        <METS:agent ROLE="CREATOR" TYPE="ORGANIZATION">
+            <METS:name>Producer 1</METS:name>
+        </METS:agent>
+        <METS:agent ROLE="ARCHIVIST" TYPE="ORGANIZATION">
+            <METS:name>ABA001</METS:name>
+        </METS:agent>
+        <METS:altRecordID TYPE="original SIP identifier">Hlasy ze Siona, 1861-1916</METS:altRecordID>
+    </METS:metsHdr>
+    <METS:dmdSec ID="DCMD_TITLE_0001">
+        <METS:mdWrap MDTYPE="DC" MIMETYPE="text/xml">
+            <METS:xmlData>
+                <dcterms:sipVersionNumber xmlns:dcterms="http://purl.org/dc/terms/">1</dcterms:sipVersionNumber>
+                <dcterms:sipVersionOf xmlns:dcterms="http://purl.org/dc/terms/">initial version</dcterms:sipVersionOf>
+                <dcterms:xmlVersionNumber xmlns:dcterms="http://purl.org/dc/terms/">1</dcterms:xmlVersionNumber>
+                <dcterms:xmlVersionOf xmlns:dcterms="http://purl.org/dc/terms/">initial version</dcterms:xmlVersionOf>
+            </METS:xmlData>
+        </METS:mdWrap>
+    </METS:dmdSec>
+    <METS:amdSec>
+        <METS:techMD ID="techMD_1">
+            <METS:mdWrap MDTYPE="PREMIS">
+                <METS:xmlData>
+                    <premis:object xsi:type="premis:file">
+                        <premis:objectIdentifier>
+                            <premis:objectIdentifierType>local</premis:objectIdentifierType>
+                            <premis:objectIdentifierValue>obj-package</premis:objectIdentifierValue>
+                        </premis:objectIdentifier>
+                        <premis:objectCharacteristics>
+                            <premis:compositionLevel>0</premis:compositionLevel>
+                            <premis:fixity>
+                                <premis:messageDigestAlgorithm>MD5</premis:messageDigestAlgorithm>
+                                <premis:messageDigest>8501e49e4a2a5fa4bd1843e674c1b1d5</premis:messageDigest>
+                            </premis:fixity>
+                            <premis:fixity>
+                                <premis:messageDigestAlgorithm>CRC32</premis:messageDigestAlgorithm>
+                                <premis:messageDigest>52a06064</premis:messageDigest>
+                            </premis:fixity>
+                            <premis:fixity>
+                                <premis:messageDigestAlgorithm>SHA-512</premis:messageDigestAlgorithm>
+                                <premis:messageDigest>
+                                    0cf660e223e0c200f789a168d0a87e5c415bb7f00555d25af3f4915122bf0d3fbc2b0033968fa353f95ae1fb4dd48bca836d003ac8c1eb5c947d279665ba5f39
+                                </premis:messageDigest>
+                            </premis:fixity>
+                            <premis:size>132006009</premis:size>
+                            <premis:format>
+                                <premis:formatDesignation>
+                                    <premis:formatName>application/zip</premis:formatName>
+                                </premis:formatDesignation>
+                                <premis:formatRegistry>
+                                    <premis:formatRegistryName>PRONOM</premis:formatRegistryName>
+                                    <premis:formatRegistryKey>x-fmt/263</premis:formatRegistryKey>
+                                </premis:formatRegistry>
+                            </premis:format>
+                        </premis:objectCharacteristics>
+                    </premis:object>
+                </METS:xmlData>
+            </METS:mdWrap>
+        </METS:techMD>
+    </METS:amdSec>
+    <METS:amdSec>
+        <METS:digiprovMD ID="AGENT_001">
+            <METS:mdWrap MDTYPE="PREMIS">
+                <METS:xmlData>
+                    <premis:agent>
+                        <premis:agentIdentifier>
+                            <premis:agentIdentifierType>AgentID</premis:agentIdentifierType>
+                            <premis:agentIdentifierValue>agent_ARCLIB</premis:agentIdentifierValue>
+                        </premis:agentIdentifier>
+                        <premis:agentName>ARCLIB</premis:agentName>
+                        <premis:agentType>software</premis:agentType>
+                        <premis:agentNote>Version 1.0.1</premis:agentNote>
+                    </premis:agent>
+                </METS:xmlData>
+            </METS:mdWrap>
+        </METS:digiprovMD>
+        <METS:digiprovMD ID="AGENT_002">
+            <METS:mdWrap MDTYPE="PREMIS">
+                <METS:xmlData>
+                    <premis:agent>
+                        <premis:agentIdentifier>
+                            <premis:agentIdentifierType>AgentID</premis:agentIdentifierType>
+                            <premis:agentIdentifierValue>agent_DROID</premis:agentIdentifierValue>
+                        </premis:agentIdentifier>
+                        <premis:agentName>DROID</premis:agentName>
+                        <premis:agentType>software</premis:agentType>
+                        <premis:agentNote>Version: DROID: version: 6.4, Signature files: 1. Type: Binary Version: 91
+                            File name: DROID_SignatureFile_V91.xml 2. Type: Container Version: 20170330 File name:
+                            container-signature-20170330.xml
+                        </premis:agentNote>
+                    </premis:agent>
+                </METS:xmlData>
+            </METS:mdWrap>
+        </METS:digiprovMD>
+        <METS:digiprovMD ID="AGENT_003">
+            <METS:mdWrap MDTYPE="PREMIS">
+                <METS:xmlData>
+                    <premis:agent>
+                        <premis:agentIdentifier>
+                            <premis:agentIdentifierType>AgentID</premis:agentIdentifierType>
+                            <premis:agentIdentifierValue>agent_CLAMAV</premis:agentIdentifierValue>
+                        </premis:agentIdentifier>
+                        <premis:agentName>CLAMAV</premis:agentName>
+                        <premis:agentType>software</premis:agentType>
+                        <premis:agentNote>Version: ClamAV 0.100.2, Description: Lorem ipsum dolor sit amet, consectetur
+                            adipiscing elit. Nulla erat augue, tincidunt vitae elementum quis, ultricies a augue.
+                            Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis
+                            egestas. Suspendisse potenti. Praesent rhoncus enim ac sem posuere, eget rhoncus lectus
+                            ullamcorper. Phasellus orci sapien, viverra at mauris quis, sollicitudin convallis mi. Ut
+                            fermentum vehicula neque, a ultrices tellus vulputate at. Lorem ipsum dolor sit amet,
+                            consectetur adipiscing elit. Donec sit amet ligula viverra, consectetur magna in,
+                            scelerisque nisl. Nunc semper placerat risus id fermentum.
+                        </premis:agentNote>
+                    </premis:agent>
+                </METS:xmlData>
+            </METS:mdWrap>
+        </METS:digiprovMD>
+    </METS:amdSec>
+    <METS:amdSec>
+        <METS:digiprovMD ID="EVENT_001">
+            <METS:mdWrap MDTYPE="PREMIS">
+                <METS:xmlData>
+                    <premis:event>
+                        <premis:eventIdentifier>
+                            <premis:eventIdentifierType>EventId</premis:eventIdentifierType>
+                            <premis:eventIdentifierValue>format_identification_event_001</premis:eventIdentifierValue>
+                        </premis:eventIdentifier>
+                        <premis:eventType>format identification</premis:eventType>
+                        <premis:eventDateTime>2019-05-15T20:59:53Z</premis:eventDateTime>
+                        <premis:eventOutcomeInformation>
+                            <premis:eventOutcome>successful</premis:eventOutcome>
+                        </premis:eventOutcomeInformation>
+                        <premis:linkingAgentIdentifier>
+                            <premis:linkingAgentIdentifierType>AgentId</premis:linkingAgentIdentifierType>
+                            <premis:linkingAgentIdentifierValue>agent_DROID</premis:linkingAgentIdentifierValue>
+                        </premis:linkingAgentIdentifier>
+                    </premis:event>
+                </METS:xmlData>
+            </METS:mdWrap>
+        </METS:digiprovMD>
+        <METS:digiprovMD ID="EVENT_002">
+            <METS:mdWrap MDTYPE="PREMIS">
+                <METS:xmlData>
+                    <premis:event>
+                        <premis:eventIdentifier>
+                            <premis:eventIdentifierType>EventId</premis:eventIdentifierType>
+                            <premis:eventIdentifierValue>virus_check_event_001</premis:eventIdentifierValue>
+                        </premis:eventIdentifier>
+                        <premis:eventType>virus check</premis:eventType>
+                        <premis:eventDateTime>2019-05-15T21:00:12Z</premis:eventDateTime>
+                        <premis:eventDetail>[ClamAV 0.100.2/25366/Wed Feb 20 12:52:59 2019]</premis:eventDetail>
+                        <premis:eventOutcomeInformation>
+                            <premis:eventOutcome>successful</premis:eventOutcome>
+                        </premis:eventOutcomeInformation>
+                        <premis:linkingAgentIdentifier>
+                            <premis:linkingAgentIdentifierType>AgentId</premis:linkingAgentIdentifierType>
+                            <premis:linkingAgentIdentifierValue>agent_CLAMAV</premis:linkingAgentIdentifierValue>
+                        </premis:linkingAgentIdentifier>
+                    </premis:event>
+                </METS:xmlData>
+            </METS:mdWrap>
+        </METS:digiprovMD>
+    </METS:amdSec>
+    <METS:fileSec>
+        <METS:fileGrp USE="file">
+            <METS:file ID="obj-021" CHECKSUMTYPE="MD5" CHECKSUM="c9fead282a43a46e0431e79fcb4b2004" SIZE="5330">
+                <METS:FLocat LOCTYPE="OTHER" xlink:href="info_7033d800-0935-11e4-beed-5ef3fc9ae867.xml"/>
+            </METS:file>
+            <METS:file ID="obj-032" CHECKSUMTYPE="MD5" CHECKSUM="2b2ef2d75296f2d993c284dc8a926971" SIZE="4731">
+                <METS:FLocat LOCTYPE="OTHER" xlink:href="md5_7033d800-0935-11e4-beed-5ef3fc9ae867.md5"/>
+            </METS:file>
+            <METS:file ID="obj-033" CHECKSUMTYPE="MD5" CHECKSUM="e697ce1dcd8a0729b72850cc197a014d" SIZE="29959">
+                <METS:FLocat LOCTYPE="OTHER" xlink:href="mets_7033d800-0935-11e4-beed-5ef3fc9ae867.xml"/>
+            </METS:file>
+        </METS:fileGrp>
+    </METS:fileSec>
+    <METS:structMap ID="Physical_Structure" TYPE="PHYSICAL">
+        <METS:div>
+            <METS:div LABEL="7033d800-0935-11e4-beed-5ef3fc9ae867">
+                <METS:fptr FILEID="obj-032"/>
+                <METS:fptr FILEID="obj-021"/>
+                <METS:fptr FILEID="obj-033"/>
+            </METS:div>
+        </METS:div>
+    </METS:structMap>
+</METS:mets>

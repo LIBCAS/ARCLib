@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<persistence xmlns="http://xmlns.jcp.org/xml/ns/persistence"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/persistence http://xmlns.jcp.org/xml/ns/persistence/persistence_2_1.xsd"
+             version="2.1">
+
+    <persistence-unit name="test" transaction-type="RESOURCE_LOCAL">
+        <provider>org.hibernate.jpa.HibernatePersistenceProvider</provider>
+        <jar-file>formatlibrary-1.0-SNAPSHOT.jar</jar-file>
+        <class>cz.cas.lib.core.file.FileRef</class>
+        <class>cz.cas.lib.core.sequence.Sequence</class>
+        <class>cz.cas.lib.core.config.change.ConfigFile</class>
+        <class>cz.cas.lib.arclib.domain.profiles.ValidationProfile</class>
+        <class>cz.cas.lib.arclib.domain.ingestWorkflow.IngestWorkflow</class>
+        <class>cz.cas.lib.arclib.domain.profiles.SipProfile</class>
+        <class>cz.cas.lib.arclib.report.Report</class>
+        <class>cz.cas.lib.arclib.domain.Producer</class>
+        <class>cz.cas.lib.arclib.domain.profiles.ProducerProfile</class>
+        <class>cz.cas.lib.arclib.domain.ingestWorkflow.WorkflowDefinition</class>
+        <class>cz.cas.lib.arclib.domain.ingestWorkflow.IngestWorkflowFailureInfo</class>
+        <class>cz.cas.lib.arclib.domain.Batch</class>
+        <class>cz.cas.lib.arclib.domain.IngestRoutine</class>
+        <class>cz.cas.lib.arclib.domain.HashType</class>
+        <class>cz.cas.lib.arclib.domain.Hash</class>
+        <class>cz.cas.lib.core.scheduling.job.Job</class>
+        <class>cz.cas.lib.arclib.security.authorization.assign.AssignedRole</class>
+        <class>cz.cas.lib.arclib.security.authorization.role.Role</class>
+        <class>cz.cas.lib.arclib.domain.AipQuery</class>
+        <class>cz.cas.lib.arclib.domain.User</class>
+        <class>cz.cas.lib.arclib.domain.packages.Sip</class>
+        <class>cz.cas.lib.arclib.domain.packages.AuthorialPackage</class>
+        <class>cz.cas.lib.arclib.domain.packages.AuthorialPackageUpdateLock</class>
+        <class>cz.cas.lib.arclib.domain.Hash</class>
+        <class>cz.cas.lib.core.scheduling.job.Job</class>
+        <class>cz.cas.lib.arclib.domain.ingestWorkflow.IngestIssue</class>
+        <class>cz.cas.lib.arclib.domain.packages.AipDeletionRequest</class>
+        <class>cz.cas.lib.arclib.domain.ExportRoutine</class>
+        <class>cz.cas.lib.arclib.domain.preservationPlanning.Tool</class>
+        <class>cz.cas.lib.arclib.domain.preservationPlanning.FormatOccurrence</class>
+        <class>cz.cas.lib.arclib.domain.preservationPlanning.IngestIssueDefinition</class>
+        <class>cz.cas.lib.arclib.domain.FormatsRevisionNotification</class>
+
+        <class>cz.cas.lib.arclib.formatlibrary.domain.Format</class>
+        <class>cz.cas.lib.arclib.formatlibrary.domain.RelatedFormat</class>
+        <class>cz.cas.lib.arclib.formatlibrary.domain.FormatIdentifier</class>
+        <class>cz.cas.lib.arclib.formatlibrary.domain.Risk</class>
+        <class>cz.cas.lib.arclib.formatlibrary.domain.FormatClassification</class>
+        <class>cz.cas.lib.arclib.formatlibrary.domain.FormatDeveloper</class>
+        <class>cz.cas.lib.arclib.formatlibrary.domain.FormatDefinition</class>
+        <class>cz.cas.lib.arclib.formatlibrary.domain.PreservationPlanFileRef</class>
+        <exclude-unlisted-classes>false</exclude-unlisted-classes>
+
+        <properties>
+            <!--<property name="hibernate.dialect"-->
+                      <!--value="org.hibernate.dialect.PostgreSQL82Dialect"/>-->
+            <!--<property name="spring.jpa.database-platform"-->
+                      <!--value="org.hibernate.dialect.PostgreSQL82Dialect"/>-->
+
+            <!--<property name="hibernate.ejb.implicit_naming_strategy"-->
+                      <!--value="org.springframework.boot.orm.jpa.hibernate.SpringImplicitNamingStrategy"/>-->
+            <!--<property name="hibernate.ejb.physical_naming_strategy"-->
+                      <!--value="org.springframework.boot.orm.jpa.hibernate.SpringPhysicalNamingStrategy"/>-->
+
+            <!--<property name="spring.jpa.hibernate.naming.physical-strategy"-->
+            <!--value="org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl"/>-->
+
+            <property name="hibernate.archive.autodetection" value="class, hbm"/>
+            <property name="javax.persistence.schema-generation.database.action" value="create"/>
+            <property name="javax.persistence.jdbc.driver" value="org.hsqldb.jdbc.JDBCDriver"/>
+            <property name="javax.persistence.jdbc.url" value="jdbc:hsqldb:mem:testdb"/>
+            <property name="javax.persistence.validation.mode" value="none"/>
+        </properties>
+    </persistence-unit>
+
+</persistence>

@@ -1,0 +1,150 @@
+spring.application.name: arclib
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/arclib
+    username: arclib
+    password: vuji61oilo
+    driver-class-name: org.postgresql.Driver
+    name: mainPool
+  solr-arclib-xml-datasource:
+    url: jdbc:solr://localhost:9983/?collection=arclibXmlC
+  jpa:
+    show-sql: false
+    database-platform: org.hibernate.dialect.PostgreSQL9Dialect
+    hibernate:
+      ddl-auto: validate
+      naming-strategy: org.hibernate.cfg.ImprovedNamingStrategy
+      use-new-id-generator-mappings: true
+  servlet:
+    multipart:
+      max-file-size: -1
+      max-request-size: -1
+      location: ${user.dir}/multipart_tmp
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+  mail:
+    host: smtp.gmail.com
+    port: 465
+    username: noreply@inqool.cz
+    password: blah38espro
+    protocol: smtp
+    properties.mail.smtp:
+      auth: true
+      starttls.enable: false
+      ssl.trust: smtp.gmail.com
+      ssl.enable: true
+  liquibase:
+    changeLog: classpath:/dbchangelog.arclib.xml
+    url: jdbc:postgresql://localhost:5432/arclib
+    user: arclib
+    password: vuji61oilo
+camunda:
+  bpm:
+    application:
+      isDeleteUponUndeploy: false
+      isScanForProcessDefinitions: false
+      isDeployChangedOnly: true
+      isResumePreviousVersions: true
+      resumePreviousBy: a value
+    job-execution:
+      enabled: true
+      active: true
+    metrics:
+      enabled: false
+      db-reporter-activate: false
+arclib:
+  version: 1.0.1
+  path:
+    workspace: workspace
+    quarantine: workspace/quarantine
+    fileStorage: fileStorage
+  arclibXmlValidator:
+    arclibXmlDefinition: classpath:index/arclibXmlDefinition.csv
+    pathToAipId: /mets/@OBJID
+    pathToAuthorialId: /mets/metsHdr/altRecordID[@TYPE='original SIP identifier']
+    pathToSipVersionNumber: /mets/dmdSec/mdWrap/xmlData/sipVersionNumber
+    pathToPhysicalVersionOf: /mets/dmdSec/mdWrap/xmlData/sipVersionOf
+  arclibXmlSchema: classpath:xmlSchemas/arclibXml.xsd
+  metsSchema: classpath:xmlSchemas/mets.xsd
+  premisSchema: classpath:xmlSchemas/premis-v2-2.xsd
+  sipProfileSchema: classpath:xmlSchemas/sipProfile.xsd
+  validationProfileSchema: classpath:xmlSchemas/validationProfile.xsd
+  script:
+    ingestRoutineBatchStart: classpath:scripts/batchStart.groovy
+    exportRoutineAipExport: classpath:scripts/aipExport.groovy
+    exportRoutineXmlExport: classpath:scripts/xmlExport.groovy
+    keepAliveUpdate: classpath:scripts/keepAliveUpdate.groovy
+    formatsRevisionNotification: classpath:scripts/formatsRevisionNotification.groovy
+    bpmDefUndeploy: classpath:scripts/bpmDefUndeploy.groovy
+  cron:
+    bpmDefUndeploy: "0 0 23 ? * SUN"
+  deleteSipFromTransferArea: true
+  skipRoutineIfPreviousBatchProcessing: true
+  aipStoreRetries: 3
+  aipStoreTimeout: PT1M
+  aipSavedCheckRetries: 10
+  aipSavedCheckTimeout: PT1M
+  keepAliveUpdateTimeout: 10
+  keepAliveNetworkDelay: 2
+namespaces:
+  mets: http://www.loc.gov/METS/
+  arclib: http://arclib.lib.cas.cz/ARCLIB_XSD
+  premis: info:lc/xmlns/premis-v2
+  oai_dc: http://www.openarchives.org/OAI/2.0/oai_dc/
+  dc: http://purl.org/dc/elements/1.1/
+  dcterms: http://purl.org/dc/terms/
+mail:
+  sender:
+    email: noreply@arclib.lib.cas.cz
+    name: Aplikace Arclib
+  app:
+    name: Arclib
+    logo: logo.png
+    link: http://arclib.inqool.cz
+    url: http://arclib.inqool.cz
+  enabled: false
+
+
+
+security:
+  basic:
+    authQuery: "/api/user/login"
+  jwt:
+    secret: YXVyYTI0Z3JvZ3M=
+    expiration: 900000
+    refresh: 30
+  roles:
+    internal:
+      enabled: true
+  ldap:
+    enabled: true
+    server: ldap://localhost:32670
+    bind:
+      dn: uid=noreply,ou=people,dc=inqool,dc=cz
+      pwd: aura24grogs
+    user:
+      type: filter
+      filter: (uid={0})
+      search-base: ou=people,dc=inqool,dc=cz
+bpm:
+  enabled: true
+solr:
+  endpoint: http://localhost:8983/solr
+  arclibxml:
+    corename: arclibXmlC
+env: staging
+jmsCommunicationRole: coordinator
+archivalStorage:
+  api: http://localhost:8081/api
+  authorization:
+    basic:
+      read: YXJjbGliLXJlYWQ6YXJjbGliLXJlYWQ=
+      readWrite: YXJjbGliLXJlYWQtd3JpdGU6YXJjbGliLXJlYWQtd3JpdGU=
+      admin: YWRtaW46YWRtaW4=
+  debugLocation: arcStorageData
+formatLibrary:
+  scheduleUpdate: false
+  updateCron: "0 0 0 1 * ?"
+  formatDetailListUrl: http://www.nationalarchives.gov.uk/PRONOM/Format/proFormatListAction.aspx
+  formatListUrl: http://www.nationalarchives.gov.uk/PRONOM/Format/proFormatDetailListAction.aspx

@@ -1,0 +1,6 @@
+package scripts
+
+import cz.cas.lib.arclib.service.FormatsRevisionNotificationService
+
+FormatsRevisionNotificationService service = spring.getBean(FormatsRevisionNotificationService.class)
+service.sendFormatsRevisionNotification(message)

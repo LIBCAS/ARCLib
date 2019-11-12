@@ -1,0 +1,207 @@
+package cz.cas.lib.arclib.index.solr;
+
+import cz.cas.lib.arclib.bpm.BpmConstants;
+import cz.cas.lib.arclib.domain.Producer;
+import cz.cas.lib.arclib.domain.User;
+import cz.cas.lib.arclib.domain.ingestWorkflow.IngestWorkflowState;
+import cz.cas.lib.arclib.domainbase.exception.GeneralException;
+import cz.cas.lib.arclib.index.solr.arclibxml.IndexedAipState;
+import cz.cas.lib.arclib.index.solr.arclibxml.IndexedArclibXmlStore;
+import cz.cas.lib.arclib.init.SolrTestRecordsInitializer;
+import cz.cas.lib.arclib.service.IngestWorkflowService;
+import cz.cas.lib.arclib.service.archivalStorage.*;
+import cz.cas.lib.arclib.store.*;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.IOUtils;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+
+import javax.inject.Inject;
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.charset.Charset;
+
+import static cz.cas.lib.core.util.Utils.notNull;
+
+@Service
+@Slf4j
+public class ReindexService {
+    private BatchStore batchStore;
+    private ProducerProfileStore producerProfileStore;
+    private UserStore userStore;
+    private IndexedFormatStore formatStore;
+    private IngestIssueStore ingestIssueStore;
+    private IndexedFormatDefinitionStore formatDefinitionStore;
+    private IngestWorkflowService ingestWorkflowService;
+    private IndexedArclibXmlStore indexedArclibXmlStore;
+    private ArchivalStorageService archivalStorageService;
+    private ArchivalStorageServiceDebug archivalStorageServiceDebug;
+    private String env;
+
+    /**
+     * formats are omitted as there are too many records
+     */
+    public void reindexAll() {
+        batchStore.reindex();
+        producerProfileStore.reindex();
+        userStore.reindex();
+        ingestIssueStore.reindex();
+    }
+
+    /**
+     * formats are omitted as there are too many records
+     */
+    public void dropReindexAll() {
+        batchStore.dropReindex();
+        producerProfileStore.dropReindex();
+        userStore.dropReindex();
+        ingestIssueStore.dropReindex();
+    }
+
+    public void dropReindexFormat() {
+        formatStore.dropReindex();
+    }
+
+    public void reindexFormat() {
+        formatStore.reindex();
+    }
+
+    public void dropReindexFormatDefinition() {
+        formatDefinitionStore.dropReindex();
+    }
+
+    public void reindexFormatDefinition() {
+        formatDefinitionStore.reindex();
+    }
+
+    public void reindexArclibXml() {
+        log.info("recovering ARCLib XML index from DB, retrieving XMLs from Archival Storage");
+        ingestWorkflowService.findAll().stream()
+                .filter(iw -> iw.getProcessingState() == IngestWorkflowState.PERSISTED || iw.getProcessingState() == IngestWorkflowState.PROCESSED)
+                .forEach(iw -> {
+                    try {
+                        Producer p = iw.getProducerProfile().getProducer();
+                        String xml;
+                        String username;
+                        Object userInCamunda = ingestWorkflowService.getVariable(iw.getExternalId(), BpmConstants.ProcessVariables.responsiblePerson);
+                        if (userInCamunda == null) {
+                            if (!"production".equals(env)) {
+                                log.warn("no responsible person found for IW: " + iw.getExternalId() + " in camunda db, assigning " + SolrTestRecordsInitializer.USER_NAME);
+                                username = SolrTestRecordsInitializer.USER_NAME;
+                            } else
+                                throw new IllegalStateException("no responsible person found for IW: " + iw.getExternalId() + " in camunda db");
+                        } else {
+                            User user = userStore.findEvenDeleted((String) userInCamunda);
+                            notNull(user, () -> new IllegalStateException("no user responsible for IW: " + iw.getExternalId() + " found in ARCLib db"));
+                            username = user.getUsername();
+                        }
+                        IndexedAipState stateAtArchivalStorage;
+                        if (iw.wasIngestedInDebugMode()) {
+                            xml = IOUtils.toString(archivalStorageServiceDebug.exportSingleXml(iw.getSip().getId(), iw.getXmlVersionNumber()), Charset.defaultCharset());
+                            stateAtArchivalStorage = IndexedAipState.ARCHIVED;
+                        } else {
+                            ArchivalStorageResponse response = archivalStorageService.exportSingleXml(iw.getSip().getId(), iw.getXmlVersionNumber());
+                            if (!response.getStatusCode().is2xxSuccessful()) {
+                                String msg = "could not retrieve XML " + iw.getExternalId() + " of AIP " + iw.getSip().getId() + ": " + response.getStatusCode().value();
+                                log.error(msg);
+                                throw new RuntimeException(msg);
+                            }
+                            xml = IOUtils.toString(response.getBody(), Charset.defaultCharset());
+                            ObjectState aipState = archivalStorageService.getAipState(iw.getSip().getId());
+                            stateAtArchivalStorage = objectStateToIndexedAipState(aipState);
+                        }
+                        indexedArclibXmlStore.createIndex(xml, p.getId(), p.getName(), username, stateAtArchivalStorage, iw.wasIngestedInDebugMode());
+                    } catch (IOException ioe) {
+                        throw new UncheckedIOException(ioe);
+                    } catch (ArchivalStorageException e) {
+                        throw new RuntimeException(e);
+                    }
+                });
+        log.info("successfully recovered ARCLib XML index");
+    }
+
+    private IndexedAipState objectStateToIndexedAipState(ObjectState aipState) {
+        IndexedAipState stateAtArchivalStorage;
+        switch (aipState){
+            case PROCESSING:
+            case PRE_PROCESSING:
+            case ROLLED_BACK:
+            case ARCHIVAL_FAILURE: {
+                stateAtArchivalStorage = null;
+                break;
+            }
+            case ARCHIVED: {
+                stateAtArchivalStorage = IndexedAipState.ARCHIVED;
+                break;
+            }
+            case REMOVED: {
+                stateAtArchivalStorage = IndexedAipState.REMOVED;
+                break;
+            }
+            case DELETION_FAILURE:
+            case DELETED: {
+                stateAtArchivalStorage = IndexedAipState.DELETED;
+                break;
+            }
+            default: {
+                log.error("AIP saved in the archival storage is in an unexpected state.");
+                throw new GeneralException("AIP saved in the archival storage is in an unexpected state.");
+            }
+        }
+        return stateAtArchivalStorage;
+    }
+
+    @Inject
+    public void setUserStore(UserStore userStore) {
+        this.userStore = userStore;
+    }
+
+    @Inject
+    public void setBatchStore(BatchStore batchStore) {
+        this.batchStore = batchStore;
+    }
+
+    @Inject
+    public void setProducerProfileStore(ProducerProfileStore producerProfileStore) {
+        this.producerProfileStore = producerProfileStore;
+    }
+
+    @Inject
+    public void setFormatStore(IndexedFormatStore formatStore) {
+        this.formatStore = formatStore;
+    }
+
+    @Inject
+    public void setIngestIssueStore(IngestIssueStore ingestIssueStore) {
+        this.ingestIssueStore = ingestIssueStore;
+    }
+
+    @Inject
+    public void setFormatDefinitionStore(IndexedFormatDefinitionStore formatDefinitionStore) {
+        this.formatDefinitionStore = formatDefinitionStore;
+    }
+
+    @Inject
+    public void setIngestWorkflowService(IngestWorkflowService ingestWorkflowService) {
+        this.ingestWorkflowService = ingestWorkflowService;
+    }
+
+    @Inject
+    public void setindexedArclibXmlStore(IndexedArclibXmlStore indexedArclibXmlStore) {
+        this.indexedArclibXmlStore = indexedArclibXmlStore;
+    }
+
+    @Inject
+    public void setArchivalStorageService(ArchivalStorageService archivalStorageService) {
+        this.archivalStorageService = archivalStorageService;
+    }
+
+    @Inject
+    public void setArchivalStorageServiceDebug(ArchivalStorageServiceDebug archivalStorageServiceDebug) {
+        this.archivalStorageServiceDebug = archivalStorageServiceDebug;
+    }
+
+    public void setEnv(@Value("${env}") String env) {
+        this.env = env;
+    }
+}

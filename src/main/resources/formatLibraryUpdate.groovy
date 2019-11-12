@@ -1,4 +1,0 @@
-import cz.cas.lib.arclib.service.preservationPlanning.FormatLibraryUpdater
-
-FormatLibraryUpdater formatLibraryUpdater = spring.getBean(FormatLibraryUpdater.class)
-formatLibraryUpdater.updateFormatsFromExternal(null)
