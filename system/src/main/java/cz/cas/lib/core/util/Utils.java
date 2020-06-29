@@ -511,58 +511,6 @@ public class Utils {
         return builder.toString();
     }
 
-    public static class Triplet<T, U, V> implements Serializable {
-        private T t;
-        private U u;
-        private V v;
-
-        public Triplet(T t, U u, V v) {
-            this.t = t;
-            this.u = u;
-            this.v = v;
-        }
-
-        public T getT() {
-            return t;
-        }
-
-        public void setT(T t) {
-            this.t = t;
-        }
-
-        public U getU() {
-            return u;
-        }
-
-        public void setU(U u) {
-            this.u = u;
-        }
-
-        public V getV() {
-            return v;
-        }
-
-        public void setV(V v) {
-            this.v = v;
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-            Triplet<?, ?, ?> triplet = (Triplet<?, ?, ?>) o;
-            return Objects.equals(t, triplet.t) &&
-                    Objects.equals(u, triplet.u) &&
-                    Objects.equals(v, triplet.v);
-        }
-
-        @Override
-        public int hashCode() {
-
-            return Objects.hash(t, u, v);
-        }
-    }
-
     /**
      * Lists files matching glob pattern
      *

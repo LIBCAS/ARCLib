@@ -13,7 +13,25 @@ import lombok.Setter;
 import org.hibernate.annotations.BatchSize;
 
 import javax.persistence.*;
+import java.time.Instant;
 
+/**
+ * This entity represents one attempt to store new AIP XML. Its created during:
+ * <ul>
+ *     <li>ingest of a completely new SIP (original authorialId) through ingest batch</li>
+ *     <li>data update of existing SIP through ingest batch</li>
+ *     <li>metadata update of existing SIP through ingest batch</li>
+ *     <li>metadata update of existing SIP through GUI editor</li>
+ * </ul>
+ * <p>
+ * Ingest workflow entities created as the result of editing AIP XML in GUI always does not have relation to a {@link Batch}
+ * and the state is always {@link IngestWorkflowState#PERSISTED}. If any error occurs during the process the entity is
+ * rolled back - deleted completely instead of setting {@link IngestWorkflowState#FAILED}.
+ * </p>
+ * <p>
+ * Ingest workflow entities created the other ways are always related to a {@link Batch} and their state reflects the processing state.
+ * </p>
+ */
 @Getter
 @Setter
 @BatchSize(size = 100)
@@ -25,6 +43,8 @@ public class IngestWorkflow extends DatedObject {
     public IngestWorkflow(String id) {
         setId(id);
     }
+
+    private Instant ended;
 
     /**
      * Externé id
@@ -69,9 +89,10 @@ public class IngestWorkflow extends DatedObject {
     private IngestWorkflowFailureInfo failureInfo;
 
     /**
-     * Ingest workflow predchádzajúcej verzie ArclibXml
+     * Ingest workflow predchádzajúcej ÚSPĚŠNÉ verzie ArclibXml (tj. verze s {@link #processingState} == {@link IngestWorkflowState#PERSISTED})
      */
     @OneToOne
+    @JsonIgnore
     private IngestWorkflow relatedWorkflow;
 
     /**
@@ -86,7 +107,7 @@ public class IngestWorkflow extends DatedObject {
     private Integer xmlVersionNumber;
 
     /**
-     * Jedná sa o najnovšiu verziu XML
+     * Jedná sa o najnovšiu verziu XML, flag je nastaven až po úspešném přepnutí do stavu {@link IngestWorkflowState#PERSISTED}
      */
     private boolean isLatestVersion;
 

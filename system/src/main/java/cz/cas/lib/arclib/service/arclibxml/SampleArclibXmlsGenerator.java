@@ -210,13 +210,14 @@ public class SampleArclibXmlsGenerator {
     }
 
     @Inject
-    public void setUris(@Value("${namespaces.mets}") String mets, @Value("${namespaces.arclib}") String arclib, @Value("${namespaces" +
+    public void setUris(@Value("${namespaces.mets}") String mets, @Value("${namespaces.xsi}") String xsi, @Value("${namespaces.arclib}") String arclib, @Value("${namespaces" +
             ".premis}") String premis, @Value("${namespaces.oai_dc}") String oai_dc, @Value("${namespaces.dc}") String dc,
                         @Value("${namespaces.dcterms}") String dcterms) {
         Map<String, String> uris = new HashMap<>();
         uris.put(METS, mets);
         uris.put(ARCLIB, arclib);
         uris.put(PREMIS, premis);
+        uris.put(XSI, xsi);
         uris.put(OAIS_DC, oai_dc);
         uris.put(DC, dc);
         uris.put(DCTERMS, dcterms);

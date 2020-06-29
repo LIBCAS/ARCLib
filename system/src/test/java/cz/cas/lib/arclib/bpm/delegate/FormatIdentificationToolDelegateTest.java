@@ -10,6 +10,7 @@ import cz.cas.lib.arclib.domain.profiles.ProducerProfile;
 import cz.cas.lib.arclib.formatlibrary.domain.Format;
 import cz.cas.lib.arclib.formatlibrary.domain.FormatDefinition;
 import cz.cas.lib.arclib.formatlibrary.service.FormatDefinitionService;
+import cz.cas.lib.arclib.service.IngestWorkflowService;
 import cz.cas.lib.arclib.service.ProducerProfileService;
 import cz.cas.lib.arclib.service.preservationPlanning.ToolService;
 import cz.cas.lib.arclib.store.FormatOccurrenceStore;
@@ -39,7 +40,7 @@ import static org.mockito.Mockito.when;
 @Deployment(resources = "bpmn/formatIdentification.bpmn")
 public class FormatIdentificationToolDelegateTest extends DelegateTest {
 
-    private static final String INGEST_CONFIG = "{\"formatIdentification\":[{\"type\":\"DROID\",\"parsedColumn\": \"PUID\",\"pathsAndFormats\":[ {\"filePath\":\"\", \"format\":\"fmt/101\"}, {\"filePath\":\"this/is/another/filepath\", \"format\":\"fmt/993\"}]}]}";
+    private static final String INGEST_CONFIG = "{\"formatIdentification\":{\"0\":{\"type\":\"DROID\",\"pathsAndFormats\":{\"0\":{\"filePath\":\"\", \"format\":\"fmt/101\"}, \"1\":{\"filePath\":\"this/is/another/filepath\", \"format\":\"fmt/993\"}}}}}";
     private static final String PROCESS_INSTANCE_KEY = "formatIdentificationProcess";
     private static final String eventId = "eventId";
     @Mock
@@ -61,7 +62,9 @@ public class FormatIdentificationToolDelegateTest extends DelegateTest {
         FormatIdentificationDelegate formatIdentificationDelegate = new FormatIdentificationDelegate();
         formatIdentificationDelegate.setObjectMapper(new ObjectMapper());
         formatIdentificationDelegate.setWorkspace(WS.toString());
-        formatIdentificationDelegate.setIngestWorkflowStore(ingestWorkflowStore);
+        IngestWorkflowService ingestWorkflowService = new IngestWorkflowService();
+        ingestWorkflowService.setStore(ingestWorkflowStore);
+        formatIdentificationDelegate.setIngestWorkflowService(ingestWorkflowService);
         formatIdentificationDelegate.setToolService(toolService);
         formatIdentificationDelegate.setFormatDefinitionService(formatDefinitionService);
         formatIdentificationDelegate.setFormatOccurrenceStore(formatOccurrenceStore);

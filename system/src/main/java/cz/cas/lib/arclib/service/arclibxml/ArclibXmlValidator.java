@@ -16,6 +16,7 @@ import org.xml.sax.SAXException;
 import javax.inject.Inject;
 import javax.xml.parsers.ParserConfigurationException;
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 
 @Slf4j
 @Service
@@ -60,15 +61,13 @@ public class ArclibXmlValidator {
         XmlUtils.validateWithXMLSchema(xml, xsdSchemas);
 
         log.debug("Checking existence of required nodes.");
-        BufferedReader br = new BufferedReader(new InputStreamReader(arclibXmlDefinition.getInputStream(), "UTF-8"));
-        Iterable<CSVRecord> records = CSVFormat.EXCEL.withDelimiter(',').withHeader(
-                "Popis","XPath","Povinnost","Původ","Násobnost","Název fieldu indexu","Typ fieldu indexu","Child"
-        ).withSkipHeaderRecord(true).parse(br);
+        BufferedReader br = new BufferedReader(new InputStreamReader(arclibXmlDefinition.getInputStream(), StandardCharsets.UTF_8));
+        Iterable<CSVRecord> records = CSVFormat.EXCEL.withDelimiter(',').withHeader().withSkipHeaderRecord(true).parse(br);
 
         for (CSVRecord record : records) {
             xml.reset();
-            if (record.get("Povinnost").equals("povinné")) {
-                String xPath = record.get("XPath");
+            if (record.get(4).equalsIgnoreCase("true")) {
+                String xPath = record.get(1);
                 XmlUtils.checkNodeExists(xml, XmlUtils.removeNamespacesFromXPathExpr(xPath));
             }
         }
@@ -105,7 +104,7 @@ public class ArclibXmlValidator {
     }
 
     @Inject
-    public void setArclibXmlDefinition(@Value("${arclib.arclibXmlValidator.arclibXmlDefinition}")
+    public void setArclibXmlDefinition(@Value("${arclib.arclibXmlDefinition}")
                                                Resource arclibXmlDefinition) {
         this.arclibXmlDefinition = arclibXmlDefinition;
     }

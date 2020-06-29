@@ -2,11 +2,11 @@ package helper;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.querydsl.jpa.impl.JPAQueryFactory;
+import cz.cas.lib.arclib.domainbase.store.DomainStore;
 import cz.cas.lib.core.config.ObjectMapperProducer;
 import cz.cas.lib.core.index.solr.IndexedDatedStore;
 import cz.cas.lib.core.index.solr.IndexedDomainStore;
 import cz.cas.lib.core.index.solr.IndexedNamedStore;
-import cz.cas.lib.arclib.domainbase.store.DomainStore;
 import lombok.Getter;
 import org.apache.solr.client.solrj.impl.HttpSolrClient;
 import org.junit.After;
@@ -88,14 +88,17 @@ public class SrDbTest extends DbTest {
             store.setQueryFactory(new JPAQueryFactory(super.getEm()));
             if (store instanceof IndexedDomainStore) {
                 ((IndexedDomainStore) store).setTemplate(getTemplate());
+                ((IndexedDomainStore) store).init();
                 continue;
             }
             if (store instanceof IndexedDatedStore) {
                 ((IndexedDatedStore) store).setTemplate(getTemplate());
+                ((IndexedDatedStore) store).init();
                 continue;
             }
             if (store instanceof IndexedNamedStore) {
                 ((IndexedNamedStore) store).setTemplate(getTemplate());
+                ((IndexedNamedStore) store).init();
             }
 
         }

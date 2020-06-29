@@ -45,10 +45,20 @@
     </analyzer>
   </fieldType>
   <fieldType name="standard_folding" class="solr.TextField" positionIncrementGap="100" multiValued="false">
-    <analyzer>
-      <tokenizer class="solr.StandardTokenizerFactory"/>
+    <analyzer type="index">
+      <tokenizer class="solr.WhitespaceTokenizerFactory"/>
       <filter class="solr.LowerCaseFilterFactory"/>
       <filter class="solr.ASCIIFoldingFilterFactory"/>
+      <filter class="solr.WordDelimiterGraphFilterFactory" generateWordParts="0" generateNumberParts="0"
+              catenateAll="1"/>
+      <filter class="solr.FlattenGraphFilterFactory"/>
+    </analyzer>
+    <analyzer type="query">
+      <tokenizer class="solr.WhitespaceTokenizerFactory"/>
+      <filter class="solr.LowerCaseFilterFactory"/>
+      <filter class="solr.ASCIIFoldingFilterFactory"/>
+      <filter class="solr.WordDelimiterGraphFilterFactory" generateWordParts="0" generateNumberParts="0"
+              catenateAll="1"/>
     </analyzer>
   </fieldType>
 
@@ -82,12 +92,13 @@
   <field name="sip_version_of" type="string"/>
   <field name="xml_version_number" type="pint"/>
   <field name="xml_version_of" type="string"/>
+  <field name="latest" type="boolean"/>
 
   <field name="extracted_format_file_format" type="keyword_folding"/>
   <copyField source="extracted_format_file_format" dest="extracted_format_file_format_s"/>
   <field name="extracted_format_format_registry_key" type="string"/>
   <field name="extracted_format_format_registry_name" type="string"/>
-  <field name="extracted_format_file_count" type="pint"/>
+  <field name="extracted_format_file_count" type="plong"/>
   <field name="extracted_format_creating_application_name" type="keyword_folding"/>
   <copyField source="extracted_format_creating_application_name" dest="extracted_format_creating_application_name_s"/>
   <field name="extracted_format_creating_application_version" type="keyword_folding"/>
@@ -96,7 +107,7 @@
   <field name="extracted_format_date_created_by_application" type="pdate"/>
   <field name="extracted_format_preservation_level_value" type="string"/>
   <field name="extracted_format_scanner_model_serial_no" type="string"/>
-  <field name="extracted_format_size" type="pint"/>
+  <field name="extracted_format_size" type="plong"/>
   <field name="extracted_format_format_version" type="string"/>
   <field name="identified_format_format_registry_key" type="string"/>
   <field name="identified_format_format_registry_name" type="string"/>

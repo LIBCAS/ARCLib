@@ -2,7 +2,10 @@ package cz.cas.lib.arclib.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import cz.cas.lib.arclib.domain.*;
+import cz.cas.lib.arclib.domain.Batch;
+import cz.cas.lib.arclib.domain.BatchState;
+import cz.cas.lib.arclib.domain.Hash;
+import cz.cas.lib.arclib.domain.VersioningLevel;
 import cz.cas.lib.arclib.domain.ingestWorkflow.IngestWorkflow;
 import cz.cas.lib.arclib.domain.ingestWorkflow.IngestWorkflowFailureInfo;
 import cz.cas.lib.arclib.domain.ingestWorkflow.IngestWorkflowFailureType;
@@ -24,14 +27,15 @@ import cz.cas.lib.arclib.service.fixity.Md5Counter;
 import cz.cas.lib.arclib.service.fixity.Sha512Counter;
 import cz.cas.lib.arclib.store.AuthorialPackageStore;
 import cz.cas.lib.arclib.store.SipStore;
+import cz.cas.lib.arclib.utils.ArclibUtils;
 import cz.cas.lib.arclib.utils.JsonUtils;
 import cz.cas.lib.arclib.utils.XmlUtils;
 import cz.cas.lib.arclib.utils.ZipUtils;
 import cz.cas.lib.core.util.Utils;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.commons.lang3.tuple.Pair;
+import org.apache.commons.lang3.tuple.Triple;
 import org.camunda.bpm.engine.ManagementService;
 import org.camunda.bpm.engine.RuntimeService;
 import org.camunda.bpm.engine.runtime.Incident;
@@ -57,7 +61,6 @@ import java.nio.file.Path;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
-import java.util.stream.Collectors;
 
 import static cz.cas.lib.arclib.bpm.BpmConstants.*;
 import static cz.cas.lib.arclib.utils.ArclibUtils.*;
@@ -207,27 +210,22 @@ public class WorkerService implements WorkerServiceI {
             throw new IllegalArgumentException("null sip profile of producer profile with external id " + producerProfile.getExternalId());
         });
 
-        verifyHash(getSipZipTransferAreaPath(ingestWorkflow).toAbsolutePath(), ingestWorkflow, userId);
-        Pair<String, Long> rootDirNameAndSizeInBytes = copySipToWorkspace(ingestWorkflow, userId);
+        verifyHash(getSipZipTransferAreaPath(ingestWorkflow).toAbsolutePath(), ingestWorkflow);
+        Pair<String, Long> rootDirNameAndSizeInBytes = copySipToWorkspace(ingestWorkflow);
 
         Path sipFolderWorkspacePath = getIngestWorkflowWorkspacePath(ingestWorkflow.getExternalId(), workspace)
                 .resolve(rootDirNameAndSizeInBytes.getLeft());
-        List<Triplet<String, String, String>> rootDirFilesAndFixities = computeRootDirFilesFixities(sipFolderWorkspacePath, HashType.MD5);
 
         String ingestWorkflowConfig = computeIngestWorkflowConfig(batch.getWorkflowConfig(), producerProfile
                 .getWorkflowConfig(), ingestWorkflow.getExternalId());
 
-        List<Pair<String, String>> filePathsAndFileSizes = listSipFilePathsAndFileSizes(sipFolderWorkspacePath);
-        List<String> filePaths = filePathsAndFileSizes.stream().map(Pair::getLeft).collect(Collectors.toList());
-        createSipAndAuthorialPackages(ingestWorkflow, sipFolderWorkspacePath, filePaths, userId);
+        List<String> filePaths = ArclibUtils.listFilePaths(sipFolderWorkspacePath);
+        createSipAndAuthorialPackages(ingestWorkflow, sipFolderWorkspacePath, filePaths, userId, rootDirNameAndSizeInBytes.getRight());
 
         Map<String, Object> initVars = new HashMap<>();
-        initVars.put(Ingestion.sizeInBytes, rootDirNameAndSizeInBytes.getRight());
         initVars.put(Ingestion.sipFileName, ingestWorkflow.getFileName());
-        initVars.put(Ingestion.filePathsAndFileSizes, filePathsAndFileSizes);
         initVars.put(Ingestion.dateTime, Instant.now().truncatedTo(ChronoUnit.SECONDS).toString());
         initVars.put(Ingestion.authorialId, ingestWorkflow.getSip().getAuthorialPackage().getAuthorialId());
-        initVars.put(Ingestion.rootDirFilesAndFixities, rootDirFilesAndFixities);
         initVars.put(ProcessVariables.sipProfileId, sipProfile.getId());
         initVars.put(ProcessVariables.sipFolderWorkspacePath, sipFolderWorkspacePath.toString());
         initVars.put(ProcessVariables.ingestWorkflowExternalId, ingestWorkflow.getExternalId());
@@ -246,11 +244,12 @@ public class WorkerService implements WorkerServiceI {
         initVars.put(ArchivalStorage.aipStoreRetries, aipStoreRetries);
         initVars.put(ArchivalStorage.aipStoreTimeout, aipStoreTimeout);
         initVars.put(Antivirus.antivirusToolCounter, 0);
+        initVars.put(FixityCheck.fixityCheckToolCounter, 0);
         initVars.put(FormatIdentification.mapOfEventIdsToMapsOfFilesToFormats, new HashMap<String, TreeMap<String, Pair<String, String>>>());
-        initVars.put(MessageDigestCalculation.mapOfEventIdsToSha512Calculations, new HashMap<>());
-        initVars.put(MessageDigestCalculation.mapOfEventIdsToMd5Calculations, new HashMap<>());
-        initVars.put(MessageDigestCalculation.mapOfEventIdsToCrc32Calculations, new HashMap<>());
-        initVars.put(FixityCheck.mapOfEventIdsToFilePathsAndFixities, new HashMap<>());
+        initVars.put(FixityGeneration.mapOfEventIdsToSipSha512, new HashMap<>());
+        initVars.put(FixityGeneration.mapOfEventIdsToSipMd5, new HashMap<>());
+        initVars.put(FixityGeneration.mapOfEventIdsToSipCrc32, new HashMap<>());
+        initVars.put(FixityGeneration.mapOfEventIdsToSipContentFixityData, new HashMap<String, Map<String, Triple<Long, String, String>>>());
 
         runtimeService.startProcessInstanceByKey(toBatchDeploymentName(batch.getId()), ingestWorkflow.getExternalId(), initVars);
     }
@@ -269,10 +268,12 @@ public class WorkerService implements WorkerServiceI {
      * @param ingestWorkflow         ingest workflow
      * @param sipFolderWorkspacePath path to the folder with the content of the SIP in workspace
      * @param filePaths              file paths of the files of the SIP
+     * @param sizeInBytes           size of the data part in bytes
      * @throws AuthorialPackageLockedException if the authorial package is locked
      */
     private void createSipAndAuthorialPackages(IngestWorkflow ingestWorkflow, Path sipFolderWorkspacePath,
-                                               List<String> filePaths, String userId) throws IOException {
+                                               List<String> filePaths, String userId,
+                                               long sizeInBytes) throws IOException {
         ProducerProfile producerProfile = ingestWorkflow.getBatch().getProducerProfile();
         String extractedAuthorialId = extractAuthorialId(ingestWorkflow, sipFolderWorkspacePath, producerProfile.getSipProfile());
 
@@ -310,10 +311,10 @@ public class WorkerService implements WorkerServiceI {
                         .anyMatch(hash -> hash.getHashValue().equals(ingestWorkflow.getHash().getHashValue()))) {
                     xmlVersioning(ingestWorkflow, highestVersionNumberPersistedSip.get(), highestVersionNumberIngestWorkflow.get());
                 } else {
-                    sipVersioning(ingestWorkflow, filePaths, sipFolderWorkspacePath, authorialPackage, highestVersionNumberPersistedSip.get());
+                    sipVersioning(ingestWorkflow, filePaths, sipFolderWorkspacePath, authorialPackage, highestVersionNumberPersistedSip.get(), sizeInBytes);
                 }
             } else {
-                noVersioning(authorialPackage, ingestWorkflow, filePaths, sipFolderWorkspacePath);
+                noVersioning(authorialPackage, ingestWorkflow, filePaths, sipFolderWorkspacePath, sizeInBytes);
             }
         } else {
             authorialPackage = new AuthorialPackage();
@@ -323,13 +324,14 @@ public class WorkerService implements WorkerServiceI {
             log.info("New authorial package with id " + authorialPackage.getId() + " created.");
 
             aipService.activateLock(authorialPackage.getId(), false, userId);
-            noVersioning(authorialPackage, ingestWorkflow, filePaths, sipFolderWorkspacePath);
+            noVersioning(authorialPackage, ingestWorkflow, filePaths, sipFolderWorkspacePath, sizeInBytes);
         }
     }
 
     private void noVersioning(AuthorialPackage authorialPackage, IngestWorkflow ingestWorkflow,
-                              List<String> filePaths, Path sipFolderWorkspacePath) {
+                              List<String> filePaths, Path sipFolderWorkspacePath, long sizeInBytes) {
         Sip sip = new Sip();
+        sip.setSizeInBytes(sizeInBytes);
         sip.setHashes(asSet(ingestWorkflow.getHash()));
         sip.setAuthorialPackage(authorialPackage);
         sip.setFolderStructure(filePathsToFolderStructure(filePaths, sipFolderWorkspacePath.getFileName().toString()));
@@ -355,9 +357,10 @@ public class WorkerService implements WorkerServiceI {
     }
 
     private void sipVersioning(IngestWorkflow ingestWorkflow, List<String> filePaths, Path sipFolderWorkspacePath,
-                               AuthorialPackage authorialPackage, Sip highestVersionNumberSip) {
+                               AuthorialPackage authorialPackage, Sip highestVersionNumberSip, long sizeInBytes) {
         log.debug("SIP versioning is performed for ingest worfklow with external id " + ingestWorkflow.getExternalId() + ".");
         Sip sip = new Sip();
+        sip.setSizeInBytes(sizeInBytes);
         sip.setHashes(asSet(ingestWorkflow.getHash()));
         sip.setVersionNumber(highestVersionNumberSip.getVersionNumber() + 1);
         sip.setAuthorialPackage(authorialPackage);
@@ -395,10 +398,9 @@ public class WorkerService implements WorkerServiceI {
      *
      * @param pathToSip      path to sip of which the hash should be verified
      * @param ingestWorkflow ingest workflow
-     * @param userId         id of the user that triggered the batch
      * @throws IOException SIP of the ingest workflow at the given path does not exist
      */
-    private void verifyHash(Path pathToSip, IngestWorkflow ingestWorkflow, String userId) throws IOException {
+    private void verifyHash(Path pathToSip, IngestWorkflow ingestWorkflow) throws IOException {
         Hash expectedHash = ingestWorkflow.getHash();
         notNull(expectedHash, () -> {
             throw new IllegalArgumentException("null hash of ingest workflow with external id " + ingestWorkflow.getExternalId());
@@ -434,10 +436,9 @@ public class WorkerService implements WorkerServiceI {
      * Unzips and copies the content of the SIP belonging the ingest workflow to workspace.
      *
      * @param ingestWorkflow ingest workflow
-     * @param userId         id of the user
      * @return pair where the left value is name of the root folder of the extracted SIP and right value is number of copied bytes
      */
-    private Pair<String, Long> copySipToWorkspace(IngestWorkflow ingestWorkflow, String userId) {
+    private Pair<String, Long> copySipToWorkspace(IngestWorkflow ingestWorkflow) {
         Path sourceSipFilePath = getSipZipTransferAreaPath(ingestWorkflow);
         Path destinationIngestWorkflowPath = getIngestWorkflowWorkspacePath(ingestWorkflow.getExternalId(), workspace);
         Path destinationSipZipPath = destinationIngestWorkflowPath.resolve(ingestWorkflow.getFileName());
@@ -455,7 +456,7 @@ public class WorkerService implements WorkerServiceI {
         try (FileInputStream sipContent = new FileInputStream(sourceSipFilePath.toAbsolutePath().toString())) {
             numberOfBytesCopied = Files.copy(sipContent, destinationSipZipPath);
             verifyHash(getSipZipWorkspacePath(ingestWorkflow.getExternalId(), workspace,
-                    ingestWorkflow.getFileName()), ingestWorkflow, userId);
+                    ingestWorkflow.getFileName()), ingestWorkflow);
             log.debug("Zip archive with SIP content for ingest workflow external id " + ingestWorkflow.getExternalId() + " has been" +
                     " copied to workspace at path " + destinationSipZipPath + ".");
         } catch (IOException e) {
@@ -464,15 +465,7 @@ public class WorkerService implements WorkerServiceI {
         }
 
         //unzip the zip content in workspace
-        String rootFolderName;
-        try (FileInputStream sipContent = new FileInputStream(destinationSipZipPath.toString())) {
-            rootFolderName = ZipUtils.unzip(sipContent, destinationIngestWorkflowPath);
-            log.debug("SIP content for ingest workflow external id " + ingestWorkflow.getExternalId() + " in zip archive has been" +
-                    " extracted to workspace.");
-        } catch (IOException e) {
-            throw new GeneralException("Unable to unzip SIP content for ingest workflow external id "
-                    + ingestWorkflow.getExternalId() + " to path: " + destinationIngestWorkflowPath.toAbsolutePath().toString(), e);
-        }
+        String rootFolderName = ZipUtils.unzipSip(destinationSipZipPath, destinationIngestWorkflowPath, ingestWorkflow.getExternalId());
         return Pair.of(rootFolderName, numberOfBytesCopied);
     }
 
@@ -572,43 +565,6 @@ public class WorkerService implements WorkerServiceI {
         log.debug("Result ingest workflow config json for ingest workflow with external id " + externalId + ": "
                 + ingestConfig);
         return mapper.writeValueAsString(ingestConfig);
-    }
-
-
-    /**
-     * Computes fixities for files located in the root folder of SIP (not nested in other subfolder)
-     *
-     * @param pathToSipFolder path to the folder with the sip content
-     * @param hashType        type of hash to compute
-     * @return list of triplets of a file path, type of fixity and computed fixity
-     * @throws IOException if some of the files are inaccessible
-     */
-    private List<Triplet<String, String, String>> computeRootDirFilesFixities(Path pathToSipFolder, HashType hashType) throws IOException {
-        FixityCounter fixityCounter;
-        switch (hashType) {
-            case MD5:
-                fixityCounter = md5Counter;
-                break;
-            case Crc32:
-                fixityCounter = crc32Counter;
-                break;
-            case Sha512:
-                fixityCounter = sha512Counter;
-                break;
-            default:
-                throw new GeneralException("unexpected type of expectedHash");
-        }
-        List<Triplet<String, String, String>> filesAndFixities = new ArrayList<>();
-        Collection<File> files = FileUtils.listFiles(pathToSipFolder.toFile(), null, false);
-        for (File file : files) {
-            try (FileInputStream fileContent = new FileInputStream(file.getAbsolutePath())) {
-                String computedHash = bytesToHexString(fixityCounter.computeDigest(fileContent));
-                filesAndFixities.add(new Triplet<>(file.getName(), hashType.name(), computedHash));
-                log.debug("Computed fixity for file " + file.getName() + ", hash type: " + hashType.name() + ", hash value: "
-                        + computedHash + ".");
-            }
-        }
-        return filesAndFixities;
     }
 
     @Inject

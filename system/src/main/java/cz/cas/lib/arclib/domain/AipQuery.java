@@ -1,7 +1,7 @@
 package cz.cas.lib.arclib.domain;
 
-import cz.cas.lib.arclib.index.solr.arclibxml.IndexedArclibXmlDocument;
 import cz.cas.lib.arclib.domainbase.domain.NamedObject;
+import cz.cas.lib.arclib.index.solr.arclibxml.IndexedArclibXmlDocument;
 import cz.cas.lib.core.index.dto.Params;
 import cz.cas.lib.core.index.dto.Result;
 import lombok.Getter;
@@ -40,11 +40,13 @@ public class AipQuery extends NamedObject {
      * Zoznam nájdených výsledkov
      */
     @Column(length = 100 * 1024 * 1024)
+    @Convert(converter = AipQueryResultDbConverter.class)
     private Result<IndexedArclibXmlDocument> result;
 
     /**
      * Vyhľadávací dotaz
      */
     @Column(length = 100 * 1024 * 1024)
+    @Convert(converter = AipQueryParamsDbConverter.class)
     private Params query;
 }

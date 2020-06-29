@@ -54,7 +54,7 @@ public class ValidatorDelegate extends ArclibDelegate {
         } catch (ParserConfigurationException | IOException | SAXException | XPathExpressionException e) {
             throw new BpmnError(BpmConstants.ErrorCodes.ProcessFailure, "SIP id: " + sipId + ". " + e.getMessage());
         }
-        ingestEventStore.save(new IngestEvent(ingestWorkflowStore.findByExternalId(externalId), toolService.findByNameAndVersion(getToolName(), getToolVersion()), true, null));
+        ingestEventStore.save(new IngestEvent(ingestWorkflowService.findByExternalId(externalId), toolService.findByNameAndVersion(getToolName(), getToolVersion()), true, null));
         log.debug("Execution of Validator delegate finished.");
     }
 

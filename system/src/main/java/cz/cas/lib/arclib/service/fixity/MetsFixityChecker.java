@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import cz.cas.lib.arclib.domain.IngestToolFunction;
 import cz.cas.lib.arclib.domainbase.exception.GeneralException;
 import cz.cas.lib.arclib.exception.bpm.IncidentException;
-import cz.cas.lib.core.util.Utils;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
@@ -38,18 +37,14 @@ public class MetsFixityChecker extends FixityChecker {
     private String toolVersion = null;
 
     /**
-     * Verifies fixity of every file specified in METS file of the package.
+     * Verifies fixity of every file specified in METS filesec.
      * Currently supports MD5, SHA-1, SHA-256 and SHA-512.
      *
-     * @param sipWsPath  path to SIP in workspace
-     * @param pathToMets path to METS file
-     * @param externalId external id of the ingest workflow
-     * @param configRoot config
-     * @return list of associated values in triplets: file path, type of fixity, fixity value.
+     * @param pathToMets path to the main metadata file (METS)
      */
     @Override
-    public List<Utils.Triplet<String, String, String>> verifySIP(Path sipWsPath, Path pathToMets, String externalId,
-                                                                 JsonNode configRoot, Map<String, Pair<String, String>> formatIdentificationResult)
+    public void verifySIP(Path sipWsPath, Path pathToMets, String externalId,
+                          JsonNode configRoot, Map<String, Pair<String, String>> formatIdentificationResult)
             throws IOException, IncidentException {
         log.debug("Verifying fixity of SIP, METS path: " + pathToMets);
         notNull(pathToMets, () -> {
@@ -75,8 +70,6 @@ public class MetsFixityChecker extends FixityChecker {
             throw new GeneralException(e);
         }
 
-        List<Utils.Triplet<String, String, String>> filePathsAndFixities = new ArrayList<>();
-
         for (int i = 0; i < elems.getLength(); i++) {
             String checksumType = elems.item(i).getAttributes().getNamedItem("CHECKSUMTYPE").getNodeValue();
             String checksum = elems.item(i).getAttributes().getNamedItem("CHECKSUM").getNodeValue();
@@ -85,8 +78,10 @@ public class MetsFixityChecker extends FixityChecker {
                 Node fileLocItem = fileLocations.item(j);
                 if (!"METS:FLocat".equalsIgnoreCase(fileLocItem.getNodeName()))
                     continue;
-                String fileRelativePath = fileLocItem.getAttributes().getNamedItem("xlink:href").getNodeValue();
-                Path filePath = pathToMets.getParent().resolve(fileRelativePath).normalize().toAbsolutePath();
+                String filePathStrFromMets = fileLocItem.getAttributes().getNamedItem("xlink:href").getNodeValue();
+                Path filePathInWs = filePathStrFromMets.startsWith("/")
+                        ? sipWsPath.resolve(filePathStrFromMets).normalize().toAbsolutePath()
+                        : pathToMets.getParent().resolve(filePathStrFromMets).normalize().toAbsolutePath();
 
                 FixityCounter counter;
                 switch (checksumType.toUpperCase()) {
@@ -105,22 +100,22 @@ public class MetsFixityChecker extends FixityChecker {
                     default:
                         boolean present = unsupportedChecksumTypes.containsKey(checksumType);
                         if (present)
-                            unsupportedChecksumTypes.get(checksumType).add(filePath);
+                            unsupportedChecksumTypes.get(checksumType).add(filePathInWs);
                         else {
                             List<Path> paths = new ArrayList<>();
-                            paths.add(filePath);
+                            paths.add(filePathInWs);
                             unsupportedChecksumTypes.put(checksumType, paths);
                         }
                         continue;
                 }
-                if (!filePath.toFile().isFile()) {
-                    missingFiles.add(filePath);
+                if (!filePathInWs.toFile().isFile()) {
+                    missingFiles.add(filePathInWs);
                     continue;
                 }
-                if (!counter.verifyFixity(filePath, checksum)) {
-                    invalidFixities.add(filePath);
+                byte[] computedChecksum = counter.computeDigest(filePathInWs);
+                if (!counter.checkIfDigestsMatches(checksum, computedChecksum)) {
+                    invalidFixities.add(filePathInWs);
                 }
-                filePathsAndFixities.add(new Utils.Triplet(fileRelativePath, checksumType, checksum));
             }
         }
         if (!unsupportedChecksumTypes.isEmpty())
@@ -129,8 +124,6 @@ public class MetsFixityChecker extends FixityChecker {
             invokeMissingFilesIssue(sipWsPath, missingFiles, externalId, configRoot, formatIdentificationResult);
         if (!invalidFixities.isEmpty())
             invokeInvalidChecksumsIssue(sipWsPath, invalidFixities, externalId, configRoot, formatIdentificationResult);
-
-        return filePathsAndFixities;
     }
 
     private XPath getMetsXpath() {

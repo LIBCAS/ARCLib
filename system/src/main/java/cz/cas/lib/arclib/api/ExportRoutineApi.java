@@ -2,9 +2,9 @@ package cz.cas.lib.arclib.api;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import cz.cas.lib.arclib.domain.ExportRoutine;
+import cz.cas.lib.arclib.domainbase.exception.BadArgument;
 import cz.cas.lib.arclib.security.authorization.Roles;
 import cz.cas.lib.arclib.service.ExportRoutineService;
-import cz.cas.lib.arclib.domainbase.exception.BadArgument;
 import cz.cas.lib.core.store.Transactional;
 import io.swagger.annotations.*;
 import lombok.Getter;
@@ -62,17 +62,6 @@ public class ExportRoutineApi {
     public ExportRoutine get(@ApiParam(value = "Id of the instance", required = true)
                              @PathVariable("id") String id) {
         return exportRoutineService.find(id);
-    }
-
-    @ApiOperation(value = "Gets one instance of export routine by id of the respective aip query", response = ExportRoutine.class)
-    @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successful response", response = ExportRoutine.class),
-            @ApiResponse(code = 404, message = "Instance does not exist")})
-    @RequestMapping(value = "aip_query/{aipQueryId}", method = RequestMethod.GET)
-    @Transactional
-    public ExportRoutine findByAipQueryId(@ApiParam(value = "Id of the aip query", required = true)
-                             @PathVariable("aipQueryId") String aipQueryId) {
-        return exportRoutineService.findByAipQueryId(aipQueryId);
     }
 
     @ApiOperation(value = "Gets all instances", response = Collection.class)

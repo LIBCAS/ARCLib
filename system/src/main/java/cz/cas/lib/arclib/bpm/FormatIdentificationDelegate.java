@@ -11,14 +11,15 @@ import cz.cas.lib.arclib.domain.preservationPlanning.Tool;
 import cz.cas.lib.arclib.domain.profiles.ProducerProfile;
 import cz.cas.lib.arclib.exception.bpm.ConfigParserException;
 import cz.cas.lib.arclib.exception.bpm.IncidentException;
+import cz.cas.lib.arclib.formatlibrary.domain.FormatDefinition;
+import cz.cas.lib.arclib.formatlibrary.service.FormatDefinitionService;
+import cz.cas.lib.arclib.service.IngestIssueService;
 import cz.cas.lib.arclib.service.ProducerProfileService;
 import cz.cas.lib.arclib.service.formatIdentification.FormatIdentificationTool;
 import cz.cas.lib.arclib.service.formatIdentification.FormatIdentificationToolType;
-import cz.cas.lib.arclib.service.formatIdentification.droid.CsvResultColumn;
 import cz.cas.lib.arclib.service.formatIdentification.droid.DroidFormatIdentificationTool;
 import cz.cas.lib.arclib.store.FormatOccurrenceStore;
-import cz.cas.lib.core.util.Utils;
-import cz.cas.lib.arclib.formatlibrary.domain.FormatDefinition;
+import cz.cas.lib.arclib.store.IngestIssueDefinitionStore;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
@@ -31,7 +32,8 @@ import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static cz.cas.lib.arclib.service.formatIdentification.FormatIdentificationTool.*;
+import static cz.cas.lib.arclib.service.formatIdentification.FormatIdentificationTool.FORMAT_IDENTIFICATON_TOOL_EXPR;
+import static cz.cas.lib.arclib.service.formatIdentification.FormatIdentificationTool.IDENTIFIER_TYPE_EXPR;
 import static cz.cas.lib.arclib.utils.ArclibUtils.parseEnumFromConfig;
 
 @Slf4j
@@ -42,6 +44,9 @@ public class FormatIdentificationDelegate extends ArclibDelegate {
     private String toolName="ARCLib_"+ IngestToolFunction.format_identification;
     private FormatOccurrenceStore formatOccurrenceStore;
     private ProducerProfileService producerProfileService;
+    private FormatDefinitionService formatDefinitionService;
+    private IngestIssueService ingestIssueService;
+    private IngestIssueDefinitionStore ingestIssueDefinitionStore;
     /**
      * Performs the format analysis of files in SIP.
      *
@@ -51,7 +56,7 @@ public class FormatIdentificationDelegate extends ArclibDelegate {
      */
     @Override
     public void executeArclibDelegate(DelegateExecution execution) throws IncidentException, IOException {
-        IngestWorkflow iw = ingestWorkflowStore.findByExternalId(getIngestWorkflowExternalId(execution));
+        IngestWorkflow iw = ingestWorkflowService.findByExternalId(getIngestWorkflowExternalId(execution));
         log.debug("Execution of Format identifier delegate started for ingest workflow " + iw.getExternalId() + ".");
 
         JsonNode configRoot = getConfigRoot(execution);
@@ -95,10 +100,8 @@ public class FormatIdentificationDelegate extends ArclibDelegate {
             FormatIdentificationTool tool;
             switch (formatIdentificationToolType) {
                 case DROID:
-                    CsvResultColumn parsedColumn = parseEnumFromConfig(root, FORMAT_IDENTIFICATON_TOOL_EXPR + "/" + formatIdentificationToolCounter + PARSED_COLUMN_EXPR,
-                            CsvResultColumn.class);
                     log.debug("Format identification tool initialized with DROID.");
-                    tool = new DroidFormatIdentificationTool(parsedColumn);
+                    tool = new DroidFormatIdentificationTool();
                     break;
                 default:
                     throw new ConfigParserException(FORMAT_IDENTIFICATON_TOOL_EXPR + "/" + formatIdentificationToolCounter + IDENTIFIER_TYPE_EXPR, "not supported", FormatIdentificationToolType.class);
@@ -135,6 +138,21 @@ public class FormatIdentificationDelegate extends ArclibDelegate {
             formatOccurrence.setOccurrences(formatOccurrence.getOccurrences() + puidOccurrenceMap.get(puid));
             formatOccurrenceStore.save(formatOccurrence);
         }
+    }
+
+    @Inject
+    public void setFormatDefinitionService(FormatDefinitionService formatDefinitionService) {
+        this.formatDefinitionService = formatDefinitionService;
+    }
+
+    @Inject
+    public void setIngestIssueService(IngestIssueService ingestIssueService) {
+        this.ingestIssueService = ingestIssueService;
+    }
+
+    @Inject
+    public void setIngestIssueDefinitionStore(IngestIssueDefinitionStore ingestIssueDefinitionStore) {
+        this.ingestIssueDefinitionStore = ingestIssueDefinitionStore;
     }
 
     @Inject

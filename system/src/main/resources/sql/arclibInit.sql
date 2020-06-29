@@ -58,9 +58,9 @@ VALUES ('3cdc21a2-8b2a-4b56-81a8-3d2ee82ab6b4', '2018-03-08 08:00:00', '2018-03-
 
 INSERT INTO public.arclib_producer_profile(id, external_id, created, updated, deleted, producer_id, validation_profile_id, sip_profile_id, workflow_config, workflow_definition_id, name, debugging_mode_active)
 VALUES ('b0384aeb-5169-459a-b5f4-483e6ad7b949', '901', '2018-03-08 08:00:00', '2018-03-08 08:00:00', null, 'aa7ddcc5-5b81-4747-bfeb-1850d952a359', '7916f84a-8958-4427-9c3c-6232f5326237', '3cdc21a2-8b2a-4b56-81a8-3d2ee82ab6b4', '
-{"fixityCheck": [{ "continueOnMissingFiles": true, "continueOnUnsupportedChecksumType": true, "continueOnInvalidChecksums":
-true }],"antivirus":[{"type":"CLAMAV","cmd":["clamscan","-r"],"infectedSipAction":"QUARANTINE"}], "formatIdentification":
-[{"type":"DROID","parsedColumn": "PUID", "pathsAndFormats":[]}]}
+{"fixityCheck": {"0":{ "continueOnMissingFiles": true, "continueOnUnsupportedChecksumType": true, "continueOnInvalidChecksums":
+true }},"antivirus":{"0":{"type":"CLAMAV","cmd":{"0":"clamscan","1":"-r"},"infectedSipAction":"QUARANTINE"}}, "formatIdentification":
+{"0":{"type":"DROID"}}}
 ', 'b1b6cc1a-0581-4e35-8b42-49e293753c16','Producer profile 1', false);
 INSERT INTO public.arclib_producer_profile(id, external_id, created, updated, deleted, producer_id, validation_profile_id, sip_profile_id, workflow_config, workflow_definition_id, name, debugging_mode_active)
 VALUES ('2c56db60-1a60-4789-9a8c-8b7da3893277', '902', '2018-03-07 12:00:00', '2018-03-07 14:30:00', null, 'aa7ddcc5-5b81-4747-bfeb-1850d952a359', '11d925f6-b5bf-4c28-873f-9ab0f09e1155', '3cdc21a2-8b2a-4b56-81a8-3d2ee82ab6b4', 'config2', '04015868-55c8-4856-90ec-df933f92d69f','Producer profile 2', false);
@@ -72,7 +72,7 @@ VALUES ('9f9ea368-4f8b-4849-b0cd-954bf9b77569', '2018-12-03 09:37:38.559', '2018
 
 
 INSERT INTO public.arclib_ingest_routine(id, created, updated, deleted, producer_profile_id, transfer_area_path, workflow_config, job_id,name)
-VALUES ('700cb19d-ca86-4031-b557-233bab3ec686', '2018-03-08 08:00:00', '2018-03-08 08:00:00', null, 'b0384aeb-5169-459a-b5f4-483e6ad7b949', 'customTransferArea1', '{"antivirus":{"type":"clamav","cmd":["clamscan","-r"],"infectedSipAction":"QUARANTINE"}, "fixityCheck": { "continueOnMissingFiles": true, "continueOnUnsupportedChecksumType": true, "continueOnInvalidChecksums": true }, "formatIdentification":{"type":"DROID","parsedColumn": "PUID", "pathsAndFormats":[]}}', 'fec19674-025a-4a25-98b2-34ae46ece670','Ingest routine 1');
+VALUES ('700cb19d-ca86-4031-b557-233bab3ec686', '2018-03-08 08:00:00', '2018-03-08 08:00:00', null, 'b0384aeb-5169-459a-b5f4-483e6ad7b949', 'customTransferArea1', '{"antivirus":{"type":"clamav","cmd":{"0":"clamscan","1":"-r"},"infectedSipAction":"QUARANTINE"}, "fixityCheck": { "continueOnMissingFiles": true, "continueOnUnsupportedChecksumType": true, "continueOnInvalidChecksums": true }, "formatIdentification":{"type":"DROID"}}', 'fec19674-025a-4a25-98b2-34ae46ece670','Ingest routine 1');
 
 INSERT INTO public.arclib_batch(id, created, updated, deleted, state, producer_profile_id, workflow_config, transfer_area_path, debugging_mode_active, bpm_def_deployed, pending_incidents)
 VALUES ('e1205cc2-5bcc-4ba1-a2ce-b27ffe8d83e0', '2018-03-08 08:00:00', '2018-03-08 08:00:00', null, 'PROCESSED', 'b0384aeb-5169-459a-b5f4-483e6ad7b949', '{"attribute":"value", "attribute2":"value2"}', 'transfer/area/path/1', false,false, false);
@@ -120,20 +120,20 @@ VALUES ('ee0cb888-2b04-48e0-b8bf-4befba5f8dc9', '2018-03-08 08:00:00', '2018-03-
 --simple ingests
 INSERT INTO public.arclib_authorial_package(id, created, updated, deleted, authorial_id)
 VALUES ('b8a03b76-52eb-4459-b354-dc6395cc5254', '2018-03-08 08:00:00', '2018-03-08 08:00:00', null, 'authorialId1');
-INSERT INTO public.arclib_sip(id, created, updated, deleted, folder_structure, authorial_package_id,previous_version_sip_id, version_number)
-VALUES ('692b3812-8ed6-4260-9ef6-a04a30f71c4c', '2018-03-08 08:00:00', '2018-03-08 08:00:00', null, null, 'b8a03b76-52eb-4459-b354-dc6395cc5254',null, '1');
-INSERT INTO public.arclib_ingest_workflow(id, external_id, batch_id, file_name, processing_state, hash_id, created, updated, deleted, versioning_level, sip_id, related_workflow_id, xml_version_number, is_latest_version, arclib_xml_hash_id)
+INSERT INTO public.arclib_sip(id, created, updated, deleted, folder_structure, authorial_package_id,previous_version_sip_id, version_number,size_in_bytes)
+VALUES ('692b3812-8ed6-4260-9ef6-a04a30f71c4c', '2018-03-08 08:00:00', '2018-03-08 08:00:00', null, null, 'b8a03b76-52eb-4459-b354-dc6395cc5254',null, '1',100);
+INSERT INTO public.arclib_ingest_workflow(id, external_id, batch_id, file_name, processing_state, hash_id, created, updated, deleted, versioning_level, sip_id, related_workflow_id, xml_version_number, is_latest_version, arclib_xml_hash_id,ended)
 VALUES ('b17981cc-2923-48bb-a183-97277a3500b1', 'ARCLIB_900000001', 'e1205cc2-5bcc-4ba1-a2ce-b27ffe8d83e0',  'nameOfFile1', 'NEW', 'e7a03b76-52eb-4459-b354-dc6395cc5254', '2018-03-08 08:00:00', '2018-03-08 08:00:00', null, 'NO_VERSIONING', '692b3812-8ed6-4260-9ef6-a04a30f71c4c', null, 1,
-false, null);
+false, null,localtimestamp);
 INSERT INTO public.arclib_sip_h(sip_id, hash_id) VALUES ('692b3812-8ed6-4260-9ef6-a04a30f71c4c', 'd7a03b76-52eb-4459-b354-dc6395cc5254');
 
 INSERT INTO public.arclib_authorial_package(id, created, updated, deleted, authorial_id)
 VALUES ('17b5b857-f28b-4807-b258-3bc927269018', '2018-03-08 08:00:00', '2018-03-08 08:00:00', null, 'authorialId2');
-INSERT INTO public.arclib_sip(id, created, updated, deleted, folder_structure, authorial_package_id,previous_version_sip_id, version_number)
-VALUES ('501b5843-0287-46ee-a658-696b6b34f7d6', '2018-03-08 08:00:00', '2018-03-08 08:00:00', null, null, '17b5b857-f28b-4807-b258-3bc927269018',null, '1');
-INSERT INTO public.arclib_ingest_workflow(id, external_id, batch_id, file_name, processing_state, hash_id, created, updated, deleted, versioning_level, sip_id, related_workflow_id, xml_version_number, is_latest_version, arclib_xml_hash_id)
+INSERT INTO public.arclib_sip(id, created, updated, deleted, folder_structure, authorial_package_id,previous_version_sip_id, version_number,size_in_bytes)
+VALUES ('501b5843-0287-46ee-a658-696b6b34f7d6', '2018-03-08 08:00:00', '2018-03-08 08:00:00', null, null, '17b5b857-f28b-4807-b258-3bc927269018',null, '1',100);
+INSERT INTO public.arclib_ingest_workflow(id, external_id, batch_id, file_name, processing_state, hash_id, created, updated, deleted, versioning_level, sip_id, related_workflow_id, xml_version_number, is_latest_version, arclib_xml_hash_id,ended)
 VALUES ('64fc41cf-2a62-4fa3-8e64-b38c469bb3a1', 'ARCLIB_900000002', 'e1205cc2-5bcc-4ba1-a2ce-b27ffe8d83e0',  'nameOfFile2', 'PROCESSING','a7a03b76-52eb-4459-b354-dc6395cc5254','2018-03-08 09:00:00', '2018-03-08 09:00:00', null, 'NO_VERSIONING', '501b5843-0287-46ee-a658-696b6b34f7d6', null, 1,
-false, null);
+false, null,localtimestamp);
 INSERT INTO public.arclib_sip_h(sip_id, hash_id) VALUES ('501b5843-0287-46ee-a658-696b6b34f7d6', 'd7a03b76-52eb-4459-b354-dc6395cc5254');
 
 --PROCESSED SIPS
@@ -141,65 +141,65 @@ INSERT INTO public.arclib_sip_h(sip_id, hash_id) VALUES ('501b5843-0287-46ee-a65
 INSERT INTO public.arclib_authorial_package(id, created, updated, deleted, authorial_id)
 VALUES ('6fc1a9ed-72ea-4eb3-a52a-b3f12b4404e4', '2018-03-08 08:00:00', '2018-03-08 08:00:00', null, 'authorialId3');
 --first sip version
-INSERT INTO public.arclib_sip(id, created, updated, deleted, folder_structure, authorial_package_id,previous_version_sip_id, version_number)
-VALUES ('4b66655a-819a-474f-8203-6c432815df1f', '2018-03-08 08:00:00', '2018-03-08 08:00:00', null, null, '6fc1a9ed-72ea-4eb3-a52a-b3f12b4404e4',null, '1');
-INSERT INTO public.arclib_ingest_workflow(id, external_id, batch_id, file_name, processing_state, hash_id, created, updated, deleted, versioning_level, sip_id, related_workflow_id, xml_version_number, is_latest_version, arclib_xml_hash_id)
+INSERT INTO public.arclib_sip(id, created, updated, deleted, folder_structure, authorial_package_id,previous_version_sip_id, version_number,size_in_bytes)
+VALUES ('4b66655a-819a-474f-8203-6c432815df1f', '2018-03-08 08:00:00', '2018-03-08 08:00:00', null, null, '6fc1a9ed-72ea-4eb3-a52a-b3f12b4404e4',null, '1',100);
+INSERT INTO public.arclib_ingest_workflow(id, external_id, batch_id, file_name, processing_state, hash_id, created, updated, deleted, versioning_level, sip_id, related_workflow_id, xml_version_number, is_latest_version, arclib_xml_hash_id,ended)
 VALUES ('a768f51d-1147-4ce6-9fd6-2d4e86c86d28', 'ARCLIB_900000003', 'e1205cc2-5bcc-4ba1-a2ce-b27ffe8d83e0',  'nameOfFile3', 'PERSISTED', 'c7a03b76-52eb-4459-b354-dc6395cc5254','2018-03-08 10:00:00', '2018-03-08 10:00:00', null, 'NO_VERSIONING', '4b66655a-819a-474f-8203-6c432815df1f', null, '1',
-false, '71571b15-53db-46cc-be84-9498a0cff8a3');
-INSERT INTO public.arclib_ingest_workflow(id, external_id, batch_id, file_name, processing_state, hash_id, created, updated, deleted, versioning_level, sip_id, related_workflow_id, xml_version_number, is_latest_version, arclib_xml_hash_id)
-VALUES ('b83c6c3e-13e5-41bf-8cd3-82100db98f1c', 'ARCLIB_900000004', 'e1205cc2-5bcc-4ba1-a2ce-b27ffe8d83e0',  'nameOfFile5', 'PERSISTED','c7a03b76-52eb-4459-b354-dc6395cc5254','2018-03-08 11:00:00', '2018-03-08 11:11:00', null,'ARCLIB_XML_VERSIONING','4b66655a-819a-474f-8203-6c432815df1f','a768f51d-1147-4ce6-9fd6-2d4e86c86d28', '2', false, '6748c4a4-0840-4bfb-8d3c-50df1882f666');
+false, '71571b15-53db-46cc-be84-9498a0cff8a3',localtimestamp);
+INSERT INTO public.arclib_ingest_workflow(id, external_id, batch_id, file_name, processing_state, hash_id, created, updated, deleted, versioning_level, sip_id, related_workflow_id, xml_version_number, is_latest_version, arclib_xml_hash_id,ended)
+VALUES ('b83c6c3e-13e5-41bf-8cd3-82100db98f1c', 'ARCLIB_900000004', 'e1205cc2-5bcc-4ba1-a2ce-b27ffe8d83e0',  'nameOfFile5', 'PERSISTED','c7a03b76-52eb-4459-b354-dc6395cc5254','2018-03-08 11:00:00', '2018-03-08 11:11:00', null,'ARCLIB_XML_VERSIONING','4b66655a-819a-474f-8203-6c432815df1f','a768f51d-1147-4ce6-9fd6-2d4e86c86d28', '2', false, '6748c4a4-0840-4bfb-8d3c-50df1882f666',localtimestamp);
 INSERT INTO public.arclib_sip_h(sip_id, hash_id) VALUES ('4b66655a-819a-474f-8203-6c432815df1f', 'd7a03b76-52eb-4459-b354-dc6395cc5254');
 
 --second sip version
-INSERT INTO public.arclib_sip(id, created, updated, deleted, folder_structure, authorial_package_id,previous_version_sip_id, version_number)
-VALUES ('8b2efafd-b637-4b97-a8f7-1b97dd4ee622', '2018-03-08 08:00:00', '2018-03-08 08:00:00', null, null, '6fc1a9ed-72ea-4eb3-a52a-b3f12b4404e4','4b66655a-819a-474f-8203-6c432815df1f', '2');
-INSERT INTO public.arclib_ingest_workflow(id, external_id, batch_id, file_name, processing_state, hash_id, created, updated, deleted, versioning_level, sip_id, related_workflow_id, xml_version_number, is_latest_version, arclib_xml_hash_id)
-VALUES ('9053d4ad-9da2-43c0-8d57-6e789dc79cb3', 'ARCLIB_900000005', 'e1205cc2-5bcc-4ba1-a2ce-b27ffe8d83e0',  'nameOfFile6', 'PERSISTED', 'c7a03b76-52eb-4459-b354-dc6395cc5254','2018-03-08 12:00:00', '2018-03-08 12:12:00', null,'SIP_PACKAGE_VERSIONING','8b2efafd-b637-4b97-a8f7-1b97dd4ee622','b83c6c3e-13e5-41bf-8cd3-82100db98f1c', '1', false, 'e4fe1dbf-fdb2-440d-89aa-356df3fe794a');
-INSERT INTO public.arclib_ingest_workflow(id, external_id, batch_id, file_name, processing_state, hash_id, created, updated, deleted, versioning_level, sip_id, related_workflow_id, xml_version_number, is_latest_version, arclib_xml_hash_id)
-VALUES ('ff923b52-b65d-4f4d-8185-a07861952697', 'ARCLIB_900000006', 'e1205cc2-5bcc-4ba1-a2ce-b27ffe8d83e0',  'nameOfFile7', 'PERSISTED', 'c7a03b76-52eb-4459-b354-dc6395cc5254','2018-03-08 13:00:00', '2018-03-08 13:13:00', null,'ARCLIB_XML_VERSIONING','8b2efafd-b637-4b97-a8f7-1b97dd4ee622','9053d4ad-9da2-43c0-8d57-6e789dc79cb3', 2, true, '88f510a8-f002-4e20-b7f6-3cbaeaf28b00');
+INSERT INTO public.arclib_sip(id, created, updated, deleted, folder_structure, authorial_package_id,previous_version_sip_id, version_number,size_in_bytes)
+VALUES ('8b2efafd-b637-4b97-a8f7-1b97dd4ee622', '2018-03-08 08:00:00', '2018-03-08 08:00:00', null, null, '6fc1a9ed-72ea-4eb3-a52a-b3f12b4404e4','4b66655a-819a-474f-8203-6c432815df1f', '2',100);
+INSERT INTO public.arclib_ingest_workflow(id, external_id, batch_id, file_name, processing_state, hash_id, created, updated, deleted, versioning_level, sip_id, related_workflow_id, xml_version_number, is_latest_version, arclib_xml_hash_id,ended)
+VALUES ('9053d4ad-9da2-43c0-8d57-6e789dc79cb3', 'ARCLIB_900000005', 'e1205cc2-5bcc-4ba1-a2ce-b27ffe8d83e0',  'nameOfFile6', 'PERSISTED', 'c7a03b76-52eb-4459-b354-dc6395cc5254','2018-03-08 12:00:00', '2018-03-08 12:12:00', null,'SIP_PACKAGE_VERSIONING','8b2efafd-b637-4b97-a8f7-1b97dd4ee622','b83c6c3e-13e5-41bf-8cd3-82100db98f1c', '1', false, 'e4fe1dbf-fdb2-440d-89aa-356df3fe794a',localtimestamp);
+INSERT INTO public.arclib_ingest_workflow(id, external_id, batch_id, file_name, processing_state, hash_id, created, updated, deleted, versioning_level, sip_id, related_workflow_id, xml_version_number, is_latest_version, arclib_xml_hash_id,ended)
+VALUES ('ff923b52-b65d-4f4d-8185-a07861952697', 'ARCLIB_900000006', 'e1205cc2-5bcc-4ba1-a2ce-b27ffe8d83e0',  'nameOfFile7', 'PERSISTED', 'c7a03b76-52eb-4459-b354-dc6395cc5254','2018-03-08 13:00:00', '2018-03-08 13:13:00', null,'ARCLIB_XML_VERSIONING','8b2efafd-b637-4b97-a8f7-1b97dd4ee622','9053d4ad-9da2-43c0-8d57-6e789dc79cb3', 2, true, '88f510a8-f002-4e20-b7f6-3cbaeaf28b00',localtimestamp);
 INSERT INTO public.arclib_sip_h(sip_id, hash_id) VALUES ('8b2efafd-b637-4b97-a8f7-1b97dd4ee622', 'd7a03b76-52eb-4459-b354-dc6395cc5254');
 
 --different authorial packaged7a03b76-52eb-4459-b354-dc6395cc5254
 INSERT INTO public.arclib_authorial_package(id, created, updated, deleted, authorial_id)
 VALUES ('bf962ddb-2180-4e56-a27b-cabdd793844e', '2018-03-08 08:00:00', '2018-03-08 08:00:00', null, 'authorialId4');
-INSERT INTO public.arclib_sip(id, created, updated, deleted, folder_structure, authorial_package_id,previous_version_sip_id, version_number)
-VALUES ('89f82da0-af78-4461-bf92-7382050082a1', '2018-03-08 08:00:00', '2018-03-08 08:00:00', null, null, 'bf962ddb-2180-4e56-a27b-cabdd793844e',null, '1');
-INSERT INTO public.arclib_ingest_workflow(id, external_id, batch_id, file_name, processing_state, hash_id, created, updated, deleted, versioning_level, sip_id, related_workflow_id, xml_version_number, is_latest_version, arclib_xml_hash_id)
+INSERT INTO public.arclib_sip(id, created, updated, deleted, folder_structure, authorial_package_id,previous_version_sip_id, version_number,size_in_bytes)
+VALUES ('89f82da0-af78-4461-bf92-7382050082a1', '2018-03-08 08:00:00', '2018-03-08 08:00:00', null, null, 'bf962ddb-2180-4e56-a27b-cabdd793844e',null, '1',100);
+INSERT INTO public.arclib_ingest_workflow(id, external_id, batch_id, file_name, processing_state, hash_id, created, updated, deleted, versioning_level, sip_id, related_workflow_id, xml_version_number, is_latest_version, arclib_xml_hash_id,ended)
 VALUES ('233d8010-20d1-4fc4-a857-155b41507765', 'ARCLIB_900000007', 'e1205cc2-5bcc-4ba1-a2ce-b27ffe8d83e0',  'nameOfFileX', 'PERSISTED', 'c7a03b76-52eb-4459-b354-dc6395cc5254','2018-03-08 10:00:00', '2018-03-08 10:00:00', null, 'NO_VERSIONING', '89f82da0-af78-4461-bf92-7382050082a1', null, '1',
-true, 'ee0cb888-2b04-48e0-b8bf-4befba5f8dc9');
+true, 'ee0cb888-2b04-48e0-b8bf-4befba5f8dc9',localtimestamp);
 INSERT INTO public.arclib_sip_h(sip_id, hash_id) VALUES ('89f82da0-af78-4461-bf92-7382050082a1', 'd7a03b76-52eb-4459-b354-dc6395cc5254');
 
 --FAILED SIPS
 INSERT INTO public.arclib_authorial_package(id, created, updated, deleted, authorial_id)
 VALUES ('d719b80e-6a80-4f91-b7a1-5b989df3242e', '2018-03-08 08:00:00', '2018-03-08 08:00:00', null, 'authorialId5');
-INSERT INTO public.arclib_sip(id, created, updated, deleted, folder_structure, authorial_package_id,previous_version_sip_id, version_number)
-VALUES ('ae180c95-c527-4b3b-84f8-1f9fb56d3e6f', '2018-03-08 08:00:00', '2018-03-08 08:00:00', null, null, 'd719b80e-6a80-4f91-b7a1-5b989df3242e',null, '1');
-INSERT INTO public.arclib_ingest_workflow(id, external_id, batch_id, file_name, processing_state, hash_id, created, updated, deleted, ingest_workflow_failure_info_id, versioning_level, sip_id, related_workflow_id, xml_version_number, is_latest_version, arclib_xml_hash_id)
-VALUES ('8661abbc-60bc-4d0e-8924-500626899a3f', 'ARCLIB_900000008', 'ab8e9862-a600-4592-aaf6-0c019e241ccb',  'nameOfFile4', 'FAILED', 'd7a03b76-52eb-4459-b354-dc6395cc5254','2018-03-08 11:00:00', '2018-03-08 11:00:00', null,'867f32b1-d721-467a-b889-52248ac13b18', 'NO_VERSIONING', 'ae180c95-c527-4b3b-84f8-1f9fb56d3e6f', null, '1', false, null);
+INSERT INTO public.arclib_sip(id, created, updated, deleted, folder_structure, authorial_package_id,previous_version_sip_id, version_number,size_in_bytes)
+VALUES ('ae180c95-c527-4b3b-84f8-1f9fb56d3e6f', '2018-03-08 08:00:00', '2018-03-08 08:00:00', null, null, 'd719b80e-6a80-4f91-b7a1-5b989df3242e',null, '1',100);
+INSERT INTO public.arclib_ingest_workflow(id, external_id, batch_id, file_name, processing_state, hash_id, created, updated, deleted, ingest_workflow_failure_info_id, versioning_level, sip_id, related_workflow_id, xml_version_number, is_latest_version, arclib_xml_hash_id,ended)
+VALUES ('8661abbc-60bc-4d0e-8924-500626899a3f', 'ARCLIB_900000008', 'ab8e9862-a600-4592-aaf6-0c019e241ccb',  'nameOfFile4', 'FAILED', 'd7a03b76-52eb-4459-b354-dc6395cc5254','2018-03-08 11:00:00', '2018-03-08 11:00:00', null,'867f32b1-d721-467a-b889-52248ac13b18', 'NO_VERSIONING', 'ae180c95-c527-4b3b-84f8-1f9fb56d3e6f', null, '1', false, null,localtimestamp);
 INSERT INTO public.arclib_sip_h(sip_id, hash_id) VALUES ('ae180c95-c527-4b3b-84f8-1f9fb56d3e6f', 'd7a03b76-52eb-4459-b354-dc6395cc5254');
 
 INSERT INTO public.arclib_authorial_package(id, created, updated, deleted, authorial_id)
 VALUES ('e2d79b58-57bc-4e53-b588-5f3000c489c0', '2018-03-08 08:00:00', '2018-03-08 08:00:00', null, 'authorialId6');
-INSERT INTO public.arclib_sip(id, created, updated, deleted, folder_structure, authorial_package_id,previous_version_sip_id, version_number)
-VALUES ('03514d26-3165-4eb6-9005-b153c406fa1b', '2018-03-08 08:00:00', '2018-03-08 08:00:00', null, null, 'e2d79b58-57bc-4e53-b588-5f3000c489c0',null, '1');
-INSERT INTO public.arclib_ingest_workflow(id, external_id, batch_id, file_name, processing_state, hash_id, created, updated, deleted, ingest_workflow_failure_info_id, versioning_level, sip_id, related_workflow_id, xml_version_number, is_latest_version, arclib_xml_hash_id)
-VALUES ('0b682b04-f512-4862-802c-44313ed3802b', 'ARCLIB_900000009', 'ab8e9862-a600-4592-aaf6-0c019e241ccb',  'nameOfFile5', 'FAILED', 'd7a03b76-52eb-4459-b354-dc6395cc5254','2018-03-08 12:00:00', '2018-03-08 12:00:00', null,'06d049f9-ea37-41eb-b9e8-28254061ef5a', 'NO_VERSIONING', '03514d26-3165-4eb6-9005-b153c406fa1b',null, '1', false, null);
+INSERT INTO public.arclib_sip(id, created, updated, deleted, folder_structure, authorial_package_id,previous_version_sip_id, version_number,size_in_bytes)
+VALUES ('03514d26-3165-4eb6-9005-b153c406fa1b', '2018-03-08 08:00:00', '2018-03-08 08:00:00', null, null, 'e2d79b58-57bc-4e53-b588-5f3000c489c0',null, '1',100);
+INSERT INTO public.arclib_ingest_workflow(id, external_id, batch_id, file_name, processing_state, hash_id, created, updated, deleted, ingest_workflow_failure_info_id, versioning_level, sip_id, related_workflow_id, xml_version_number, is_latest_version, arclib_xml_hash_id,ended)
+VALUES ('0b682b04-f512-4862-802c-44313ed3802b', 'ARCLIB_900000009', 'ab8e9862-a600-4592-aaf6-0c019e241ccb',  'nameOfFile5', 'FAILED', 'd7a03b76-52eb-4459-b354-dc6395cc5254','2018-03-08 12:00:00', '2018-03-08 12:00:00', null,'06d049f9-ea37-41eb-b9e8-28254061ef5a', 'NO_VERSIONING', '03514d26-3165-4eb6-9005-b153c406fa1b',null, '1', false, null,localtimestamp);
 INSERT INTO public.arclib_sip_h(sip_id, hash_id) VALUES ('03514d26-3165-4eb6-9005-b153c406fa1b', 'd7a03b76-52eb-4459-b354-dc6395cc5254');
 
 INSERT INTO public.arclib_authorial_package(id, created, updated, deleted, authorial_id)
 VALUES ('77c60598-5f2e-41e8-9ed7-d2f6299cca07', '2018-03-08 08:00:00', '2018-03-08 08:00:00', null, 'authorialId7');
-INSERT INTO public.arclib_sip(id, created, updated, deleted, folder_structure, authorial_package_id,previous_version_sip_id, version_number)
-VALUES ('aeffbe50-7c61-4e82-8f7a-625ea09ae80d', '2018-03-08 08:00:00', '2018-03-08 08:00:00', null, null, '77c60598-5f2e-41e8-9ed7-d2f6299cca07',null, '1');
-INSERT INTO public.arclib_ingest_workflow(id, external_id, batch_id, file_name, processing_state, hash_id, created, updated, deleted, ingest_workflow_failure_info_id, versioning_level, sip_id, related_workflow_id, xml_version_number, is_latest_version, arclib_xml_hash_id)
-VALUES ('d483106e-d721-4ab8-94d3-4e582d571c13', 'ARCLIB_900000010', 'ab8e9862-a600-4592-aaf6-0c019e241ccb',  'nameOfFile6', 'FAILED', 'd7a03b76-52eb-4459-b354-dc6395cc5254','2018-03-08 13:00:00', '2018-03-08 13:00:00', null,'c920dc8b-f774-4a6e-ab15-1b5f6b1910a7', 'NO_VERSIONING', 'aeffbe50-7c61-4e82-8f7a-625ea09ae80d', null, '1', false, null);
+INSERT INTO public.arclib_sip(id, created, updated, deleted, folder_structure, authorial_package_id,previous_version_sip_id, version_number,size_in_bytes)
+VALUES ('aeffbe50-7c61-4e82-8f7a-625ea09ae80d', '2018-03-08 08:00:00', '2018-03-08 08:00:00', null, null, '77c60598-5f2e-41e8-9ed7-d2f6299cca07',null, '1',100);
+INSERT INTO public.arclib_ingest_workflow(id, external_id, batch_id, file_name, processing_state, hash_id, created, updated, deleted, ingest_workflow_failure_info_id, versioning_level, sip_id, related_workflow_id, xml_version_number, is_latest_version, arclib_xml_hash_id,ended)
+VALUES ('d483106e-d721-4ab8-94d3-4e582d571c13', 'ARCLIB_900000010', 'ab8e9862-a600-4592-aaf6-0c019e241ccb',  'nameOfFile6', 'FAILED', 'd7a03b76-52eb-4459-b354-dc6395cc5254','2018-03-08 13:00:00', '2018-03-08 13:00:00', null,'c920dc8b-f774-4a6e-ab15-1b5f6b1910a7', 'NO_VERSIONING', 'aeffbe50-7c61-4e82-8f7a-625ea09ae80d', null, '1', false, null,localtimestamp);
 INSERT INTO public.arclib_sip_h(sip_id, hash_id) VALUES ('aeffbe50-7c61-4e82-8f7a-625ea09ae80d', 'd7a03b76-52eb-4459-b354-dc6395cc5254');
 
 INSERT INTO public.arclib_authorial_package(id, created, updated, deleted, authorial_id)
 VALUES ('ec27b6b8-fa1c-46dc-8ade-91912ee81c0b', '2018-03-08 08:00:00', '2018-03-08 08:00:00', null, 'authorialId8');
-INSERT INTO public.arclib_sip(id, created, updated, deleted, folder_structure, authorial_package_id,previous_version_sip_id, version_number)
-VALUES ('ba6ebf37-daf2-40a1-80e0-4b779e14c7f1', '2018-03-08 08:00:00', '2018-03-08 08:00:00', null, null, 'ec27b6b8-fa1c-46dc-8ade-91912ee81c0b',null, '1');
-INSERT INTO public.arclib_ingest_workflow(id, external_id, batch_id, file_name, processing_state, hash_id, created, updated, deleted, ingest_workflow_failure_info_id, versioning_level, sip_id, related_workflow_id, xml_version_number, is_latest_version, arclib_xml_hash_id)
-VALUES ('14619bd1-5d5b-461e-b2cd-d6f0bee20dd5', 'ARCLIB_9000000011', 'ab8e9862-a600-4592-aaf6-0c019e241ccb',  'nameOfFile7', 'FAILED', 'd7a03b76-52eb-4459-b354-dc6395cc5254', '2018-03-08 14:00:00', '2018-03-08 14:00:00', null,'c2e0a3fb-5507-4ac8-b7cf-1a5f146f6def', 'NO_VERSIONING', 'ba6ebf37-daf2-40a1-80e0-4b779e14c7f1', null, '1', false, null);
+INSERT INTO public.arclib_sip(id, created, updated, deleted, folder_structure, authorial_package_id,previous_version_sip_id, version_number,size_in_bytes)
+VALUES ('ba6ebf37-daf2-40a1-80e0-4b779e14c7f1', '2018-03-08 08:00:00', '2018-03-08 08:00:00', null, null, 'ec27b6b8-fa1c-46dc-8ade-91912ee81c0b',null, '1',100);
+INSERT INTO public.arclib_ingest_workflow(id, external_id, batch_id, file_name, processing_state, hash_id, created, updated, deleted, ingest_workflow_failure_info_id, versioning_level, sip_id, related_workflow_id, xml_version_number, is_latest_version, arclib_xml_hash_id,ended)
+VALUES ('14619bd1-5d5b-461e-b2cd-d6f0bee20dd5', 'ARCLIB_9000000011', 'ab8e9862-a600-4592-aaf6-0c019e241ccb',  'nameOfFile7', 'FAILED', 'd7a03b76-52eb-4459-b354-dc6395cc5254', '2018-03-08 14:00:00', '2018-03-08 14:00:00', null,'c2e0a3fb-5507-4ac8-b7cf-1a5f146f6def', 'NO_VERSIONING', 'ba6ebf37-daf2-40a1-80e0-4b779e14c7f1', null, '1', false, null,localtimestamp);
 INSERT INTO public.arclib_sip_h(sip_id, hash_id) VALUES ('ba6ebf37-daf2-40a1-80e0-4b779e14c7f1', 'd7a03b76-52eb-4459-b354-dc6395cc5254');
 
 INSERT INTO public.arclib_aip_deletion_request(id, created, updated, deleted, aip_id, requester_id, confirmer1_id, confirmer2_id)

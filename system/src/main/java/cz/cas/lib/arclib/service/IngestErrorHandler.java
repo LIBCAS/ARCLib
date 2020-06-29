@@ -8,14 +8,20 @@ import cz.cas.lib.arclib.domain.packages.AuthorialPackage;
 import cz.cas.lib.arclib.domain.packages.Sip;
 import cz.cas.lib.arclib.domainbase.exception.MissingObject;
 import cz.cas.lib.arclib.dto.JmsDto;
+import cz.cas.lib.arclib.service.archivalStorage.ArchivalStorageException;
+import cz.cas.lib.arclib.service.archivalStorage.ArchivalStorageService;
 import cz.cas.lib.core.util.Utils;
 import lombok.extern.slf4j.Slf4j;
 import org.camunda.bpm.engine.RuntimeService;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jms.core.JmsTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
+import org.springframework.util.FileSystemUtils;
 
 import javax.inject.Inject;
+
+import static cz.cas.lib.arclib.utils.ArclibUtils.getIngestWorkflowWorkspacePath;
 
 @Service
 @Slf4j
@@ -26,6 +32,8 @@ public class IngestErrorHandler {
     private RuntimeService runtimeService;
     private AipService aipService;
     private TransactionTemplate transactionTemplate;
+    private String workspace;
+    private ArchivalStorageService archivalStorageService;
 
     /**
      * Assigns failure info to ingest workflow, deactivates AIP update lock, kills camunda process and notifies Coordinator
@@ -44,7 +52,22 @@ public class IngestErrorHandler {
             ingestWorkflow.setProcessingState(IngestWorkflowState.FAILED);
             ingestWorkflow.setFailureInfo(ingestWorkflowFailureInfo);
             ingestWorkflowService.save(ingestWorkflow);
+            aipService.removeAipXmlIndex(externalId);
             log.info("State of ingest workflow with external id " + ingestWorkflow.getExternalId() + " changed to " + IngestWorkflowState.FAILED + ".");
+            FileSystemUtils.deleteRecursively(getIngestWorkflowWorkspacePath(ingestWorkflow.getExternalId(), workspace).toAbsolutePath().toFile());
+            log.debug("AIP data of ingest workflow with external id " + ingestWorkflow.getExternalId() + " has been deleted from workspace.");
+
+            if (ingestWorkflow.getXmlVersionNumber() != null) {
+                try {
+                    if (ingestWorkflow.getXmlVersionNumber() == 1)
+                        archivalStorageService.rollbackAip(ingestWorkflow.getSip().getId());
+                    else
+                        archivalStorageService.rollbackLatestXml(ingestWorkflow.getSip().getId(), ingestWorkflow.getXmlVersionNumber());
+                    log.debug("Rollback request sent to Archival Storage.");
+                } catch (ArchivalStorageException exception) {
+                    log.debug("Failed to sent rollback request to Archival Storage: " + exception.toString());
+                }
+            }
 
             IngestWorkflowFailureType failureType = ingestWorkflowFailureInfo.getIngestWorkflowFailureType();
             String cancellationReason = ingestWorkflowFailureInfo.getMsg();
@@ -90,6 +113,16 @@ public class IngestErrorHandler {
         });
         if (ingestWorkflowFailureInfo.getIngestWorkflowFailureType() != IngestWorkflowFailureType.BATCH_CANCELLATION)
             template.convertAndSend("finish", new JmsDto(iw.getBatch().getId(), userId));
+    }
+
+    @Inject
+    public void setArchivalStorageService(ArchivalStorageService archivalStorageService) {
+        this.archivalStorageService = archivalStorageService;
+    }
+
+    @Inject
+    public void setWorkspace(@Value("${arclib.path.workspace}") String workspace) {
+        this.workspace = workspace;
     }
 
     @Inject

@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Created with Jaspersoft Studio version 6.8.0.final using JasperReports Library version 6.8.0-2ed8dfabb690ff337a5797129f2cd92902b0c87b  -->
+<!-- Created with Jaspersoft Studio version 6.6.0.final using JasperReports Library version 6.6.0  -->
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="Blank_A4_5" pageWidth="595" pageHeight="842" columnWidth="555" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20" uuid="74538650-a68e-4b98-9f0f-7a1909c9f9a8">
 	<property name="com.jaspersoft.studio.data.sql.tables" value=""/>
-	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="Solr data adapter"/>
+	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="DataAdapter.xml"/>
 	<style name="Table_TH" mode="Opaque" backcolor="#F0F8FF">
 		<box>
 			<pen lineWidth="0.5" lineColor="#000000"/>
@@ -30,28 +30,24 @@
 			<rightPen lineWidth="0.5" lineColor="#000000"/>
 		</box>
 	</style>
-	<subDataset name="Dataset1" uuid="f7a21021-c9d1-4926-9779-cb5d8b8031b2">
+	<subDataset name="UsedFormatsDs" uuid="f7a21021-c9d1-4926-9779-cb5d8b8031b2">
 		<property name="com.jaspersoft.studio.data.sql.tables" value=""/>
-		<property name="com.jaspersoft.studio.data.defaultdataadapter" value="New Data Adapter "/>
-		<parameter name="created_from" class="java.lang.String">
+		<property name="com.jaspersoft.studio.data.defaultdataadapter" value="DataAdapter.xml"/>
+		<parameter name="from" class="java.lang.String">
 			<parameterDescription><![CDATA[]]></parameterDescription>
 			<defaultValueExpression><![CDATA["1700-01-01T00:00:00Z"]]></defaultValueExpression>
 		</parameter>
-		<parameter name="created_to" class="java.lang.String">
+		<parameter name="to" class="java.lang.String">
 			<parameterDescription><![CDATA[]]></parameterDescription>
 			<defaultValueExpression><![CDATA["4000-12-31T00:00:00Z"]]></defaultValueExpression>
-		</parameter>
-		<parameter name="decimal_points" class="java.lang.Integer">
-			<parameterDescription><![CDATA[]]></parameterDescription>
-			<defaultValueExpression><![CDATA[7]]></defaultValueExpression>
 		</parameter>
 		<queryString language="SQL">
 			<![CDATA[SELECT arc.extracted_format_file_format_s AS extracted_format_file_format,
 			 arc.extracted_format_preservation_level_value AS extracted_format_preservation_level_value,
-			COUNT(*) AS count_of_items, SUM(arc.extracted_format_size) as sum_of_extracted_format_size
+			SUM(arc.extracted_format_file_count) AS count_of_items, SUM(arc.extracted_format_size) as sum_of_extracted_format_size
 			FROM arclibXmlC arc JOIN arclibXmlC sub ON sub._root_ = arc._root_ WHERE
 			arc.extracted_format_file_format_s = '[* TO *]' AND arc.extracted_format_preservation_level_value = '[* TO *]'
-			AND sub.created = '[$P!{created_from} TO $P!{created_to}]'
+			AND sub.created = '[$P!{from} TO $P!{to}]'
 			GROUP BY arc.extracted_format_file_format_s, arc.extracted_format_preservation_level_value]]>
 		</queryString>
 		<field name="extracted_format_file_format" class="java.lang.String"/>
@@ -59,18 +55,14 @@
 		<field name="sum_of_extracted_format_size" class="java.lang.Long"/>
 		<field name="count_of_items" class="java.lang.String"/>
 	</subDataset>
-	<subDataset name="Dataset2" uuid="aebc3587-522a-4a00-b5b4-995a39a49866">
+	<subDataset name="PuidsDs" uuid="aebc3587-522a-4a00-b5b4-995a39a49866">
 		<property name="com.jaspersoft.studio.data.sql.tables" value=""/>
-		<property name="com.jaspersoft.studio.data.defaultdataadapter" value="New Data Adapter "/>
-		<parameter name="decimal_points" class="java.lang.Integer">
-			<parameterDescription><![CDATA[]]></parameterDescription>
-			<defaultValueExpression><![CDATA[7]]></defaultValueExpression>
-		</parameter>
-		<parameter name="created_from" class="java.lang.String">
+		<property name="com.jaspersoft.studio.data.defaultdataadapter" value="DataAdapter.xml"/>
+		<parameter name="from" class="java.lang.String">
 			<parameterDescription><![CDATA[]]></parameterDescription>
 			<defaultValueExpression><![CDATA["1700-01-01T00:00:00Z"]]></defaultValueExpression>
 		</parameter>
-		<parameter name="created_to" class="java.lang.String">
+		<parameter name="to" class="java.lang.String">
 			<parameterDescription><![CDATA[]]></parameterDescription>
 			<defaultValueExpression><![CDATA["4000-12-31T00:00:00Z"]]></defaultValueExpression>
 		</parameter>
@@ -79,11 +71,11 @@
 			 arc.extracted_format_format_version AS extracted_format_format_version,
 			  arc.extracted_format_format_registry_key AS extracted_format_format_registry_key,
              arc.extracted_format_preservation_level_value AS extracted_format_preservation_level_value,
-              COUNT(*) AS count_of_items, SUM(arc.extracted_format_size) as sum_of_extracted_format_size
+              SUM(arc.extracted_format_file_count) AS count_of_items, SUM(arc.extracted_format_size) as sum_of_extracted_format_size
              FROM arclibXmlC arc JOIN arclibXmlC sub ON sub._root_ = arc._root_ WHERE
              arc.extracted_format_file_format_s = '[* TO *]' AND arc.extracted_format_preservation_level_value = '[* TO *]'
              AND arc.extracted_format_format_version = '[* TO *]' AND arc.extracted_format_format_registry_key = '[* TO *]'
-             AND sub.created = '[$P!{created_from} TO $P!{created_to}]'
+             AND sub.created = '[$P!{from} TO $P!{to}]'
              GROUP BY arc.extracted_format_file_format_s, arc.extracted_format_format_registry_key, arc.extracted_format_format_version,
              arc.extracted_format_preservation_level_value]]>
 		</queryString>
@@ -94,44 +86,36 @@
 		<field name="extracted_format_preservation_level_value" class="java.lang.String"/>
 		<field name="count_of_items" class="java.lang.String"/>
 	</subDataset>
-	<subDataset name="Dataset3" uuid="64cc43f0-00fe-4ba0-90b3-217a6ca912f9">
+	<subDataset name="PreservationLevelDs" uuid="64cc43f0-00fe-4ba0-90b3-217a6ca912f9">
 		<property name="com.jaspersoft.studio.data.sql.tables" value=""/>
-		<property name="com.jaspersoft.studio.data.defaultdataadapter" value="New Data Adapter "/>
-		<parameter name="created_from" class="java.lang.String">
+		<property name="com.jaspersoft.studio.data.defaultdataadapter" value="DataAdapter.xml"/>
+		<parameter name="from" class="java.lang.String">
 			<parameterDescription><![CDATA[]]></parameterDescription>
 			<defaultValueExpression><![CDATA["1700-01-01T00:00:00Z"]]></defaultValueExpression>
 		</parameter>
-		<parameter name="created_to" class="java.lang.String">
+		<parameter name="to" class="java.lang.String">
 			<parameterDescription><![CDATA[]]></parameterDescription>
 			<defaultValueExpression><![CDATA["4000-12-31T00:00:00Z"]]></defaultValueExpression>
 		</parameter>
-		<parameter name="decimal_points" class="java.lang.Integer">
-			<parameterDescription><![CDATA[]]></parameterDescription>
-			<defaultValueExpression><![CDATA[7]]></defaultValueExpression>
-		</parameter>
 		<queryString language="SQL">
-			<![CDATA[SELECT arc.extracted_format_preservation_level_value, COUNT(*) AS count_of_items,
+			<![CDATA[SELECT arc.extracted_format_preservation_level_value, SUM(arc.extracted_format_file_count) AS count_of_items,
             SUM(arc.extracted_format_size) as sum_of_extracted_format_size
             FROM arclibXmlC arc JOIN arclibXmlC sub ON sub._root_ = arc._root_ WHERE
             arc.extracted_format_preservation_level_value = '[* TO *]'
-            AND sub.created = '[$P!{created_from} TO $P!{created_to}]'
+            AND sub.created = '[$P!{from} TO $P!{to}]'
             GROUP BY arc.extracted_format_preservation_level_value]]>
 		</queryString>
 		<field name="sum_of_extracted_format_size" class="java.lang.Long"/>
 		<field name="extracted_format_preservation_level_value" class="java.lang.String"/>
 		<field name="count_of_items" class="java.lang.String"/>
 	</subDataset>
-	<parameter name="created_from" class="java.lang.String">
+	<parameter name="from" class="java.lang.String">
 		<parameterDescription><![CDATA[]]></parameterDescription>
 		<defaultValueExpression><![CDATA["1700-01-01T00:00:00Z"]]></defaultValueExpression>
 	</parameter>
-	<parameter name="created_to" class="java.lang.String">
+	<parameter name="to" class="java.lang.String">
 		<parameterDescription><![CDATA[]]></parameterDescription>
 		<defaultValueExpression><![CDATA["4000-12-31T00:00:00Z"]]></defaultValueExpression>
-	</parameter>
-	<parameter name="decimal_points" class="java.lang.Integer">
-		<parameterDescription><![CDATA[]]></parameterDescription>
-		<defaultValueExpression><![CDATA[7]]></defaultValueExpression>
 	</parameter>
 	<queryString language="SQL">
 		<![CDATA[select 1]]>
@@ -148,35 +132,31 @@
 	<detail>
 		<band height="260" splitType="Stretch">
 			<componentElement>
-				<reportElement x="77" y="50" width="400" height="200" uuid="d006050f-61e1-4b67-8a4c-1a3a64ccb7ab">
+				<reportElement x="80" y="40" width="400" height="60" uuid="d006050f-61e1-4b67-8a4c-1a3a64ccb7ab">
 					<property name="com.jaspersoft.studio.layout" value="com.jaspersoft.studio.editor.layout.VerticalRowLayout"/>
 					<property name="com.jaspersoft.studio.table.style.table_header" value="Table_TH"/>
 					<property name="com.jaspersoft.studio.table.style.column_header" value="Table_CH"/>
 					<property name="com.jaspersoft.studio.table.style.detail" value="Table_TD"/>
+					<property name="net.sf.jasperreports.export.headertoolbar.table.name" value="UsedFormats"/>
 				</reportElement>
-				<jr:table xmlns:jr="http://jasperreports.sourceforge.net/jasperreports/components" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports/components http://jasperreports.sourceforge.net/xsd/components.xsd">
-					<datasetRun subDataset="Dataset1" uuid="46ae24f3-ecad-47de-b764-55cf3f33f555">
-						<datasetParameter name="decimal_points">
-							<datasetParameterExpression><![CDATA[$P{decimal_points}]]></datasetParameterExpression>
+				<jr:table xmlns:jr="http://jasperreports.sourceforge.net/jasperreports/components" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports/components http://jasperreports.sourceforge.net/xsd/components.xsd" whenNoDataType="AllSectionsNoDetail">
+					<datasetRun subDataset="UsedFormatsDs" uuid="46ae24f3-ecad-47de-b764-55cf3f33f555">
+						<datasetParameter name="from">
+							<datasetParameterExpression><![CDATA[$P{from}]]></datasetParameterExpression>
 						</datasetParameter>
-						<datasetParameter name="created_from">
-							<datasetParameterExpression><![CDATA[$P{created_from}]]></datasetParameterExpression>
-						</datasetParameter>
-						<datasetParameter name="created_to">
-							<datasetParameterExpression><![CDATA[$P{created_to}]]></datasetParameterExpression>
+						<datasetParameter name="to">
+							<datasetParameterExpression><![CDATA[$P{to}]]></datasetParameterExpression>
 						</datasetParameter>
 						<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
 					</datasetRun>
 					<jr:column width="100" uuid="8cb530c3-7d95-4336-933a-1b2c114beb35">
-						<jr:tableHeader style="Table_TH" height="30"/>
-						<jr:tableFooter style="Table_TH" height="30"/>
+						<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column1"/>
 						<jr:columnHeader style="Table_CH" height="30">
 							<staticText>
 								<reportElement x="0" y="0" width="100" height="30" uuid="00216162-f356-4daf-b412-0ff69889302b"/>
 								<text><![CDATA[Type]]></text>
 							</staticText>
 						</jr:columnHeader>
-						<jr:columnFooter style="Table_CH" height="30"/>
 						<jr:detailCell style="Table_TD" height="30">
 							<textField>
 								<reportElement x="0" y="0" width="100" height="30" uuid="9b2acbb8-910a-4c73-977f-368ad3f0393d"/>
@@ -185,15 +165,13 @@
 						</jr:detailCell>
 					</jr:column>
 					<jr:column width="100" uuid="0159b4c8-3fb6-4f42-9f03-b5cecdb9f581">
-						<jr:tableHeader style="Table_TH" height="30"/>
-						<jr:tableFooter style="Table_TH" height="30"/>
+						<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column2"/>
 						<jr:columnHeader style="Table_CH" height="30">
 							<staticText>
 								<reportElement x="0" y="0" width="100" height="30" uuid="d0d36afa-5868-4219-b4e3-edc8313c95f7"/>
-								<text><![CDATA[Count of items]]></text>
+								<text><![CDATA[Count of files]]></text>
 							</staticText>
 						</jr:columnHeader>
-						<jr:columnFooter style="Table_CH" height="30"/>
 						<jr:detailCell style="Table_TD" height="30">
 							<textField>
 								<reportElement x="0" y="0" width="100" height="30" uuid="6ad6b939-b093-4136-b132-fcdcb9cf7554"/>
@@ -202,32 +180,28 @@
 						</jr:detailCell>
 					</jr:column>
 					<jr:column width="100" uuid="0159b4c8-3fb6-4f42-9f03-b5cecdb9f581">
-						<jr:tableHeader style="Table_TH" height="30"/>
-						<jr:tableFooter style="Table_TH" height="30"/>
+						<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column3"/>
 						<jr:columnHeader style="Table_CH" height="30">
 							<staticText>
 								<reportElement x="0" y="0" width="100" height="30" uuid="d0d36afa-5868-4219-b4e3-edc8313c95f7"/>
 								<text><![CDATA[Size in GB]]></text>
 							</staticText>
 						</jr:columnHeader>
-						<jr:columnFooter style="Table_CH" height="30"/>
 						<jr:detailCell style="Table_TD" height="30">
 							<textField>
 								<reportElement x="0" y="0" width="100" height="30" uuid="6ad6b939-b093-4136-b132-fcdcb9cf7554"/>
-								<textFieldExpression><![CDATA[String.format("%." + $P{decimal_points} + "f", ($F{sum_of_extracted_format_size}.doubleValue() / 1073741824))]]></textFieldExpression>
+								<textFieldExpression><![CDATA[String.format("%.2f", ($F{sum_of_extracted_format_size}.doubleValue() / 1073741824))]]></textFieldExpression>
 							</textField>
 						</jr:detailCell>
 					</jr:column>
 					<jr:column width="100" uuid="0159b4c8-3fb6-4f42-9f03-b5cecdb9f581">
-						<jr:tableHeader style="Table_TH" height="30"/>
-						<jr:tableFooter style="Table_TH" height="30"/>
+						<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column4"/>
 						<jr:columnHeader style="Table_CH" height="30">
 							<staticText>
 								<reportElement x="0" y="0" width="100" height="30" uuid="d0d36afa-5868-4219-b4e3-edc8313c95f7"/>
 								<text><![CDATA[Preservation level]]></text>
 							</staticText>
 						</jr:columnHeader>
-						<jr:columnFooter style="Table_CH" height="30"/>
 						<jr:detailCell style="Table_TD" height="30">
 							<textField>
 								<reportElement x="0" y="0" width="100" height="30" uuid="6ad6b939-b093-4136-b132-fcdcb9cf7554"/>
@@ -247,123 +221,109 @@
 		</band>
 		<band height="280" splitType="Stretch">
 			<componentElement>
-				<reportElement x="-6" y="70" width="570" height="150" uuid="d006050f-61e1-4b67-8a4c-1a3a64ccb7ab">
+				<reportElement x="9" y="60" width="540" height="60" uuid="d006050f-61e1-4b67-8a4c-1a3a64ccb7ab">
 					<property name="com.jaspersoft.studio.layout" value="com.jaspersoft.studio.editor.layout.VerticalRowLayout"/>
 					<property name="com.jaspersoft.studio.table.style.table_header" value="Table_TH"/>
 					<property name="com.jaspersoft.studio.table.style.column_header" value="Table_CH"/>
 					<property name="com.jaspersoft.studio.table.style.detail" value="Table_TD"/>
+					<property name="net.sf.jasperreports.export.headertoolbar.table.name" value="Puids"/>
 				</reportElement>
-				<jr:table xmlns:jr="http://jasperreports.sourceforge.net/jasperreports/components" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports/components http://jasperreports.sourceforge.net/xsd/components.xsd">
-					<datasetRun subDataset="Dataset2" uuid="56ae24f3-ecad-47de-b764-55cc2f33f555">
-						<datasetParameter name="decimal_points">
-							<datasetParameterExpression><![CDATA[$P{decimal_points}]]></datasetParameterExpression>
+				<jr:table xmlns:jr="http://jasperreports.sourceforge.net/jasperreports/components" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports/components http://jasperreports.sourceforge.net/xsd/components.xsd" whenNoDataType="AllSectionsNoDetail">
+					<datasetRun subDataset="PuidsDs" uuid="56ae24f3-ecad-47de-b764-55cc2f33f555">
+						<datasetParameter name="from">
+							<datasetParameterExpression><![CDATA[$P{from}]]></datasetParameterExpression>
 						</datasetParameter>
-						<datasetParameter name="created_from">
-							<datasetParameterExpression><![CDATA[$P{created_from}]]></datasetParameterExpression>
-						</datasetParameter>
-						<datasetParameter name="created_to">
-							<datasetParameterExpression><![CDATA[$P{created_to}]]></datasetParameterExpression>
+						<datasetParameter name="to">
+							<datasetParameterExpression><![CDATA[$P{to}]]></datasetParameterExpression>
 						</datasetParameter>
 						<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
 					</datasetRun>
-					<jr:column width="100" uuid="8cb530c3-7d95-4336-933a-1b2c114beb35">
-						<jr:tableHeader style="Table_TH" height="30"/>
-						<jr:tableFooter style="Table_TH" height="30"/>
+					<jr:column width="90" uuid="8cb530c3-7d95-4336-933a-1b2c114beb35">
+						<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column1"/>
 						<jr:columnHeader style="Table_CH" height="30">
 							<staticText>
-								<reportElement x="0" y="0" width="100" height="30" uuid="00216162-f356-4daf-b412-0ff69889302b"/>
+								<reportElement x="0" y="0" width="90" height="30" uuid="00216162-f356-4daf-b412-0ff69889302b"/>
 								<text><![CDATA[Type]]></text>
 							</staticText>
 						</jr:columnHeader>
-						<jr:columnFooter style="Table_CH" height="30"/>
 						<jr:detailCell style="Table_TD" height="30">
 							<textField>
-								<reportElement x="0" y="0" width="100" height="30" uuid="9b2acbb8-910a-4c73-977f-368ad3f0393d"/>
+								<reportElement x="0" y="0" width="90" height="30" uuid="9b2acbb8-910a-4c73-977f-368ad3f0393d"/>
 								<textFieldExpression><![CDATA[$F{extracted_format_file_format}]]></textFieldExpression>
 							</textField>
 						</jr:detailCell>
 					</jr:column>
-					<jr:column width="100" uuid="8cb530c3-7d95-4336-933a-1b2c114beb35">
-						<jr:tableHeader style="Table_TH" height="30"/>
-						<jr:tableFooter style="Table_TH" height="30"/>
+					<jr:column width="90" uuid="8cb530c3-7d95-4336-933a-1b2c114beb35">
+						<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column2"/>
 						<jr:columnHeader style="Table_CH" height="30">
 							<staticText>
-								<reportElement x="0" y="0" width="100" height="30" uuid="00216162-f356-4daf-b412-0ff69889302b"/>
+								<reportElement x="0" y="0" width="90" height="30" uuid="00216162-f356-4daf-b412-0ff69889302b"/>
 								<text><![CDATA[PUID]]></text>
 							</staticText>
 						</jr:columnHeader>
-						<jr:columnFooter style="Table_CH" height="30"/>
 						<jr:detailCell style="Table_TD" height="30">
 							<textField>
-								<reportElement x="0" y="0" width="100" height="30" uuid="9b2acbb8-910a-4c73-977f-368ad3f0393d"/>
+								<reportElement x="0" y="0" width="90" height="30" uuid="9b2acbb8-910a-4c73-977f-368ad3f0393d"/>
 								<textFieldExpression><![CDATA[$F{extracted_format_format_registry_key}]]></textFieldExpression>
 							</textField>
 						</jr:detailCell>
 					</jr:column>
-					<jr:column width="100" uuid="0159b4c8-3fb6-4f42-9f03-b5cecdb9f581">
-						<jr:tableHeader style="Table_TH" height="30"/>
-						<jr:tableFooter style="Table_TH" height="30"/>
+					<jr:column width="90" uuid="0159b4c8-3fb6-4f42-9f03-b5cecdb9f581">
+						<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column3"/>
 						<jr:columnHeader style="Table_CH" height="30">
 							<staticText>
-								<reportElement x="0" y="0" width="100" height="30" uuid="d0d36afa-5868-4219-b4e3-edc8313c95f7"/>
+								<reportElement x="0" y="0" width="90" height="30" uuid="d0d36afa-5868-4219-b4e3-edc8313c95f7"/>
 								<text><![CDATA[Format version]]></text>
 							</staticText>
 						</jr:columnHeader>
-						<jr:columnFooter style="Table_CH" height="30"/>
 						<jr:detailCell style="Table_TD" height="30">
 							<textField>
-								<reportElement x="0" y="0" width="100" height="30" uuid="6ad6b939-b093-4136-b132-fcdcb9cf7554"/>
+								<reportElement x="0" y="0" width="90" height="30" uuid="6ad6b939-b093-4136-b132-fcdcb9cf7554"/>
 								<textFieldExpression><![CDATA[$F{extracted_format_format_version}]]></textFieldExpression>
 							</textField>
 						</jr:detailCell>
 					</jr:column>
-					<jr:column width="100" uuid="0159b4c8-3fb6-4f42-9f03-b5cecdb9f581">
-						<jr:tableHeader style="Table_TH" height="30"/>
-						<jr:tableFooter style="Table_TH" height="30"/>
+					<jr:column width="90" uuid="0159b4c8-3fb6-4f42-9f03-b5cecdb9f581">
+						<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column4"/>
 						<jr:columnHeader style="Table_CH" height="30">
 							<staticText>
-								<reportElement x="0" y="0" width="100" height="30" uuid="d0d36afa-5868-4219-b4e3-edc8313c95f7"/>
-								<text><![CDATA[Count of items]]></text>
+								<reportElement x="0" y="0" width="90" height="30" uuid="d0d36afa-5868-4219-b4e3-edc8313c95f7"/>
+								<text><![CDATA[Count of files]]></text>
 							</staticText>
 						</jr:columnHeader>
-						<jr:columnFooter style="Table_CH" height="30"/>
 						<jr:detailCell style="Table_TD" height="30">
 							<textField>
-								<reportElement x="0" y="0" width="100" height="30" uuid="6ad6b939-b093-4136-b132-fcdcb9cf7554"/>
+								<reportElement x="0" y="0" width="90" height="30" uuid="6ad6b939-b093-4136-b132-fcdcb9cf7554"/>
 								<textFieldExpression><![CDATA[$F{count_of_items}]]></textFieldExpression>
 							</textField>
 						</jr:detailCell>
 					</jr:column>
-					<jr:column width="100" uuid="0159b4c8-3fb6-4f42-9f03-b5cecdb9f581">
-						<jr:tableHeader style="Table_TH" height="30"/>
-						<jr:tableFooter style="Table_TH" height="30"/>
+					<jr:column width="90" uuid="0159b4c8-3fb6-4f42-9f03-b5cecdb9f581">
+						<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column5"/>
 						<jr:columnHeader style="Table_CH" height="30">
 							<staticText>
-								<reportElement x="0" y="0" width="100" height="30" uuid="d0d36afa-5868-4219-b4e3-edc8313c95f7"/>
+								<reportElement x="0" y="0" width="90" height="30" uuid="d0d36afa-5868-4219-b4e3-edc8313c95f7"/>
 								<text><![CDATA[Size in GB]]></text>
 							</staticText>
 						</jr:columnHeader>
-						<jr:columnFooter style="Table_CH" height="30"/>
 						<jr:detailCell style="Table_TD" height="30">
 							<textField>
-								<reportElement x="0" y="0" width="100" height="30" uuid="6ad6b939-b093-4136-b132-fcdcb9cf7554"/>
-								<textFieldExpression><![CDATA[String.format("%." + $P{decimal_points} + "f", ($F{sum_of_extracted_format_size}.doubleValue() / 1073741824))]]></textFieldExpression>
+								<reportElement x="0" y="0" width="90" height="30" uuid="6ad6b939-b093-4136-b132-fcdcb9cf7554"/>
+								<textFieldExpression><![CDATA[String.format("%.2f", ($F{sum_of_extracted_format_size}.doubleValue() / 1073741824))]]></textFieldExpression>
 							</textField>
 						</jr:detailCell>
 					</jr:column>
-					<jr:column width="100" uuid="0159b4c8-3fb6-4f42-9f03-b5cecdb9f581">
-						<jr:tableHeader style="Table_TH" height="30"/>
-						<jr:tableFooter style="Table_TH" height="30"/>
+					<jr:column width="90" uuid="0159b4c8-3fb6-4f42-9f03-b5cecdb9f581">
+						<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column6"/>
 						<jr:columnHeader style="Table_CH" height="30">
 							<staticText>
-								<reportElement x="0" y="0" width="100" height="30" uuid="d0d36afa-5868-4219-b4e3-edc8313c95f7"/>
+								<reportElement x="0" y="0" width="90" height="30" uuid="d0d36afa-5868-4219-b4e3-edc8313c95f7"/>
 								<text><![CDATA[Preservation level]]></text>
 							</staticText>
 						</jr:columnHeader>
-						<jr:columnFooter style="Table_CH" height="30"/>
 						<jr:detailCell style="Table_TD" height="30">
 							<textField>
-								<reportElement x="0" y="0" width="100" height="30" uuid="6ad6b939-b093-4136-b132-fcdcb9cf7554"/>
+								<reportElement x="0" y="0" width="90" height="30" uuid="6ad6b939-b093-4136-b132-fcdcb9cf7554"/>
 								<textFieldExpression><![CDATA[$F{extracted_format_preservation_level_value}]]></textFieldExpression>
 							</textField>
 						</jr:detailCell>
@@ -383,35 +343,31 @@
 		</band>
 		<band height="380" splitType="Stretch">
 			<componentElement>
-				<reportElement x="129" y="60" width="301" height="320" uuid="d006050f-61e1-4b67-8a4c-1a3a64ccb7ab">
+				<reportElement x="129" y="60" width="301" height="60" uuid="d006050f-61e1-4b67-8a4c-1a3a64ccb7ab">
 					<property name="com.jaspersoft.studio.layout" value="com.jaspersoft.studio.editor.layout.VerticalRowLayout"/>
 					<property name="com.jaspersoft.studio.table.style.table_header" value="Table_TH"/>
 					<property name="com.jaspersoft.studio.table.style.column_header" value="Table_CH"/>
 					<property name="com.jaspersoft.studio.table.style.detail" value="Table_TD"/>
+					<property name="net.sf.jasperreports.export.headertoolbar.table.name" value="PreservationLevel"/>
 				</reportElement>
-				<jr:table xmlns:jr="http://jasperreports.sourceforge.net/jasperreports/components" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports/components http://jasperreports.sourceforge.net/xsd/components.xsd">
-					<datasetRun subDataset="Dataset3" uuid="830d8439-c2bc-4bd8-9477-85cbbdc04802">
-						<datasetParameter name="decimal_points">
-							<datasetParameterExpression><![CDATA[$P{decimal_points}]]></datasetParameterExpression>
+				<jr:table xmlns:jr="http://jasperreports.sourceforge.net/jasperreports/components" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports/components http://jasperreports.sourceforge.net/xsd/components.xsd" whenNoDataType="AllSectionsNoDetail">
+					<datasetRun subDataset="UsedFormatsDs" uuid="830d8439-c2bc-4bd8-9477-85cbbdc04802">
+						<datasetParameter name="from">
+							<datasetParameterExpression><![CDATA[$P{from}]]></datasetParameterExpression>
 						</datasetParameter>
-						<datasetParameter name="created_from">
-							<datasetParameterExpression><![CDATA[$P{created_from}]]></datasetParameterExpression>
-						</datasetParameter>
-						<datasetParameter name="created_to">
-							<datasetParameterExpression><![CDATA[$P{created_to}]]></datasetParameterExpression>
+						<datasetParameter name="to">
+							<datasetParameterExpression><![CDATA[$P{to}]]></datasetParameterExpression>
 						</datasetParameter>
 						<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
 					</datasetRun>
 					<jr:column width="100" uuid="8cb530c3-7d95-4336-933a-1b2c114beb35">
-						<jr:tableHeader style="Table_TH" height="30"/>
-						<jr:tableFooter style="Table_TH" height="30"/>
+						<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column1"/>
 						<jr:columnHeader style="Table_CH" height="30">
 							<staticText>
 								<reportElement x="0" y="0" width="100" height="30" uuid="00216162-f356-4daf-b412-0ff69889302b"/>
 								<text><![CDATA[Preservation level]]></text>
 							</staticText>
 						</jr:columnHeader>
-						<jr:columnFooter style="Table_CH" height="30"/>
 						<jr:detailCell style="Table_TD" height="30">
 							<textField>
 								<reportElement x="0" y="0" width="100" height="30" uuid="9b2acbb8-910a-4c73-977f-368ad3f0393d"/>
@@ -420,15 +376,13 @@
 						</jr:detailCell>
 					</jr:column>
 					<jr:column width="100" uuid="0159b4c8-3fb6-4f42-9f03-b5cecdb9f581">
-						<jr:tableHeader style="Table_TH" height="30"/>
-						<jr:tableFooter style="Table_TH" height="30"/>
+						<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column2"/>
 						<jr:columnHeader style="Table_CH" height="30">
 							<staticText>
 								<reportElement x="0" y="0" width="100" height="30" uuid="d0d36afa-5868-4219-b4e3-edc8313c95f7"/>
-								<text><![CDATA[Count of items]]></text>
+								<text><![CDATA[Count of files]]></text>
 							</staticText>
 						</jr:columnHeader>
-						<jr:columnFooter style="Table_CH" height="30"/>
 						<jr:detailCell style="Table_TD" height="30">
 							<textField>
 								<reportElement x="0" y="0" width="100" height="30" uuid="6ad6b939-b093-4136-b132-fcdcb9cf7554"/>
@@ -437,19 +391,17 @@
 						</jr:detailCell>
 					</jr:column>
 					<jr:column width="100" uuid="0159b4c8-3fb6-4f42-9f03-b5cecdb9f581">
-						<jr:tableHeader style="Table_TH" height="30"/>
-						<jr:tableFooter style="Table_TH" height="30"/>
+						<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column3"/>
 						<jr:columnHeader style="Table_CH" height="30">
 							<staticText>
 								<reportElement x="0" y="0" width="100" height="30" uuid="d0d36afa-5868-4219-b4e3-edc8313c95f7"/>
 								<text><![CDATA[Size in GB]]></text>
 							</staticText>
 						</jr:columnHeader>
-						<jr:columnFooter style="Table_CH" height="30"/>
 						<jr:detailCell style="Table_TD" height="30">
 							<textField>
 								<reportElement x="0" y="0" width="100" height="30" uuid="6ad6b939-b093-4136-b132-fcdcb9cf7554"/>
-								<textFieldExpression><![CDATA[String.format("%." + $P{decimal_points} + "f", ($F{sum_of_extracted_format_size}.doubleValue() / 1073741824))]]></textFieldExpression>
+								<textFieldExpression><![CDATA[String.format("%.2f", ($F{sum_of_extracted_format_size}.doubleValue() / 1073741824))]]></textFieldExpression>
 							</textField>
 						</jr:detailCell>
 					</jr:column>

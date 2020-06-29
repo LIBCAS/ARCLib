@@ -2,7 +2,10 @@ package cz.cas.lib.arclib.bpm;
 
 import cz.cas.lib.arclib.domain.IngestToolFunction;
 import cz.cas.lib.arclib.domain.ingestWorkflow.IngestEvent;
+import cz.cas.lib.arclib.service.IngestWorkflowService;
 import cz.cas.lib.arclib.service.arclibxml.ArclibXmlXsltExtractor;
+import cz.cas.lib.arclib.service.preservationPlanning.ToolService;
+import cz.cas.lib.arclib.store.IngestEventStore;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.camunda.bpm.engine.delegate.DelegateExecution;
@@ -28,7 +31,7 @@ public class ArclibXmlExtractorDelegate extends ArclibDelegate {
         //extract metadata from original SIP using XSLT
         String extractedMetadata = arclibXmlXsltExtractor.extractMetadata(execution.getVariables());
         execution.setVariable(BpmConstants.MetadataExtraction.result, extractedMetadata.getBytes());
-        ingestEventStore.save(new IngestEvent(ingestWorkflowStore.findByExternalId(ingestWorkflowExternalId), toolService.findByNameAndVersion(getToolName(), getToolVersion()), true, null));
+        ingestEventStore.save(new IngestEvent(ingestWorkflowService.findByExternalId(ingestWorkflowExternalId), toolService.findByNameAndVersion(getToolName(), getToolVersion()), true, null));
 
         log.debug("Execution of ArclibXml extractor delegate finished for ingest workflow " + ingestWorkflowExternalId + ".");
     }

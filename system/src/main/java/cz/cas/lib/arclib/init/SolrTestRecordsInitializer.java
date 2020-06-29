@@ -40,10 +40,10 @@ public class SolrTestRecordsInitializer {
         String arclibXml4 = Utils.resourceString("sampleData/8b/2e/fa/8b2efafd-b637-4b97-a8f7-1b97dd4ee622_xml_2");
         String arclibXml5 = Utils.resourceString("sampleData/89/f8/2d/89f82da0-af78-4461-bf92-7382050082a1_xml_1");
 
-        indexedArclibXmlStore.createIndex(arclibXml1, PRODUCER_ID, PRODUCER_NAME, USER_NAME, IndexedAipState.ARCHIVED,false);
-        indexedArclibXmlStore.createIndex(arclibXml2, PRODUCER_ID, PRODUCER_NAME, USER_NAME, IndexedAipState.ARCHIVED,false);
-        indexedArclibXmlStore.createIndex(arclibXml3, PRODUCER_ID, PRODUCER_NAME, USER_NAME, IndexedAipState.ARCHIVED,false);
-        indexedArclibXmlStore.createIndex(arclibXml4, PRODUCER_ID, PRODUCER_NAME, USER_NAME, IndexedAipState.ARCHIVED,false);
-        indexedArclibXmlStore.createIndex(arclibXml5, PRODUCER_ID, PRODUCER_NAME, USER_NAME, IndexedAipState.ARCHIVED,false);
+        indexedArclibXmlStore.createIndex(arclibXml1.getBytes(), PRODUCER_ID, PRODUCER_NAME, USER_NAME, IndexedAipState.ARCHIVED, false, false);
+        indexedArclibXmlStore.createIndex(arclibXml2.getBytes(), PRODUCER_ID, PRODUCER_NAME, USER_NAME, IndexedAipState.ARCHIVED, false, false);
+        indexedArclibXmlStore.createIndex(arclibXml3.getBytes(), PRODUCER_ID, PRODUCER_NAME, USER_NAME, IndexedAipState.ARCHIVED, false, false);
+        indexedArclibXmlStore.createIndex(arclibXml4.getBytes(), PRODUCER_ID, PRODUCER_NAME, USER_NAME, IndexedAipState.ARCHIVED, false, true);
+        indexedArclibXmlStore.createIndex(arclibXml5.getBytes(), PRODUCER_ID, PRODUCER_NAME, USER_NAME, IndexedAipState.ARCHIVED, false, true);
     }
 }

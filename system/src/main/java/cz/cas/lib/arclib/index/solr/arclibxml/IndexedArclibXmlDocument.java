@@ -32,7 +32,7 @@ public class IndexedArclibXmlDocument implements Serializable {
     public static final String PRODUCER_ID = "producer_id";
     public static final String PRODUCER_NAME = "producer_name";
     public static final String USER_NAME = "user_name";
-    public static final String DOCUMENT = "document";
+    public static final String CONTENT = "document";
     public static final String DEBUG_MODE = "debug_mode";
     public static final String AIP_STATE = "aip_state";
     public static final String MAIN_INDEX_TYPE_VALUE = "arclibXmlMainIndex";
@@ -48,6 +48,7 @@ public class IndexedArclibXmlDocument implements Serializable {
     public static final String XML_VERSION_OF = "xml_version_of";
     public static final String CREATED = "created";
     public static final String AUTHORIAL_ID = "authorial_id";
+    public static final String LATEST = "latest";
 
     /**
      * ID of the document, equal to id {@link IngestWorkflow#externalId}.
@@ -137,11 +138,11 @@ public class IndexedArclibXmlDocument implements Serializable {
     private String xmlVersionOf;
 
     /**
-     * The whole document is indexed as fulltext.
+     * concatenation of all text content of elements
      */
-    @Field(value = DOCUMENT)
+    @Field(value = CONTENT)
     @Indexed(type = IndexFieldType.TEXT)
-    private String document;
+    private String content;
 
     /**
      * State of the AIP at archival storage.
@@ -150,6 +151,9 @@ public class IndexedArclibXmlDocument implements Serializable {
     @Indexed(type = IndexFieldType.STRING)
     private IndexedAipState aipState;
 
+    @Field(value = LATEST)
+    @Indexed(type = IndexFieldType.BOOLEAN)
+    private Boolean latest;
 
     @Field(value = DEBUG_MODE)
     @Indexed(defaultValue = "false", type = IndexFieldType.BOOLEAN)

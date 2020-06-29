@@ -123,6 +123,6 @@ public class ArclibXmlXsltExtractorTest extends SrDbTest {
         variables.put(BpmConstants.ProcessVariables.sipFolderWorkspacePath,SIP.toAbsolutePath().toString());
         String extractionResult = arclibXmlXsltExtractor.extractMetadata(variables).replace("\\", "");
         assertThat(extractionResult.contains("mets:mets"), is(true));
-        assertThat(extractionResult.contains("ARCLib:eventAgents"), is(true));
+        assertThat(extractionResult.contains("<ARCLib:eventAgent>"), is(true));
     }
 }

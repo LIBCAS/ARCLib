@@ -9,16 +9,16 @@ import cz.cas.lib.arclib.exception.bpm.ConfigParserException;
 import cz.cas.lib.arclib.formatlibrary.domain.FormatDefinition;
 import cz.cas.lib.arclib.formatlibrary.service.FormatDefinitionService;
 import cz.cas.lib.arclib.security.user.UserDetails;
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.dom4j.Document;
 import org.dom4j.io.OutputFormat;
 import org.dom4j.io.XMLWriter;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.StringWriter;
+import java.io.UncheckedIOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collection;
@@ -38,6 +38,7 @@ public class ArclibUtils {
     public static final String METS = "mets";
     public static final String OAIS_DC = "oai_dc";
     public static final String PREMIS = "premis";
+    public static final String XSI = "xsi";
     public static final String ARCLIB = "arclib";
     public static final String DCTERMS = "dcterms";
     public static final String DC = "dc";
@@ -129,6 +130,17 @@ public class ArclibUtils {
     }
 
     /**
+     * Computes path to AIP XML of the ingest workflow at workspace
+     *
+     * @param externalId external id of ingest workflow
+     * @param workspace  path to workspace
+     * @return computed path
+     */
+    public static Path getAipXmlWorkspacePath(String externalId, String workspace) {
+        return Paths.get(workspace, externalId, externalId + ".xml");
+    }
+
+    /**
      * Converts set of file paths to tree folder structure
      *
      * @param filePats paths to files
@@ -163,10 +175,10 @@ public class ArclibUtils {
      * examples:
      * </p>
      * <ol>
-     * <li>the config entry to be parsed is not contained in the config -> method returns Pair<null,text> where text
+     * <li>if the config entry to be parsed is not contained in the config then method returns {@link Pair} where the *key* is null and *value*
      * contains the information that the config value is missing</li>
-     * <li>the config entry to be parsed is present and contains valid boolean value -> method returns Pair<value,text>
-     * where the value=value parsed from config entry and text contains information that the parsed value from the config entry was used to solve the issue</li>
+     * <li>if the config entry to be parsed is present and contains valid boolean value then method returns {@link Pair}
+     * where the *key* contains value parsed from config entry and *value* contains information that the parsed value from the config entry was used to solve the issue</li>
      * </ol>
      *
      * @param configRoot root of JSON config
@@ -190,17 +202,19 @@ public class ArclibUtils {
     }
 
     /**
-     * Lists file paths and file sizes for all files of the SIP package
+     * Walks through all files of the root folder (depth-first) and returns list of Strings representing relative paths
+     * to files. Returned paths uses forward slashes regardless the environment.
      *
-     * @param pathToSipFolder path to the folder with the sip content
-     * @return list of pairs of a file path and file size
+     * @param rootFolder root folder
+     * @return list of relative paths to all files contained in the  rootFolder
      */
-    public static List<Pair<String, String>> listSipFilePathsAndFileSizes(Path pathToSipFolder) {
-        Collection<File> files = FileUtils.listFiles(pathToSipFolder.toFile(), null, true);
-        return files.stream().map(file -> Pair.of(
-                (file.toPath().toUri()).toString().replaceAll(pathToSipFolder.toUri().toString(), ""),
-                String.valueOf(file.length())))
-                .collect(Collectors.toList());
+    public static List<String> listFilePaths(Path rootFolder) {
+        try {
+            return Files.walk(rootFolder).filter(f -> f.toFile().isFile()).map(file -> file.toUri().toString().replaceAll(rootFolder.toUri().toString(), ""))
+                    .collect(Collectors.toList());
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
     }
 
     /**

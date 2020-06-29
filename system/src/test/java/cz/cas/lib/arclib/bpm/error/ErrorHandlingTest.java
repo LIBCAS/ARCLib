@@ -15,10 +15,13 @@ import cz.cas.lib.arclib.service.AipService;
 import cz.cas.lib.arclib.service.BatchService;
 import cz.cas.lib.arclib.service.IngestErrorHandler;
 import cz.cas.lib.arclib.service.IngestWorkflowService;
+import cz.cas.lib.arclib.service.archivalStorage.ArchivalStorageException;
+import cz.cas.lib.arclib.service.archivalStorage.ArchivalStorageService;
 import cz.cas.lib.arclib.service.incident.CustomIncidentHandler;
-import cz.cas.lib.arclib.store.IngestWorkflowStore;
+import cz.cas.lib.arclib.utils.ArclibUtils;
 import cz.cas.lib.core.store.Transactional;
 import helper.DbTest;
+import org.apache.commons.io.FileUtils;
 import org.camunda.bpm.engine.history.HistoricJobLog;
 import org.camunda.bpm.engine.history.HistoricProcessInstance;
 import org.camunda.bpm.engine.runtime.Job;
@@ -34,6 +37,10 @@ import org.springframework.jms.core.JmsTemplate;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -41,12 +48,14 @@ import java.util.Map;
 import static helper.ThrowableAssertion.assertThrown;
 import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.assertThat;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @Deployment(resources = "bpmn/errorTest.bpmn")
 public class ErrorHandlingTest extends DbTest {
+    public static final Path WS = Paths.get("testWorkspace");
 
     private static final String CONFIG_EX_INCIDENT = "{\"throw\":\"incident\"}";
     private static final String CONFIG_EX_RUNTIME = "{\"throw\":\"runtime\"}";
@@ -61,9 +70,6 @@ public class ErrorHandlingTest extends DbTest {
     private BpmTestConfig bpmTestConfig = new BpmTestConfig(new CustomIncidentHandler());
 
     @Mock
-    private IngestWorkflowStore ingestWorkflowStore;
-
-    @Mock
     private IngestWorkflowService ingestWorkflowService;
 
     @Mock
@@ -76,6 +82,9 @@ public class ErrorHandlingTest extends DbTest {
     private JmsTemplate template;
     @Rule
     public ProcessEngineRule rule = new ProcessEngineRule(bpmTestConfig.buildProcessEngine());
+
+    @Mock
+    private ArchivalStorageService archivalStorageService;
 
     @Mock
     private PlatformTransactionManager transactionManager;
@@ -99,6 +108,7 @@ public class ErrorHandlingTest extends DbTest {
         sip.setAuthorialPackage(authorialPackage);
 
         ingestWorkflow = new IngestWorkflow();
+        ingestWorkflow.setXmlVersionNumber(1);
         ingestWorkflow.setProcessingState(IngestWorkflowState.PROCESSING);
         ingestWorkflow.setExternalId(EXTERNAL_ID);
         ingestWorkflow.setSip(sip);
@@ -108,8 +118,6 @@ public class ErrorHandlingTest extends DbTest {
         ingestWorkflow.setBatch(b);
         when(ingestWorkflowService.find(eq(ingestWorkflow.getExternalId()))).thenReturn(ingestWorkflow);
         when(ingestWorkflowService.findByExternalId(eq(EXTERNAL_ID))).thenReturn(ingestWorkflow);
-        //when(ingestWorkflowService.getStore()).thenReturn(ingestWorkflowStore);
-
 
         BpmErrorHandlerDelegate bpmErrorHandlerDelegate = new BpmErrorHandlerDelegate();
         Mocks.register("bpmErrorHandlerDelegate", bpmErrorHandlerDelegate);
@@ -123,6 +131,8 @@ public class ErrorHandlingTest extends DbTest {
         ingestErrorHandler.setTemplate(template);
         ingestErrorHandler.setIngestWorkflowService(ingestWorkflowService);
         ingestErrorHandler.setAipService(aipService);
+        ingestErrorHandler.setArchivalStorageService(archivalStorageService);
+        ingestErrorHandler.setWorkspace(WS.toString());
     }
 
     @Test
@@ -152,13 +162,18 @@ public class ErrorHandlingTest extends DbTest {
     }
 
     @Test
-    public void testBpmErrorHandling() {
+    public void testBpmErrorHandling() throws Exception {
+        when(archivalStorageService.rollbackAip(anyString())).thenThrow(new ArchivalStorageException("Connection refused: connect"));
+        File iwWorkspaceFolder = ArclibUtils.getIngestWorkflowWorkspacePath(ingestWorkflow.getExternalId(), WS.toString()).toFile();
+        FileUtils.copyToFile(new ByteArrayInputStream(new byte[0]), ArclibUtils.getAipXmlWorkspacePath(ingestWorkflow.getExternalId(), WS.toString()).toFile());
+        FileUtils.copyToFile(new ByteArrayInputStream(new byte[0]), ArclibUtils.getSipZipWorkspacePath(ingestWorkflow.getExternalId(), WS.toString(), "aipdata").toFile());
         Map<String, Object> vars = new HashMap<>();
         vars.put(BpmConstants.ProcessVariables.ingestWorkflowExternalId, EXTERNAL_ID);
         vars.put(BpmConstants.ProcessVariables.latestConfig, CONFIG_EX_BPM);
         vars.put(BpmConstants.ProcessVariables.batchId, BATCH_ID);
         String processInstanceId = rule.getRuntimeService().startProcessInstanceByKey(BPMN_KEY, vars).getId();
         Job job = rule.getManagementService().createJobQuery().singleResult();
+        assertThat(iwWorkspaceFolder.exists(), is(true));
         rule.getManagementService().executeJob(job.getId());
 
         assertThat(ingestWorkflow.getProcessingState(), is(IngestWorkflowState.FAILED));
@@ -168,6 +183,9 @@ public class ErrorHandlingTest extends DbTest {
         assertThat(failureInfo.getStackTrace(), nullValue());
         assertThat(failureInfo.getMsg(), containsString("processFailure"));
         verify(ingestWorkflowService).save(eq(ingestWorkflow));
+        verify(archivalStorageService).rollbackAip(ingestWorkflow.getSip().getId());
+        verify(aipService).removeAipXmlIndex(ingestWorkflow.getExternalId());
+        assertThat(iwWorkspaceFolder.exists(), is(false));
 
         assertThat(rule.getHistoryService().createHistoricIncidentQuery().processInstanceId(processInstanceId).list(), empty());
         HistoricProcessInstance historicProcessInstance = rule.getHistoryService().createHistoricProcessInstanceQuery().processInstanceId(processInstanceId).singleResult();

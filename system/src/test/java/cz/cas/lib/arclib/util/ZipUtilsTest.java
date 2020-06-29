@@ -6,8 +6,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.io.ByteArrayInputStream;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -38,14 +36,16 @@ public class ZipUtilsTest {
 
     @Test
     public void testZipThanUnzip() throws IOException {
-        ZipUtils.unzip(new ByteArrayInputStream(ZipUtils.zipToByteArray(SIP_FOLDER)), WS);
+        byte[] bytes = ZipUtils.zipToByteArray(SIP_FOLDER);
+        Path write = Files.write(WS.resolve("zipToByteArrayTest.zip"), bytes);
+        ZipUtils.unzipSip(write, WS, "dummyIwId");
         assertThat(WS.resolve(SIP_FOLDER_STR).toFile().isDirectory(), is(true));
         assertThat(WS.resolve(SIP_FOLDER_STR).resolve(SIP_FILE_STR).toFile().isFile(), is(true));
     }
 
     @Test
     public void testUnZip() throws IOException {
-        ZipUtils.unzip(new FileInputStream(SIP_ZIP.toFile()), WS);
+        ZipUtils.unzipSip(SIP_ZIP, WS, "dummyIwId");
         assertThat(WS.resolve(SIP_FOLDER_STR).toFile().isDirectory(), is(true));
         assertThat(WS.resolve(SIP_FOLDER_STR).resolve(SIP_FILE_STR).toFile().isFile(), is(true));
     }

@@ -1,12 +1,9 @@
 package cz.cas.lib.arclib.service;
 
 import cz.cas.lib.arclib.domain.Batch;
-import cz.cas.lib.arclib.dto.BatchDto;
-import cz.cas.lib.arclib.index.IndexArclibXmlStore;
-import cz.cas.lib.arclib.index.solr.arclibxml.IndexedAipState;
-import cz.cas.lib.arclib.store.BatchStore;
-import cz.cas.lib.arclib.domainbase.exception.BadArgument;
 import cz.cas.lib.arclib.domainbase.exception.MissingObject;
+import cz.cas.lib.arclib.dto.BatchDto;
+import cz.cas.lib.arclib.store.BatchStore;
 import cz.cas.lib.core.index.dto.Params;
 import cz.cas.lib.core.index.dto.Result;
 import cz.cas.lib.core.rest.data.DelegateAdapter;
@@ -26,8 +23,6 @@ public class BatchService implements DelegateAdapter<Batch> {
 
     @Getter
     private BatchStore delegate;
-    private IngestWorkflowService ingestWorkflowService;
-    private IndexArclibXmlStore indexArclibXmlStore;
     private BeanMappingService beanMappingService;
 
 
@@ -74,32 +69,6 @@ public class BatchService implements DelegateAdapter<Batch> {
         return batch;
     }
 
-    /**
-     * Deletes batch and all its respective ingest workflows from database.
-     * <p>
-     * Applicable only for batches processed in the debugging mode.
-     *
-     * @param id id of the batch
-     */
-    @Transactional
-    public void forget(String id) {
-        Batch batch = delegate.findWithIngestWorkflowsFilled(id);
-        notNull(batch, () -> new MissingObject(Batch.class, id));
-        if (!batch.isDebuggingModeActive()) {
-            throw new BadArgument("Cannot forget batch that has not been processed in the debugging mode.");
-        }
-        batch.getIngestWorkflows().forEach(ingestWorkflow -> {
-            ingestWorkflowService.delete(ingestWorkflow);
-            log.info("Ingest workflow with external id " + ingestWorkflow.getExternalId() + " has been deleted from database.");
-            indexArclibXmlStore.changeAipState(ingestWorkflow.getExternalId(), IndexedAipState.DELETED);
-            log.debug("Index of XML of ingest workflow " + ingestWorkflow.getExternalId() + " has been updated with " +
-                    "the ingest workflow state DELETED.");
-
-        });
-        delegate.delete(batch);
-        log.info("Batch ID " + id + " has been deleted from database.");
-    }
-
     @Inject
     public void setBeanMappingService(BeanMappingService beanMappingService) {
         this.beanMappingService = beanMappingService;
@@ -108,15 +77,5 @@ public class BatchService implements DelegateAdapter<Batch> {
     @Inject
     public void setDelegate(BatchStore delegate) {
         this.delegate = delegate;
-    }
-
-    @Inject
-    public void setIngestWorkflowService(IngestWorkflowService ingestWorkflowService) {
-        this.ingestWorkflowService = ingestWorkflowService;
-    }
-
-    @Inject
-    public void setIndexArclibXmlStore(IndexArclibXmlStore indexArclibXmlStore) {
-        this.indexArclibXmlStore = indexArclibXmlStore;
     }
 }

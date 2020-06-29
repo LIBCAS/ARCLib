@@ -3,26 +3,24 @@ package cz.cas.lib.arclib.service;
 import cz.cas.lib.arclib.domain.*;
 import cz.cas.lib.arclib.domain.ingestWorkflow.IngestWorkflow;
 import cz.cas.lib.arclib.domain.ingestWorkflow.IngestWorkflowState;
-import cz.cas.lib.arclib.domain.packages.AipDeletionRequest;
 import cz.cas.lib.arclib.domain.packages.AuthorialPackage;
 import cz.cas.lib.arclib.domain.packages.AuthorialPackageUpdateLock;
-import cz.cas.lib.arclib.domainbase.exception.ConflictException;
+import cz.cas.lib.arclib.domain.packages.Sip;
 import cz.cas.lib.arclib.domainbase.exception.ForbiddenObject;
 import cz.cas.lib.arclib.domainbase.exception.GeneralException;
 import cz.cas.lib.arclib.domainbase.exception.MissingObject;
-import cz.cas.lib.arclib.dto.AipDeletionRequestDto;
 import cz.cas.lib.arclib.dto.AipDetailDto;
+import cz.cas.lib.arclib.exception.AipStateChangeException;
 import cz.cas.lib.arclib.exception.AuthorialPackageLockedException;
+import cz.cas.lib.arclib.exception.AuthorialPackageNotLockedException;
 import cz.cas.lib.arclib.exception.ForbiddenException;
 import cz.cas.lib.arclib.index.IndexArclibXmlStore;
 import cz.cas.lib.arclib.index.solr.arclibxml.IndexedAipState;
 import cz.cas.lib.arclib.index.solr.arclibxml.IndexedArclibXmlDocument;
 import cz.cas.lib.arclib.index.solr.arclibxml.IndexedArclibXmlStore;
-import cz.cas.lib.arclib.mail.ArclibMailCenter;
 import cz.cas.lib.arclib.security.authorization.Roles;
 import cz.cas.lib.arclib.security.user.UserDetails;
 import cz.cas.lib.arclib.service.archivalStorage.ArchivalStorageException;
-import cz.cas.lib.arclib.service.archivalStorage.ArchivalStorageResponse;
 import cz.cas.lib.arclib.service.archivalStorage.ArchivalStorageService;
 import cz.cas.lib.arclib.service.arclibxml.ArclibXmlGenerator;
 import cz.cas.lib.arclib.service.arclibxml.ArclibXmlValidator;
@@ -30,10 +28,8 @@ import cz.cas.lib.arclib.service.fixity.Crc32Counter;
 import cz.cas.lib.arclib.service.fixity.FixityCounter;
 import cz.cas.lib.arclib.service.fixity.Md5Counter;
 import cz.cas.lib.arclib.service.fixity.Sha512Counter;
-import cz.cas.lib.arclib.store.AipDeletionRequestStore;
 import cz.cas.lib.arclib.store.AuthorialPackageStore;
 import cz.cas.lib.arclib.store.AuthorialPackageUpdateLockStore;
-import cz.cas.lib.arclib.store.ProducerStore;
 import cz.cas.lib.arclib.utils.ArclibUtils;
 import cz.cas.lib.core.scheduling.job.Job;
 import cz.cas.lib.core.scheduling.job.JobService;
@@ -45,25 +41,21 @@ import org.apache.commons.io.IOUtils;
 import org.dom4j.DocumentException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.support.TransactionTemplate;
+import org.springframework.util.FileSystemUtils;
 import org.springframework.util.StreamUtils;
 import org.xml.sax.SAXException;
 
 import javax.inject.Inject;
 import javax.xml.parsers.ParserConfigurationException;
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
+import java.util.*;
 
 import static cz.cas.lib.arclib.utils.ArclibUtils.hasRole;
 import static cz.cas.lib.core.util.Utils.bytesToHexString;
@@ -72,19 +64,16 @@ import static cz.cas.lib.core.util.Utils.notNull;
 @Slf4j
 @Service
 public class AipService {
-    private AipDeletionRequestStore aipDeletionRequestStore;
     private AuthorialPackageUpdateLockStore authorialPackageUpdateLockStore;
     private AuthorialPackageStore authorialPackageStore;
     private IndexArclibXmlStore indexedArclibXmlStore;
     private IngestWorkflowService ingestWorkflowService;
-    private IndexArclibXmlStore indexArclibXmlStore;
-    private ProducerStore producerStore;
+    private Path workspace;
 
     private JobService jobService;
     private ArclibXmlGenerator arclibXmlGenerator;
     private ArchivalStorageService archivalStorageService;
     private ArclibXmlValidator arclibXmlValidator;
-    private ArclibMailCenter arclibMailCenter;
 
     private Crc32Counter crc32Counter;
     private Sha512Counter sha512Counter;
@@ -94,64 +83,27 @@ public class AipService {
     private int keepAliveUpdateTimeout;
     private int keepAliveNetworkDelay;
     private UserDetails userDetails;
-    private BeanMappingService beanMappingService;
+    private TransactionTemplate transactionTemplate;
 
     /**
      * Gets all fields of ARCLib XML index record together with corresponding IW entity containing SIPs folder structure.
-     * Hash of the XML content stored in index is validated to the hash stored in the IW entity.
      *
      * @param xmlId od of the ARCLib XML
      * @return DTO with indexed fields and IW entity
-     * @throws GeneralException if the hash stored in the the IW entity does not match the hash of the indexed XML
      */
     @Transactional
     public AipDetailDto get(String xmlId, UserDetails userDetails) throws IOException {
         IngestWorkflow ingestWorkflow = ingestWorkflowService.findByExternalId(xmlId);
         notNull(ingestWorkflow, () -> new MissingObject(IngestWorkflow.class, xmlId));
 
-        Map<String, Object> arclibXmlIndexDocument = indexArclibXmlStore.findArclibXmlIndexDocument(xmlId);
+        Map<String, Object> arclibXmlIndexDocument = indexedArclibXmlStore.findArclibXmlIndexDocument(xmlId);
 
         notNull(arclibXmlIndexDocument, () -> new MissingObject(IndexedArclibXmlDocument.class, xmlId));
         String producerId = (String) ((ArrayList) arclibXmlIndexDocument.get(IndexedArclibXmlDocument.PRODUCER_ID)).get(0);
         if (!hasRole(userDetails, Roles.SUPER_ADMIN) && !userDetails.getProducerId().equals(producerId)) {
             throw new ForbiddenObject(IngestWorkflow.class, xmlId);
         }
-
-        String xml = (String) ((ArrayList) arclibXmlIndexDocument.get(IndexedArclibXmlDocument.DOCUMENT)).get(0);
-
-        Hash expectedHash = ingestWorkflow.getArclibXmlHash();
-        if (expectedHash != null) {
-            if (!verifyHash(xml, expectedHash))
-                throw new GeneralException("Invalid checksum of indexed XML with id " + xmlId + ".");
-        }
-
         return new AipDetailDto(arclibXmlIndexDocument, ingestWorkflow);
-    }
-
-    /**
-     * Exports AIP data as a .zip
-     *
-     * @param aipId id of the AIP package to export
-     * @param all   true to return all XMLs, otherwise only the latest is returned
-     * @return response from the archival storage
-     * @throws ArchivalStorageException
-     */
-    @Transactional
-    public ArchivalStorageResponse exportSingleAip(String aipId, boolean all) throws ArchivalStorageException {
-        return archivalStorageService.exportSingleAip(aipId, all);
-    }
-
-    /**
-     * Exports specified XML
-     *
-     * @param aipId   id of the AIP package
-     * @param version version number of XML, if not set the latest version is returned
-     * @return response from the archival storage
-     * @throws ArchivalStorageException
-     */
-    @Transactional
-    public ArchivalStorageResponse exportSingleXml(String aipId, Integer version) throws ArchivalStorageException {
-        return archivalStorageService.exportSingleXml(aipId, version);
     }
 
     /**
@@ -163,22 +115,19 @@ public class AipService {
      */
     @Transactional
     public void exportMultipleXmls(Map<String, List<Integer>> aipIdsAndVersions, String exportLocationPath)
-            throws ArchivalStorageException, IOException {
+            throws IOException {
         for (Map.Entry<String, List<Integer>> aipAndVersionId : aipIdsAndVersions.entrySet()) {
             String aipId = aipAndVersionId.getKey();
             List<Integer> versions = aipAndVersionId.getValue();
             for (Integer version : versions) {
-                ArchivalStorageResponse response = archivalStorageService.exportSingleXml(aipId, version);
-                if (response.getStatusCode().is2xxSuccessful()) {
-                    InputStream is = response.getBody();
+                try {
+                    InputStream response = archivalStorageService.exportSingleXml(aipId, version);
                     String fileName = ArclibUtils.getXmlExportName(aipId, version);
                     File file = new File(exportLocationPath + "/" + fileName);
-                    FileUtils.copyInputStreamToFile(is, file);
+                    FileUtils.copyInputStreamToFile(response, file);
                     log.info("XML of AIP with ID " + aipId + " has been exported from archival storage.");
-                } else {
-                    String exceptionMsg = response.getBody() == null ? "" : IOUtils.toString(response.getBody());
-                    log.error("error during export of XML of AIP with ID" + aipId + ": " +
-                            response.getStatusCode() + " " + exceptionMsg);
+                } catch (ArchivalStorageException e) {
+                    log.error("error during export of XML of AIP with ID" + aipId, e);
                 }
             }
 
@@ -191,81 +140,90 @@ public class AipService {
      * @param aipIds             ids of the AIP packages to export
      * @param all                true to return all XMLs, otherwise only the latest is returned
      * @param exportLocationPath location to export the AIPs to
-     * @throws ArchivalStorageException
      */
     @Transactional
     public void exportMultipleAips(List<String> aipIds, boolean all, String exportLocationPath)
-            throws ArchivalStorageException, IOException {
+            throws IOException {
         for (String aipId : aipIds) {
-            ArchivalStorageResponse response = archivalStorageService.exportSingleAip(aipId, all);
-            if (response.getStatusCode().is2xxSuccessful()) {
-                InputStream is = response.getBody();
+            try {
+                InputStream response = archivalStorageService.exportSingleAip(aipId, all);
                 File file = new File(exportLocationPath + "/" + ArclibUtils.getAipExportName(aipId));
-                FileUtils.copyInputStreamToFile(is, file);
+                FileUtils.copyInputStreamToFile(response, file);
                 log.info("AIP " + aipId + " has been exported from archival storage.");
-            } else {
-                String exceptionMsg = response.getBody() == null ? "" : IOUtils.toString(response.getBody());
-                log.error("error during export of AIP " + aipId + ": " + response.getStatusCode() + " " + exceptionMsg);
+            } catch (ArchivalStorageException e) {
+                log.error("error during export of AIP: " + aipId, e);
             }
         }
     }
 
     /**
-     * Removes AIP from archival storage and changes state of all associated indexed XML documents to REMOVED
+     * Changes state of the AIP in Archival Storage and changes state of all associated indexed XML documents in index
      *
-     * @param aipId id of the AIP to remove
-     * @return HTTP response from the archival storage
-     * @throws ArchivalStorageException
-
+     * @param aipId    id of the AIP
+     * @param newState new state
+     * @throws IOException             in the case of uncontrolled/unexpected IO error probably not related to the ArchivalStorage service
+     * @throws AipStateChangeException in the case of any controlled error (e.g. some ingest workflows are unfinished or Archival Storage returns bad return code)
      */
-    @Transactional
-    public ArchivalStorageResponse removeAip(String aipId) throws ArchivalStorageException {
-        ArchivalStorageResponse response = archivalStorageService.remove(aipId);
-        if (response.getStatusCode().is2xxSuccessful()) {
-            ingestWorkflowService.findBySipId(aipId).forEach(iw -> {
-                indexedArclibXmlStore.changeAipState(iw.getExternalId(), IndexedAipState.REMOVED);
-                log.info("State of XML of AIP " + aipId + " version " + iw.getXmlVersionNumber() + " has changed to REMOVED.");
-            });
+    public void changeAipState(String aipId, IndexedAipState newState) throws AipStateChangeException, IOException {
+        notNull(newState, () -> new IllegalArgumentException("state can't be null"));
+        String logPrefix = "Change state request (new state: " + newState + ") of AIP: " + aipId + ": ";
+        log.debug(logPrefix + "STARTED");
+        List<IngestWorkflow> iws = ingestWorkflowService.findBySipId(aipId);
+        List<IngestWorkflow> unfinishedIws = new ArrayList<>();
+        List<IngestWorkflow> successfulIws = new ArrayList<>();
+        for (IngestWorkflow iw : iws) {
+            switch (iw.getProcessingState()) {
+                case PERSISTED:
+                    successfulIws.add(iw);
+                case FAILED:
+                    break;
+                default:
+                    unfinishedIws.add(iw);
+            }
         }
-        return response;
-    }
-
-    /**
-     * Renews previously removed AIP at archival storage and changes processingState of all associated indexed XML documents to PERSISTED
-     *
-     * @param aipId id of the AIP to renew
-     * @return HTTP response from the archival storage
-     * @throws ArchivalStorageException
-     */
-    @Transactional
-    public ArchivalStorageResponse renewAip(String aipId) throws ArchivalStorageException {
-        ArchivalStorageResponse response = archivalStorageService.renew(aipId);
-        if (response.getStatusCode().is2xxSuccessful()) {
-            ingestWorkflowService.findBySipId(aipId).forEach(iw -> {
-                indexedArclibXmlStore.changeAipState(iw.getExternalId(), IndexedAipState.ARCHIVED);
-                log.info("State of XML of AIP " + aipId + " version " + iw.getXmlVersionNumber() + " has changed to PERSISTED.");
-            });
+        if (!unfinishedIws.isEmpty()) {
+            throw new AipStateChangeException(logPrefix + "some ingest workflows not in final state: " + Arrays.toString(unfinishedIws.toArray()));
         }
-        return response;
-    }
-
-    /**
-     * Deletes AIP at archival storage and changes state of all associated indexed XML documents to DELETED
-     *
-     * @param aipId id of the AIP to delete
-     * @return HTTP response from the archival storage
-     * @throws ArchivalStorageException
-     */
-    @Transactional
-    private ArchivalStorageResponse deleteAip(String aipId) throws ArchivalStorageException {
-        ArchivalStorageResponse response = archivalStorageService.delete(aipId);
-        if (response.getStatusCode().is2xxSuccessful()) {
-            ingestWorkflowService.findBySipId(aipId).forEach(iw -> {
-                indexedArclibXmlStore.changeAipState(iw.getExternalId(), IndexedAipState.DELETED);
-                log.info("State of XML of AIP " + aipId + " version " + iw.getXmlVersionNumber() + " has changed to DELETED.");
-            });
+        Path requestWsFolder = workspace.resolve(aipId + "_state_change_" + Instant.now().toEpochMilli());
+        Files.createDirectory(requestWsFolder);
+        Map<IngestWorkflow, Path> iwToTmpXmlFile = new HashMap<>();
+        for (IngestWorkflow successfulIw : successfulIws) {
+            InputStream aipXmlFromStorage;
+            try {
+                aipXmlFromStorage = archivalStorageService.exportSingleXml(aipId, successfulIw.getXmlVersionNumber());
+            } catch (ArchivalStorageException e) {
+                FileSystemUtils.deleteRecursively(requestWsFolder);
+                throw new AipStateChangeException(logPrefix + "unable to retrieve AIP XML from Archival Storage", e);
+            }
+            Path xmlTmpFile = requestWsFolder.resolve(successfulIw.getExternalId() + ".xml");
+            try (FileOutputStream fileOutputStream = new FileOutputStream(xmlTmpFile.toFile())) {
+                IOUtils.copy(aipXmlFromStorage, fileOutputStream);
+            }
+            iwToTmpXmlFile.put(successfulIw, xmlTmpFile);
         }
-        return response;
+        try {
+            switch (newState) {
+                case DELETED:
+                    archivalStorageService.delete(aipId);
+                    break;
+                case REMOVED:
+                    archivalStorageService.remove(aipId);
+                    break;
+                case ARCHIVED:
+                    archivalStorageService.renew(aipId);
+                    break;
+            }
+        } catch (ArchivalStorageException e) {
+            FileSystemUtils.deleteRecursively(requestWsFolder);
+            throw new AipStateChangeException(logPrefix + "unexpected Archival Storage response to state change request", e);
+        }
+        for (IngestWorkflow iw : iwToTmpXmlFile.keySet()) {
+            final Path tmpXmlFile = iwToTmpXmlFile.get(iw);
+            indexedArclibXmlStore.changeAipState(iw.getExternalId(), newState, Files.readAllBytes(tmpXmlFile));
+            log.debug("State of XML of AIP " + aipId + " version " + iw.getXmlVersionNumber() + " has changed to: " + newState);
+        }
+        FileSystemUtils.deleteRecursively(requestWsFolder);
+        log.info(logPrefix + "successfully ENDED");
     }
 
     /**
@@ -286,6 +244,8 @@ public class AipService {
 
     /**
      * Finishes AIP update by deactivating lock at the respective authorial package entity and saving a new version of ArclibXml to DB
+     * <br>
+     * <b>this method is not @Transactional, transactions are handled programmatically</b>
      *
      * @param aipId      id of the AIP being updated
      * @param xmlId      xml id of the latest version XML of the AIP being updated
@@ -293,26 +253,33 @@ public class AipService {
      * @param reason     reason for updating specified by user
      * @param hash       hash of the XML document
      * @param xmlVersion xml version of the updated XML document
-     * @return response entity from the archival storage
+     * @return result code and message
      * @throws IllegalStateException if there is no update in progress
      */
-    @Transactional
-    public ResponseEntity<String> finishXmlUpdate(String aipId, String xmlId, String xml, Hash hash, Integer xmlVersion,
-                                                  String reason)
-            throws ParserConfigurationException, SAXException, IOException, DocumentException {
+    //not @Transactional, transactions are handled programmatically
+    public void finishXmlUpdate(String aipId, String xmlId, String xml, Hash hash, Integer xmlVersion, String reason)
+            throws ParserConfigurationException, SAXException, IOException, DocumentException, AuthorialPackageNotLockedException, ArchivalStorageException {
+        String opLogId = "Upload of AIP XML version: " + xmlVersion + " of AIP: " + aipId + " ";
+        log.info(opLogId + "started");
+
         IngestWorkflow originalIngestWorkflow = ingestWorkflowService.findByExternalId(xmlId);
-        verifyHash(xml, hash);
-
-        Map<String, Object> originalArclibXml = indexedArclibXmlStore.findArclibXmlIndexDocument(xmlId);
-        String producerId = (String) ((ArrayList) originalArclibXml.get(IndexedArclibXmlDocument.PRODUCER_ID)).get(0);
-        Integer sipVersionNumber = (Integer) ((ArrayList) originalArclibXml.get(IndexedArclibXmlDocument.SIP_VERSION_NUMBER)).get(0);
-        String sipVersionOf = (String) ((ArrayList) originalArclibXml.get(IndexedArclibXmlDocument.SIP_VERSION_OF)).get(0);
-        String authorialId = (String) ((ArrayList) originalArclibXml.get(IndexedArclibXmlDocument.AUTHORIAL_ID)).get(0);
-
-        arclibXmlValidator.validateArclibXml(new ByteArrayInputStream(xml.getBytes()), aipId, authorialId, sipVersionNumber, sipVersionOf);
-
+        AuthorialPackage authorialPackage = originalIngestWorkflow.getSip().getAuthorialPackage();
+        AuthorialPackageUpdateLock lock = authorialPackageUpdateLockStore.findByAuthorialPackageId(authorialPackage.getId());
+        if (!lock.isLocked()) {
+            throw new AuthorialPackageNotLockedException(authorialPackage.getId());
+        }
+        InputStream previousAipXmlStream = archivalStorageService.exportSingleXml(aipId, null);
+        byte[] previousAipXml = IOUtils.toByteArray(previousAipXmlStream);
+        transactionTemplate.execute(t -> {
+            jobService.delete(lock.getTimeoutCheckJob());
+            return null;
+        });
+        Producer producer = originalIngestWorkflow.getProducerProfile().getProducer();
+        Integer sipVersionNumber = originalIngestWorkflow.getSip().getVersionNumber();
+        Sip previousVersionSip = originalIngestWorkflow.getSip().getPreviousVersionSip();
+        String sipVersionOf = previousVersionSip == null ? ArclibXmlGenerator.INITIAL_VERSION : previousVersionSip.getId();
+        String authorialId = originalIngestWorkflow.getSip().getAuthorialPackage().getAuthorialId();
         IngestWorkflow newIngestWorkflow = new IngestWorkflow();
-        newIngestWorkflow.setProcessingState(IngestWorkflowState.NEW);
         newIngestWorkflow.setXmlVersionNumber(xmlVersion);
         newIngestWorkflow.setRelatedWorkflow(originalIngestWorkflow);
         newIngestWorkflow.setSip(originalIngestWorkflow.getSip());
@@ -320,39 +287,65 @@ public class AipService {
         newIngestWorkflow.setVersioningLevel(VersioningLevel.ARCLIB_XML_VERSIONING);
         newIngestWorkflow.setBatch(null);
         newIngestWorkflow.setFailureInfo(null);
-        ingestWorkflowService.save(newIngestWorkflow);
-        log.debug("New index workflow with external id " + newIngestWorkflow.getExternalId()
-                + " for XML version " + xmlVersion + " of AIP " + aipId + " created. The processing state is NEW.");
 
-        xml = arclibXmlGenerator.addUpdateMetadata(xml, reason, userDetails.getUsername(), newIngestWorkflow);
-        String hashValue = bytesToHexString(sha512Counter.computeDigest(new ByteArrayInputStream(xml.getBytes())));
-        Hash arclibXmlHash = new Hash(hashValue, HashType.Sha512);
+        transactionTemplate.execute(t -> {
+            boolean sentToArchivalStorage = false;
+            try {
+                ingestWorkflowService.save(newIngestWorkflow);
 
-        ResponseEntity<String> archivalStorageResponse = archivalStorageService.updateXml(aipId, new ByteArrayInputStream(
-                xml.getBytes()), arclibXmlHash, xmlVersion, true);
+                log.debug(opLogId + "verifying hash");
+                verifyHash(xml, hash);
 
-        if (archivalStorageResponse.getStatusCode().is2xxSuccessful()) {
-            originalIngestWorkflow.setLatestVersion(false);
-            ingestWorkflowService.save(originalIngestWorkflow);
+                log.debug(opLogId + "validating AIP XML");
+                arclibXmlValidator.validateArclibXml(new ByteArrayInputStream(xml.getBytes()), aipId, authorialId, sipVersionNumber, sipVersionOf);
 
-            newIngestWorkflow.setArclibXmlHash(arclibXmlHash);
-            newIngestWorkflow.setLatestVersion(true);
-            newIngestWorkflow.setProcessingState(IngestWorkflowState.PERSISTED);
-            ingestWorkflowService.save(newIngestWorkflow);
-            log.debug("State of ingest workflow " + newIngestWorkflow.getExternalId() + " changed to PERSISTED.");
-            Producer producer = producerStore.find(producerId);
-            indexedArclibXmlStore.createIndex(xml, producer.getId(), producer.getName(), userDetails.getUser().getUsername(), IndexedAipState.ARCHIVED, originalIngestWorkflow.getBatch().isDebuggingModeActive());
-            log.debug("State of XML of AIP " + aipId + " version " + xmlVersion + " in index has changed to PERSISTED.");
+                log.debug(opLogId + "generating metadata update event");
+                String updatedXml = arclibXmlGenerator.addUpdateMetadata(xml, reason, userDetails.getUsername(), newIngestWorkflow);
+                String hashValue = bytesToHexString(sha512Counter.computeDigest(new ByteArrayInputStream(updatedXml.getBytes())));
+                Hash arclibXmlHash = new Hash(hashValue, HashType.Sha512);
 
+                log.debug(opLogId + "sending to Archival Storage");
+                sentToArchivalStorage = true;
+                archivalStorageService.updateXml(aipId, new ByteArrayInputStream(updatedXml.getBytes()), arclibXmlHash, xmlVersion, true);
+                newIngestWorkflow.setArclibXmlHash(arclibXmlHash);
+                newIngestWorkflow.setLatestVersion(true);
+                newIngestWorkflow.setProcessingState(IngestWorkflowState.PERSISTED);
+                newIngestWorkflow.setEnded(Instant.now());
+                originalIngestWorkflow.setLatestVersion(false);
+                ingestWorkflowService.save(originalIngestWorkflow);
+                ingestWorkflowService.save(newIngestWorkflow);
+                log.debug(opLogId + "creating index record");
+                indexedArclibXmlStore.createIndex(
+                        updatedXml.getBytes(),
+                        producer.getId(),
+                        producer.getName(),
+                        userDetails.getUser().getUsername(),
+                        IndexedAipState.ARCHIVED,
+                        false,
+                        true);
+                indexedArclibXmlStore.setLatestFlag(xmlId, false, previousAipXml);
+                log.info(opLogId + "successfully finished");
+            } catch (Exception e) {
+                t.setRollbackOnly();
+                log.error(opLogId + "Error occurred: " + e.toString() + ", system will roll back data, see the stacktrace bellow.");
+                log.debug(opLogId + "deleting index");
+                indexedArclibXmlStore.removeIndex(newIngestWorkflow.getExternalId());
+                if (sentToArchivalStorage) {
+                    log.debug(opLogId + "rolling back at Archival Storage");
+                    try {
+                        archivalStorageService.rollbackLatestXml(aipId, newIngestWorkflow.getXmlVersionNumber());
+                    } catch (ArchivalStorageException rollbackException) {
+                        log.error(opLogId + "rollback has failed at Archival Storage");
+                    }
+                }
+                throw new RuntimeException(e);
+            }
+            return null;
+        });
+        transactionTemplate.execute(t -> {
             deactivateLock(newIngestWorkflow.getSip().getAuthorialPackage().getId());
-            log.info("Finished update of AIP " + aipId + ".");
-        } else {
-            log.error("Update of AIP " + aipId + " has failed to finish because failure of storing to archival storage." +
-                    " Error code " + archivalStorageResponse.getStatusCode() + ", reason "
-                    + archivalStorageResponse.getBody() + ".");
-        }
-
-        return archivalStorageResponse;
+            return null;
+        });
     }
 
     /**
@@ -362,15 +355,14 @@ public class AipService {
      * @throws IllegalStateException no update process is in progress
      */
     @Transactional
-    public void refreshKeepAliveUpdate(String authorialPackageId) {
+    public void refreshKeepAliveUpdate(String authorialPackageId) throws AuthorialPackageNotLockedException {
         AuthorialPackage authorialPackage = authorialPackageStore.find(authorialPackageId);
         notNull(authorialPackage, () -> new MissingObject(AuthorialPackage.class, authorialPackageId));
 
         AuthorialPackageUpdateLock updateLock =
                 authorialPackageUpdateLockStore.findByAuthorialPackageId(authorialPackageId);
         if (updateLock == null || !updateLock.isLocked()) {
-            throw new IllegalStateException("Cannot keep alive update of XML of authorial package with id " +
-                    authorialPackageId + ". No update process is in progress.");
+            throw new AuthorialPackageNotLockedException(authorialPackageId);
         }
         updateLock.setLatestLockedInstant(Instant.now());
         authorialPackageUpdateLockStore.save(updateLock);
@@ -378,20 +370,9 @@ public class AipService {
     }
 
     /**
-     * Cancels XML update by deactivating lock at the respective authorial package
-     *
-     * @param authorialPackageId of the authorial package
-     */
-    @Transactional
-    public void cancelXmlUpdate(String authorialPackageId) {
-        deactivateLock(authorialPackageId);
-        log.debug("Canceled XML update for authorial package " + authorialPackageId + ".");
-    }
-
-    /**
      * Cancels XML update if the update lock has expired
      *
-     * @param authorialPackageId
+     * @param authorialPackageId authorial package id
      */
     @Transactional
     public void testAndCancelXmlUpdate(String authorialPackageId) {
@@ -399,9 +380,10 @@ public class AipService {
                 authorialPackageUpdateLockStore.findByAuthorialPackageId(authorialPackageId);
         Instant latestLockedInstant = authorialPackageUpdateLock.getLatestLockedInstant();
 
-        if (latestLockedInstant != null && latestLockedInstant.plusSeconds(Long.valueOf(keepAliveUpdateTimeout))
-                .isBefore(Instant.now().plusSeconds(keepAliveNetworkDelay))) {
-            cancelXmlUpdate(authorialPackageId);
+        if (latestLockedInstant != null && latestLockedInstant.plusSeconds(keepAliveUpdateTimeout)
+                .isBefore(Instant.now().minusSeconds(keepAliveNetworkDelay))) {
+            log.debug("Job is canceling XML update for authorial package " + authorialPackageId + ".");
+            deactivateLock(authorialPackageId);
         }
     }
 
@@ -444,7 +426,7 @@ public class AipService {
      *
      * @param authorialPackageId id of the authorial package
      * @return created timeout check job
-     * @throws ArchivalStorageException keep alive update script is unreadable
+     * @throws IOException keep alive update script is unreadable
      */
     @Transactional
     private Job createTimeoutCheckJob(String authorialPackageId) throws IOException {
@@ -489,132 +471,8 @@ public class AipService {
         }
     }
 
-    /**
-     * Create request for deletion for AIP.
-     *
-     * @param aipId id of the AIP to delete
-     */
-    @Transactional
-    public void createDeletionRequest(String aipId) {
-        User requester = new User(userDetails.getId());
-        AipDeletionRequest byAipAndRequester = aipDeletionRequestStore.findByAipIdAndRequesterId(aipId, userDetails.getId());
-        if (byAipAndRequester != null) {
-            throw new ConflictException(AipDeletionRequest.class, byAipAndRequester.getId());
-        }
-        AipDeletionRequest deletionRequest = new AipDeletionRequest();
-        deletionRequest.setAipId(aipId);
-        deletionRequest.setRequester(requester);
-        aipDeletionRequestStore.save(deletionRequest);
-        log.info("Created request for AIP deletion " + deletionRequest.getId() + " for requester " +
-                requester.getId() + " and AIP " + aipId + ".");
-    }
-
-    /**
-     * Lists unresolved deletion requests (that have not yet been resolved and deleted)
-     * <p>
-     * If the logged on user has not Roles.SUPER_ADMIN  returns only requests of which the requester
-     * has the same producer as the logged on user.
-     *
-     * @return list of deletion requests
-     */
-    @Transactional
-    public List<AipDeletionRequestDto> listDeletionRequests() {
-        List<AipDeletionRequest> unresolvedDeletionRequests = aipDeletionRequestStore.findUnresolved();
-
-        if (!hasRole(userDetails, Roles.SUPER_ADMIN)) {
-            unresolvedDeletionRequests = unresolvedDeletionRequests.stream()
-                    .filter(request -> {
-                        User requester = request.getRequester();
-                        return requester.getProducer().getId().equals(userDetails.getProducerId());
-                    })
-                    .collect(Collectors.toList());
-        }
-
-        return unresolvedDeletionRequests.stream()
-                .map(o -> beanMappingService.mapTo(o, AipDeletionRequestDto.class))
-                .collect(Collectors.toList());
-    }
-
-    /**
-     * Acknowledges the request for deletion of AIP
-     *
-     * @param deletionRequestId id of the deletion request to acknowledge
-     */
-    @Transactional
-    public void acknowledgeDeletion(String deletionRequestId) {
-        AipDeletionRequest deletionRequest = aipDeletionRequestStore.find(deletionRequestId);
-        notNull(deletionRequest, () -> new MissingObject(AipDeletionRequest.class, deletionRequestId));
-
-        User requester = deletionRequest.getRequester();
-        User confirmer1 = deletionRequest.getConfirmer1();
-        User confirmer2 = deletionRequest.getConfirmer2();
-
-        if (userDetails.getId().equals(requester.getId())) {
-            throw new IllegalArgumentException("Cannot acknowledge own AIP deletion request. Deletion request "
-                    + deletionRequestId + ", user " + userDetails.getId() + ".");
-        }
-        if (confirmer1 != null && userDetails.getId().equals(confirmer1.getId())) {
-            throw new IllegalArgumentException("Cannot acknowledge the same AIP deletion request more than once. Deletion request "
-                    + deletionRequestId + ", user " + userDetails.getId() + ".");
-        }
-        log.info("User " + userDetails.getId() + " has acknowledged deletion of AIP " + deletionRequest.getAipId() + ".");
-
-        if (confirmer1 == null) {
-            deletionRequest.setConfirmer1(new User(userDetails.getId()));
-            aipDeletionRequestStore.save(deletionRequest);
-            log.debug("User " + userDetails.getId() + " has been set as the first confirmer of deletion request "
-                    + deletionRequest.getId() + ".");
-
-        } else if (confirmer2 == null) {
-            deletionRequest.setConfirmer2(new User(userDetails.getId()));
-            deletionRequest.setDeleted(Instant.now());
-            aipDeletionRequestStore.save(deletionRequest);
-            log.debug("User " + userDetails.getId() + " has been set as the second confirmer of deletion request "
-                    + deletionRequest.getId());
-            log.debug("Deletion request " + deletionRequestId + " has been set to DELETED.");
-
-            log.info("Triggered deletion of AIP " + deletionRequest.getAipId() + ".");
-            String result = null;
-            try {
-                ArchivalStorageResponse response = deleteAip(deletionRequest.getAipId());
-                int statusCode = response.getStatusCode().value();
-                String body = IOUtils.toString(response.getBody(), StandardCharsets.UTF_8);
-
-                result = "HTTP status code on request for deletion of AIP " + deletionRequest.getAipId()
-                        + " at archival storage: " + statusCode + ", result: " + body;
-                log.info(result);
-            } catch (ArchivalStorageException | IOException e) {
-                result = "Deletion of AIP " + deletionRequest.getAipId() + " at archival storage failed. Reason: " + e.toString();
-                log.error(result);
-            } finally {
-                arclibMailCenter.sendAipDeletionAcknowledgedNotification(requester.getEmail(), deletionRequest.getAipId(), result, Instant.now());
-            }
-        }
-    }
-
-    /**
-     * Disacknowledges the request for deletion of AIP
-     *
-     * @param deletionRequestId id of the deletion request to disacknowledge
-     */
-    @Transactional
-    public void disacknowledgeDeletion(String deletionRequestId) {
-        AipDeletionRequest deletionRequest = aipDeletionRequestStore.find(deletionRequestId);
-        notNull(deletionRequest, () -> new MissingObject(AipDeletionRequest.class, deletionRequestId));
-
-        User requester = deletionRequest.getRequester();
-        if (userDetails.getId().equals(requester.getId())) {
-            throw new IllegalArgumentException("Cannot disacknowledge own AIP deletion request. Deletion request "
-                    + deletionRequestId + ", user " + userDetails.getId() + ".");
-        }
-
-        deletionRequest.setDeleted(Instant.now());
-        aipDeletionRequestStore.save(deletionRequest);
-        log.debug("Deletion request " + deletionRequestId + " has been set to DELETED.");
-
-        String message = "User " + userDetails.getId() + " has disacknowledged deletion of AIP " + deletionRequest.getAipId();
-        log.info(message);
-        arclibMailCenter.sendAipDeletionDisacknowledgedNotification(requester.getEmail(), deletionRequest.getAipId(), message, Instant.now());
+    public void removeAipXmlIndex(String externalId) {
+        indexedArclibXmlStore.removeIndex(externalId);
     }
 
     /**
@@ -688,18 +546,8 @@ public class AipService {
     }
 
     @Inject
-    public void setIndexArclibXmlStore(IndexArclibXmlStore indexArclibXmlStore) {
-        this.indexArclibXmlStore = indexArclibXmlStore;
-    }
-
-    @Inject
     public void setIngestWorkflowService(IngestWorkflowService ingestWorkflowService) {
         this.ingestWorkflowService = ingestWorkflowService;
-    }
-
-    @Inject
-    public void setAipDeletionRequestStore(AipDeletionRequestStore aipDeletionRequestStore) {
-        this.aipDeletionRequestStore = aipDeletionRequestStore;
     }
 
     @Inject
@@ -710,11 +558,6 @@ public class AipService {
     @Inject
     public void setUserDetails(UserDetails userDetails) {
         this.userDetails = userDetails;
-    }
-
-    @Inject
-    public void setArclibMailCenter(ArclibMailCenter arclibMailCenter) {
-        this.arclibMailCenter = arclibMailCenter;
     }
 
     @Inject
@@ -733,12 +576,12 @@ public class AipService {
     }
 
     @Inject
-    public void setProducerStore(ProducerStore producerStore) {
-        this.producerStore = producerStore;
+    public void setWorkspace(@Value("${arclib.path.workspace}") String workspace) {
+        this.workspace = Paths.get(workspace);
     }
 
     @Inject
-    public void setBeanMappingService(BeanMappingService beanMappingService) {
-        this.beanMappingService = beanMappingService;
+    public void setTransactionTemplate(TransactionTemplate transactionTemplate) {
+        this.transactionTemplate = transactionTemplate;
     }
 }

@@ -10,6 +10,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import java.io.IOException;
 
+import static helper.ThrowableAssertion.assertThrown;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
@@ -91,38 +92,29 @@ public class JsonUtilsTest {
     }
 
     @Test
-    public void mergeArrayUniquePrimitives() throws IOException {
-        String overridingStr = "{\"atr1\":[\"val1\"]}";
-        String overriddenStr = "{\"atr1\":[\"val2\"]}";
+    public void mergeArrayLikeComplexObject() throws IOException {
+        String overridingStr = "{\"atr1\":{\"0\":{\"nest1\":1},\"1\":{\"other\":1,\"nest2\":2}}}";
+        String overriddenStr = "{\"atr1\":{\"0\":{\"nest1\":1},\"1\":{\"nest2\":3,\"other2\":1},\"2\":{\"nest3\":4}}}";
         ObjectMapper mapper = new ObjectMapper();
         JsonNode overriding = mapper.readTree(overridingStr);
         JsonNode overridden = mapper.readTree(overriddenStr);
         JsonNode mergedJson = JsonUtils.merge(overridden, overriding);
-        JsonNode expectedResult = mapper.readTree("{\"atr1\":[\"val2\",\"val1\"]}");
+        JsonNode expectedResult = mapper.readTree("{\"atr1\":{\"0\":{\"nest1\":1},\"1\":{\"nest2\":2,\"other2\":1,\"other\":1},\"2\":{\"nest3\":4}}}");
         assertThat(mergedJson, is(expectedResult));
     }
 
     @Test
-    public void mergeArrayDuplicatedPrimitives() throws IOException {
-        String overridingStr = "{\"atr1\":[\"val1\"]}";
-        String overriddenStr = "{\"atr1\":[\"val1\"]}";
-        ObjectMapper mapper = new ObjectMapper();
-        JsonNode overriding = mapper.readTree(overridingStr);
-        JsonNode overridden = mapper.readTree(overriddenStr);
-        JsonNode mergedJson = JsonUtils.merge(overridden, overriding);
-        JsonNode expectedResult = mapper.readTree("{\"atr1\":[\"val1\"]}");
-        assertThat(mergedJson, is(expectedResult));
-    }
-
-    @Test
-    public void mergeArrayComplex() throws IOException {
+    public void mergeArrayStandardFormatThrowsException() throws IOException {
         String overridingStr = "{\"atr1\":[{\"nest1\":1},{\"nest2\":2}]}";
         String overriddenStr = "{\"atr1\":[{\"nest1\":1},{\"nest2\":3},{\"nest3\":4}]}";
         ObjectMapper mapper = new ObjectMapper();
         JsonNode overriding = mapper.readTree(overridingStr);
         JsonNode overridden = mapper.readTree(overriddenStr);
-        JsonNode mergedJson = JsonUtils.merge(overridden, overriding);
-        JsonNode expectedResult = mapper.readTree("{\"atr1\":[{\"nest1\":1},{\"nest2\":3},{\"nest3\":4},{\"nest2\":2}]}");
-        assertThat(mergedJson, is(expectedResult));
+        assertThrown(() -> JsonUtils.merge(overridden, overriding)).isInstanceOf(IllegalArgumentException.class);
+        overridingStr = "{\"atr1\":[\"val1\"]}";
+        overriddenStr = "{\"atr1\":[\"val2\"]}";
+        JsonNode overridingPrimitive = mapper.readTree(overridingStr);
+        JsonNode overriddenPrimitive = mapper.readTree(overriddenStr);
+        assertThrown(() -> JsonUtils.merge(overriddenPrimitive, overridingPrimitive)).isInstanceOf(IllegalArgumentException.class);
     }
 }

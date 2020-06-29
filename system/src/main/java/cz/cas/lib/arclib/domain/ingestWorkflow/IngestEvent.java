@@ -1,5 +1,6 @@
 package cz.cas.lib.arclib.domain.ingestWorkflow;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import cz.cas.lib.arclib.domain.preservationPlanning.Tool;
 import cz.cas.lib.arclib.domainbase.domain.DatedObject;
 import lombok.AllArgsConstructor;
@@ -25,6 +26,7 @@ public class IngestEvent extends DatedObject {
      */
     @ManyToOne
     @NotNull
+    @JsonIgnore
     private IngestWorkflow ingestWorkflow;
 
     /**

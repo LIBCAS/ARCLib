@@ -28,6 +28,7 @@ public class ArclibXmlGeneratorTest {
         ArclibXmlGenerator generator = new ArclibXmlGenerator();
         SAXReader reader = new SAXReader();
         generator.setUris("http://www.loc.gov/METS/",
+                "http://www.w3.org/2001/XMLSchema-instance",
                 "http://arclib.lib.cas.cz/ARCLIB_XSD",
                 "info:lc/xmlns/premis-v2",
                 "http://www.openarchives.org/OAI/2.0/oai_dc/",

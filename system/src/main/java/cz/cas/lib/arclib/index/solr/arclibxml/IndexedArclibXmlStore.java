@@ -10,15 +10,21 @@ import cz.cas.lib.arclib.index.IndexArclibXmlStore;
 import cz.cas.lib.arclib.index.solr.IndexQueryUtils;
 import cz.cas.lib.arclib.security.user.UserDetails;
 import cz.cas.lib.arclib.store.AipQueryStore;
+import cz.cas.lib.arclib.utils.XmlUtils;
 import cz.cas.lib.core.index.dto.Params;
 import cz.cas.lib.core.index.dto.Result;
 import cz.cas.lib.core.index.solr.IndexField;
 import cz.cas.lib.core.index.solr.IndexFieldType;
+import cz.cas.lib.core.store.Transactional;
+import lombok.Getter;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.reflect.FieldUtils;
 import org.apache.solr.common.SolrInputDocument;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.Resource;
 import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.solr.UncategorizedSolrException;
@@ -36,14 +42,12 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
 import javax.annotation.PostConstruct;
-import javax.annotation.Resource;
 import javax.inject.Inject;
 import javax.xml.XMLConstants;
 import javax.xml.bind.DatatypeConverter;
 import javax.xml.namespace.NamespaceContext;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.transform.TransformerException;
 import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpressionException;
@@ -63,7 +67,8 @@ import java.util.stream.Collectors;
 import static cz.cas.lib.arclib.index.solr.IndexQueryUtils.buildFilters;
 import static cz.cas.lib.arclib.index.solr.IndexQueryUtils.initializeQuery;
 import static cz.cas.lib.arclib.utils.ArclibUtils.*;
-import static cz.cas.lib.arclib.utils.XmlUtils.*;
+import static cz.cas.lib.arclib.utils.XmlUtils.nsUnawareDom;
+import static cz.cas.lib.arclib.utils.XmlUtils.nsUnawareXPath;
 import static cz.cas.lib.core.util.Utils.asSet;
 
 @Service
@@ -79,15 +84,17 @@ public class IndexedArclibXmlStore implements IndexArclibXmlStore<IndexedArclibX
     private UserDetails userDetails;
     private String coreName;
     private Map<String, String> uris = new HashMap<>();
+    @Getter
+    private Resource arclibXmlDefinition;
 
     @SneakyThrows
     @Override
-    public void createIndex(String arclibXml, String producerId, String producerName, String userName, IndexedAipState aipState, boolean debuggingModeActive) {
+    public void createIndex(byte[] arclibXml, String producerId, String producerName, String userName, IndexedAipState aipState, boolean debuggingModeActive, boolean latestVersion) {
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
         factory.setNamespaceAware(true);
         Document xml;
         try {
-            xml = factory.newDocumentBuilder().parse(new ByteArrayInputStream(arclibXml.getBytes()));
+            xml = factory.newDocumentBuilder().parse(new ByteArrayInputStream(arclibXml));
         } catch (ParserConfigurationException | SAXException | IOException e) {
             log.error("Error during parsing of XML document");
             throw e;
@@ -101,10 +108,11 @@ public class IndexedArclibXmlStore implements IndexArclibXmlStore<IndexedArclibX
         mainDoc.addField(IndexQueryUtils.TYPE_FIELD, mainDocConfig.getIndexType());
         mainDoc.addField(IndexedArclibXmlDocument.PRODUCER_NAME, producerName);
         mainDoc.addField(IndexedArclibXmlDocument.PRODUCER_ID, producerId);
+        mainDoc.addField(IndexedArclibXmlDocument.LATEST, latestVersion);
         if (aipState != null)
             mainDoc.addField(IndexedArclibXmlDocument.AIP_STATE, aipState.toString());
         mainDoc.addField(IndexedArclibXmlDocument.USER_NAME, userName);
-        mainDoc.addField(IndexedArclibXmlDocument.DOCUMENT, arclibXml);
+        mainDoc.addField(IndexedArclibXmlDocument.CONTENT, XmlUtils.extractTextFromAllElements(new StringBuilder(), xml).toString());
         mainDoc.addField(IndexedArclibXmlDocument.DEBUG_MODE, debuggingModeActive);
         for (ArclibXmlField conf : mainDocConfig.getIndexedFieldConfig()) {
             NodeList nodes = (NodeList) xpath.evaluate(conf.getXpath(), xml, XPathConstants.NODESET);
@@ -147,6 +155,7 @@ public class IndexedArclibXmlStore implements IndexArclibXmlStore<IndexedArclibX
     }
 
     @Override
+    @Transactional
     public Result<IndexedArclibXmlDocument> findAll(Params params, String queryName) {
         SimpleQuery query = new SimpleQuery();
         Map<String, IndexField> indexedFields = IndexQueryUtils.INDEXED_FIELDS_MAP.get(getMainDocumentIndexType());
@@ -187,14 +196,43 @@ public class IndexedArclibXmlStore implements IndexArclibXmlStore<IndexedArclibX
      * @param newAipState
      */
     @Override
-    public void changeAipState(String arclibXmlDocumentId, IndexedAipState newAipState) {
+    public void changeAipState(String arclibXmlDocumentId, IndexedAipState newAipState, byte[] aipXml) {
         Map<String, Object> aclibXmlIndexDocument = findArclibXmlIndexDocument(arclibXmlDocumentId);
         String producerId = (String) ((ArrayList) aclibXmlIndexDocument.get(IndexedArclibXmlDocument.PRODUCER_ID)).get(0);
         String responsiblePerson = (String) ((ArrayList) aclibXmlIndexDocument.get(IndexedArclibXmlDocument.USER_NAME)).get(0);
         String producer_name = (String) ((ArrayList) aclibXmlIndexDocument.get(IndexedArclibXmlDocument.PRODUCER_NAME)).get(0);
         boolean debugMode = (Boolean) ((ArrayList) aclibXmlIndexDocument.get(IndexedArclibXmlDocument.DEBUG_MODE)).get(0);
-        String document = (String) ((ArrayList) aclibXmlIndexDocument.get(IndexedArclibXmlDocument.DOCUMENT)).get(0);
-        createIndex(document, producerId, producer_name, responsiblePerson, newAipState, debugMode);
+        boolean latestVersion = (Boolean) ((ArrayList) aclibXmlIndexDocument.get(IndexedArclibXmlDocument.LATEST)).get(0);
+        createIndex(aipXml,
+                producerId,
+                producer_name,
+                responsiblePerson,
+                newAipState,
+                debugMode,
+                latestVersion);
+    }
+
+    /**
+     * changes {@link IndexedArclibXmlDocument#LATEST} flag of the document.. this can't be done via partial update as it breaks parent-children relationship
+     *
+     * @param arclibXmlDocumentId
+     * @param flag
+     */
+    @Override
+    public void setLatestFlag(String arclibXmlDocumentId, boolean flag, byte[] aipXml) {
+        Map<String, Object> aclibXmlIndexDocument = findArclibXmlIndexDocument(arclibXmlDocumentId);
+        IndexedAipState aipState = IndexedAipState.valueOf((String) ((ArrayList) aclibXmlIndexDocument.get(IndexedArclibXmlDocument.AIP_STATE)).get(0));
+        String producerId = (String) ((ArrayList) aclibXmlIndexDocument.get(IndexedArclibXmlDocument.PRODUCER_ID)).get(0);
+        String responsiblePerson = (String) ((ArrayList) aclibXmlIndexDocument.get(IndexedArclibXmlDocument.USER_NAME)).get(0);
+        String producer_name = (String) ((ArrayList) aclibXmlIndexDocument.get(IndexedArclibXmlDocument.PRODUCER_NAME)).get(0);
+        boolean debugMode = (Boolean) ((ArrayList) aclibXmlIndexDocument.get(IndexedArclibXmlDocument.DEBUG_MODE)).get(0);
+        createIndex(aipXml,
+                producerId,
+                producer_name,
+                responsiblePerson,
+                aipState,
+                debugMode,
+                flag);
     }
 
 
@@ -306,6 +344,8 @@ public class IndexedArclibXmlStore implements IndexArclibXmlStore<IndexedArclibX
                     throw new IllegalArgumentException("No prefix provided!");
                 } else if (prefix.equalsIgnoreCase("METS")) {
                     return uris.get(METS);
+                } else if (prefix.equalsIgnoreCase("xsi")) {
+                    return uris.get(XSI);
                 } else if (prefix.equalsIgnoreCase("oai_dc")) {
                     return uris.get(OAIS_DC);
                 } else if (prefix.equalsIgnoreCase("premis")) {
@@ -335,13 +375,14 @@ public class IndexedArclibXmlStore implements IndexArclibXmlStore<IndexedArclibX
     }
 
     @Inject
-    public void setUris(@Value("${namespaces.mets}") String mets, @Value("${namespaces.arclib}") String arclib, @Value("${namespaces" +
+    public void setUris(@Value("${namespaces.mets}") String mets, @Value("${namespaces.xsi}") String xsi, @Value("${namespaces.arclib}") String arclib, @Value("${namespaces" +
             ".premis}") String premis, @Value("${namespaces.oai_dc}") String oai_dc, @Value("${namespaces.dc}") String dc,
                         @Value("${namespaces.dcterms}") String dcterms) {
         Map<String, String> uris = new HashMap<>();
         uris.put(METS, mets);
         uris.put(ARCLIB, arclib);
         uris.put(PREMIS, premis);
+        uris.put(XSI, xsi);
         uris.put(OAIS_DC, oai_dc);
         uris.put(DC, dc);
         uris.put(DCTERMS, dcterms);
@@ -375,10 +416,10 @@ public class IndexedArclibXmlStore implements IndexArclibXmlStore<IndexedArclibX
                         if (conf.isSimple()) {
                             doc.addField(conf.getFieldName(), nodes.item(i).getTextContent());
                         } else {
-                            doc.addField(conf.getFieldName(), nodeToString(nodes.item(i)));
+                            doc.addField(conf.getFieldName(), XmlUtils.extractTextFromAllElements(new StringBuilder(), nodes.item(i)).toString());
                         }
                 }
-            } catch (IllegalArgumentException | NullPointerException | TransformerException parsingEx) {
+            } catch (IllegalArgumentException | NullPointerException ex) {
                 String msg = String.format("Could not parse %s as %s", nodes.item(i).getTextContent(), conf.getAipXmlNodeValueType());
                 throw new BadArgument(msg);
             }
@@ -390,7 +431,8 @@ public class IndexedArclibXmlStore implements IndexArclibXmlStore<IndexedArclibX
         this.aipQueryStore = aipQueryStore;
     }
 
-    @Resource(name = "ArclibXmlSolrTemplate")
+    @Autowired
+    @Qualifier("ArclibXmlSolrTemplate")
     public void setSolrTemplate(SolrTemplate solrTemplate) {
         this.solrTemplate = solrTemplate;
     }
@@ -405,5 +447,9 @@ public class IndexedArclibXmlStore implements IndexArclibXmlStore<IndexedArclibX
         this.userDetails = userDetails;
     }
 
-
+    @Inject
+    public void setArclibXmlDefinition(@Value("${arclib.arclibXmlDefinition}")
+                                               Resource arclibXmlDefinition) {
+        this.arclibXmlDefinition = arclibXmlDefinition;
+    }
 }

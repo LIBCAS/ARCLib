@@ -1,5 +1,6 @@
 package helper.auth;
 
+import cz.cas.lib.arclib.security.authorization.Roles;
 import org.springframework.security.test.context.support.WithSecurityContext;
 
 import java.lang.annotation.Retention;
@@ -11,4 +12,6 @@ public @interface WithMockCustomUser {
     String username() default "user";
 
     String id() default "user";
+
+    String role() default Roles.SUPER_ADMIN;
 }

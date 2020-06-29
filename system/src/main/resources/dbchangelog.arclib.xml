@@ -843,4 +843,36 @@
             </column>
         </addColumn>
     </changeSet>
+    <changeSet id="arclib:5" author="tomasek">
+        <dropUniqueConstraint tableName="arclib_aip_query" constraintName="arclib_aip_query_name_key"/>
+        <addColumn tableName="arclib_sip">
+            <column name="size_in_bytes" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+        <addColumn tableName="arclib_ingest_workflow">
+            <column name="ended" type="datetime"/>
+        </addColumn>
+    </changeSet>
+    <changeSet id="arclib:6" author="tomasek">
+        <dropUniqueConstraint tableName="arclib_sip_profile" constraintName="arclib_sip_profile_name_key"/>
+        <dropUniqueConstraint tableName="arclib_validation_profile"
+                              constraintName="arclib_validation_profile_name_key"/>
+        <dropUniqueConstraint tableName="arclib_producer" constraintName="arclib_producer_name_key"/>
+        <dropUniqueConstraint tableName="arclib_workflow_definition"
+                              constraintName="arclib_workflow_definition_name_key"/>
+        <dropUniqueConstraint tableName="arclib_producer_profile" constraintName="arclib_producer_profile_name_key"/>
+        <dropUniqueConstraint tableName="arclib_ingest_routine" constraintName="arclib_ingest_routine_name_key"/>
+        <dropUniqueConstraint tableName="arclib_format_risk" constraintName="arclib_risk_name_key"/>
+    </changeSet>
+    <changeSet id="arclib:7" author="tomasek">
+        <addColumn tableName="arclib_report">
+            <column name="created" type="datetime"/>
+            <column name="updated" type="datetime"/>
+        </addColumn>
+    </changeSet>
+    <changeSet id="arclib:8" author="tomasek">
+        <modifyDataType tableName="arclib_aip_query" columnName="query" newDataType="nclob"/>
+        <modifyDataType tableName="arclib_aip_query" columnName="result" newDataType="nclob"/>
+    </changeSet>
 </databaseChangeLog>

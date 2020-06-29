@@ -28,11 +28,8 @@ public class BpmConstants {
 
     public static class Ingestion {
         public static final String dateTime = "ingestionDateTime";
-        public static final String sizeInBytes = "sizeInBytes";
-        public static final String filePathsAndFileSizes = "filePathsAndFileSizes";
         public static final String sipFileName = "sipFileName";
         public static final String authorialId = "authorialId";
-        public static final String rootDirFilesAndFixities = "rootDirFilesAndFixities";
     }
 
     public static class Validation {
@@ -40,8 +37,7 @@ public class BpmConstants {
     }
 
     public static class FixityCheck {
-        public static final String preferredFixityCheckEventId = "preferredFixityCheckEventId";
-        public static final String mapOfEventIdsToFilePathsAndFixities = "mapOfEventIdsToFilePathsAndFixities";
+        public static final String fixityCheckToolCounter = "fixityCheckToolCounter";
     }
 
     public static class FormatIdentification {
@@ -53,12 +49,21 @@ public class BpmConstants {
         public static final String result = "metadataExtractionResult";
     }
 
-    public static class MessageDigestCalculation {
-        public static final String preferredMessageDigestCalculationEventId = "preferredMessageDigestCalculationEventId";
-        public static final String mapOfEventIdsToMd5Calculations = "mapOfEventIdsToMd5Calculations";
-        public static final String mapOfEventIdsToSha512Calculations = "mapOfEventIdsToSha512Calculations";
-        public static final String mapOfEventIdsToCrc32Calculations = "mapOfEventIdsToCrc32Calculations";
-
+    public static class FixityGeneration {
+        public static final String preferredFixityGenerationEventId = "preferredFixityGenerationEventId";
+        public static final String mapOfEventIdsToSipMd5 = "mapOfEventIdsToSipMd5";
+        public static final String mapOfEventIdsToSipSha512 = "mapOfEventIdsToSipSha512";
+        public static final String mapOfEventIdsToSipCrc32 = "mapOfEventIdsToSipCrc32";
+        /**
+         * <pre>{@code
+         * variable of type:
+         * Map<String, Map<String, Triple<Long, String, String>>>
+         *
+         * filled as:
+         * Map<eventId, Map<pathToFile, Triple<sizeInBytes, metsChecksumType, checksum>>>
+         * }</pre>
+         */
+        public static final String mapOfEventIdsToSipContentFixityData = "mapOfEventIdsToSipContentFixityData";
     }
 
     public static class ArchivalStorage {
@@ -66,7 +71,10 @@ public class BpmConstants {
         public static final String aipSavedCheckTimeout = "aipSavedCheckTimeout";
         public static final String aipStoreRetries = "aipStoreRetries";
         public static final String aipStoreTimeout = "aipStoreTimeout";
-        public static final String aipState = "aipState";
+        /**
+         * state of the object (AIP in case of data versioning, AIP XML in case of metadata versioning) in Archival Storage
+         */
+        public static final String stateInArchivalStorage = "aipState";
     }
 
     public static class Antivirus {
@@ -78,5 +86,6 @@ public class BpmConstants {
      */
     public static class ErrorCodes {
         public static final String ProcessFailure = "processFailure";
+        public static final String StorageFailure = "storageFailure";
     }
 }

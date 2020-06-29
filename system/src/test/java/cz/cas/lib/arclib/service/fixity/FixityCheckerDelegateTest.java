@@ -72,11 +72,11 @@ public class FixityCheckerDelegateTest {
     private static final Path SIP_BAG = Paths.get("src/test/resources/SIP_PACKAGE/BAG");
     private static final Path WS_SIP_BAG_LOCATION = Paths.get(WS.toString(), EXTERNAL_ID, ORIGINAL_SIP_BAG_FILE_NAME);
 
-    private static final String CONFIG1 = "{\"fixityCheck\":[{" +
-            "\"continueOnUnsupportedChecksumType\":true}]}";
-    private static final String CONFIG2 = "{\"fixityCheck\":[{" +
+    private static final String CONFIG1 = "{\"fixityCheck\":{\"0\":{" +
+            "\"continueOnUnsupportedChecksumType\":true}}}";
+    private static final String CONFIG2 = "{\"fixityCheck\":{\"0\":{" +
             "\"continueOnMissingFiles\":false," +
-            "\"continueOnUnsupportedChecksumType\":true}]}";
+            "\"continueOnUnsupportedChecksumType\":true}}}";
 
     private static final String PROCESS_INSTANCE_KEY = "fixity";
     private static final String INVALID_CHECKSUM_FILE_1 = "TXT_KPW01169310_0002.TXT";
@@ -208,8 +208,7 @@ public class FixityCheckerDelegateTest {
         variables.put(BpmConstants.FormatIdentification.preferredFormatIdentificationEventId, eventId);
         variables.put(BpmConstants.FormatIdentification.mapOfEventIdsToMapsOfFilesToFormats, mapOfEventIdsToMapsOfFilesToFormats);
         variables.put(BpmConstants.ProcessVariables.sipFolderWorkspacePath, WS_SIP_LOCATION.toAbsolutePath().toString());
-        variables.put(BpmConstants.FixityCheck.mapOfEventIdsToFilePathsAndFixities, new HashMap<>());
-        variables.put(BpmConstants.FixityCheck.preferredFixityCheckEventId, eventId);
+        variables.put(BpmConstants.FixityCheck.fixityCheckToolCounter, 0);
         assertThrown(() -> startJob(PROCESS_INSTANCE_KEY, variables)).hasCauseInstanceOf(IncidentException.class);
         verify(ingestIssueStore, times(2)).save(captor.capture());
 
@@ -247,8 +246,7 @@ public class FixityCheckerDelegateTest {
         variables.put(BpmConstants.FormatIdentification.preferredFormatIdentificationEventId, eventId);
         variables.put(BpmConstants.FormatIdentification.mapOfEventIdsToMapsOfFilesToFormats, mapOfEventIdsToMapsOfFilesToFormats);
         variables.put(BpmConstants.ProcessVariables.sipFolderWorkspacePath, WS_SIP_LOCATION.toAbsolutePath().toString());
-        variables.put(BpmConstants.FixityCheck.mapOfEventIdsToFilePathsAndFixities, new HashMap<>());
-        variables.put(BpmConstants.FixityCheck.preferredFixityCheckEventId, eventId);
+        variables.put(BpmConstants.FixityCheck.fixityCheckToolCounter, 0);
         startJob(PROCESS_INSTANCE_KEY, variables);
 
         verify(ingestIssueStore, times(2)).save(captor.capture());
@@ -284,8 +282,7 @@ public class FixityCheckerDelegateTest {
         variables.put(BpmConstants.FormatIdentification.preferredFormatIdentificationEventId, eventId);
         variables.put(BpmConstants.FormatIdentification.mapOfEventIdsToMapsOfFilesToFormats, mapOfEventIdsToMapsOfFilesToFormats);
         variables.put(BpmConstants.ProcessVariables.sipFolderWorkspacePath, WS_SIP_BAG_LOCATION.toAbsolutePath().toString());
-        variables.put(BpmConstants.FixityCheck.mapOfEventIdsToFilePathsAndFixities, new HashMap<>());
-        variables.put(BpmConstants.FixityCheck.preferredFixityCheckEventId, eventId);
+        variables.put(BpmConstants.FixityCheck.fixityCheckToolCounter, 0);
         assertThrown(() -> startJob(PROCESS_INSTANCE_KEY, variables)).hasCauseInstanceOf(IncidentException.class);
         verify(ingestIssueStore, times(2)).save(captor.capture());
 
@@ -323,8 +320,7 @@ public class FixityCheckerDelegateTest {
         variables.put(BpmConstants.FormatIdentification.preferredFormatIdentificationEventId, eventId);
         variables.put(BpmConstants.FormatIdentification.mapOfEventIdsToMapsOfFilesToFormats, mapOfEventIdsToMapsOfFilesToFormats);
         variables.put(BpmConstants.ProcessVariables.sipFolderWorkspacePath, WS_SIP_BAG_LOCATION.toAbsolutePath().toString());
-        variables.put(BpmConstants.FixityCheck.mapOfEventIdsToFilePathsAndFixities, new HashMap<>());
-        variables.put(BpmConstants.FixityCheck.preferredFixityCheckEventId, eventId);
+        variables.put(BpmConstants.FixityCheck.fixityCheckToolCounter, 0);
         startJob(PROCESS_INSTANCE_KEY, variables);
 
         verify(ingestIssueStore, times(2)).save(captor.capture());

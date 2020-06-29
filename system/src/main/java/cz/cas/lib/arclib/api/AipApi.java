@@ -7,6 +7,8 @@ import cz.cas.lib.arclib.domainbase.exception.MissingObject;
 import cz.cas.lib.arclib.dto.AipDeletionRequestDto;
 import cz.cas.lib.arclib.dto.AipDetailDto;
 import cz.cas.lib.arclib.dto.AipQueryDto;
+import cz.cas.lib.arclib.exception.AipStateChangeException;
+import cz.cas.lib.arclib.exception.AuthorialPackageNotLockedException;
 import cz.cas.lib.arclib.index.IndexArclibXmlStore;
 import cz.cas.lib.arclib.index.solr.arclibxml.IndexedAipState;
 import cz.cas.lib.arclib.index.solr.arclibxml.IndexedArclibXmlDocument;
@@ -16,13 +18,12 @@ import cz.cas.lib.arclib.service.AipQueryService;
 import cz.cas.lib.arclib.service.AipService;
 import cz.cas.lib.arclib.service.archivalStorage.ArchivalStorageException;
 import cz.cas.lib.arclib.service.archivalStorage.ArchivalStoragePipe;
-import cz.cas.lib.arclib.service.archivalStorage.ArchivalStorageResponse;
+import cz.cas.lib.arclib.service.archivalStorage.ArchivalStorageService;
 import cz.cas.lib.arclib.utils.ArclibUtils;
 import cz.cas.lib.core.index.dto.Filter;
 import cz.cas.lib.core.index.dto.FilterOperation;
 import cz.cas.lib.core.index.dto.Params;
 import cz.cas.lib.core.index.dto.Result;
-import cz.cas.lib.core.store.Transactional;
 import io.swagger.annotations.*;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -30,8 +31,6 @@ import org.apache.commons.io.IOUtils;
 import org.dom4j.DocumentException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.xml.sax.SAXException;
 
@@ -40,8 +39,8 @@ import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.xml.parsers.ParserConfigurationException;
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
 
 import static cz.cas.lib.arclib.utils.ArclibUtils.hasRole;
@@ -51,7 +50,6 @@ import static cz.cas.lib.core.util.Utils.*;
 @Api(value = "aip", description = "Api for searching within ARCLib XML index, retrieving from Archival Storage and editing of ArclibXml")
 @RequestMapping("/api/aip")
 @Slf4j
-@Transactional
 public class AipApi extends ArchivalStoragePipe {
 
     @Getter
@@ -59,6 +57,7 @@ public class AipApi extends ArchivalStoragePipe {
     private AipService aipService;
     private AipQueryService aipQueryService;
     private int keepAliveUpdateTimeout;
+    private ArchivalStorageService archivalStorageService;
 
     @ApiOperation(value = "Gets partially filled ARCLib XML index records. The result of query as well as the query " +
             "itself is saved if the queryName param is filled.",
@@ -94,8 +93,7 @@ public class AipApi extends ArchivalStoragePipe {
             response = AipDetailDto.class)
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Successful response"),
-            @ApiResponse(code = 404, message = "Ingest workflow not found."),
-            @ApiResponse(code = 500, message = "Hash of the indexed ARCLib XML does not match the expected hash.")})
+            @ApiResponse(code = 404, message = "Ingest workflow not found.")})
     @RequestMapping(value = "/{xmlId}", method = RequestMethod.GET)
     public AipDetailDto get(
             @ApiParam(value = "Ingest workflow external id", required = true)
@@ -112,21 +110,12 @@ public class AipApi extends ArchivalStoragePipe {
             @ApiParam(value = "AIP ID", required = true) @PathVariable("aipId") String aipId,
             @ApiParam(value = "True to return all XMLs, otherwise only the latest is returned")
             @RequestParam(value = "all", defaultValue = "false") boolean all,
-            HttpServletResponse response) throws ArchivalStorageException {
+            HttpServletResponse response) throws ArchivalStorageException, IOException {
         checkUUID(aipId);
-        ArchivalStorageResponse storageResponse = aipService.exportSingleAip(aipId, all);
-        try {
-            HttpStatus status = storageResponse.getStatusCode();
-            if (status.is2xxSuccessful()) {
-                response.setContentType("application/zip");
-                response.addHeader("Content-Disposition", "attachment; filename=" + ArclibUtils.getAipExportName(aipId));
-            } else
-                response.setContentType("text/plain");
-            response.setStatus(status.value());
-            IOUtils.copyLarge(storageResponse.getBody(), response.getOutputStream());
-        } catch (IOException e) {
-            throw new ArchivalStorageException(e);
-        }
+        InputStream storageResponse = archivalStorageService.exportSingleAip(aipId, all);
+        response.setContentType("application/zip");
+        response.addHeader("Content-Disposition", "attachment; filename=" + ArclibUtils.getAipExportName(aipId));
+        IOUtils.copyLarge(storageResponse, response.getOutputStream());
     }
 
     @ApiOperation(value = "Returns specified AIP XML")
@@ -139,21 +128,12 @@ public class AipApi extends ArchivalStoragePipe {
             @PathVariable("aipId") String aipId,
             @ApiParam(value = "Version number of XML, if not set the latest version is returned")
             @RequestParam(value = "v", defaultValue = "") Integer version,
-            HttpServletResponse response) throws ArchivalStorageException {
+            HttpServletResponse response) throws ArchivalStorageException, IOException {
         checkUUID(aipId);
-        ArchivalStorageResponse storageResponse = aipService.exportSingleXml(aipId, version);
-        try {
-            HttpStatus status = storageResponse.getStatusCode();
-            if (status.is2xxSuccessful()) {
-                response.setContentType("application/xml");
-                response.addHeader("Content-Disposition", "attachment; filename=" + ArclibUtils.getXmlExportName(aipId, version));
-            } else
-                response.setContentType("text/plain");
-            response.setStatus(status.value());
-            IOUtils.copyLarge(storageResponse.getBody(), response.getOutputStream());
-        } catch (IOException e) {
-            throw new ArchivalStorageException(e);
-        }
+        InputStream storageResponse = archivalStorageService.exportSingleXml(aipId, version);
+        response.setContentType("application/xml");
+        response.addHeader("Content-Disposition", "attachment; filename=" + ArclibUtils.getXmlExportName(aipId, version));
+        IOUtils.copyLarge(storageResponse, response.getOutputStream());
     }
 
     @ApiOperation(notes = "If the AIP is in PROCESSING state or the storage is not reachable, the storage checksums are not filled and the consistent flag is set to false", value = "Retrieves information about AIP containing state, whether is consistent etc from the given storage.")
@@ -172,22 +152,20 @@ public class AipApi extends ArchivalStoragePipe {
         passToArchivalStorage(response, request, "/storage/" + aipId + "/info?storageId=" + storageId, HttpMethod.GET, "retrieve info about AIP: " + aipId + "at storage: " + storageId, AccessTokenType.READ);
     }
 
-    @ApiOperation(value = "Gets all saved queries of the user",
-            response = AipQuery.class, responseContainer = "list")
+    @ApiOperation(value = "Gets saved query by ID", response = AipQuery.class)
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Successful response")})
-    @RequestMapping(value = "/saved_query", method = RequestMethod.GET)
-    @Transactional
-    public List<AipQuery> getSavedQueries() {
-        return aipQueryService.findQueriesOfUser(userDetails.getId());
+    @RequestMapping(value = "/saved_query/{id}", method = RequestMethod.GET)
+    public AipQuery getSavedQuery(@ApiParam(value = "Id of the instance", required = true)
+                                  @PathVariable("id") String id) {
+        return aipQueryService.find(id);
     }
 
     @ApiOperation(value = "Gets DTOs of all saved queries of the user",
-            response = AipQuery.class, responseContainer = "list")
+            response = AipQueryDto.class, responseContainer = "list")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Successful response")})
     @RequestMapping(value = "/saved_query_dtos", method = RequestMethod.GET)
-    @Transactional
     public List<AipQueryDto> getSavedQueryDtos() {
         return aipQueryService.listSavedQueryDtos(userDetails.getId());
     }
@@ -218,18 +196,9 @@ public class AipApi extends ArchivalStoragePipe {
     @RequestMapping(value = "/{aipId}/remove", method = RequestMethod.PUT)
     public void remove(
             @ApiParam(value = "AIP id", required = true) @PathVariable("aipId") String aipId,
-            HttpServletResponse response) throws ArchivalStorageException {
+            HttpServletResponse response) throws ArchivalStorageException, AipStateChangeException, IOException {
         checkUUID(aipId);
-        ArchivalStorageResponse storageResponse = aipService.removeAip(aipId);
-        int status = 500;
-        try {
-            status = storageResponse.getStatusCode().value();
-            IOUtils.copy(storageResponse.getBody(), response.getOutputStream());
-        } catch (IOException e) {
-            throw new ArchivalStorageException(e);
-        } finally {
-            response.setStatus(status);
-        }
+        aipService.changeAipState(aipId, IndexedAipState.REMOVED);
     }
 
     @ApiOperation(value = "Renews logically removed AIP at archival storage. Roles.ADMIN, Roles.SUPER_ADMIN, Roles.ARCHIVIST")
@@ -241,34 +210,10 @@ public class AipApi extends ArchivalStoragePipe {
     @RequestMapping(value = "/{aipId}/renew", method = RequestMethod.PUT)
     public void renew(
             @ApiParam(value = "AIP id", required = true)
-            @PathVariable("aipId") String aipId, HttpServletResponse response)
-            throws ArchivalStorageException {
+            @PathVariable("aipId") String aipId)
+            throws ArchivalStorageException, AipStateChangeException, IOException {
         checkUUID(aipId);
-        int status = 500;
-        ArchivalStorageResponse storageResponse = aipService.renewAip(aipId);
-        try {
-            status = storageResponse.getStatusCode().value();
-            IOUtils.copy(storageResponse.getBody(), response.getOutputStream());
-        } catch (IOException e) {
-            throw new ArchivalStorageException(e);
-        } finally {
-            response.setStatus(status);
-        }
-    }
-
-    @ApiOperation(value = "Creates deletion request for deletion of AIP at archival storage. Roles.ADMIN, Roles.SUPER_ADMIN, Roles.ARCHIVIST")
-    @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "AIP successfully deleted"),
-            @ApiResponse(code = 400, message = "The specified aip id is not a valid UUID"),
-            @ApiResponse(code = 409, message = "Deletion request for the user and aip id already exists.")
-    })
-    @RolesAllowed({Roles.ADMIN, Roles.SUPER_ADMIN, Roles.ARCHIVIST})
-    @RequestMapping(value = "/{aipId}", method = RequestMethod.DELETE)
-    public void delete(
-            @ApiParam(value = "AIP id", required = true)
-            @PathVariable("aipId") String aipId) {
-        checkUUID(aipId);
-        aipService.createDeletionRequest(aipId);
+        aipService.changeAipState(aipId, IndexedAipState.ARCHIVED);
     }
 
     @ApiOperation(value = "Registers update of Arclib Xml of authorial package. Roles.SUPER_ADMIN, Roles.EDITOR")
@@ -296,7 +241,8 @@ public class AipApi extends ArchivalStoragePipe {
     public void cancelXmlUpdate(
             @ApiParam(value = "Authorial package id", required = true)
             @PathVariable("authorialPackageId") String authorialPackageId) {
-        aipService.cancelXmlUpdate(authorialPackageId);
+        log.debug("Canceling XML update for authorial package " + authorialPackageId + ".");
+        aipService.deactivateLock(authorialPackageId);
     }
 
     @ApiOperation(value = "Returns keep alive timeout in seconds used during the update process.")
@@ -317,7 +263,7 @@ public class AipApi extends ArchivalStoragePipe {
     @RolesAllowed({Roles.SUPER_ADMIN, Roles.EDITOR})
     @RequestMapping(value = "/{authorialPackageId}/keep_alive_update", method = RequestMethod.PUT)
     public void refreshKeepAliveUpdate(
-            @ApiParam(value = "AIP id", required = true) @PathVariable("authorialPackageId") String authorialPackageId) {
+            @ApiParam(value = "AIP id", required = true) @PathVariable("authorialPackageId") String authorialPackageId) throws AuthorialPackageNotLockedException {
         aipService.refreshKeepAliveUpdate(authorialPackageId);
     }
 
@@ -341,52 +287,14 @@ public class AipApi extends ArchivalStoragePipe {
             @ApiParam(value = "Version of the XML", required = true)
             @RequestParam("version") int version,
             @ApiParam(value = "Reason for update", required = true)
-            @RequestParam("reason") String reason,
-            HttpServletResponse response) throws DocumentException, SAXException, ParserConfigurationException, ArchivalStorageException, IOException {
+            @RequestParam("reason") String reason) throws DocumentException, SAXException, ParserConfigurationException, IOException, AuthorialPackageNotLockedException, ArchivalStorageException {
         checkUUID(aipId);
-        ResponseEntity<String> archivalStorageResponse = aipService.finishXmlUpdate(aipId, xmlId, xml, hash, version, reason);
-        try {
-            String body = archivalStorageResponse.getBody();
-            if (body != null) IOUtils.copy(new ByteArrayInputStream(body.getBytes()), response.getOutputStream());
-        } catch (IOException e) {
-            throw new ArchivalStorageException(e);
-        } finally {
-            response.setStatus(archivalStorageResponse.getStatusCode().value());
-        }
+        aipService.finishXmlUpdate(aipId, xmlId, xml, hash, version, reason);
     }
 
-    @ApiOperation(value = "Gets requests for AIP deletion waiting to be resolved that have not yet been acknowledged " +
-            "by the current user. Roles.DELETION_ACKNOWLEDGE, Roles.SUPER_ADMIN",
-            response = List.class)
-    @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successful response")})
-    @RequestMapping(value = "/list_deletion_requests", method = RequestMethod.GET)
-    public List<AipDeletionRequestDto> listDeletionRequests() {
-        return aipService.listDeletionRequests();
-    }
-
-    @ApiOperation(value = "Acknowledge deletion request. Roles.DELETION_ACKNOWLEDGE, Roles.SUPER_ADMIN",
-            response = Result.class)
-    @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successful response")})
-    @RolesAllowed({Roles.DELETION_ACKNOWLEDGE, Roles.SUPER_ADMIN})
-    @RequestMapping(value = "{deletionRequestId}/acknowledge_deletion", method = RequestMethod.PUT)
-    public void acknowledgeDeletion(
-            @ApiParam(value = "Deletion request id", required = true)
-            @PathVariable("deletionRequestId") String deletionRequestId) {
-        aipService.acknowledgeDeletion(deletionRequestId);
-    }
-
-    @ApiOperation(value = "Disacknowledge deletion request. Roles.DELETION_ACKNOWLEDGE, Roles.SUPER_ADMIN",
-            response = Result.class)
-    @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successful response")})
-    @RolesAllowed({Roles.DELETION_ACKNOWLEDGE, Roles.SUPER_ADMIN})
-    @RequestMapping(value = "{deletionRequestId}/disacknowledge_deletion", method = RequestMethod.PUT)
-    public void disacknowledgeDeletion(
-            @ApiParam(value = "Deletion request id", required = true)
-            @PathVariable("deletionRequestId") String deletionRequestId) {
-        aipService.disacknowledgeDeletion(deletionRequestId);
+    @Inject
+    public void setArchivalStorageService(ArchivalStorageService archivalStorageService) {
+        this.archivalStorageService = archivalStorageService;
     }
 
     @Inject

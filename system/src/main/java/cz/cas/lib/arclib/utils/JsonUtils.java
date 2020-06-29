@@ -20,23 +20,10 @@ public class JsonUtils {
      * @return resulting json object
      */
     public static JsonNode merge(final JsonNode target, final JsonNode source) {
-        if (target instanceof ArrayNode && source instanceof ArrayNode) {
-            //adds all from source to target except duplicities
-            ArrayNode sourceArray = ((ArrayNode) source);
-            ArrayNode targetArray = ((ArrayNode) target);
-            for (int i = 0; i < sourceArray.size(); i++) {
-                JsonNode node = sourceArray.get(i);
-                boolean found = false;
-                for (int j = 0; j < targetArray.size(); j++) {
-                    if (node.equals(targetArray.get(j))) {
-                        found = true;
-                        break;
-                    }
-                }
-                if (!found)
-                    targetArray.add(node);
-            }
-            return target;
+        if (target instanceof ArrayNode || source instanceof ArrayNode) {
+            throw new IllegalArgumentException("Can't merge JSON:" + source + " with JSON: " + target + ". " +
+                    "Arrays are not supported." +
+                    "Define order using object keys, e.g. {\"0\":{...},\"1\":{...}} instead of [{...},{...}]");
         } else if (target instanceof ObjectNode && source instanceof ObjectNode) {
             // Both the target and source are object nodes, then recursively
             // merge the fields of the source node over the same fields in

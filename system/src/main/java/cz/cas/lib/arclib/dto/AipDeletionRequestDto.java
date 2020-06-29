@@ -14,4 +14,5 @@ public class AipDeletionRequestDto extends DatedObject {
     private User requester;
     private User confirmer1;
     private User confirmer2;
+    private User rejectedBy;
 }

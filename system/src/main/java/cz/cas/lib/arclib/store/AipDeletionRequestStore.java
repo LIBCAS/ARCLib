@@ -1,8 +1,8 @@
 package cz.cas.lib.arclib.store;
 
 import com.querydsl.jpa.impl.JPAQuery;
-import cz.cas.lib.arclib.domain.packages.QAipDeletionRequest;
 import cz.cas.lib.arclib.domain.packages.AipDeletionRequest;
+import cz.cas.lib.arclib.domain.packages.QAipDeletionRequest;
 import cz.cas.lib.arclib.domainbase.store.DatedStore;
 import org.springframework.stereotype.Repository;
 
@@ -17,18 +17,16 @@ public class AipDeletionRequestStore
     }
 
     /**
-     * Finds all unresolved deletion requests - requests that have not been deleted.
+     * Finds all deletion requests - even the ones marked as deleted
      *
      * @return list of non deleted deletion requests
      */
     @Transactional
-    public List<AipDeletionRequest> findUnresolved() {
+    public List<AipDeletionRequest> findAllIncludingDeleted() {
         QAipDeletionRequest deletionRequest = qObject();
 
         JPAQuery<AipDeletionRequest> query = query()
-                .select(deletionRequest)
-                .where(deletionRequest.deleted.isNull());
-
+                .select(deletionRequest);
         List<AipDeletionRequest> aipDeletionRequestsFound = query.fetch();
 
         detachAll();
@@ -36,18 +34,17 @@ public class AipDeletionRequestStore
     }
 
     /**
-     * Finds deletion request by id of AIP and id of requester
+     * Finds deletion request by id of AIP
      *
-     * @return deletion requester matching id of AIP and id of requester
+     * @return deletion requester matching id of AIP
      */
     @Transactional
-    public AipDeletionRequest findByAipIdAndRequesterId(String aipId, String requesterId) {
+    public AipDeletionRequest findByAipId(String aipId) {
         QAipDeletionRequest deletionRequest = qObject();
 
         JPAQuery<AipDeletionRequest> query = query()
                 .select(deletionRequest)
                 .where(deletionRequest.aipId.eq(aipId))
-                .where(deletionRequest.requester.id.eq(requesterId))
                 .where(deletionRequest.deleted.isNull());
 
         AipDeletionRequest aipDeletionRequestFound = query.fetchFirst();

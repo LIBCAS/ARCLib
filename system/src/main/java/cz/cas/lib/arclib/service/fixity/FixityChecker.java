@@ -17,7 +17,6 @@ import cz.cas.lib.arclib.store.IngestIssueDefinitionStore;
 import cz.cas.lib.arclib.store.IngestWorkflowStore;
 import cz.cas.lib.arclib.utils.ArclibUtils;
 import cz.cas.lib.core.store.Transactional;
-import cz.cas.lib.core.util.Utils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
 import org.camunda.bpm.engine.delegate.BpmnError;
@@ -54,17 +53,17 @@ public abstract class FixityChecker implements IngestTool {
      * <li>files not found: description contains {@link List<Path>} of files which does not exist</li>
      * <li>invalid checksums: description contains {@link List<Path>} of files with invalid fixites</li>
      * </ol>
-     * The first issue which is not automatically solved by config stops process and invokes new Incident
+     * The first issue which is not automatically solved by config stops process and invokes new {@link IncidentException}
      *
      * @param sipWsPath        path to SIP in workspace
      * @param pathToFixityFile Path to a file which contains fixity information of files of the package.
-     * @param externalId       used in case of issue
-     * @param configRoot       used in case of issue
-     * @return list of associated values in triplets: file path, type of fixity, fixity value.
+     * @param externalId      external id of the ingest workflow, used in case of issue
+     * @param configRoot      root node of the ingest workflow JSON config containing configuration of the behaviour
+     *                        for a case of a fixity error
      */
-    public abstract List<Utils.Triplet<String, String, String>> verifySIP(Path sipWsPath, Path pathToFixityFile,
-                                                                          String externalId, JsonNode configRoot,
-                                                                          Map<String, Pair<String, String>> formatIdentificationResult)
+    public abstract void verifySIP(Path sipWsPath, Path pathToFixityFile,
+                                   String externalId, JsonNode configRoot,
+                                   Map<String, Pair<String, String>> formatIdentificationResult)
             throws IOException, IncidentException;
 
     @Transactional

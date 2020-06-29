@@ -31,8 +31,8 @@ public class AipQueryService {
                     ExportRoutine exportRoutine = exportRoutineStore.findByAipQueryId(query.getId());
                     Instant exportedTime = exportRoutine == null ? null : exportRoutine.getExportTime();
                     String exportLocationPath = exportRoutine == null ? null : exportRoutine.getExportLocationPath();
-
-                    return new AipQueryDto(query.getId(), query.getName(), query.getCreated(), query.getUpdated(), exportedTime,
+                    String exportRoutineId = exportRoutine == null ? null : exportRoutine.getId();
+                    return new AipQueryDto(query.getId(), query.getName(), query.getCreated(), query.getUpdated(), exportRoutineId, exportedTime,
                             exportLocationPath);
                 })
                 .collect(Collectors.toList());

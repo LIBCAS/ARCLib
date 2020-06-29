@@ -118,13 +118,13 @@ public class IngestIntegrationTest extends TransformerFactoryWorkaroundTest impl
         assertThat(Files.exists(QUARANTINE.resolve(CORRUPTED_FILE_NAME)), equalTo(true));
         List<HistoricVariableInstance> globalConfigWrites = historyService.createHistoricVariableInstanceQuery().variableName(BpmConstants.ProcessVariables.latestConfig).list();
         assertThat(globalConfigWrites, hasSize(1));
-        Map<String, Long> mapOfEventIdsToCrc32Calculations = (Map<String, Long>) historyService.createHistoricVariableInstanceQuery().variableName(BpmConstants.MessageDigestCalculation.mapOfEventIdsToCrc32Calculations).singleResult().getValue();
+        Map<String, Long> mapOfEventIdsToCrc32Calculations = (Map<String, Long>) historyService.createHistoricVariableInstanceQuery().variableName(BpmConstants.FixityGeneration.mapOfEventIdsToSipCrc32).singleResult().getValue();
         long crc32 = mapOfEventIdsToCrc32Calculations.get(eventId);
 
-        Map<String, Long> mapOfEventIdsToMd5Calculations = (Map<String, Long>) historyService.createHistoricVariableInstanceQuery().variableName(BpmConstants.MessageDigestCalculation.mapOfEventIdsToMd5Calculations).singleResult().getValue();
+        Map<String, Long> mapOfEventIdsToMd5Calculations = (Map<String, Long>) historyService.createHistoricVariableInstanceQuery().variableName(BpmConstants.FixityGeneration.mapOfEventIdsToSipMd5).singleResult().getValue();
         long md5 = mapOfEventIdsToMd5Calculations.get(eventId);
 
-        Map<String, Long> mapOfEventIdsToSha512Calculations = (Map<String, Long>) historyService.createHistoricVariableInstanceQuery().variableName(BpmConstants.MessageDigestCalculation.mapOfEventIdsToSha512Calculations).singleResult().getValue();
+        Map<String, Long> mapOfEventIdsToSha512Calculations = (Map<String, Long>) historyService.createHistoricVariableInstanceQuery().variableName(BpmConstants.FixityGeneration.mapOfEventIdsToSipSha512).singleResult().getValue();
         long sha512 = mapOfEventIdsToSha512Calculations.get(eventId);
 
         assertThat(crc32, is(CRC32));

@@ -14,13 +14,15 @@ import cz.cas.lib.arclib.index.solr.arclibxml.IndexedArclibXmlDocument;
 import cz.cas.lib.arclib.index.solr.arclibxml.IndexedArclibXmlStore;
 import cz.cas.lib.arclib.security.user.UserDelegate;
 import cz.cas.lib.arclib.service.BatchService;
+import cz.cas.lib.arclib.service.IngestWorkflowService;
 import cz.cas.lib.arclib.service.archivalStorage.ArchivalStorageService;
 import cz.cas.lib.arclib.service.archivalStorage.ArchivalStorageServiceDebug;
 import cz.cas.lib.arclib.store.*;
+import cz.cas.lib.arclib.utils.ArclibUtils;
 import cz.cas.lib.core.sequence.Generator;
 import cz.cas.lib.core.sequence.Sequence;
 import cz.cas.lib.core.sequence.SequenceStore;
-import org.apache.commons.io.IOUtils;
+import org.apache.commons.io.FileUtils;
 import org.camunda.bpm.engine.test.Deployment;
 import org.camunda.bpm.engine.test.mock.Mocks;
 import org.junit.Before;
@@ -28,9 +30,11 @@ import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -146,10 +150,11 @@ public class ArchivalStorageDelegateTest extends DelegateTest {
         indexedArclibXmlStore.setUserDetails(userDelegate);
 
         archivalStorageDelegate = new ArchivalStorageDelegate();
-        archivalStorageDelegate.setIngestWorkflowStore(ingestWorkflowStore);
+        IngestWorkflowService ingestWorkflowService = new IngestWorkflowService();
+        ingestWorkflowService.setStore(ingestWorkflowStore);
+        archivalStorageDelegate.setIngestWorkflowService(ingestWorkflowService);
         archivalStorageDelegate.setObjectMapper(new ObjectMapper());
         archivalStorageDelegate.setWorkspace(WS.toString());
-        archivalStorageDelegate.setIndexArclibXmlStore(indexedArclibXmlStore);
         archivalStorageDelegate.setArchivalStorageService(archivalStorageService);
         archivalStorageDelegate.setArchivalStorageServiceDebug(archivalStorageServiceDebug);
 
@@ -203,19 +208,17 @@ public class ArchivalStorageDelegateTest extends DelegateTest {
         ArrayList<Object> documents = new ArrayList<>();
         documents.add("<xml/>");
         Map<String, Object> indexedFields = new HashMap<>();
-        indexedFields.put(IndexedArclibXmlDocument.DOCUMENT, documents);
+        indexedFields.put(IndexedArclibXmlDocument.CONTENT, documents);
         when(indexedArclibXmlStore.findArclibXmlIndexDocument(anyString())).thenReturn(indexedFields);
 
         Mocks.register("archivalStorageDelegate", archivalStorageDelegate);
+
+        Path testXmlPath = Paths.get("src/test/resources/arclibXmls/arclibXml.xml");
+        FileUtils.copyToFile(new FileInputStream(testXmlPath.toFile()), ArclibUtils.getAipXmlWorkspacePath(EXTERNAL_ID, WS.toString()).toFile());
     }
 
     @Test
     public void testArchivalStorageDelegate() throws InterruptedException, IOException {
-        InputStream arclibXmlStream = getClass().getResourceAsStream("/sampleData/8b/2e/fa/8b2efafd-b637-4b97-a8f7-1b97dd4ee622_xml_2");
-        String arclibXml = IOUtils.toString(arclibXmlStream, StandardCharsets.UTF_8);
-
-        indexedArclibXmlStore.createIndex(arclibXml, producer.getId(), producer.getName(), user.getUsername(), null, false);
-
         Map<String, String> mapOfEventIdsToSha512Calculations = new HashMap<>();
         mapOfEventIdsToSha512Calculations.put(eventId, SIP_HASH);
 
@@ -223,8 +226,8 @@ public class ArchivalStorageDelegateTest extends DelegateTest {
         variables.put(BpmConstants.ProcessVariables.ingestWorkflowExternalId, EXTERNAL_ID);
         variables.put(BpmConstants.ProcessVariables.ingestWorkflowId, INGEST_WORKFLOW_ID);
         variables.put(BpmConstants.ProcessVariables.debuggingModeActive, true);
-        variables.put(BpmConstants.MessageDigestCalculation.preferredMessageDigestCalculationEventId, eventId);
-        variables.put(BpmConstants.MessageDigestCalculation.mapOfEventIdsToSha512Calculations, mapOfEventIdsToSha512Calculations);
+        variables.put(BpmConstants.FixityGeneration.preferredFixityGenerationEventId, eventId);
+        variables.put(BpmConstants.FixityGeneration.mapOfEventIdsToSipSha512, mapOfEventIdsToSha512Calculations);
         variables.put(BpmConstants.Ingestion.sipFileName, SIP_FILE_NAME);
         variables.put(BpmConstants.ProcessVariables.sipId, sip.getId());
 

@@ -48,9 +48,11 @@ public class DozerConfig {
             mapping(AipDeletionRequestDto.class, AipDeletionRequest.class)
                     .fields("created", "created", FieldsMappingOptions.copyByReference())
                     .fields("updated", "updated", FieldsMappingOptions.copyByReference())
+                    .fields("deleted", "deleted", FieldsMappingOptions.copyByReference())
                     .fields("requester", "requester", FieldsMappingOptions.copyByReference())
                     .fields("confirmer1", "confirmer1", FieldsMappingOptions.copyByReference())
-                    .fields("confirmer2", "confirmer2", FieldsMappingOptions.copyByReference());
+                    .fields("confirmer2", "confirmer2", FieldsMappingOptions.copyByReference())
+                    .fields("rejectedBy", "rejectedBy", FieldsMappingOptions.copyByReference());
         }
     }
 

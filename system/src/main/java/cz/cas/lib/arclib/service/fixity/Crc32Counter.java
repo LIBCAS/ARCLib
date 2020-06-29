@@ -27,7 +27,10 @@ public class Crc32Counter extends FixityCounter {
                     checksum.update(buffer, 0, numRead);
                 }
             } while (numRead != -1);
-            return Hex.decode(Long.toHexString(checksum.getValue()));
+            String s = Long.toHexString(checksum.getValue());
+            if (s.length() % 2 != 0)
+                s = "0" + s;
+            return Hex.decode(s);
         }
     }
 }

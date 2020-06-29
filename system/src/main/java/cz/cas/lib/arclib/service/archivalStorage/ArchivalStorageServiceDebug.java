@@ -46,7 +46,7 @@ public class ArchivalStorageServiceDebug {
         Path pathToZip = arcStorageData.resolve(aipId + "." + now.getEpochSecond() + ".zip");
 
         try (ZipOutputStream zipOut = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(pathToZip.toFile())))) {
-            zipOut.putNextEntry(new ZipEntry(aipId));
+            zipOut.putNextEntry(new ZipEntry(aipId + ".zip"));
             InputStream sipFis = new BufferedInputStream(new FileInputStream(sipPath.toFile()));
             IOUtils.copyLarge(sipFis, zipOut);
             zipOut.closeEntry();
@@ -71,7 +71,7 @@ public class ArchivalStorageServiceDebug {
                 }
             }
             for (File xml : xmls) {
-                zipOut.putNextEntry(new ZipEntry(String.format("%s_xml_%d", aipId, getXmlVersion(aipId, xml.getName()))));
+                zipOut.putNextEntry(new ZipEntry(String.format("%s_xml_%d.xml", aipId, getXmlVersion(aipId, xml.getName()))));
                 InputStream xmlFis = new BufferedInputStream(new FileInputStream(xml));
                 IOUtils.copyLarge(new BufferedInputStream(xmlFis), zipOut);
                 zipOut.closeEntry();
@@ -208,6 +208,18 @@ public class ArchivalStorageServiceDebug {
         Boolean isSaved = sip.exists() && xml.exists();
 
         return isSaved ? ObjectState.ARCHIVED : ObjectState.PROCESSING;
+    }
+
+    /**
+     * Returns the AIP XML state at the archival storage.
+     *
+     * @param aipId      id of the AIP
+     * @param xmlVersion XML version
+     * @return state of the AIP XML stored at archival storage
+     */
+    public ObjectState getXmlState(String aipId, int xmlVersion) {
+        File xml = new File(arcStorageData.resolve(aipId + xmlVersion).toString());
+        return xml.exists() ? ObjectState.ARCHIVED : ObjectState.PROCESSING;
     }
 
     /**

@@ -13,6 +13,7 @@ import cz.cas.lib.arclib.domain.preservationPlanning.Tool;
 import cz.cas.lib.arclib.exception.bpm.ConfigParserException;
 import cz.cas.lib.arclib.mail.ArclibMailCenter;
 import cz.cas.lib.arclib.service.IngestIssueService;
+import cz.cas.lib.arclib.service.IngestWorkflowService;
 import cz.cas.lib.arclib.service.antivirus.Antivirus;
 import cz.cas.lib.arclib.service.antivirus.ClamAntivirus;
 import cz.cas.lib.arclib.service.preservationPlanning.ToolService;
@@ -51,7 +52,7 @@ import static org.mockito.Mockito.when;
 @Deployment(resources = "bpmn/antivirus.bpmn")
 public class AntivirusDelegateTest extends DelegateTest {
 
-    private static final String INGEST_CONFIG = "{\"antivirus\":[{\"type\":\"clamav\",\"cmd\":[\"clamscan\",\"-r\"],\"infectedSipAction\":\"QUARANTINE\"}]}";
+    private static final String INGEST_CONFIG = "{\"antivirus\":{\"0\":{\"type\":\"clamav\",\"cmd\":{\"0\":\"clamscan\",\"1\":\"-r\"},\"infectedSipAction\":\"QUARANTINE\"}}}";
     private static final String PROCESS_INSTANCE_KEY = "antivirusProcess";
     private static final String CORRUPTED_FILE_NAME = "eicar.com";
     private static final Path QUARANTINE_PATH = WS.resolve("quarantine");
@@ -90,7 +91,9 @@ public class AntivirusDelegateTest extends DelegateTest {
         antivirusDelegate.setObjectMapper(new ObjectMapper());
         antivirusDelegate.setWorkspace(WS.toString());
         antivirusDelegate.setIngestIssueService(ingestIssueService);
-        antivirusDelegate.setIngestWorkflowStore(ingestWorkflowStore);
+        IngestWorkflowService ingestWorkflowService = new IngestWorkflowService();
+        ingestWorkflowService.setStore(ingestWorkflowStore);
+        antivirusDelegate.setIngestWorkflowService(ingestWorkflowService);
         antivirusDelegate.setQuarantinePath(QUARANTINE_PATH.toString());
         antivirusDelegate.setToolService(toolService);
         antivirusDelegate.setIngestIssueDefinitionStore(ingestIssueDefinitionStore);

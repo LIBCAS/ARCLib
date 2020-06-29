@@ -1,12 +1,20 @@
 package cz.cas.lib.arclib.utils;
 
+import cz.cas.lib.arclib.domainbase.exception.GeneralException;
+import lombok.extern.slf4j.Slf4j;
+
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
+import java.util.Enumeration;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
+import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
 
+@Slf4j
 public class ZipUtils {
     /**
      * Size of the buffer to read/write data
@@ -14,32 +22,41 @@ public class ZipUtils {
     private static final int BUFFER_SIZE = 4096;
 
     /**
-     * Extracts a zip file specified by the zipFilePath to a directory specified by
+     * Extracts a SIP ZIP file specified by the zipFilePath to a directory specified by
      * destDirectory (will be created if does not exists)
      *
      * @param zipInput
      * @param destDirectory
-     * @return name of the root folder (if the content is a directory) or the name of the extracted file
+     * @return name of the root folder
      * @throws IOException
+     * @throws cz.cas.lib.arclib.domainbase.exception.GeneralException if there is not exactly one root folder inside the ZIP
      */
-    public static String unzip(InputStream zipInput, Path destDirectory) throws IOException {
-        Files.createDirectories(destDirectory);
-        ZipInputStream zipIn = new ZipInputStream(zipInput);
-        ZipEntry entry = zipIn.getNextEntry();
-        String rootFolderName = entry.getName();
-        while (entry != null) {
-            Path filePath = destDirectory.resolve(entry.getName());
-            if (!entry.isDirectory()) {
-                Files.createDirectories(filePath.getParent());
-                extractFile(zipIn, filePath);
-            } else {
-                Files.createDirectories(filePath);
+    public static String unzipSip(Path zipInput, Path destDirectory, String ingestWorkflowLogId) {
+        try (ZipFile zipFile = new ZipFile(zipInput.toFile())) {
+            Files.createDirectories(destDirectory);
+            Enumeration<? extends ZipEntry> entries = zipFile.entries();
+            Set<String> rootDirNames = new HashSet<>();
+            while (entries.hasMoreElements()) {
+                ZipEntry entry = entries.nextElement();
+                Path filePath = destDirectory.resolve(entry.getName());
+                if (!entry.isDirectory()) {
+                    Files.createDirectories(filePath.getParent());
+                    extractFile(zipFile.getInputStream(entry), filePath);
+                } else {
+                    rootDirNames.add(entry.getName().substring(0, entry.getName().indexOf('/')));
+                    Files.createDirectories(filePath);
+                }
             }
-            zipIn.closeEntry();
-            entry = zipIn.getNextEntry();
+            if (rootDirNames.size() != 1) {
+                throw new GeneralException("Invalid input ZIP format. ZIP has to include exactly one root folder. But " + rootDirNames.size() + " were found (" + Arrays.toString(rootDirNames.toArray()) + ")");
+            }
+            log.debug("SIP content for ingest workflow external id " + ingestWorkflowLogId + " in zip archive has been" +
+                    " extracted to workspace.");
+            return rootDirNames.iterator().next();
+        } catch (IOException e) {
+            throw new GeneralException("Unable to unzip SIP content for ingest workflow external id "
+                    + ingestWorkflowLogId + " to path: " + destDirectory.toAbsolutePath().toString(), e);
         }
-        zipIn.close();
-        return rootFolderName;
     }
 
     /**
@@ -49,7 +66,7 @@ public class ZipUtils {
      * @param filePath
      * @throws IOException
      */
-    private static void extractFile(ZipInputStream zipIn, Path filePath) throws IOException {
+    private static void extractFile(InputStream zipIn, Path filePath) throws IOException {
         BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(filePath.toFile()));
         byte[] bytesIn = new byte[BUFFER_SIZE];
         int read = 0;
@@ -83,6 +100,7 @@ public class ZipUtils {
                             System.err.println(e);
                         }
                     });
+            zs.close();
             packed = bos.toByteArray();
         }
         return packed;

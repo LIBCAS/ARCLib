@@ -2,15 +2,11 @@ package cz.cas.lib.arclib.bpm;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import cz.cas.lib.arclib.service.IngestIssueService;
+import cz.cas.lib.arclib.domainbase.exception.GeneralException;
+import cz.cas.lib.arclib.service.IngestWorkflowService;
 import cz.cas.lib.arclib.service.preservationPlanning.ToolService;
 import cz.cas.lib.arclib.store.IngestEventStore;
-import cz.cas.lib.arclib.store.IngestIssueDefinitionStore;
-import cz.cas.lib.arclib.store.IngestWorkflowStore;
-import cz.cas.lib.arclib.domainbase.exception.GeneralException;
 import cz.cas.lib.core.store.TransactionalNew;
-import cz.cas.lib.core.util.Utils;
-import cz.cas.lib.arclib.formatlibrary.service.FormatDefinitionService;
 import lombok.Getter;
 import org.apache.commons.lang3.tuple.Pair;
 import org.camunda.bpm.engine.delegate.DelegateExecution;
@@ -24,6 +20,7 @@ import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.TreeMap;
 
+import static cz.cas.lib.arclib.utils.ArclibUtils.getAipXmlWorkspacePath;
 import static cz.cas.lib.arclib.utils.ArclibUtils.getSipZipWorkspacePath;
 import static cz.cas.lib.core.util.Utils.notNull;
 
@@ -31,13 +28,10 @@ import static cz.cas.lib.core.util.Utils.notNull;
 public abstract class ArclibDelegate implements VariableMapper, IngestTool, JavaDelegate {
 
     protected ObjectMapper objectMapper;
-    protected IngestIssueService ingestIssueService;
-    protected ToolService toolService;
-    protected IngestIssueDefinitionStore ingestIssueDefinitionStore;
-    protected IngestWorkflowStore ingestWorkflowStore;
     protected String workspace;
-    protected FormatDefinitionService formatDefinitionService;
     protected IngestEventStore ingestEventStore;
+    protected ToolService toolService;
+    protected IngestWorkflowService ingestWorkflowService;
     @Getter
     private String toolVersion = null;
 
@@ -137,6 +131,16 @@ public abstract class ArclibDelegate implements VariableMapper, IngestTool, Java
     }
 
     /**
+     * Gets path to the AIP XML stored at the workspace.
+     *
+     * @param execution delegate execution containing BPM variables
+     * @return path to the AIP XML
+     */
+    public Path getAipXmlPath(DelegateExecution execution) {
+        return getAipXmlWorkspacePath(getIngestWorkflowExternalId(execution), workspace);
+    }
+
+    /**
      * Gets the latest JSON config.
      * If there were changes of the config performed during ingest workflow execution, this is the most recent version.
      *
@@ -148,21 +152,6 @@ public abstract class ArclibDelegate implements VariableMapper, IngestTool, Java
     }
 
     @Inject
-    public void setIngestIssueService(IngestIssueService ingestIssueService) {
-        this.ingestIssueService = ingestIssueService;
-    }
-
-    @Inject
-    public void setToolService(ToolService toolService) {
-        this.toolService = toolService;
-    }
-
-    @Inject
-    public void setIngestIssueDefinitionStore(IngestIssueDefinitionStore ingestIssueDefinitionStore) {
-        this.ingestIssueDefinitionStore = ingestIssueDefinitionStore;
-    }
-
-    @Inject
     public void setWorkspace(@Value("${arclib.path.workspace}") String workspace) {
         this.workspace = workspace;
     }
@@ -171,19 +160,18 @@ public abstract class ArclibDelegate implements VariableMapper, IngestTool, Java
     public void setObjectMapper(ObjectMapper objectMapper) {
         this.objectMapper = objectMapper;
     }
-
-    @Inject
-    public void setIngestWorkflowStore(IngestWorkflowStore ingestWorkflowStore) {
-        this.ingestWorkflowStore = ingestWorkflowStore;
-    }
-
-    @Inject
-    public void setFormatDefinitionService(FormatDefinitionService formatDefinitionService) {
-        this.formatDefinitionService = formatDefinitionService;
-    }
-
     @Inject
     public void setIngestEventStore(IngestEventStore ingestEventStore) {
         this.ingestEventStore = ingestEventStore;
+    }
+
+    @Inject
+    public void setToolService(ToolService toolService) {
+        this.toolService = toolService;
+    }
+
+    @Inject
+    public void setIngestWorkflowService(IngestWorkflowService ingestWorkflowService) {
+        this.ingestWorkflowService = ingestWorkflowService;
     }
 }

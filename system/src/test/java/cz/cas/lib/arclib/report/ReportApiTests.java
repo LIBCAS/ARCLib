@@ -4,33 +4,39 @@ import cz.cas.lib.arclib.api.ReportApi;
 import cz.cas.lib.core.store.Transactional;
 import helper.ApiTest;
 import helper.TransformerFactoryWorkaroundTest;
+import helper.auth.WithMockCustomUser;
+import org.apache.commons.io.IOUtils;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestName;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.http.MediaType;
 import org.springframework.test.annotation.Rollback;
 import org.springframework.test.context.junit4.SpringRunner;
-import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import javax.inject.Inject;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.UUID;
 
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest
 @Transactional
 @Rollback(false)
+@WithMockCustomUser
 public class ReportApiTests extends TransformerFactoryWorkaroundTest implements ApiTest {
 
     @Inject
@@ -64,40 +70,71 @@ public class ReportApiTests extends TransformerFactoryWorkaroundTest implements 
 
     @Test
     public void saveValidTemplate() throws Exception {
-        MockMultipartFile template = new MockMultipartFile(
-                "template", Files.readAllBytes(TEMPLATE_PATH));
-        String reportId = mvc(api)
-                .perform(MockMvcRequestBuilders.fileUpload(BASE).file(template).param("name", name.getMethodName()))
+        String reportId = UUID.randomUUID().toString();
+        Report rep = new Report(
+                reportId,
+                name.getMethodName(),
+                IOUtils.toString(new FileInputStream(TEMPLATE_PATH.toFile())),
+                null, false);
+        mvc(api)
+                .perform(put(BASE + "/{reportId}", reportId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(toJson(rep)))
                 .andExpect(status().isOk())
-                .andReturn().getResponse().getContentAsString();
+                .andExpect(jsonPath("$.id", is(reportId)));
     }
 
     @Test
     public void saveTemplateUnsupportedParameterType() throws Exception {
-        MockMultipartFile template = new MockMultipartFile(
-                "template", Files.readAllBytes(TEMPLATES_PATH.resolve("unsupported-param.jrxml")));
+        String reportId = UUID.randomUUID().toString();
+        Report rep = new Report(
+                reportId,
+                name.getMethodName(),
+                IOUtils.toString(new FileInputStream(TEMPLATES_PATH.resolve("unsupported-param.jrxml").toFile())),
+                null, false);
         mvc(api)
-                .perform(MockMvcRequestBuilders.fileUpload(BASE).file(template).param("name", name.getMethodName()))
+                .perform(put(BASE + "/{reportId}", reportId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(toJson(rep)))
                 .andExpect(status().isBadRequest());
     }
 
     @Test
     public void saveTemplateInvalidDefaultValue() throws Exception {
-        MockMultipartFile template = new MockMultipartFile(
-                "template", Files.readAllBytes(TEMPLATES_PATH.resolve("invalid-value.jrxml")));
+        String reportId = UUID.randomUUID().toString();
+        Report rep = new Report(
+                reportId,
+                name.getMethodName(),
+                IOUtils.toString(new FileInputStream(TEMPLATES_PATH.resolve("invalid-value.jrxml").toFile())),
+                null, false);
         mvc(api)
-                .perform(MockMvcRequestBuilders.fileUpload(BASE).file(template).param("name", name.getMethodName()))
+                .perform(put(BASE + "/{reportId}", reportId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(toJson(rep)))
                 .andExpect(status().isBadRequest());
     }
 
     @Test
     @Rollback
     public void saveTemplateDuplicitName() throws Exception {
-        MockMultipartFile template = new MockMultipartFile(
-                "template", Files.readAllBytes(TEMPLATE_PATH));
+        String reportId = UUID.randomUUID().toString();
+        Report rep = new Report(
+                reportId,
+                TEMPLATE_NAME,
+                IOUtils.toString(new FileInputStream(TEMPLATE_PATH.toFile())),
+                null, false);
         mvc(api)
-                .perform(MockMvcRequestBuilders.fileUpload(BASE).file(template).param("name", TEMPLATE_NAME))
+                .perform(put(BASE + "/{reportId}", reportId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(toJson(rep)))
                 .andExpect(status().isConflict());
+    }
+
+    @Test
+    public void getReportDetail() throws Exception {
+        mvc(api)
+                .perform(get(BASE + "/{reportId}", TEMPLATE_ID))
+                .andExpect(status().is2xxSuccessful());
     }
 
     @Test

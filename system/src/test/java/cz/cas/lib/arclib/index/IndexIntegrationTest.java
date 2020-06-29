@@ -139,13 +139,13 @@ public class IndexIntegrationTest extends TransformerFactoryWorkaroundTest imple
     @Test
     public void testCreateIndexInvalidFieldValue() throws Exception {
         String arclibXml = new String(Files.readAllBytes(Paths.get("src/test/resources/arclibXmls/invalidValue.xml")), StandardCharsets.UTF_8);
-        assertThrown(() -> indexArclibXmlStore.createIndex(arclibXml, PRODUCER_ID, "", "", null, false)).isInstanceOf(BadArgument.class);
+        assertThrown(() -> indexArclibXmlStore.createIndex(arclibXml.getBytes(), PRODUCER_ID, "", "", null, false, true)).isInstanceOf(BadArgument.class);
     }
 
     @Test
     public void testCreateIndex() throws Exception {
         String arclibXml = new String(Files.readAllBytes(Paths.get("src/main/resources/sampleData/8b/2e/fa/8b2efafd-b637-4b97-a8f7-1b97dd4ee622_xml_2")), StandardCharsets.UTF_8);
-        indexArclibXmlStore.createIndex(arclibXml, "otherproducer", "", "", null, false);
+        indexArclibXmlStore.createIndex(arclibXml.getBytes(), "otherproducer", "", "", null, false, true);
         SimpleQuery q = new SimpleQuery();
         q.addCriteria(Criteria.where(IndexedArclibXmlDocument.PRODUCER_ID).in("otherproducer").and("type").in("Periodical"));
         List<IndexedArclibXmlDocument> content = solrTemplate.query(coreName, q, IndexedArclibXmlDocument.class).getContent();
@@ -195,7 +195,7 @@ public class IndexIntegrationTest extends TransformerFactoryWorkaroundTest imple
     @Test
     public void testQueryMultiValues() throws Exception {
         String arclibXml = new String(Files.readAllBytes(Paths.get("src/main/resources/sampleData/8b/2e/fa/8b2efafd-b637-4b97-a8f7-1b97dd4ee622_xml_2")), StandardCharsets.UTF_8);
-        indexArclibXmlStore.createIndex(arclibXml, PRODUCER_ID, "", "", null, false);
+        indexArclibXmlStore.createIndex(arclibXml.getBytes(), PRODUCER_ID, "", "", null, false, false);
         mvc(api).perform(get("/api/aip/list")
                 .param("filter[0].field", "dublin_core")
                 .param("filter[0].operation", "CONTAINS")
@@ -214,7 +214,7 @@ public class IndexIntegrationTest extends TransformerFactoryWorkaroundTest imple
     @Test
     public void nestedQuery() throws Exception {
         String arclibXml = new String(Files.readAllBytes(Paths.get("src/test/resources/arclibXmls/validSimple.xml")), StandardCharsets.UTF_8);
-        indexArclibXmlStore.createIndex(arclibXml, PRODUCER_ID, "", "", null, false);
+        indexArclibXmlStore.createIndex(arclibXml.getBytes(), PRODUCER_ID, "", "", null, false, false);
         mvc(api).perform(get("/api/aip/list")
                 .param("filter[0].field", "premis_event")
                 .param("filter[0].operation", "NESTED")
@@ -344,6 +344,63 @@ public class IndexIntegrationTest extends TransformerFactoryWorkaroundTest imple
                 .andExpect(jsonPath("$.items", hasSize(2)));
     }
 
+    @Test
+    public void testUuidSearch() throws Exception {
+        mvc(api).perform(get("/api/aip/list")
+                .param("filter[0].field", IndexedArclibXmlDocument.CONTENT)
+                .param("filter[0].operation", "CONTAINS")
+                .param("filter[0].value", "7033d800-0935-11e4-beed-5ef3fc9ae860")
+        )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.items", empty()));
+
+        mvc(api).perform(get("/api/aip/list")
+                .param("filter[0].field", IndexedArclibXmlDocument.CONTENT)
+                .param("filter[0].operation", "CONTAINS")
+                .param("filter[0].value", "7033d800-0935-11e4-beed-5ef3fc9ae867")
+        )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.items", not(empty())));
+    }
+
+    @Test
+    public void testUrnSearch() throws Exception {
+        mvc(api).perform(get("/api/aip/list")
+                .param("filter[0].field", IndexedArclibXmlDocument.CONTENT)
+                .param("filter[0].operation", "CONTAINS")
+                .param("filter[0].value", "urn:nbn:cz:nk-nonono")
+        )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.items", empty()));
+
+        mvc(api).perform(get("/api/aip/list")
+                .param("filter[0].field", IndexedArclibXmlDocument.CONTENT)
+                .param("filter[0].operation", "CONTAINS")
+                .param("filter[0].value", "urn:nbn:cz:nk-0016ke")
+        )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.items", not(empty())));
+    }
+
+    @Test
+    public void testTrailingCommaSearch() throws Exception {
+        mvc(api).perform(get("/api/aip/list")
+                .param("filter[0].field", IndexedArclibXmlDocument.CONTENT)
+                .param("filter[0].operation", "CONTAINS")
+                .param("filter[0].value", "richard novak,")
+        )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.items", not(empty())));
+
+        mvc(api).perform(get("/api/aip/list")
+                .param("filter[0].field", IndexedArclibXmlDocument.CONTENT)
+                .param("filter[0].operation", "CONTAINS")
+                .param("filter[0].value", "richard novak")
+        )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.items", not(empty())));
+    }
+
     private SolrInputDocument createDocument(String id, Date created, String producerId, String producerName, String userName, String authorialId, String sipId, Integer sipVersionNumber, Integer xmlVersionNumber, String sipVersionOf, String xmlVersionOf, String document, IndexedAipState aipState, Boolean debugMode, String indexType, Map<String, Object> fields) {
         SolrInputDocument doc = new SolrInputDocument();
         doc.addField(ID, id);
@@ -357,7 +414,7 @@ public class IndexIntegrationTest extends TransformerFactoryWorkaroundTest imple
         doc.addField(XML_VERSION_NUMBER, xmlVersionNumber);
         doc.addField(SIP_VERSION_OF, sipVersionOf);
         doc.addField(XML_VERSION_OF, xmlVersionOf);
-        doc.addField(DOCUMENT, document);
+        doc.addField(CONTENT, document);
         if (aipState != null)
             doc.addField(AIP_STATE, aipState.toString());
         doc.addField(DEBUG_MODE, debugMode);

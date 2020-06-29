@@ -619,11 +619,17 @@ public class IndexedStoreTest extends SrDbTest {
 
         // CONTAINS
         params = new Params();
-        params.setFilter(asList(new Filter("textAttribute", FilterOperation.CONTAINS, "na", null)));
+        params.setFilter(asList(new Filter("textAttribute", FilterOperation.CONTAINS, "banan", null)));
 
         result = store.findAll(params);
         assertThat(result.getCount(), is(1L));
         assertThat(result.getItems(), containsInAnyOrder(entities[2]));
+
+        params = new Params();
+        params.setFilter(asList(new Filter("textAttribute", FilterOperation.CONTAINS, "na", null)));
+
+        result = store.findAll(params);
+        assertThat(result.getCount(), is(0L));
 
         // IS_NULL
         params = new Params();
@@ -1207,6 +1213,33 @@ public class IndexedStoreTest extends SrDbTest {
 
         assertThrown(() -> store.findAll(params))
                 .isInstanceOf(BadArgument.class);
+    }
+
+    @Test
+    public void paginationDisabled() {
+        TestEntity[] entities = new TestEntity[]{
+                new TestEntity(),
+                new TestEntity(),
+                new TestEntity(),
+                new TestEntity(),
+                new TestEntity(),
+                new TestEntity(),
+                new TestEntity(),
+                new TestEntity(),
+                new TestEntity(),
+                new TestEntity(),
+                new TestEntity(),
+                new TestEntity(),
+                new TestEntity(),};
+        store.save(asList(entities));
+        Params params = new Params();
+        params.setPage(6);
+        params.setPageSize(null);
+        assertThat(store.findAll(params).getItems(), hasSize(13));
+        params.setPageSize(0);
+        assertThat(store.findAll(params).getItems(), hasSize(13));
+        params.setPageSize(1);
+        assertThat(store.findAll(params).getItems(), hasSize(1));
     }
 
     @Test

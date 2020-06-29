@@ -21,7 +21,10 @@ import org.apache.commons.lang3.tuple.Pair;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -38,13 +41,12 @@ public abstract class FormatIdentificationTool implements IngestTool {
     public static final String FORMAT_IDENTIFICATON_TOOL_EXPR = "/formatIdentification";
     public static final String PATHS_AND_FORMATS_EXPR = "/pathsAndFormats";
     public static final String IDENTIFIER_TYPE_EXPR = "/type";
-    public static final String PARSED_COLUMN_EXPR = "/parsedColumn";
     public static final String FILE_PATH_EXPR = "filePath";
     public static final String FORMAT_EXPR = "format";
 
     public static final String EXPECTED_JSON_INPUT = "List of pairs of paths to files and their respective file formats, e.g. " +
-            "[ {\"filePath\":\"this/is/a/filepath\", \"format\":\"fmt/101\"}," +
-            " {\"filePath\":\"this/is/another/filepath\", \"format\":\"fmt/993\"} ]";
+            "{\"0\":{\"filePath\":\"this/is/a/filepath\", \"format\":\"fmt/101\"}," +
+            " \"1\":{\"filePath\":\"this/is/another/filepath\", \"format\":\"fmt/993\"}}";
 
     /**
      * Performs the format identification analysis for all the files belonging the SIP package
@@ -128,14 +130,17 @@ public abstract class FormatIdentificationTool implements IngestTool {
      */
     public List<Pair<String, String>> parsePathsAndFormats(JsonNode root, String externalId) throws IncidentException {
         ObjectMapper om = new ObjectMapper();
-        JsonNode pathsToFormatsNode = root.at(FORMAT_IDENTIFICATON_TOOL_EXPR + "/" + formatIdentificationToolCounter + PATHS_AND_FORMATS_EXPR);
-
-        if (pathsToFormatsNode.getNodeType() != JsonNodeType.ARRAY)
-            invokeInvalidConfigIssue(FORMAT_IDENTIFICATON_TOOL_EXPR +  "/" + formatIdentificationToolCounter + PATHS_AND_FORMATS_EXPR, pathsToFormatsNode.toString(), externalId);
-        List<LinkedHashMap> list = om.convertValue(pathsToFormatsNode, List.class);
-
         List<Pair<String, String>> result = new ArrayList<>();
-        for (LinkedHashMap pathToFormat : list) {
+
+        JsonNode pathsToFormatsNode = root.at(FORMAT_IDENTIFICATON_TOOL_EXPR + "/" + formatIdentificationToolCounter + PATHS_AND_FORMATS_EXPR);
+        if (pathsToFormatsNode.isMissingNode())
+            return result;
+
+        if (pathsToFormatsNode.getNodeType() != JsonNodeType.OBJECT)
+            invokeInvalidConfigIssue(FORMAT_IDENTIFICATON_TOOL_EXPR +  "/" + formatIdentificationToolCounter + PATHS_AND_FORMATS_EXPR, pathsToFormatsNode.toString(), externalId);
+        Map<String, Map> list = om.convertValue(pathsToFormatsNode, Map.class);
+
+        for (Map pathToFormat : list.values()) {
             String filePath = (String) pathToFormat.get(FILE_PATH_EXPR);
             String format = (String) pathToFormat.get(FORMAT_EXPR);
             if (filePath == null || format == null) {

@@ -4,13 +4,12 @@ import com.fasterxml.jackson.databind.JsonNode;
 import cz.cas.lib.arclib.domain.IngestToolFunction;
 import cz.cas.lib.arclib.domain.ingestWorkflow.IngestEvent;
 import cz.cas.lib.arclib.domain.profiles.SipProfile;
+import cz.cas.lib.arclib.domainbase.exception.GeneralException;
 import cz.cas.lib.arclib.exception.bpm.IncidentException;
 import cz.cas.lib.arclib.service.SipProfileService;
 import cz.cas.lib.arclib.service.fixity.BagitFixityChecker;
 import cz.cas.lib.arclib.service.fixity.FixityChecker;
 import cz.cas.lib.arclib.service.fixity.MetsFixityChecker;
-import cz.cas.lib.arclib.domainbase.exception.GeneralException;
-import cz.cas.lib.core.util.Utils;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.camunda.bpm.engine.delegate.DelegateExecution;
@@ -21,8 +20,6 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 
 import static cz.cas.lib.arclib.bpm.BpmConstants.FixityCheck;
@@ -59,13 +56,7 @@ public class FixityCheckerDelegate extends ArclibDelegate {
         SipProfile sipProfile = sipProfileService.find(sipProfileId);
         Path sipFolderWorkspacePath = Paths.get((String) execution.getVariable(ProcessVariables.sipFolderWorkspacePath));
 
-        //map that captures fixity check events and the respective filePathsAndFixities
-        HashMap<String,  List<Utils.Triplet<String, String, String>>> mapOfEventIdsToFilePathsAndFixities =
-                (HashMap<String,  List<Utils.Triplet<String, String, String>>>)
-                        execution.getVariable(FixityCheck.mapOfEventIdsToFilePathsAndFixities);
-
-        //counter specifies the position of the fixity check among other fixity checks in the given BPM workflow
-        int fixityCheckerCounter = mapOfEventIdsToFilePathsAndFixities.size();
+        int fixityCheckToolCounter = (int) execution.getVariable(FixityCheck.fixityCheckToolCounter);
         FixityChecker fixityChecker;
 
         String sipMetadataPathGlobPattern = sipProfile.getSipMetadataPathGlobPattern();
@@ -78,34 +69,27 @@ public class FixityCheckerDelegate extends ArclibDelegate {
                 "at the path given by glob pattern: " + sipMetadataPathGlobPattern);
 
         File metsFile = matchingFiles.get(0);
-        List<Utils.Triplet<String, String, String>> filePathsAndFixities = new ArrayList<>();
 
         switch (sipProfile.getPackageType()) {
             case METS:
                 fixityChecker = metsFixityVerifier;
-                fixityChecker.setFixityCheckToolCounter(fixityCheckerCounter);
-                filePathsAndFixities.addAll(fixityChecker
-                        .verifySIP(sipFolderWorkspacePath, metsFile.toPath(), ingestWorkflowExternalId,
-                                config, getFormatIdentificationResult(execution)));
+                fixityChecker.setFixityCheckToolCounter(fixityCheckToolCounter);
+                fixityChecker.verifySIP(sipFolderWorkspacePath, metsFile.toPath(), ingestWorkflowExternalId,
+                        config, getFormatIdentificationResult(execution));
                 break;
             case BAGIT:
                 fixityChecker = bagitFixityVerifier;
-                fixityChecker.setFixityCheckToolCounter(fixityCheckerCounter);
-                filePathsAndFixities.addAll(fixityChecker
-                        .verifySIP(sipFolderWorkspacePath, metsFile.toPath().getParent(),
-                                ingestWorkflowExternalId, config, getFormatIdentificationResult(execution)));
+                fixityChecker.setFixityCheckToolCounter(fixityCheckToolCounter);
+                fixityChecker.verifySIP(sipFolderWorkspacePath, sipFolderWorkspacePath,
+                        ingestWorkflowExternalId, config, getFormatIdentificationResult(execution));
                 break;
             default:
                 throw new GeneralException("Unsupported package type: " + sipProfile.getPackageType());
         }
-        IngestEvent fixityCheckEvent = new IngestEvent(ingestWorkflowStore.findByExternalId(ingestWorkflowExternalId), toolService.findByNameAndVersion(fixityChecker.getToolName(), fixityChecker.getToolVersion()), true, null);
+        IngestEvent fixityCheckEvent = new IngestEvent(ingestWorkflowService.findByExternalId(ingestWorkflowExternalId), toolService.findByNameAndVersion(fixityChecker.getToolName(), fixityChecker.getToolVersion()), true, null);
         ingestEventStore.save(fixityCheckEvent);
 
-        mapOfEventIdsToFilePathsAndFixities.put(fixityCheckEvent.getId(), filePathsAndFixities);
-        execution.setVariable(FixityCheck.mapOfEventIdsToFilePathsAndFixities, mapOfEventIdsToFilePathsAndFixities);
-
-        if (fixityCheckerCounter == 0) execution.setVariable(FixityCheck.preferredFixityCheckEventId, fixityCheckEvent.getId());
-
+        execution.setVariable(FixityCheck.fixityCheckToolCounter, fixityCheckToolCounter + 1);
         log.debug("Execution of Fixity check delegate finished for ingest workflow " + ingestWorkflowExternalId + ".");
     }
 

@@ -10,10 +10,13 @@ import cz.cas.lib.arclib.domain.preservationPlanning.IngestIssueDefinitionCode;
 import cz.cas.lib.arclib.domain.preservationPlanning.Tool;
 import cz.cas.lib.arclib.exception.bpm.ConfigParserException;
 import cz.cas.lib.arclib.exception.bpm.IncidentException;
+import cz.cas.lib.arclib.formatlibrary.service.FormatDefinitionService;
+import cz.cas.lib.arclib.service.IngestIssueService;
 import cz.cas.lib.arclib.service.antivirus.Antivirus;
 import cz.cas.lib.arclib.service.antivirus.AntivirusType;
 import cz.cas.lib.arclib.service.antivirus.ClamAntivirus;
 import cz.cas.lib.arclib.service.antivirus.InfectedSipAction;
+import cz.cas.lib.arclib.store.IngestIssueDefinitionStore;
 import cz.cas.lib.arclib.utils.ArclibUtils;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -25,7 +28,7 @@ import javax.inject.Inject;
 import java.io.FileNotFoundException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.List;
+import java.util.Map;
 
 import static cz.cas.lib.arclib.utils.ArclibUtils.parseEnumFromConfig;
 
@@ -38,6 +41,9 @@ public class AntivirusDelegate extends ArclibDelegate {
     public static final String ANTIVIRUS_TYPE = "/type";
     public static final String ANTIVIRUS_CMD = "/cmd";
     private Path quarantinePath;
+    private FormatDefinitionService formatDefinitionService;
+    private IngestIssueService ingestIssueService;
+    private IngestIssueDefinitionStore ingestIssueDefinitionStore;
     @Getter
     private String toolName = "ARCLib_" + IngestToolFunction.virus_check;
 
@@ -50,7 +56,7 @@ public class AntivirusDelegate extends ArclibDelegate {
     public void executeArclibDelegate(DelegateExecution execution) throws IncidentException, FileNotFoundException {
         String ingestWorkflowExternalId = getIngestWorkflowExternalId(execution);
         log.debug("Execution of Antivirus delegate started for ingest workflow " + ingestWorkflowExternalId + ".");
-        IngestWorkflow iw = ingestWorkflowStore.findByExternalId(ingestWorkflowExternalId);
+        IngestWorkflow iw = ingestWorkflowService.findByExternalId(ingestWorkflowExternalId);
         JsonNode configRoot = getConfigRoot(execution);
 
         Path sipPath = ArclibUtils.getIngestWorkflowWorkspacePath(ingestWorkflowExternalId, workspace);
@@ -75,9 +81,10 @@ public class AntivirusDelegate extends ArclibDelegate {
                 case CLAMAV:
                     String cmdExpr = ANTIVIRUS_TOOL_EXPR + "/" + antivirusToolCounter + ANTIVIRUS_CMD;
                     JsonNode cmdNode = root.at(cmdExpr);
-                    if (cmdNode.getNodeType() != JsonNodeType.ARRAY || cmdNode.size() < 1)
+                    if (cmdNode.getNodeType() != JsonNodeType.OBJECT || cmdNode.size() < 1)
                         throw new ConfigParserException(cmdExpr, cmdNode.toString(), "Antivirus executable, with full path if not in $PATH variable, with switches");
-                    String[] cmd = ((List<String>) objectMapper.convertValue(cmdNode, List.class)).toArray(new String[0]);
+                    Map<String, String> list = objectMapper.convertValue(cmdNode, Map.class);
+                    String[] cmd = list.values().toArray(new String[0]);
                     antivirusToBeUsed = new ClamAntivirus(cmd);
                     break;
                 default:
@@ -103,6 +110,21 @@ public class AntivirusDelegate extends ArclibDelegate {
             ));
             throw e;
         }
+    }
+
+    @Inject
+    public void setFormatDefinitionService(FormatDefinitionService formatDefinitionService) {
+        this.formatDefinitionService = formatDefinitionService;
+    }
+
+    @Inject
+    public void setIngestIssueService(IngestIssueService ingestIssueService) {
+        this.ingestIssueService = ingestIssueService;
+    }
+
+    @Inject
+    public void setIngestIssueDefinitionStore(IngestIssueDefinitionStore ingestIssueDefinitionStore) {
+        this.ingestIssueDefinitionStore = ingestIssueDefinitionStore;
     }
 
     @Inject

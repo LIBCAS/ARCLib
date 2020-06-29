@@ -9,7 +9,10 @@ import cz.cas.lib.arclib.index.solr.arclibxml.IndexedAipState;
 import cz.cas.lib.arclib.index.solr.arclibxml.IndexedArclibXmlStore;
 import cz.cas.lib.arclib.init.SolrTestRecordsInitializer;
 import cz.cas.lib.arclib.service.IngestWorkflowService;
-import cz.cas.lib.arclib.service.archivalStorage.*;
+import cz.cas.lib.arclib.service.archivalStorage.ArchivalStorageException;
+import cz.cas.lib.arclib.service.archivalStorage.ArchivalStorageService;
+import cz.cas.lib.arclib.service.archivalStorage.ArchivalStorageServiceDebug;
+import cz.cas.lib.arclib.service.archivalStorage.ObjectState;
 import cz.cas.lib.arclib.store.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
@@ -18,6 +21,7 @@ import org.springframework.stereotype.Service;
 
 import javax.inject.Inject;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.nio.charset.Charset;
 
@@ -100,17 +104,18 @@ public class ReindexService {
                             xml = IOUtils.toString(archivalStorageServiceDebug.exportSingleXml(iw.getSip().getId(), iw.getXmlVersionNumber()), Charset.defaultCharset());
                             stateAtArchivalStorage = IndexedAipState.ARCHIVED;
                         } else {
-                            ArchivalStorageResponse response = archivalStorageService.exportSingleXml(iw.getSip().getId(), iw.getXmlVersionNumber());
-                            if (!response.getStatusCode().is2xxSuccessful()) {
-                                String msg = "could not retrieve XML " + iw.getExternalId() + " of AIP " + iw.getSip().getId() + ": " + response.getStatusCode().value();
-                                log.error(msg);
-                                throw new RuntimeException(msg);
+                            InputStream arcstorageResponse;
+                            try {
+                                arcstorageResponse = archivalStorageService.exportSingleXml(iw.getSip().getId(), iw.getXmlVersionNumber());
+                            } catch (ArchivalStorageException e) {
+                                log.error("could not retrieve XML " + iw.getExternalId() + " of AIP " + iw.getSip().getId());
+                                throw e;
                             }
-                            xml = IOUtils.toString(response.getBody(), Charset.defaultCharset());
+                            xml = IOUtils.toString(arcstorageResponse, Charset.defaultCharset());
                             ObjectState aipState = archivalStorageService.getAipState(iw.getSip().getId());
                             stateAtArchivalStorage = objectStateToIndexedAipState(aipState);
                         }
-                        indexedArclibXmlStore.createIndex(xml, p.getId(), p.getName(), username, stateAtArchivalStorage, iw.wasIngestedInDebugMode());
+                        indexedArclibXmlStore.createIndex(xml.getBytes(), p.getId(), p.getName(), username, stateAtArchivalStorage, iw.wasIngestedInDebugMode(), iw.isLatestVersion());
                     } catch (IOException ioe) {
                         throw new UncheckedIOException(ioe);
                     } catch (ArchivalStorageException e) {

@@ -8,6 +8,7 @@ import cz.cas.lib.arclib.domain.ingestWorkflow.IngestWorkflow;
 import cz.cas.lib.arclib.domain.preservationPlanning.Tool;
 import cz.cas.lib.arclib.domain.profiles.ValidationProfile;
 import cz.cas.lib.arclib.exception.validation.MissingFile;
+import cz.cas.lib.arclib.service.IngestWorkflowService;
 import cz.cas.lib.arclib.service.preservationPlanning.ToolService;
 import cz.cas.lib.arclib.service.validator.Validator;
 import cz.cas.lib.arclib.store.IngestEventStore;
@@ -65,7 +66,9 @@ public class ValidatorDelegateTest extends DelegateTest {
 
         toolService.setToolStore(toolStore);
         validatorDelegate.setIngestEventStore(ingestEventStore);
-        validatorDelegate.setIngestWorkflowStore(ingestWorkflowStore);
+        IngestWorkflowService ingestWorkflowService = new IngestWorkflowService();
+        ingestWorkflowService.setStore(ingestWorkflowStore);
+        validatorDelegate.setIngestWorkflowService(ingestWorkflowService);
         validatorDelegate.setToolService(toolService);
 
         Tool t = new Tool();

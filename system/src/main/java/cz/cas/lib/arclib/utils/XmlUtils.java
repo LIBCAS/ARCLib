@@ -7,6 +7,7 @@ import lombok.SneakyThrows;
 import net.sf.saxon.jaxp.SaxonTransformerFactory;
 import org.dom4j.InvalidXPathException;
 import org.w3c.dom.Document;
+import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
@@ -76,6 +77,24 @@ public class XmlUtils {
             XPathExpressionException, TransformerException, IOException, SAXException {
         Document doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(new InputSource(new StringReader(xml)));
         return rewriteValuesOfDoc(doc, nodeXpath, value);
+    }
+
+    public static StringBuilder extractTextFromAllElements(StringBuilder stringBuilder, Node node) {
+        NodeList childNodes = node.getChildNodes();
+        switch (node.getNodeType()) {
+            case Node.TEXT_NODE:
+            case Node.CDATA_SECTION_NODE:
+                String textContent = node.getTextContent().trim();
+                if (textContent.isEmpty())
+                    return stringBuilder;
+                return stringBuilder.append(textContent).append(" ");
+        }
+        if (childNodes != null) {
+            for (int i = 0; i < childNodes.getLength(); i++) {
+                extractTextFromAllElements(stringBuilder, childNodes.item(i));
+            }
+        }
+        return stringBuilder;
     }
 
     /**

@@ -14,8 +14,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.UUID;
 
-import static cz.cas.lib.core.util.Utils.checked;
-import static cz.cas.lib.core.util.Utils.notNull;
+import static cz.cas.lib.core.util.Utils.*;
 import static java.nio.file.Files.*;
 
 /**
@@ -197,10 +196,6 @@ public class FileRepository {
         } else {
             log.warn("File {} not found.", path);
         }
-    }
-
-    private void checkUUID(String id) {
-        checked(() -> UUID.fromString(id), () -> new BadArgument(Path.class, id));
     }
 
     /**

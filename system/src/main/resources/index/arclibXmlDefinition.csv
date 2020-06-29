@@ -1,79 +1,79 @@
-Popis,XPath,Povinnost,Původ,Násobnost,Název fieldu indexu,Typ hodnoty elementu/atributu v ArclibXml,Child
-Root,/METS:mets/@LABEL,povinné,přebírá se,1,label,other,
-Root,/METS:mets/@TYPE,povinné,přebírá se,1,type,other,
-Root,/METS:mets/@OBJID,povinné,generuje ARCLib,1,sip_id,other,
-Hlavička,/METS:mets/METS:metsHdr/@CREATEDATE,povinné,generuje ARCLib,1,created,datetime,
-Hlavička,/METS:mets/METS:metsHdr/@LASTMODDATE,povinné,generuje ARCLib,1,updated,datetime,
-Hlavička,/METS:mets/METS:metsHdr/@ID,povinné,generuje ARCLib,1,id,other,
-Hlavička,/METS:mets/METS:metsHdr/METS:altRecordID[@TYPE='original SIP identifier'],povinné,generuje ARCLib,1,authorial_id,other,
-Hlavička,/METS:mets/METS:metsHdr/METS:agent,povinné,přebírá se,N,,,
-Agent,/METS:mets/METS:metsHdr/METS:agent/@ROLE,povinné,přebírá se,1,,,
-Agent,/METS:mets/METS:metsHdr/METS:agent/@TYPE,povinné,přebírá se,1,,,
-Agent,/METS:mets/METS:metsHdr/METS:agent/METS:name,povinné,přebírá se,1,,,
-Popisná metadata - generický Dublin Core,/METS:mets/METS:dmdSec[METS:mdWrap[@MDTYPE='DC']/METS:xmlData/oai_dc:dc],povinné,přebírá se,N,,,dublin_core
-Popisná metadata - generický Dublin Core,/METS:mets/METS:dmdSec[METS:mdWrap[@MDTYPE='DC']/METS:xmlData/oai_dc:dc]/@ID,povinné,přebírá se,1,dublin_core_id,other,dublin_core
-Popisná metadata - generický Dublin Core,/METS:mets/METS:dmdSec[METS:mdWrap[@MDTYPE='DC']/METS:xmlData/oai_dc:dc]/METS:mdWrap[@MDTYPE='DC']/METS:xmlData/oai_dc:dc,povinné,přebírá se,N,dublin_core_value,other,dublin_core
-Poradové číslo SIP verze,/METS:mets/METS:dmdSec/METS:mdWrap[@MDTYPE='DC']/METS:xmlData/dcterms:sipVersionNumber,povinné,generuje ARCLib,1,sip_version_number,other,
-Vazba mezi SIP verzemi,/METS:mets/METS:dmdSec/METS:mdWrap[@MDTYPE='DC']/METS:xmlData/dcterms:sipVersionOf,povinné,generuje ARCLib,1,sip_version_of,other,
-Poradové číslo XML verze,/METS:mets/METS:dmdSec/METS:mdWrap[@MDTYPE='DC']/METS:xmlData/dcterms:xmlVersionNumber,povinné,generuje ARCLib,1,xml_version_number,other,
-Vazba mezi XML verzemi,/METS:mets/METS:dmdSec/METS:mdWrap[@MDTYPE='DC']/METS:xmlData/dcterms:xmlVersionOf,povinné,generuje ARCLib,1,xml_version_of,other,
-Technická metadata pro celý balíček,/METS:mets/METS:amdSec/METS:techMD/METS:mdWrap[@MDTYPE='PREMIS']/METS:xmlData/premis:object/premis:objectIdentifier,povinné,generuje ARCLib,1,,,
-Technická metadata pro celý balíček,/METS:mets/METS:amdSec/METS:techMD/METS:mdWrap[@MDTYPE='PREMIS']/METS:xmlData/premis:object/premis:objectCharacteristics/premis:fixity,povinné,generuje ARCLib,N,,,
-Technická metadata pro celý balíček,/METS:mets/METS:amdSec/METS:techMD/METS:mdWrap[@MDTYPE='PREMIS']/METS:xmlData/premis:object/premis:objectCharacteristics/premis:size,povinné,generuje ARCLib,1,,,
-Technická metadata pro celý balíček,/METS:mets/METS:amdSec/METS:techMD/METS:mdWrap[@MDTYPE='PREMIS']/METS:xmlData/premis:object/premis:objectCharacteristics/premis:format,povinné,generuje ARCLib,1,,,
-Technická metadata agregovaná,/METS:mets/METS:amdSec/METS:techMD/METS:mdWrap[@MDTYPE='OTHER']/METS:xmlData/ARCLib:formats/ARCLib:format,nepovinné,generuje ARCLib,N,,,extracted_format
-Technická metadata agregovaná přebíraná,/METS:mets/METS:amdSec/METS:techMD/METS:mdWrap[@MDTYPE='OTHER']/METS:xmlData/ARCLib:formats/ARCLib:format/ARCLib:fileFormat,nepovinné,generuje ARCLib,1,extracted_format_file_format,other,extracted_format
-Technická metadata agregovaná přebíraná,/METS:mets/METS:amdSec/METS:techMD/METS:mdWrap[@MDTYPE='OTHER']/METS:xmlData/ARCLib:formats/ARCLib:format/ARCLib:formatRegistryKey,nepovinné,generuje ARCLib,1,extracted_format_format_registry_key,other,extracted_format
-Technická metadata agregovaná přebíraná,/METS:mets/METS:amdSec/METS:techMD/METS:mdWrap[@MDTYPE='OTHER']/METS:xmlData/ARCLib:formats/ARCLib:format/ARCLib:formatRegistryName,nepovinné,generuje ARCLib,1,extracted_format_format_registry_name,other,extracted_format
-Technická metadata agregovaná přebíraná,/METS:mets/METS:amdSec/METS:techMD/METS:mdWrap[@MDTYPE='OTHER']/METS:xmlData/ARCLib:formats/ARCLib:format/ARCLib:fileCount,nepovinné,generuje ARCLib,1,extracted_format_file_count,other,extracted_format
-Technická metadata agregovaná přebíraná,/METS:mets/METS:amdSec/METS:techMD/METS:mdWrap[@MDTYPE='OTHER']/METS:xmlData/ARCLib:formats/ARCLib:format/ARCLib:creatingApplicationName,nepovinné,generuje ARCLib,1,extracted_format_creating_application_name,other,extracted_format
-Technická metadata agregovaná přebíraná,/METS:mets/METS:amdSec/METS:techMD/METS:mdWrap[@MDTYPE='OTHER']/METS:xmlData/ARCLib:formats/ARCLib:format/ARCLib:creatingApplicationVersion,nepovinné,generuje ARCLib,1,extracted_format_creating_application_version,other,extracted_format
-Technická metadata agregovaná přebíraná,/METS:mets/METS:amdSec/METS:techMD/METS:mdWrap[@MDTYPE='OTHER']/METS:xmlData/ARCLib:formats/ARCLib:format/ARCLib:dateCreatedByApplication,nepovinné,generuje ARCLib,1,extracted_format_date_created_by_application,date,extracted_format
-Technická metadata agregovaná přebíraná,/METS:mets/METS:amdSec/METS:techMD/METS:mdWrap[@MDTYPE='OTHER']/METS:xmlData/ARCLib:formats/ARCLib:format/ARCLib:preservationLevelValue,nepovinné,generuje ARCLib,1,extracted_format_preservation_level_value,other,extracted_format
-Technická metadata agregovaná přebíraná,/METS:mets/METS:amdSec/METS:techMD/METS:mdWrap[@MDTYPE='OTHER']/METS:xmlData/ARCLib:formats/ARCLib:format/ARCLib:scannerModelSerialNo,nepovinné,generuje ARCLib,1,extracted_format_scanner_model_serial_no,other,extracted_format
-Technická metadata agregovaná přebíraná,/METS:mets/METS:amdSec/METS:techMD/METS:mdWrap[@MDTYPE='OTHER']/METS:xmlData/ARCLib:formats/ARCLib:format/ARCLib:size,nepovinné,generuje ARCLib,1,extracted_format_size,other,extracted_format
-Technická metadata agregovaná přebíraná,/METS:mets/METS:amdSec/METS:techMD/METS:mdWrap[@MDTYPE='OTHER']/METS:xmlData/ARCLib:formats/ARCLib:format/ARCLib:formatVersion,nepovinné,generuje ARCLib,1,extracted_format_format_version,other,extracted_format
-Technická metadata agregovaná generovaná ARCLib,/METS:mets/METS:amdSec/METS:techMD/METS:mdWrap[@MDTYPE='PREMIS']/METS:xmlData/ARCLib:formats/ARCLib:format,povinné,generuje ARCLib,N,,,identified_format
-Technická metadata agregovaná generovaná ARCLib,/METS:mets/METS:amdSec/METS:techMD/METS:mdWrap[@MDTYPE='PREMIS']/METS:xmlData/ARCLib:formats/ARCLib:format/ARCLib:formatRegistryKey,povinné,generuje ARCLib,1,identified_format_format_registry_key,other,identified_format
-Technická metadata agregovaná generovaná ARCLib,/METS:mets/METS:amdSec/METS:techMD/METS:mdWrap[@MDTYPE='PREMIS']/METS:xmlData/ARCLib:formats/ARCLib:format/ARCLib:formatRegistryName,povinné,generuje ARCLib,1,identified_format_format_registry_name,other,identified_format
-Technická metadata agregovaná generovaná ARCLib,/METS:mets/METS:amdSec/METS:techMD/METS:mdWrap[@MDTYPE='PREMIS']/METS:xmlData/ARCLib:formats/ARCLib:format/ARCLib:fileCount,povinné,generuje ARCLib,1,identified_format_file_count,other,identified_format
-Technická metadata agregovaná generovaná ARCLib,/METS:mets/METS:amdSec/METS:techMD/METS:mdWrap[@MDTYPE='PREMIS']/METS:xmlData/ARCLib:formats/ARCLib:format/ARCLib:creatingApplicationName,povinné,generuje ARCLib,1,identified_format_creating_application_name,other,identified_format
-Technická metadata agregovaná generovaná ARCLib,/METS:mets/METS:amdSec/METS:techMD/METS:mdWrap[@MDTYPE='PREMIS']/METS:xmlData/ARCLib:formats/ARCLib:format/ARCLib:creatingApplicationVersion,povinné,generuje ARCLib,1,identified_format_creating_application_version,other,identified_format
-Technická metadata agregovaná generovaná ARCLib,/METS:mets/METS:amdSec/METS:techMD/METS:mdWrap[@MDTYPE='PREMIS']/METS:xmlData/ARCLib:formats/ARCLib:format/ARCLib:dateCreatedByApplication,povinné,generuje ARCLib,1,identified_format_date_created_by_application,date,identified_format
-Technická metadata agregovaná přebíraná,/METS:mets/METS:amdSec/METS:techMD/METS:mdWrap[@MDTYPE='OTHER']/METS:xmlData/ARCLib:devices/ARCLib:device,nepovinné,generuje ARCLib,N,,,device
-Technická metadata agregovaná přebíraná,/METS:mets/METS:amdSec/METS:techMD/METS:mdWrap[@MDTYPE='OTHER']/METS:xmlData/ARCLib:devices/ARCLib:device/ARCLib:deviceId,nepovinné,generuje ARCLib,1,device_id,other,device
-Technická metadata agregovaná přebíraná,/METS:mets/METS:amdSec/METS:techMD/METS:mdWrap[@MDTYPE='OTHER']/METS:xmlData/ARCLib:devices/ARCLib:device/ARCLib:fileCount,nepovinné,generuje ARCLib,1,device_file_count,other,device
-Technická metadata agregovaná přebíraná,/METS:mets/METS:amdSec/METS:techMD/METS:mdWrap[@MDTYPE='OTHER']/METS:xmlData/ARCLib:ImageCaptureInformation/ARCLib:ImageCaptureMetadata,nepovinné,generuje ARCLib,N,,,img_metadata
-Technická metadata agregovaná přebíraná,/METS:mets/METS:amdSec/METS:techMD/METS:mdWrap[@MDTYPE='OTHER']/METS:xmlData/ARCLib:ImageCaptureInformation/ARCLib:ImageCaptureMetadata/ARCLib:dateCreated,nepovinné,generuje ARCLib,1,img_metadata_date_created,date,img_metadata
-Technická metadata agregovaná přebíraná,/METS:mets/METS:amdSec/METS:techMD/METS:mdWrap[@MDTYPE='OTHER']/METS:xmlData/ARCLib:ImageCaptureInformation/ARCLib:ImageCaptureMetadata/ARCLib:imageProducer,nepovinné,generuje ARCLib,1,img_metadata_image_producer,other,img_metadata
-Technická metadata agregovaná přebíraná,/METS:mets/METS:amdSec/METS:techMD/METS:mdWrap[@MDTYPE='OTHER']/METS:xmlData/ARCLib:ImageCaptureInformation/ARCLib:ImageCaptureMetadata/ARCLib:scannerModelSerialNo,nepovinné,generuje ARCLib,1,img_metadata_scanner_model_serial_no,other,img_metadata
-Technická metadata agregovaná přebíraná,/METS:mets/METS:amdSec/METS:techMD/METS:mdWrap[@MDTYPE='OTHER']/METS:xmlData/ARCLib:ImageCaptureInformation/ARCLib:ImageCaptureMetadata/ARCLib:eventCount,nepovinné,generuje ARCLib,1,img_metadata_arc_event_count,other,img_metadata
-Technická metadata agregovaná přebíraná,/METS:mets/METS:amdSec/METS:techMD/METS:mdWrap[@MDTYPE='OTHER']/METS:xmlData/ARCLib:creatingApplications/ARCLib:creatingApplication,nepovinné,generuje ARCLib,N,,,creating_application
-Technická metadata agregovaná přebíraná,/METS:mets/METS:amdSec/METS:techMD/METS:mdWrap[@MDTYPE='OTHER']/METS:xmlData/ARCLib:creatingApplications/ARCLib:creatingApplication/ARCLib:creatingApplicationName,nepovinné,generuje ARCLib,1,creating_application_creating_application_name,other,creating_application
-Technická metadata agregovaná přebíraná,/METS:mets/METS:amdSec/METS:techMD/METS:mdWrap[@MDTYPE='OTHER']/METS:xmlData/ARCLib:creatingApplications/ARCLib:creatingApplication/ARCLib:creatingApplicationVersion,nepovinné,generuje ARCLib,1,creating_application_creating_application_version,other,creating_application
-Technická metadata agregovaná přebíraná,/METS:mets/METS:amdSec/METS:techMD/METS:mdWrap[@MDTYPE='OTHER']/METS:xmlData/ARCLib:creatingApplications/ARCLib:creatingApplication/ARCLib:dateCreatedByApplication,nepovinné,generuje ARCLib,1,creating_application_date_created_by_application,date,creating_application
-Technická metadata agregovaná přebíraná,/METS:mets/METS:amdSec/METS:techMD/METS:mdWrap[@MDTYPE='OTHER']/METS:xmlData/ARCLib:creatingApplications/ARCLib:creatingApplication/ARCLib:eventCount,nepovinné,generuje ARCLib,1,creating_application_event_count,other,creating_application
-Provenance a kontroly při ingestu,/METS:mets/METS:amdSec/METS:digiprovMD/METS:mdWrap[@MDTYPE='PREMIS']/METS:xmlData/premis:event,povinné,generuje ARCLib,N,,,premis_event
-Provenance a kontroly při ingestu,/METS:mets/METS:amdSec/METS:digiprovMD/METS:mdWrap[@MDTYPE='PREMIS']/METS:xmlData/premis:event/premis:eventOutcomeInformation,povinné,generuje ARCLib,1,,,
-Provenance a kontroly při ingestu,/METS:mets/METS:amdSec/METS:digiprovMD/METS:mdWrap[@MDTYPE='PREMIS']/METS:xmlData/premis:event/premis:eventOutcomeInformation/premis:eventOutcome,povinné,generuje ARCLib,1,premis_event_outcome,other,premis_event
-Provenance a kontroly při ingestu,/METS:mets/METS:amdSec/METS:digiprovMD/METS:mdWrap[@MDTYPE='PREMIS']/METS:xmlData/premis:event/premis:linkingAgentIdentifier,povinné,generuje ARCLib,1,,,
-Provenance a kontroly při ingestu,/METS:mets/METS:amdSec/METS:digiprovMD/METS:mdWrap[@MDTYPE='PREMIS']/METS:xmlData/premis:event/premis:linkingAgentIdentifier/premis:linkingAgentIdentifierType,povinné,generuje ARCLib,1,premis_event_linking_agent_identifier_type,other,premis_event
-Provenance a kontroly při ingestu,/METS:mets/METS:amdSec/METS:digiprovMD/METS:mdWrap[@MDTYPE='PREMIS']/METS:xmlData/premis:event/premis:linkingAgentIdentifier/premis:linkingAgentIdentifierValue,povinné,generuje ARCLib,1,premis_event_linking_agent_identifier_value,other,premis_event
-Provenance a kontroly při ingestu,/METS:mets/METS:amdSec/METS:digiprovMD/METS:mdWrap[@MDTYPE='PREMIS']/METS:xmlData/premis:event/premis:eventDetail,povinné,generuje ARCLib,1,premis_event_detail,other,premis_event
-Provenance a kontroly při ingestu,/METS:mets/METS:amdSec/METS:digiprovMD/METS:mdWrap[@MDTYPE='PREMIS']/METS:xmlData/premis:event/premis:eventType,povinné,generuje ARCLib,1,premis_event_type,other,premis_event
-Provenance a kontroly při ingestu,/METS:mets/METS:amdSec/METS:digiprovMD/METS:mdWrap[@MDTYPE='PREMIS']/METS:xmlData/premis:event/premis:eventDateTime,povinné,generuje ARCLib,1,premis_event_date_time,datetime,premis_event
-Provenance a kontroly při ingestu,/METS:mets/METS:amdSec/METS:digiprovMD/METS:mdWrap[@MDTYPE='PREMIS']/METS:xmlData/premis:event/premis:eventIdentifier,povinné,generuje ARCLib,1,,,
-Provenance a kontroly při ingestu,/METS:mets/METS:amdSec/METS:digiprovMD/METS:mdWrap[@MDTYPE='PREMIS']/METS:xmlData/premis:event/premis:eventIdentifier/premis:eventIdentifierType,povinné,generuje ARCLib,1,premis_event_identifier_type,other,premis_event
-Provenance a kontroly při ingestu,/METS:mets/METS:amdSec/METS:digiprovMD/METS:mdWrap[@MDTYPE='PREMIS']/METS:xmlData/premis:event/premis:eventIdentifier/premis:eventIdentifierValue,povinné,generuje ARCLib,1,premis_event_identifier_value,other,premis_event
-Provenance přebrané ze SIP,/METS:mets/METS:amdSec/METS:techMD/METS:mdWrap[@MDTYPE='OTHER']/METS:xmlData/ARCLib:eventAgents/ARCLib:eventAgent,nepovinné,generuje ARCLib,N,,,arc_event
-Provenance přebrané ze SIP,/METS:mets/METS:amdSec/METS:techMD/METS:mdWrap[@MDTYPE='OTHER']/METS:xmlData/ARCLib:eventAgents/ARCLib:eventAgent/ARCLib:eventType,nepovinné,generuje ARCLib,1,arc_event_type,other,arc_event
-Provenance přebrané ze SIP,/METS:mets/METS:amdSec/METS:techMD/METS:mdWrap[@MDTYPE='OTHER']/METS:xmlData/ARCLib:eventAgents/ARCLib:eventAgent/ARCLib:agentName,nepovinné,generuje ARCLib,1,arc_event_agent_name,other,arc_event
-Provenance přebrané ze SIP,/METS:mets/METS:amdSec/METS:techMD/METS:mdWrap[@MDTYPE='OTHER']/METS:xmlData/ARCLib:eventAgents/ARCLib:eventAgent/ARCLib:linkingDeviceID,nepovinné,generuje ARCLib,1,arc_event_linking_device_id,other,arc_event
-Provenance přebrané ze SIP,/METS:mets/METS:amdSec/METS:techMD/METS:mdWrap[@MDTYPE='OTHER']/METS:xmlData/ARCLib:eventAgents/ARCLib:eventAgent/ARCLib:scannerModelSerialNo,nepovinné,generuje ARCLib,1,arc_event_scanner_model_serial_no,other,arc_event
-Provenance přebrané ze SIP,/METS:mets/METS:amdSec/METS:techMD/METS:mdWrap[@MDTYPE='OTHER']/METS:xmlData/ARCLib:eventAgents/ARCLib:eventAgent/ARCLib:scanningSoftwareName,nepovinné,generuje ARCLib,1,arc_event_scanning_software_name,other,arc_event
-Provenance přebrané ze SIP,/METS:mets/METS:amdSec/METS:techMD/METS:mdWrap[@MDTYPE='OTHER']/METS:xmlData/ARCLib:eventAgents/ARCLib:eventAgent/ARCLib:eventDate,nepovinné,generuje ARCLib,1,arc_event_date,datetime,arc_event
-Provenance přebrané ze SIP,/METS:mets/METS:amdSec/METS:techMD/METS:mdWrap[@MDTYPE='OTHER']/METS:xmlData/ARCLib:eventAgents/ARCLib:eventAgent/ARCLib:eventCount,nepovinné,generuje ARCLib,1,arc_event_count,other,arc_event
-Práva,/METS:mets/METS:amdSec/METS:rightsMD,nepovinné,přebírá se,1,,,
-Další bibliografická metadata,/METS:mets/METS:amdSec/METS:sourceMD,nepovinné,přebírá se,1,,,
-Informace o struktuře ARCLib AIP,/METS:mets/METS:fileSec,povinné,generuje ARCLib,1,,,
-Informace o struktuře ARCLib AIP,/METS:mets/METS:structMap,povinné,generuje ARCLib,1,,,
+Description (DOC – this column is for documentation purpose only),Xpath (SYS – values of this column are parsed and used by the system),Must be present (DOC),Data source (DOC),Check existence (SYS),Multiplicity (SYS),Index field name (SYS),Element type (SYS),Index Child (SYS)
+Root,/METS:mets/@LABEL,FALSE,SIP profile XSLT,TRUE,1,label,other,
+Root,/METS:mets/@TYPE,FALSE,SIP profile XSLT,TRUE,1,type,other,
+Root - id of SIP package – UUID,/METS:mets/@OBJID,TRUE,system,TRUE,1,sip_id,other,
+Header - date and time of start of ingest workflow process,/METS:mets/METS:metsHdr/@CREATEDATE,TRUE,system,TRUE,1,created,datetime,
+Header - date and time of finish of ingest workflow process,/METS:mets/METS:metsHdr/@LASTMODDATE,TRUE,system,TRUE,1,updated,datetime,
+Header - XML ID; e.g. ARCLIB_000000004,/METS:mets/METS:metsHdr/@ID,TRUE,system,TRUE,1,id,other,
+Header - authorial id,/METS:mets/METS:metsHdr/METS:altRecordID[@TYPE='original SIP identifier'],TRUE,SIP profile,TRUE,1,authorial_id,other,
+Header,/METS:mets/METS:metsHdr/METS:agent,TRUE,system,TRUE,N,,,
+Agent – 'CREATOR',/METS:mets/METS:metsHdr/METS:agent/@ROLE,TRUE,system,TRUE,1,,,
+Agent – 'ORGANIZATION',/METS:mets/METS:metsHdr/METS:agent/@TYPE,TRUE,system,TRUE,1,,,
+Agent - name of the producer,/METS:mets/METS:metsHdr/METS:agent/METS:name,TRUE,system,TRUE,1,,,
+Descriptive metadata – Dublin Core,/METS:mets/METS:dmdSec[METS:mdWrap[@MDTYPE='DC']/METS:xmlData/oai_dc:dc],FALSE,SIP profile XSLT,TRUE,N,,,dublin_core
+Descriptive metadata - Dublin Core,/METS:mets/METS:dmdSec[METS:mdWrap[@MDTYPE='DC']/METS:xmlData/oai_dc:dc]/@ID,FALSE,SIP profile XSLT,TRUE,1,dublin_core_id,other,dublin_core
+Descriptive metadata - Dublin Core,/METS:mets/METS:dmdSec[METS:mdWrap[@MDTYPE='DC']/METS:xmlData/oai_dc:dc]/METS:mdWrap[@MDTYPE='DC']/METS:xmlData/oai_dc:dc,FALSE,SIP profile XSLT,TRUE,N,dublin_core_value,other,dublin_core
+SIP version serial number,/METS:mets/METS:dmdSec/METS:mdWrap[@MDTYPE='DC']/METS:xmlData/dcterms:sipVersionNumber,TRUE,system,TRUE,1,sip_version_number,other,
+SIP versions link - ID of the previous version SIP,/METS:mets/METS:dmdSec/METS:mdWrap[@MDTYPE='DC']/METS:xmlData/dcterms:sipVersionOf,TRUE,system,TRUE,1,sip_version_of,other,
+XML version serial number,/METS:mets/METS:dmdSec/METS:mdWrap[@MDTYPE='DC']/METS:xmlData/dcterms:xmlVersionNumber,TRUE,system,TRUE,1,xml_version_number,other,
+XML versions link - ID of the previous version XML,/METS:mets/METS:dmdSec/METS:mdWrap[@MDTYPE='DC']/METS:xmlData/dcterms:xmlVersionOf,TRUE,system,TRUE,1,xml_version_of,other,
+AIP techMD,/METS:mets/METS:amdSec/METS:techMD/METS:mdWrap[@MDTYPE='PREMIS']/METS:xmlData/premis:object/premis:objectIdentifier,TRUE,fixity generator,TRUE,1,,,
+AIP techMD,/METS:mets/METS:amdSec/METS:techMD/METS:mdWrap[@MDTYPE='PREMIS']/METS:xmlData/premis:object/premis:objectCharacteristics/premis:fixity,TRUE,fixity generator,TRUE,N,,,
+AIP techMD,/METS:mets/METS:amdSec/METS:techMD/METS:mdWrap[@MDTYPE='PREMIS']/METS:xmlData/premis:object/premis:objectCharacteristics/premis:size,TRUE,fixity generator,TRUE,1,,,
+AIP techMD,/METS:mets/METS:amdSec/METS:techMD/METS:mdWrap[@MDTYPE='PREMIS']/METS:xmlData/premis:object/premis:objectCharacteristics/premis:format,TRUE,fixity generator,TRUE,1,,,
+Agregated techMD – extracted,/METS:mets/METS:amdSec/METS:techMD/METS:mdWrap[@MDTYPE='OTHER']/METS:xmlData/ARCLib:formats/ARCLib:format,FALSE,SIP profile XSLT,FALSE,N,,,extracted_format
+Agregated techMD – extracted,/METS:mets/METS:amdSec/METS:techMD/METS:mdWrap[@MDTYPE='OTHER']/METS:xmlData/ARCLib:formats/ARCLib:format/ARCLib:fileFormat,FALSE,SIP profile XSLT,FALSE,1,extracted_format_file_format,other,extracted_format
+Agregated techMD – extracted,/METS:mets/METS:amdSec/METS:techMD/METS:mdWrap[@MDTYPE='OTHER']/METS:xmlData/ARCLib:formats/ARCLib:format/ARCLib:formatRegistryKey,FALSE,SIP profile XSLT,FALSE,1,extracted_format_format_registry_key,other,extracted_format
+Agregated techMD – extracted,/METS:mets/METS:amdSec/METS:techMD/METS:mdWrap[@MDTYPE='OTHER']/METS:xmlData/ARCLib:formats/ARCLib:format/ARCLib:formatRegistryName,FALSE,SIP profile XSLT,FALSE,1,extracted_format_format_registry_name,other,extracted_format
+Agregated techMD – extracted,/METS:mets/METS:amdSec/METS:techMD/METS:mdWrap[@MDTYPE='OTHER']/METS:xmlData/ARCLib:formats/ARCLib:format/ARCLib:fileCount,FALSE,SIP profile XSLT,FALSE,1,extracted_format_file_count,other,extracted_format
+Agregated techMD – extracted,/METS:mets/METS:amdSec/METS:techMD/METS:mdWrap[@MDTYPE='OTHER']/METS:xmlData/ARCLib:formats/ARCLib:format/ARCLib:creatingApplicationName,FALSE,SIP profile XSLT,FALSE,1,extracted_format_creating_application_name,other,extracted_format
+Agregated techMD – extracted,/METS:mets/METS:amdSec/METS:techMD/METS:mdWrap[@MDTYPE='OTHER']/METS:xmlData/ARCLib:formats/ARCLib:format/ARCLib:creatingApplicationVersion,FALSE,SIP profile XSLT,FALSE,1,extracted_format_creating_application_version,other,extracted_format
+Agregated techMD – extracted,/METS:mets/METS:amdSec/METS:techMD/METS:mdWrap[@MDTYPE='OTHER']/METS:xmlData/ARCLib:formats/ARCLib:format/ARCLib:dateCreatedByApplication,FALSE,SIP profile XSLT,FALSE,1,extracted_format_date_created_by_application,date,extracted_format
+Agregated techMD – extracted,/METS:mets/METS:amdSec/METS:techMD/METS:mdWrap[@MDTYPE='OTHER']/METS:xmlData/ARCLib:formats/ARCLib:format/ARCLib:preservationLevelValue,FALSE,SIP profile XSLT,FALSE,1,extracted_format_preservation_level_value,other,extracted_format
+Agregated techMD – extracted,/METS:mets/METS:amdSec/METS:techMD/METS:mdWrap[@MDTYPE='OTHER']/METS:xmlData/ARCLib:formats/ARCLib:format/ARCLib:scannerModelSerialNo,FALSE,SIP profile XSLT,FALSE,1,extracted_format_scanner_model_serial_no,other,extracted_format
+Agregated techMD – extracted,/METS:mets/METS:amdSec/METS:techMD/METS:mdWrap[@MDTYPE='OTHER']/METS:xmlData/ARCLib:formats/ARCLib:format/ARCLib:size,FALSE,SIP profile XSLT,FALSE,1,extracted_format_size,other,extracted_format
+Agregated techMD – extracted,/METS:mets/METS:amdSec/METS:techMD/METS:mdWrap[@MDTYPE='OTHER']/METS:xmlData/ARCLib:formats/ARCLib:format/ARCLib:formatVersion,FALSE,SIP profile XSLT,FALSE,1,extracted_format_format_version,other,extracted_format
+Agregated techMD – generated,/METS:mets/METS:amdSec/METS:techMD/METS:mdWrap[@MDTYPE='PREMIS']/METS:xmlData/ARCLib:formats/ARCLib:format,FALSE,format identifier,TRUE,N,,,identified_format
+Agregated techMD – generated,/METS:mets/METS:amdSec/METS:techMD/METS:mdWrap[@MDTYPE='PREMIS']/METS:xmlData/ARCLib:formats/ARCLib:format/ARCLib:formatRegistryKey,FALSE,format identifier,TRUE,1,identified_format_format_registry_key,other,identified_format
+Agregated techMD – generated,/METS:mets/METS:amdSec/METS:techMD/METS:mdWrap[@MDTYPE='PREMIS']/METS:xmlData/ARCLib:formats/ARCLib:format/ARCLib:formatRegistryName,FALSE,format identifier,TRUE,1,identified_format_format_registry_name,other,identified_format
+Agregated techMD – generated,/METS:mets/METS:amdSec/METS:techMD/METS:mdWrap[@MDTYPE='PREMIS']/METS:xmlData/ARCLib:formats/ARCLib:format/ARCLib:fileCount,FALSE,format identifier,TRUE,1,identified_format_file_count,other,identified_format
+Agregated techMD – generated,/METS:mets/METS:amdSec/METS:techMD/METS:mdWrap[@MDTYPE='PREMIS']/METS:xmlData/ARCLib:formats/ARCLib:format/ARCLib:creatingApplicationName,FALSE,format identifier,TRUE,1,identified_format_creating_application_name,other,identified_format
+Agregated techMD – generated,/METS:mets/METS:amdSec/METS:techMD/METS:mdWrap[@MDTYPE='PREMIS']/METS:xmlData/ARCLib:formats/ARCLib:format/ARCLib:creatingApplicationVersion,FALSE,format identifier,TRUE,1,identified_format_creating_application_version,other,identified_format
+Agregated techMD – generated,/METS:mets/METS:amdSec/METS:techMD/METS:mdWrap[@MDTYPE='PREMIS']/METS:xmlData/ARCLib:formats/ARCLib:format/ARCLib:dateCreatedByApplication,FALSE,format identifier,TRUE,1,identified_format_date_created_by_application,date,identified_format
+TechMD – extracted,/METS:mets/METS:amdSec/METS:techMD/METS:mdWrap[@MDTYPE='OTHER']/METS:xmlData/ARCLib:devices/ARCLib:device,FALSE,SIP profile XSLT,FALSE,N,,,device
+TechMD – extracted,/METS:mets/METS:amdSec/METS:techMD/METS:mdWrap[@MDTYPE='OTHER']/METS:xmlData/ARCLib:devices/ARCLib:device/ARCLib:deviceId,FALSE,SIP profile XSLT,FALSE,1,device_id,other,device
+TechMD – extracted,/METS:mets/METS:amdSec/METS:techMD/METS:mdWrap[@MDTYPE='OTHER']/METS:xmlData/ARCLib:devices/ARCLib:device/ARCLib:fileCount,FALSE,SIP profile XSLT,FALSE,1,device_file_count,other,device
+TechMD – extracted,/METS:mets/METS:amdSec/METS:techMD/METS:mdWrap[@MDTYPE='OTHER']/METS:xmlData/ARCLib:ImageCaptureInformation/ARCLib:ImageCaptureMetadata,FALSE,SIP profile XSLT,FALSE,N,,,img_metadata
+TechMD – extracted,/METS:mets/METS:amdSec/METS:techMD/METS:mdWrap[@MDTYPE='OTHER']/METS:xmlData/ARCLib:ImageCaptureInformation/ARCLib:ImageCaptureMetadata/ARCLib:dateCreated,FALSE,SIP profile XSLT,FALSE,1,img_metadata_date_created,date,img_metadata
+TechMD – extracted,/METS:mets/METS:amdSec/METS:techMD/METS:mdWrap[@MDTYPE='OTHER']/METS:xmlData/ARCLib:ImageCaptureInformation/ARCLib:ImageCaptureMetadata/ARCLib:imageProducer,FALSE,SIP profile XSLT,FALSE,1,img_metadata_image_producer,other,img_metadata
+TechMD – extracted,/METS:mets/METS:amdSec/METS:techMD/METS:mdWrap[@MDTYPE='OTHER']/METS:xmlData/ARCLib:ImageCaptureInformation/ARCLib:ImageCaptureMetadata/ARCLib:scannerModelSerialNo,FALSE,SIP profile XSLT,FALSE,1,img_metadata_scanner_model_serial_no,other,img_metadata
+TechMD – extracted,/METS:mets/METS:amdSec/METS:techMD/METS:mdWrap[@MDTYPE='OTHER']/METS:xmlData/ARCLib:ImageCaptureInformation/ARCLib:ImageCaptureMetadata/ARCLib:eventCount,FALSE,SIP profile XSLT,FALSE,1,img_metadata_arc_event_count,other,img_metadata
+TechMD – extracted,/METS:mets/METS:amdSec/METS:techMD/METS:mdWrap[@MDTYPE='OTHER']/METS:xmlData/ARCLib:creatingApplications/ARCLib:creatingApplication,FALSE,SIP profile XSLT,FALSE,N,,,creating_application
+TechMD – extracted,/METS:mets/METS:amdSec/METS:techMD/METS:mdWrap[@MDTYPE='OTHER']/METS:xmlData/ARCLib:creatingApplications/ARCLib:creatingApplication/ARCLib:creatingApplicationName,FALSE,SIP profile XSLT,FALSE,1,creating_application_creating_application_name,other,creating_application
+TechMD – extracted,/METS:mets/METS:amdSec/METS:techMD/METS:mdWrap[@MDTYPE='OTHER']/METS:xmlData/ARCLib:creatingApplications/ARCLib:creatingApplication/ARCLib:creatingApplicationVersion,FALSE,SIP profile XSLT,FALSE,1,creating_application_creating_application_version,other,creating_application
+TechMD – extracted,/METS:mets/METS:amdSec/METS:techMD/METS:mdWrap[@MDTYPE='OTHER']/METS:xmlData/ARCLib:creatingApplications/ARCLib:creatingApplication/ARCLib:dateCreatedByApplication,FALSE,SIP profile XSLT,FALSE,1,creating_application_date_created_by_application,date,creating_application
+TechMD – extracted,/METS:mets/METS:amdSec/METS:techMD/METS:mdWrap[@MDTYPE='OTHER']/METS:xmlData/ARCLib:creatingApplications/ARCLib:creatingApplication/ARCLib:eventCount,FALSE,SIP profile XSLT,FALSE,1,creating_application_event_count,other,creating_application
+Events – generated,/METS:mets/METS:amdSec/METS:digiprovMD/METS:mdWrap[@MDTYPE='PREMIS']/METS:xmlData/premis:event,TRUE,system,TRUE,N,,,premis_event
+Events – generated,/METS:mets/METS:amdSec/METS:digiprovMD/METS:mdWrap[@MDTYPE='PREMIS']/METS:xmlData/premis:event/premis:eventOutcomeInformation,TRUE,system,TRUE,1,,,
+Events – generated,/METS:mets/METS:amdSec/METS:digiprovMD/METS:mdWrap[@MDTYPE='PREMIS']/METS:xmlData/premis:event/premis:eventOutcomeInformation/premis:eventOutcome,TRUE,system,TRUE,1,premis_event_outcome,other,premis_event
+Events – generated,/METS:mets/METS:amdSec/METS:digiprovMD/METS:mdWrap[@MDTYPE='PREMIS']/METS:xmlData/premis:event/premis:linkingAgentIdentifier,TRUE,system,TRUE,1,,,
+Events – generated,/METS:mets/METS:amdSec/METS:digiprovMD/METS:mdWrap[@MDTYPE='PREMIS']/METS:xmlData/premis:event/premis:linkingAgentIdentifier/premis:linkingAgentIdentifierType,TRUE,system,TRUE,1,premis_event_linking_agent_identifier_type,other,premis_event
+Events – generated,/METS:mets/METS:amdSec/METS:digiprovMD/METS:mdWrap[@MDTYPE='PREMIS']/METS:xmlData/premis:event/premis:linkingAgentIdentifier/premis:linkingAgentIdentifierValue,TRUE,system,TRUE,1,premis_event_linking_agent_identifier_value,other,premis_event
+Events – generated,/METS:mets/METS:amdSec/METS:digiprovMD/METS:mdWrap[@MDTYPE='PREMIS']/METS:xmlData/premis:event/premis:eventDetail,TRUE,system,TRUE,1,premis_event_detail,other,premis_event
+Events – generated,/METS:mets/METS:amdSec/METS:digiprovMD/METS:mdWrap[@MDTYPE='PREMIS']/METS:xmlData/premis:event/premis:eventType,TRUE,system,TRUE,1,premis_event_type,other,premis_event
+Events – generated,/METS:mets/METS:amdSec/METS:digiprovMD/METS:mdWrap[@MDTYPE='PREMIS']/METS:xmlData/premis:event/premis:eventDateTime,TRUE,system,TRUE,1,premis_event_date_time,datetime,premis_event
+Events – generated,/METS:mets/METS:amdSec/METS:digiprovMD/METS:mdWrap[@MDTYPE='PREMIS']/METS:xmlData/premis:event/premis:eventIdentifier,TRUE,system,TRUE,1,,,
+Events – generated,/METS:mets/METS:amdSec/METS:digiprovMD/METS:mdWrap[@MDTYPE='PREMIS']/METS:xmlData/premis:event/premis:eventIdentifier/premis:eventIdentifierType,TRUE,system,TRUE,1,premis_event_identifier_type,other,premis_event
+Events – generated,/METS:mets/METS:amdSec/METS:digiprovMD/METS:mdWrap[@MDTYPE='PREMIS']/METS:xmlData/premis:event/premis:eventIdentifier/premis:eventIdentifierValue,TRUE,system,TRUE,1,premis_event_identifier_value,other,premis_event
+Events – extracted,/METS:mets/METS:amdSec/METS:techMD/METS:mdWrap[@MDTYPE='OTHER']/METS:xmlData/ARCLib:eventAgents/ARCLib:eventAgent,FALSE,SIP profile XSLT,FALSE,N,,,arc_event
+Events – extracted,/METS:mets/METS:amdSec/METS:techMD/METS:mdWrap[@MDTYPE='OTHER']/METS:xmlData/ARCLib:eventAgents/ARCLib:eventAgent/ARCLib:eventType,FALSE,SIP profile XSLT,FALSE,1,arc_event_type,other,arc_event
+Events – extracted,/METS:mets/METS:amdSec/METS:techMD/METS:mdWrap[@MDTYPE='OTHER']/METS:xmlData/ARCLib:eventAgents/ARCLib:eventAgent/ARCLib:agentName,FALSE,SIP profile XSLT,FALSE,1,arc_event_agent_name,other,arc_event
+Events – extracted,/METS:mets/METS:amdSec/METS:techMD/METS:mdWrap[@MDTYPE='OTHER']/METS:xmlData/ARCLib:eventAgents/ARCLib:eventAgent/ARCLib:linkingDeviceID,FALSE,SIP profile XSLT,FALSE,1,arc_event_linking_device_id,other,arc_event
+Events – extracted,/METS:mets/METS:amdSec/METS:techMD/METS:mdWrap[@MDTYPE='OTHER']/METS:xmlData/ARCLib:eventAgents/ARCLib:eventAgent/ARCLib:scannerModelSerialNo,FALSE,SIP profile XSLT,FALSE,1,arc_event_scanner_model_serial_no,other,arc_event
+Events – extracted,/METS:mets/METS:amdSec/METS:techMD/METS:mdWrap[@MDTYPE='OTHER']/METS:xmlData/ARCLib:eventAgents/ARCLib:eventAgent/ARCLib:scanningSoftwareName,FALSE,SIP profile XSLT,FALSE,1,arc_event_scanning_software_name,other,arc_event
+Events – extracted,/METS:mets/METS:amdSec/METS:techMD/METS:mdWrap[@MDTYPE='OTHER']/METS:xmlData/ARCLib:eventAgents/ARCLib:eventAgent/ARCLib:eventDate,FALSE,SIP profile XSLT,FALSE,1,arc_event_date,datetime,arc_event
+Events – extracted,/METS:mets/METS:amdSec/METS:techMD/METS:mdWrap[@MDTYPE='OTHER']/METS:xmlData/ARCLib:eventAgents/ARCLib:eventAgent/ARCLib:eventCount,FALSE,SIP profile XSLT,FALSE,1,arc_event_count,other,arc_event
+Rights,/METS:mets/METS:amdSec/METS:rightsMD,FALSE,SIP profile XSLT,FALSE,1,,,
+Other bibliographic metadata,/METS:mets/METS:amdSec/METS:sourceMD,FALSE,SIP profile XSLT,FALSE,1,,,
+AIP structure,/METS:mets/METS:fileSec,TRUE,system; fixity generator,TRUE,1,,,
+AIP structure,/METS:mets/METS:structMap,TRUE,system,TRUE,1,,,

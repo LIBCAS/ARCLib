@@ -9,7 +9,6 @@ import org.springframework.data.solr.core.query.Criteria;
 import javax.persistence.Transient;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -31,7 +30,7 @@ import java.util.List;
  */
 @Getter
 @Setter
-public class Params implements Serializable {
+public class Params {
     /**
      * Attribute name to sort on.
      */
@@ -62,7 +61,7 @@ public class Params implements Serializable {
     /**
      * Number of requested instances.
      * <p>
-     * If null specified then paging is disabled and all items are returned.
+     * If null or 0, then paging is disabled and all ({@link Integer#MAX_VALUE}) items are returned.
      */
     protected Integer pageSize = 10;
 

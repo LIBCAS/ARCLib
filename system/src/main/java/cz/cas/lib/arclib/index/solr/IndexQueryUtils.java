@@ -129,9 +129,7 @@ public class IndexQueryUtils {
             case IndexFieldType.STRING:
                 return new SimpleStringCriteria(fieldName + ":*" + value.replace(" ", "\\ ") + "*");
             case IndexFieldType.TEXT:
-                if (value.trim().contains(" "))
-                    return new SimpleStringCriteria(fieldName + ":\"" + value + "\"");
-                return Criteria.where(fieldName).contains(value);
+                return new SimpleStringCriteria(fieldName + ":\"" + value + "\"");
             default:
                 throw new UnsupportedSearchParameterException();
         }
@@ -290,30 +288,41 @@ public class IndexQueryUtils {
 
     public static void initializeQuery(SimpleQuery query, Params params, Map<String, IndexField> indexedFields) {
         if (params.getSorting() != null && !params.getSorting().isEmpty()) {
-            Sort s = Sort.by(Sort.Direction.valueOf(params.getSorting().get(0).getOrder().toString()), params.getSorting().get(0).getSort());
-            for (int i = 1; i < params.getSorting().size(); i++) {
+            Sort s = Sort.unsorted();
+            for (int i = 0; i < params.getSorting().size(); i++) {
+                String sortField;
                 SortSpecification sortSpecification = params.getSorting().get(i);
-                IndexField field = indexedFields.get(sortSpecification.getSort());
-                notNull(field, () -> new UnsupportedSearchParameterException("sort field: " + sortSpecification.getSort() + " not mapped"));
-                String sortField = field.getSortField();
-                notNull(sortField, () -> new UnsupportedSearchParameterException("sort is not supported on field type: " + field.getFieldType() + " consider adding " + IndexField.SORT_SUFFIX + " copy field"));
+                if ("score".equals(sortSpecification.getSort()))
+                    sortField = "score";
+                else {
+                    IndexField field = indexedFields.get(sortSpecification.getSort());
+                    notNull(field, () -> new UnsupportedSearchParameterException("sort field: " + sortSpecification.getSort() + " not mapped"));
+                    sortField = field.getSortField();
+                    notNull(sortField, () -> new UnsupportedSearchParameterException("sort is not supported on field type: " + field.getFieldType() + " consider adding " + IndexField.STRING_SUFFIX + " copy field"));
+                }
                 s = s.and(Sort.by(Sort.Direction.valueOf(sortSpecification.getOrder().toString()), sortField));
             }
             query.addSort(s);
         } else {
             notNull(params.getSort(), () -> new BadArgument("sort"));
             notNull(params.getOrder(), () -> new BadArgument("order"));
-            IndexField field = indexedFields.get(params.getSort());
-            notNull(field, () -> new UnsupportedSearchParameterException("sort field: " + params.getSort() + " not mapped"));
-            String sortField = field.getSortField();
-            notNull(sortField, () -> new UnsupportedSearchParameterException("sort is not supported on field type: " + field.getFieldType() + " consider adding " + IndexField.SORT_SUFFIX + " copy field"));
+            String sortField;
+            if ("score".equals(params.getSort()))
+                sortField = "score";
+            else {
+                IndexField field = indexedFields.get(params.getSort());
+                notNull(field, () -> new UnsupportedSearchParameterException("sort field: " + params.getSort() + " not mapped"));
+                sortField = field.getSortField();
+                notNull(sortField, () -> new UnsupportedSearchParameterException("sort is not supported on field type: " + field.getFieldType() + " consider adding " + IndexField.STRING_SUFFIX + " copy field"));
+            }
             query.addSort(Sort.by(Sort.Direction.valueOf(params.getOrder().toString()), sortField));
         }
         if (params.getPageSize() != null && params.getPageSize() > 0) {
             notNull(params.getPage(), () -> new BadArgument("page"));
             gte(params.getPage(), 0, () -> new BadArgument("page"));
             query.setPageRequest(PageRequest.of(params.getPage(), params.getPageSize()));
-        }
+        } else
+            query.setPageRequest(PageRequest.of(0, Integer.MAX_VALUE));
     }
 
     public static Criteria buildFilters(Params params, String indexType, Map<String, IndexField> indexedFields) {

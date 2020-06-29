@@ -3,7 +3,6 @@ package cz.cas.lib.arclib.service.formatIdentification.droid;
 import cz.cas.lib.arclib.domainbase.exception.GeneralException;
 import cz.cas.lib.arclib.service.formatIdentification.FormatIdentificationTool;
 import cz.cas.lib.arclib.service.formatIdentification.FormatIdentificationToolType;
-import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
@@ -39,16 +38,6 @@ public class DroidFormatIdentificationTool extends FormatIdentificationTool {
         }
     }
 
-    /**
-     * Column to parse from the .CSV with the identification result
-     */
-    @Getter
-    private CsvResultColumn parsedColumn;
-
-    public DroidFormatIdentificationTool(CsvResultColumn parsedColumn) {
-        this.parsedColumn = parsedColumn;
-    }
-
     public Map<String, List<Pair<String, String>>> analyze(Path pathToSip) throws IOException {
         notNull(pathToSip, () -> {
             throw new IllegalArgumentException("null path to SIP package");
@@ -66,7 +55,7 @@ public class DroidFormatIdentificationTool extends FormatIdentificationTool {
             exportProfile(profileResultsPath, exportResultsPath);
 
             log.debug("DROID format analysis for SIP at path " + pathToSip + " finished.");
-            return parseResults(exportResultsPath, parsedColumn, pathToSip);
+            return parseResults(exportResultsPath, pathToSip);
         } finally {
             cleanUp(asList(profileResultsPath, exportResultsPath));
         }
@@ -105,16 +94,15 @@ public class DroidFormatIdentificationTool extends FormatIdentificationTool {
      * From the CSV file with the exported profile parses the values of the specified column
      *
      * @param pathToResultsCsv path to the CSV file to parse
-     * @param parsedColumn     column of which respective values will appear in the result as values
      * @param pathToSip        path to the SIP package
      * @return map of key-value pairs where the key is a path to a file and the value is a list of pairs of a value
      * and corresponding identification method (multiple values can correspond to a single file path)
      * @throws GeneralException CSV file with the results of the DROID format identification is inaccessible
      */
-    protected Map<String, List<Pair<String, String>>> parseResults(Path pathToResultsCsv, CsvResultColumn parsedColumn, Path pathToSip) throws IOException {
+    protected Map<String, List<Pair<String, String>>> parseResults(Path pathToResultsCsv, Path pathToSip) throws IOException {
         log.debug("Parsing of CSV file " + pathToResultsCsv + " started.");
 
-        Map<String, List<Pair<String, String>>> filePathsToParsedColumnValues = new HashMap<>();
+        Map<String, List<Pair<String, String>>> filePathsToPuidValues = new HashMap<>();
 
         BufferedReader br = null;
         try {
@@ -129,20 +117,20 @@ public class DroidFormatIdentificationTool extends FormatIdentificationTool {
             String pathToSipStr = pathToSip.toAbsolutePath().toString().replace("\\", "/");
 
             for (CSVRecord record : records) {
-                String filePath = record.get(CsvResultColumn.URI);
-                String parsedColumnValue = record.get(parsedColumn.name());
-                String method = record.get(CsvResultColumn.METHOD.name());
+                String filePath = record.get("URI");
+                String puid = record.get("PUID");
+                String method = record.get("METHOD");
 
                 filePath = filePath.replaceAll("file:/?" + Pattern.quote(pathToSipStr) + "/", "");
 
-                List<Pair<String, String>> parsedColumnValues = filePathsToParsedColumnValues.get(filePath);
-                if (parsedColumnValues == null) {
-                    parsedColumnValues = new ArrayList<>();
+                List<Pair<String, String>> puids = filePathsToPuidValues.get(filePath);
+                if (puids == null) {
+                    puids = new ArrayList<>();
                 }
-                parsedColumnValues.add(Pair.of(parsedColumnValue, method));
-                filePathsToParsedColumnValues.put(filePath, parsedColumnValues);
+                puids.add(Pair.of(puid, method));
+                filePathsToPuidValues.put(filePath, puids);
 
-                log.debug("File at path \"" + filePath + "\" has been identified with format: " + parsedColumnValue +
+                log.debug("File at path \"" + filePath + "\" has been identified with format: " + puid +
                         ". Identification method: " + method + ".");
             }
         } catch (IOException e) {
@@ -155,7 +143,7 @@ public class DroidFormatIdentificationTool extends FormatIdentificationTool {
         }
 
         log.debug("Parsing of CSV file " + pathToResultsCsv + " finished.");
-        return filePathsToParsedColumnValues;
+        return filePathsToPuidValues;
     }
 
     public String getToolName() {

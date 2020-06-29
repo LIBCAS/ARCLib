@@ -60,7 +60,7 @@ public abstract class FixityCounter {
         notNull(expectedDigest, () -> {
             throw new IllegalArgumentException();
         });
-        return compare(expectedDigest, computeDigest(pathToFile));
+        return checkIfDigestsMatches(expectedDigest, computeDigest(pathToFile));
     }
 
     /**
@@ -78,10 +78,10 @@ public abstract class FixityCounter {
         notNull(expectedDigest, () -> {
             throw new IllegalArgumentException();
         });
-        return compare(expectedDigest, computeDigest(fileStream));
+        return checkIfDigestsMatches(expectedDigest, computeDigest(fileStream));
     }
 
-    private boolean compare(String expectedDigest, byte[] computedDigest) {
+    public boolean checkIfDigestsMatches(String expectedDigest, byte[] computedDigest) {
         String computedDigestStr = bytesToHexString(computedDigest);
         log.debug("expected digest: " + expectedDigest);
         log.debug("computed digest: " + computedDigestStr);

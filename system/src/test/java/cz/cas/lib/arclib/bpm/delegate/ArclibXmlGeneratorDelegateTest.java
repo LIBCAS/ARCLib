@@ -21,11 +21,13 @@ import cz.cas.lib.arclib.domain.profiles.SipProfile;
 import cz.cas.lib.arclib.index.solr.arclibxml.IndexedArclibXmlStore;
 import cz.cas.lib.arclib.security.user.UserDelegate;
 import cz.cas.lib.arclib.service.IngestIssueService;
+import cz.cas.lib.arclib.service.IngestWorkflowService;
 import cz.cas.lib.arclib.service.SipProfileService;
 import cz.cas.lib.arclib.service.UserService;
 import cz.cas.lib.arclib.service.arclibxml.ArclibXmlGenerator;
 import cz.cas.lib.arclib.service.arclibxml.ArclibXmlValidator;
 import cz.cas.lib.arclib.service.arclibxml.ArclibXmlXsltExtractor;
+import cz.cas.lib.arclib.service.fixity.MetsChecksumType;
 import cz.cas.lib.arclib.service.fixity.Sha512Counter;
 import cz.cas.lib.arclib.service.formatIdentification.FormatIdentificationToolType;
 import cz.cas.lib.arclib.service.preservationPlanning.ToolService;
@@ -36,6 +38,7 @@ import cz.cas.lib.core.sequence.Sequence;
 import cz.cas.lib.core.sequence.SequenceStore;
 import cz.cas.lib.core.store.Transactional;
 import org.apache.commons.lang3.tuple.Pair;
+import org.apache.commons.lang3.tuple.Triple;
 import org.camunda.bpm.engine.history.HistoricVariableInstance;
 import org.camunda.bpm.engine.test.Deployment;
 import org.camunda.bpm.engine.test.mock.Mocks;
@@ -43,12 +46,18 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.springframework.core.io.ClassPathResource;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.nio.file.Files;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 import static cz.cas.lib.core.util.Utils.*;
+import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsNull.notNullValue;
 import static org.junit.Assert.assertThat;
@@ -72,11 +81,11 @@ public class ArclibXmlGeneratorDelegateTest extends DelegateTest {
     private static final String SIP_HASH = "50FDE99373B04363727473D00AE938A4F4DEBFD0AFB1D428337D81905F6863B3CC303BB3" +
             "31FFB3361085C3A6A2EF4589FF9CD2014C90CE90010CD3805FA5FBC6";
 
-    String filePath1 = "dmdsec/amd_mets_7033d800-0935-11e4-beed-5ef3fc9ae867_0005.xml";
+    String filePath1 = "amdsec/amd_mets_7033d800-0935-11e4-beed-5ef3fc9ae867_0005.xml";
     String filePath2 = "amdsec/amd_mets_7033d800-0935-11e4-beed-5ef3fc9ae867_0006.xml";
     String filePath3 = "amdsec/amd_mets_7033d800-0935-11e4-beed-5ef3fc9ae867_0007.xml";
 
-    private IngestEvent messageDigestCalculationEvent;
+    private IngestEvent fixityGenerationEvent;
     private IngestEvent formatIdentificationEvent;
     private IngestEvent fixityCheckEvent;
     private ArclibXmlXsltExtractor extractor;
@@ -120,6 +129,8 @@ public class ArclibXmlGeneratorDelegateTest extends DelegateTest {
     private Sip sip;
     private Sip previousVersionSip;
     private AuthorialPackage authorialPackage;
+    private static final String ARCLIB_XML_DEFINITION = "index/arclibXmlDefinition.csv";
+
 
     @Before
     @Transactional
@@ -135,11 +146,13 @@ public class ArclibXmlGeneratorDelegateTest extends DelegateTest {
         indexedArclibXmlStore.setCoreName(arclibXmlCoreName);
         indexedArclibXmlStore.setSolrTemplate(getArclibXmlSolrTemplate());
         indexedArclibXmlStore.setUris("http://www.loc.gov/METS/",
+                "http://www.w3.org/2001/XMLSchema-instance",
                 "http://arclib.lib.cas.cz/ARCLIB_XSD",
                 "info:lc/xmlns/premis-v2",
                 "http://www.openarchives.org/OAI/2.0/oai_dc/",
                 "http://purl.org/dc/elements/1.1/",
                 "http://purl.org/dc/terms/");
+        indexedArclibXmlStore.setArclibXmlDefinition(new ClassPathResource(ARCLIB_XML_DEFINITION));
         indexedArclibXmlStore.init();
 
         userStore = new UserStore();
@@ -196,6 +209,7 @@ public class ArclibXmlGeneratorDelegateTest extends DelegateTest {
 
         arclibXmlGenerator = new ArclibXmlGenerator();
         arclibXmlGenerator.setUris("http://www.loc.gov/METS/",
+                "http://www.w3.org/2001/XMLSchema-instance",
                 "http://arclib.lib.cas.cz/ARCLIB_XSD",
                 "info:lc/xmlns/premis-v2",
                 "http://www.openarchives.org/OAI/2.0/oai_dc/",
@@ -216,7 +230,9 @@ public class ArclibXmlGeneratorDelegateTest extends DelegateTest {
         arclibXmlExtractorDelegate.setWorkspace(WS.toString());
         arclibXmlExtractorDelegate.setArclibXmlXsltExtractor(extractor);
         arclibXmlExtractorDelegate.setIngestEventStore(ingestEventStore);
-        arclibXmlExtractorDelegate.setIngestWorkflowStore(ingestWorkflowStore);
+        IngestWorkflowService ingestWorkflowService = new IngestWorkflowService();
+        ingestWorkflowService.setStore(ingestWorkflowStore);
+        arclibXmlExtractorDelegate.setIngestWorkflowService(ingestWorkflowService);
         arclibXmlExtractorDelegate.setToolService(toolService);
 
         arclibXmlGeneratorDelegate = new ArclibXmlGeneratorDelegate();
@@ -225,7 +241,7 @@ public class ArclibXmlGeneratorDelegateTest extends DelegateTest {
         arclibXmlGeneratorDelegate.setWorkspace(WS.toString());
         arclibXmlGeneratorDelegate.setIndexArclibXmlStore(indexedArclibXmlStore);
         arclibXmlGeneratorDelegate.setArclibXmlGenerator(arclibXmlGenerator);
-        arclibXmlGeneratorDelegate.setIngestWorkflowStore(ingestWorkflowStore);
+        arclibXmlGeneratorDelegate.setIngestWorkflowService(ingestWorkflowService);
         arclibXmlGeneratorDelegate.setSha512Counter(sha512Counter);
         arclibXmlGeneratorDelegate.setToolService(toolService);
         arclibXmlGeneratorDelegate.setUserService(userService);
@@ -275,6 +291,7 @@ public class ArclibXmlGeneratorDelegateTest extends DelegateTest {
         sip.setPreviousVersionSip(previousVersionSip);
         sip.setVersionNumber(SIP_VERSION);
         sip.setFolderStructure(folderStructure);
+        sip.setSizeInBytes(566L);
         sipStore.save(sip);
 
         relatedIngestWorkflow = new IngestWorkflow();
@@ -304,16 +321,16 @@ public class ArclibXmlGeneratorDelegateTest extends DelegateTest {
         Mocks.register("arclibXmlExtractorDelegate", arclibXmlExtractorDelegate);
         Mocks.register("arclibXmlGeneratorDelegate", arclibXmlGeneratorDelegate);
 
-        Tool messageDigestCalculationTool = new Tool();
-        messageDigestCalculationTool.setInternal(true);
-        messageDigestCalculationTool.setToolFunction(IngestToolFunction.message_digest_calculation);
-        toolStore.save(messageDigestCalculationTool);
+        Tool fixityGenerationTool = new Tool();
+        fixityGenerationTool.setInternal(true);
+        fixityGenerationTool.setToolFunction(IngestToolFunction.message_digest_calculation);
+        toolStore.save(fixityGenerationTool);
 
-        messageDigestCalculationEvent = new IngestEvent();
-        messageDigestCalculationEvent.setSuccess(true);
-        messageDigestCalculationEvent.setTool(messageDigestCalculationTool);
-        messageDigestCalculationEvent.setIngestWorkflow(ingestWorkflow);
-        ingestEventStore.save(messageDigestCalculationEvent);
+        fixityGenerationEvent = new IngestEvent();
+        fixityGenerationEvent.setSuccess(true);
+        fixityGenerationEvent.setTool(fixityGenerationTool);
+        fixityGenerationEvent.setIngestWorkflow(ingestWorkflow);
+        ingestEventStore.save(fixityGenerationEvent);
 
         Tool fixityCheckTool = new Tool();
         fixityCheckTool.setInternal(true);
@@ -328,7 +345,7 @@ public class ArclibXmlGeneratorDelegateTest extends DelegateTest {
     }
 
     @Test
-    public void testArclibXmlGeneratorDelegate() throws InterruptedException {
+    public void testArclibXmlGeneratorDelegate() throws InterruptedException, IOException {
         Map<String, Object> variables = asMap(BpmConstants.ProcessVariables.batchId, batch.getId());
 
         TreeMap<String, Pair<String, String>> identifiedFormats = new TreeMap<>();
@@ -337,29 +354,24 @@ public class ArclibXmlGeneratorDelegateTest extends DelegateTest {
         identifiedFormats.put(filePath2, Pair.of("x-fmt/111", "content"));
         identifiedFormats.put(filePath3, Pair.of("fmt/248", "extension"));
 
-        List<Pair<String, String>> filePathsToSizes = asList(
-                Pair.of(filePath1, "23523423"),
-                Pair.of(filePath2, "5342235"),
-                Pair.of(filePath3, "632432"));
-
-        Triplet<String, String, String> file1 = new Triplet(
-                filePath1, "MD5", "2a6d072e0f741b52148abe308bb506d8");
-        Triplet<String, String, String> file2 = new Triplet(
-                filePath2, "MD5", "d906978fbcd8c9488d604ccc30f323fd");
-        Triplet<String, String, String> file3 = new Triplet(
-                filePath3, "MD5", "e4b3c5adf26ebe80cf0a718be5ace66f");
+        HashMap<String, Map<String, Triple<Long, String, String>>> fixityGeneratorEventMap = new HashMap<>();
+        Map<String, Triple<Long, String, String>> fixityGenerationResultMap = new HashMap<>();
+        fixityGenerationResultMap.put(filePath1, Triple.of(23523423L, MetsChecksumType.MD5.toString(), "2a6d072e0f741b52148abe308bb506d8"));
+        fixityGenerationResultMap.put(filePath2, Triple.of(5342235L, MetsChecksumType.MD5.toString(), "d906978fbcd8c9488d604ccc30f323fd"));
+        fixityGenerationResultMap.put(filePath3, Triple.of(632432L, MetsChecksumType.MD5.toString(), "e4b3c5adf26ebe80cf0a718be5ace66f"));
+        fixityGeneratorEventMap.put(fixityGenerationEvent.getId(), fixityGenerationResultMap);
 
         Map<String, String> mapOfEventIdsToSha512Calculations = new HashMap<>();
-        mapOfEventIdsToSha512Calculations.put(messageDigestCalculationEvent.getId(), "554677FCE42A7FB189BEF9A9B520183EF80A4EF828964FBA2D1C49C4A771D898CFFC6B1967FF706AB0EE48E5FAF22E7D340AD1FD751C5B99BD2CD9F51CCD3126");
-        variables.put(BpmConstants.MessageDigestCalculation.mapOfEventIdsToSha512Calculations, mapOfEventIdsToSha512Calculations);
+        mapOfEventIdsToSha512Calculations.put(fixityGenerationEvent.getId(), "554677FCE42A7FB189BEF9A9B520183EF80A4EF828964FBA2D1C49C4A771D898CFFC6B1967FF706AB0EE48E5FAF22E7D340AD1FD751C5B99BD2CD9F51CCD3126");
+        variables.put(BpmConstants.FixityGeneration.mapOfEventIdsToSipSha512, mapOfEventIdsToSha512Calculations);
 
         Map<String, String> mapOfEventIdsToCrc32Calculations = new HashMap<>();
-        mapOfEventIdsToCrc32Calculations.put(messageDigestCalculationEvent.getId(), "28cc2aae");
-        variables.put(BpmConstants.MessageDigestCalculation.mapOfEventIdsToCrc32Calculations, mapOfEventIdsToCrc32Calculations);
+        mapOfEventIdsToCrc32Calculations.put(fixityGenerationEvent.getId(), "28cc2aae");
+        variables.put(BpmConstants.FixityGeneration.mapOfEventIdsToSipCrc32, mapOfEventIdsToCrc32Calculations);
 
         Map<String, String> mapOfEventIdsToMd5Calculations = new HashMap<>();
-        mapOfEventIdsToMd5Calculations.put(messageDigestCalculationEvent.getId(), "6d80ab7440370f3c68c75fa4642fb24a");
-        variables.put(BpmConstants.MessageDigestCalculation.mapOfEventIdsToMd5Calculations, mapOfEventIdsToMd5Calculations);
+        mapOfEventIdsToMd5Calculations.put(fixityGenerationEvent.getId(), "6d80ab7440370f3c68c75fa4642fb24a");
+        variables.put(BpmConstants.FixityGeneration.mapOfEventIdsToSipMd5, mapOfEventIdsToMd5Calculations);
 
         variables.put(BpmConstants.ProcessVariables.ingestWorkflowId, INGEST_WORKFLOW_ID);
         variables.put(BpmConstants.ProcessVariables.ingestWorkflowExternalId, EXTERNAL_ID);
@@ -372,15 +384,12 @@ public class ArclibXmlGeneratorDelegateTest extends DelegateTest {
         variables.put(BpmConstants.ProcessVariables.debuggingModeActive, true);
 
         variables.put(BpmConstants.Ingestion.sipFileName, SIP_FILE_NAME);
-        variables.put(BpmConstants.Ingestion.filePathsAndFileSizes, filePathsToSizes);
         variables.put(BpmConstants.Ingestion.dateTime, "2018-05-11T10:27:00Z");
-        variables.put(BpmConstants.Ingestion.sizeInBytes, 512312123L);
         variables.put(BpmConstants.Ingestion.authorialId, authorialPackage.getAuthorialId());
-        variables.put(BpmConstants.Ingestion.rootDirFilesAndFixities, new ArrayList());
 
         variables.put(BpmConstants.Validation.validationProfileId, VALIDATION_PROFILE_ID);
 
-        variables.put(BpmConstants.MessageDigestCalculation.preferredMessageDigestCalculationEventId, messageDigestCalculationEvent.getId());
+        variables.put(BpmConstants.FixityGeneration.preferredFixityGenerationEventId, fixityGenerationEvent.getId());
 
         Tool droidTool = new Tool();
         droidTool.setName(FormatIdentificationToolType.DROID.toString());
@@ -402,11 +411,7 @@ public class ArclibXmlGeneratorDelegateTest extends DelegateTest {
         variables.put(BpmConstants.FormatIdentification.preferredFormatIdentificationEventId, formatIdentificationEvent.getId());
 
         variables.put(BpmConstants.ProcessVariables.sipFolderWorkspacePath, SIP.toAbsolutePath().toString());
-
-        HashMap<String, List<Triplet<String, String, String>>> mapOfEventIdsToFilePathsAndFixities = new HashMap<>();
-        mapOfEventIdsToFilePathsAndFixities.put(fixityCheckEvent.getId(), asList(file1, file2, file3));
-        variables.put(BpmConstants.FixityCheck.preferredFixityCheckEventId, fixityCheckEvent.getId());
-        variables.put(BpmConstants.FixityCheck.mapOfEventIdsToFilePathsAndFixities, mapOfEventIdsToFilePathsAndFixities);
+        variables.put(BpmConstants.FixityCheck.fixityCheckToolCounter, 0);
 
         IngestIssueDefinition def = new IngestIssueDefinition();
         def.setName("def");
@@ -445,8 +450,8 @@ public class ArclibXmlGeneratorDelegateTest extends DelegateTest {
         assertThat(list.get(0).getValue(), notNullValue());
         byte[] extract = (byte[]) list.get(0).getValue();
         variables.put(BpmConstants.MetadataExtraction.result, extract);
-        variables.put(BpmConstants.MessageDigestCalculation.preferredMessageDigestCalculationEventId, messageDigestCalculationEvent.getId());
-
+        variables.put(BpmConstants.FixityGeneration.preferredFixityGenerationEventId, fixityGenerationEvent.getId());
+        variables.put(BpmConstants.FixityGeneration.mapOfEventIdsToSipContentFixityData, fixityGeneratorEventMap);
         startJob(PROCESS_INSTANCE_KEY_GEN, variables);
         Thread.sleep(3000);
 
@@ -455,5 +460,8 @@ public class ArclibXmlGeneratorDelegateTest extends DelegateTest {
 
         Map<String, Object> aclibXmlIndexDocument = indexedArclibXmlStore.findArclibXmlIndexDocument(EXTERNAL_ID);
         assertThat(aclibXmlIndexDocument, notNullValue());
+        byte[] xmlFromTmpStorage = Files.readAllBytes(ArclibUtils.getAipXmlWorkspacePath(ingestWorkflow.getExternalId(), WS.toString()));
+        assertThat(xmlFromTmpStorage.length, greaterThan(0));
+
     }
 }

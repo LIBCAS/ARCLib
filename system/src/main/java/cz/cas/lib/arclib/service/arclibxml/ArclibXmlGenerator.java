@@ -8,13 +8,16 @@ import cz.cas.lib.arclib.domain.packages.FolderStructure;
 import cz.cas.lib.arclib.domain.packages.Sip;
 import cz.cas.lib.arclib.domain.preservationPlanning.Tool;
 import cz.cas.lib.arclib.exception.validation.MissingNode;
+import cz.cas.lib.arclib.service.fixity.MetsChecksumType;
 import cz.cas.lib.arclib.store.IngestEventStore;
 import cz.cas.lib.arclib.store.IngestWorkflowStore;
+import cz.cas.lib.arclib.utils.ArclibUtils;
 import cz.cas.lib.arclib.utils.NamespaceChangingVisitor;
 import cz.cas.lib.core.store.Transactional;
-import cz.cas.lib.core.util.Utils;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.EnumUtils;
 import org.apache.commons.lang3.tuple.Pair;
+import org.apache.commons.lang3.tuple.Triple;
 import org.dom4j.*;
 import org.dom4j.io.SAXReader;
 import org.dom4j.tree.DefaultAttribute;
@@ -25,6 +28,7 @@ import javax.inject.Inject;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Paths;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
@@ -50,8 +54,6 @@ public class ArclibXmlGenerator {
     private String arclibVersion;
     private IngestEventStore ingestEventStore;
 
-    private List<Pair<String, String>> filePathsAndObjIdentifiers;
-
     /**
      * Supplements ArclibXml with generated metadata
      *
@@ -62,17 +64,14 @@ public class ArclibXmlGenerator {
      */
     @Transactional
     public Document generateMetadata(String xml, Map<String, Object> variables) throws DocumentException {
-        filePathsAndObjIdentifiers = new ArrayList<>();
+        List<Pair<String, String>> filePathsAndObjIdentifiers = new ArrayList<>();
 
         String ingestWorkflowExternalId = (String) variables.get(ProcessVariables.ingestWorkflowExternalId);
         log.debug("Generating metadata for ingest workflow with external id " + ingestWorkflowExternalId + ".");
         IngestWorkflow ingestWorkflow = ingestWorkflowStore.findByExternalId(ingestWorkflowExternalId);
 
-        List<Pair<String, String>> filePathsAndFileSizes = (List<Pair<String, String>>)
-                variables.get(Ingestion.filePathsAndFileSizes);
-
         //assign each file an object identifier
-        List<String> filePaths = filePathsAndFileSizes.stream().map(Pair::getLeft).collect(Collectors.toList());
+        List<String> filePaths = ArclibUtils.listFilePaths(Paths.get((String) variables.get(ProcessVariables.sipFolderWorkspacePath)));
         for (int i = 0; i < filePaths.size(); i++) {
             String objIdentifier = "obj-" + String.format(OBJ_NUMBER_FORMAT, i + 1);
             filePathsAndObjIdentifiers.add(Pair.of(filePaths.get(i), objIdentifier));
@@ -123,17 +122,17 @@ public class ArclibXmlGenerator {
           Add premis:object for whole package
          */
         //place the element with premis object before the element with premis agents and events
-        addPremisObject(metsElement, variables, positionOfPremisAgentsAndEvents, eventIdentifiers);
+        addPremisObject(metsElement, variables, positionOfPremisAgentsAndEvents, eventIdentifiers, ingestWorkflow.getSip().getSizeInBytes());
 
         /*
           Add METS:fileSec
          */
-        addFileSec(metsElement, variables);
+        addFileSec(metsElement, variables, filePathsAndObjIdentifiers);
 
         /*
           Add METS:structMap
          */
-        addStructMap(metsElement, ingestWorkflow.getSip());
+        addStructMap(metsElement, ingestWorkflow.getSip(), filePathsAndObjIdentifiers);
         return doc;
     }
 
@@ -249,7 +248,7 @@ public class ArclibXmlGenerator {
     /**
      * @param position position of the amdSecElement to be created in withing METS file
      */
-    private void addPremisObject(Element metsElement, Map<String, Object> variables, int position, Set<String> eventIdentifiers) {
+    private void addPremisObject(Element metsElement, Map<String, Object> variables, int position, Set<String> eventIdentifiers, long sizeInBytes) {
         Element amdSecElement = metsElement.addElement("METS:amdSec");
 
         //move created amdSecElement to the given position in the METS file
@@ -262,7 +261,7 @@ public class ArclibXmlGenerator {
         mdWrapElement.addAttribute("MDTYPE", "PREMIS");
         Element xmlDataElement = mdWrapElement.addElement("METS:xmlData");
         Element objectElement = xmlDataElement.addElement("premis:object", uris.get(PREMIS));
-        objectElement.addAttribute("xsi:type", "premis:file");
+        objectElement.addAttribute(QName.get("xsi:type", uris.get(XSI)), "premis:file");
 
         Element objectIdentifierElement = objectElement.addElement("premis:objectIdentifier");
         Element objectIdentifierType = objectIdentifierElement.addElement("premis:objectIdentifierType");
@@ -274,24 +273,25 @@ public class ArclibXmlGenerator {
         Element compositionLevelElement = objectCharacteristicsElement.addElement("premis:compositionLevel");
         compositionLevelElement.addText("0");
 
-        String preferredMessageDigestCalculationEventId = (String) variables.get(MessageDigestCalculation.preferredMessageDigestCalculationEventId);
-        IngestEvent preferredMessageDigestCalculationEvent = ingestEventStore.find(preferredMessageDigestCalculationEventId);
-        if (preferredMessageDigestCalculationEvent.isSuccess()) {
-            Map<String, String> mapOfEventIdsToMd5Calculations = (Map<String, String>)
-                    variables.get(MessageDigestCalculation.mapOfEventIdsToMd5Calculations);
-            addFixity(objectCharacteristicsElement, "MD5", mapOfEventIdsToMd5Calculations.get(preferredMessageDigestCalculationEventId));
+        String preferredFixityGenerationEventId = (String) variables.get(FixityGeneration.preferredFixityGenerationEventId);
+        if (preferredFixityGenerationEventId != null) {
+            IngestEvent preferredFixityGenerationEvent = ingestEventStore.find(preferredFixityGenerationEventId);
+            if (preferredFixityGenerationEvent != null && preferredFixityGenerationEvent.isSuccess()) {
+                Map<String, String> mapOfEventIdsToMd5Calculations = (Map<String, String>)
+                        variables.get(FixityGeneration.mapOfEventIdsToSipMd5);
+                addFixity(objectCharacteristicsElement, "MD5", mapOfEventIdsToMd5Calculations.get(preferredFixityGenerationEventId));
 
-            Map<String, String> mapOfEventIdsToCrc32Calculations = (Map<String, String>)
-                    variables.get(MessageDigestCalculation.mapOfEventIdsToCrc32Calculations);
-            addFixity(objectCharacteristicsElement, "CRC32", mapOfEventIdsToCrc32Calculations.get(preferredMessageDigestCalculationEventId));
+                Map<String, String> mapOfEventIdsToCrc32Calculations = (Map<String, String>)
+                        variables.get(FixityGeneration.mapOfEventIdsToSipCrc32);
+                addFixity(objectCharacteristicsElement, "CRC32", mapOfEventIdsToCrc32Calculations.get(preferredFixityGenerationEventId));
 
-            Map<String, String> mapOfEventIdsToSha512Calculations = (Map<String, String>)
-                    variables.get(MessageDigestCalculation.mapOfEventIdsToSha512Calculations);
-            addFixity(objectCharacteristicsElement, "SHA-512", mapOfEventIdsToSha512Calculations.get(preferredMessageDigestCalculationEventId));
+                Map<String, String> mapOfEventIdsToSha512Calculations = (Map<String, String>)
+                        variables.get(FixityGeneration.mapOfEventIdsToSipSha512);
+                addFixity(objectCharacteristicsElement, "SHA-512", mapOfEventIdsToSha512Calculations.get(preferredFixityGenerationEventId));
+            }
         }
 
         Element sizeElement = objectCharacteristicsElement.addElement("premis:size");
-        long sizeInBytes = (long) (variables.get(Ingestion.sizeInBytes));
         sizeElement.addText(String.valueOf(sizeInBytes));
 
         Element formatElement = objectCharacteristicsElement.addElement("premis:format");
@@ -318,7 +318,7 @@ public class ArclibXmlGenerator {
         }
     }
 
-    private void addStructMap(Element metsElement, Sip sip) {
+    private void addStructMap(Element metsElement, Sip sip, List<Pair<String, String>> filePathsAndObjIdentifiers) {
         Element structMapElement = metsElement.addElement("METS:structMap");
         structMapElement.addAttribute("ID", "Physical_Structure");
         structMapElement.addAttribute("TYPE", "PHYSICAL");
@@ -326,19 +326,23 @@ public class ArclibXmlGenerator {
         Element aipDivElement = structMapElement.addElement("METS:div");
 
         FolderStructure sipFolderStructure = sip.getFolderStructure();
-        addStructMapDivElementsRecursively(aipDivElement, sipFolderStructure, sipFolderStructure.getCaption());
+        addStructMapDivElementsRecursively(aipDivElement, sipFolderStructure, sipFolderStructure.getCaption(), filePathsAndObjIdentifiers);
     }
 
-    private void addStructMapDivElementsRecursively(Element parentDivElement, FolderStructure folderStructure, String parentFolderStructurePath) {
+    private void addStructMapDivElementsRecursively(Element parentDivElement,
+                                                    FolderStructure folderStructure,
+                                                    String parentFolderStructurePath,
+                                                    List<Pair<String, String>> filePathsAndObjIdentifiers) {
         Collection<FolderStructure> children = folderStructure.getChildren();
         if (children == null) {
             //folder structure represents a file
-            Pair<String, String> filePathAndObjectIdentifier = filePathsAndObjIdentifiers.stream()
+            Optional<Pair<String, String>> first = filePathsAndObjIdentifiers.stream()
                     .filter(pair -> {
                         String folderStructurePath = parentFolderStructurePath.substring(parentFolderStructurePath.indexOf("/") + 1);
                         return pair.getLeft().equals(folderStructurePath);
                     })
-                    .findFirst().get();
+                    .findFirst();
+            Pair<String, String> filePathAndObjectIdentifier = first.get();
             Element fptrElement = parentDivElement.addElement("METS:fptr");
             fptrElement.addAttribute("FILEID", filePathAndObjectIdentifier.getRight());
         } else {
@@ -348,57 +352,49 @@ public class ArclibXmlGenerator {
             children.stream()
                     .sorted(Comparator.comparing(fs -> fs.getChildren() != null))
                     .forEach(childFolderStructure -> addStructMapDivElementsRecursively(divElement, childFolderStructure,
-                            parentFolderStructurePath + "/" + childFolderStructure.getCaption()));
+                            parentFolderStructurePath + "/" + childFolderStructure.getCaption(), filePathsAndObjIdentifiers));
         }
     }
 
-    private void addFileSec(Element metsElement, Map<String, Object> variables) {
+    private void addFileSec(Element metsElement, Map<String, Object> variables, List<Pair<String, String>> filePathsAndObjIdentifiers) {
         Element fileSecElement = metsElement.addElement("METS:fileSec");
         Element fileGrpElement = fileSecElement.addElement("METS:fileGrp");
         fileGrpElement.addAttribute("USE", "file");
 
-        String preferredFixityCheckEventId = (String) variables.get(FixityCheck.preferredFixityCheckEventId);
-        IngestEvent preferredFixityCheckEvent = ingestEventStore.find(preferredFixityCheckEventId);
-
-        if (preferredFixityCheckEvent.isSuccess()) {
-            List<Pair<String, String>> filePathsAndFileSizes =
-                    (List<Pair<String, String>>) variables.get(Ingestion.filePathsAndFileSizes);
-
-            HashMap<String, List<Utils.Triplet<String, String, String>>> mapOfEventIdsToFilePathsAndFixities =
-                    (HashMap<String, List<Utils.Triplet<String, String, String>>>)
-                            variables.get(FixityCheck.mapOfEventIdsToFilePathsAndFixities);
-
-
-            List<Utils.Triplet<String, String, String>> filePathsAndFileFixities = mapOfEventIdsToFilePathsAndFixities.get(preferredFixityCheckEventId);
-            //merge list of fixities computed during fixity verification with fixities for files located in the root folder
-            filePathsAndFileFixities.addAll(
-                    (List<Utils.Triplet<String, String, String>>) variables.get(Ingestion.rootDirFilesAndFixities));
-
-            for (Pair<String, String> filePathAndObjIdentifier : filePathsAndObjIdentifiers) {
-                Utils.Triplet<String, String, String> filePathAndFixity = filePathsAndFileFixities.stream()
-                        .filter(triplet -> {
-                            String filePath = triplet.getT();
-                            return filePath.equals(filePathAndObjIdentifier.getLeft());
-                        })
-                        .findFirst().get();
-                String fixityType = filePathAndFixity.getU();
-                String fixityValue = filePathAndFixity.getV();
-
+        IngestEvent preferredFixityGenerationEvent = null;
+        String preferredFixityGenerationEventId = (String) variables.get(FixityGeneration.preferredFixityGenerationEventId);
+        if (preferredFixityGenerationEventId != null)
+            preferredFixityGenerationEvent = ingestEventStore.find(preferredFixityGenerationEventId);
+        if (preferredFixityGenerationEventId == null || preferredFixityGenerationEvent == null || !preferredFixityGenerationEvent.isSuccess()) {
+            for (Pair<String, String> filePathsAndObjIdentifier : filePathsAndObjIdentifiers) {
                 Element fileElement = fileGrpElement.addElement("METS:file");
-
-                fileElement.addAttribute("ID", filePathAndObjIdentifier.getRight());
-
+                fileElement.addAttribute("ID", filePathsAndObjIdentifier.getRight());
                 Element fLocatElement = fileElement.addElement("METS:FLocat");
                 fLocatElement.addAttribute("LOCTYPE", "OTHER");
-                fLocatElement.addAttribute("xlink:href", filePathAndObjIdentifier.getLeft());
-
-                fileElement.addAttribute("CHECKSUMTYPE", fixityType);
-                fileElement.addAttribute("CHECKSUM", fixityValue);
-
-                Pair<String, String> filePathAndSize = filePathsAndFileSizes.stream()
-                        .filter(pair -> pair.getLeft().equals(filePathAndObjIdentifier.getLeft()))
-                        .findFirst().get();
-                fileElement.addAttribute("SIZE", filePathAndSize.getRight());
+                fLocatElement.addAttribute("xlink:href", filePathsAndObjIdentifier.getLeft());
+            }
+            return;
+        }
+        Map<String, Triple<Long, String, String>> sipContentFixityData =
+                ((Map<String, Map<String, Triple<Long, String, String>>>)
+                        variables.get(FixityGeneration.mapOfEventIdsToSipContentFixityData)).get(preferredFixityGenerationEventId);
+        for (Pair<String, String> filePathsAndObjIdentifier : filePathsAndObjIdentifiers) {
+            Element fileElement = fileGrpElement.addElement("METS:file");
+            fileElement.addAttribute("ID", filePathsAndObjIdentifier.getRight());
+            Element fLocatElement = fileElement.addElement("METS:FLocat");
+            fLocatElement.addAttribute("LOCTYPE", "OTHER");
+            fLocatElement.addAttribute("xlink:href", filePathsAndObjIdentifier.getLeft());
+            Triple<Long, String, String> fileFixityData = sipContentFixityData.get(filePathsAndObjIdentifier.getLeft());
+            if (fileFixityData != null) {
+                if (fileFixityData.getLeft() != null)
+                    fileElement.addAttribute("SIZE", fileFixityData.getLeft().toString());
+                if (fileFixityData.getMiddle() != null) {
+                    MetsChecksumType metsChecksumType = EnumUtils.getEnum(MetsChecksumType.class, fileFixityData.getMiddle());
+                    if (metsChecksumType != null) {
+                        fileElement.addAttribute("CHECKSUMTYPE", metsChecksumType.getXmlValue());
+                        fileElement.addAttribute("CHECKSUM", fileFixityData.getRight());
+                    }
+                }
             }
         }
     }
@@ -487,9 +483,10 @@ public class ArclibXmlGenerator {
     private void addAggregatedFormats(Element xmlDataElement, Map<String, Object> variables) {
         Element arclibFormatsElement = xmlDataElement.addElement("ARCLIB:formats", uris.get(ARCLIB));
         String preferredFormatIdentificationEventId = (String) variables.get(FormatIdentification.preferredFormatIdentificationEventId);
+        if (preferredFormatIdentificationEventId == null)
+            return;
         IngestEvent preferredFormatIdentificationEvent = ingestEventStore.find(preferredFormatIdentificationEventId);
-
-        if (preferredFormatIdentificationEvent.isSuccess()) {
+        if (preferredFormatIdentificationEvent != null && preferredFormatIdentificationEvent.isSuccess()) {
             HashMap<String, TreeMap<String, Pair<String, String>>> mapOfEventIdsToMapsOfFilesToFormats =
                     (HashMap<String, TreeMap<String, Pair<String, String>>>)
                             variables.get(FormatIdentification.mapOfEventIdsToMapsOfFilesToFormats);
@@ -618,9 +615,8 @@ public class ArclibXmlGenerator {
         addEvent(amdSecForEventsElement, eventIdValue, eventIdentifier, true, AGENT_ARCLIB,
                 eventDetail, "metadata modification", Instant.now().truncatedTo(ChronoUnit.SECONDS).toString());
 
-        xml = prettyPrint(doc);
-        log.debug("Updated ARCLib XML: \n" + xml);
-        return xml;
+        log.debug("Ingest Workflow: " + ingestWorkflow.getId() + ": " + eventDetail);
+        return prettyPrint(doc);
     }
 
     private String toEventId(IngestToolFunction f) {
@@ -642,13 +638,14 @@ public class ArclibXmlGenerator {
     }
 
     @Inject
-    public void setUris(@Value("${namespaces.mets}") String mets, @Value("${namespaces.arclib}") String arclib, @Value("${namespaces" +
+    public void setUris(@Value("${namespaces.mets}") String mets, @Value("${namespaces.xsi}") String xsi, @Value("${namespaces.arclib}") String arclib, @Value("${namespaces" +
             ".premis}") String premis, @Value("${namespaces.oai_dc}") String oai_dc, @Value("${namespaces.dc}") String dc,
                         @Value("${namespaces.dcterms}") String dcterms) {
         Map<String, String> uris = new HashMap<>();
         uris.put(METS, mets);
         uris.put(ARCLIB, arclib);
         uris.put(PREMIS, premis);
+        uris.put(XSI, xsi);
         uris.put(OAIS_DC, oai_dc);
         uris.put(DC, dc);
         uris.put(DCTERMS, dcterms);

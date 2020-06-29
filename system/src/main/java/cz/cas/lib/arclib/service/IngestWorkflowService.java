@@ -4,11 +4,11 @@ import cz.cas.lib.arclib.bpm.BpmConstants;
 import cz.cas.lib.arclib.domain.Batch;
 import cz.cas.lib.arclib.domain.ingestWorkflow.IngestEvent;
 import cz.cas.lib.arclib.domain.ingestWorkflow.IngestWorkflow;
+import cz.cas.lib.arclib.domainbase.exception.GeneralException;
+import cz.cas.lib.arclib.domainbase.exception.MissingObject;
 import cz.cas.lib.arclib.dto.IngestWorkflowDto;
 import cz.cas.lib.arclib.store.IngestEventStore;
 import cz.cas.lib.arclib.store.IngestWorkflowStore;
-import cz.cas.lib.arclib.domainbase.exception.GeneralException;
-import cz.cas.lib.arclib.domainbase.exception.MissingObject;
 import cz.cas.lib.core.store.Transactional;
 import org.camunda.bpm.engine.HistoryService;
 import org.camunda.bpm.engine.history.HistoricProcessInstance;
@@ -64,9 +64,10 @@ public class IngestWorkflowService {
     }
 
     public IngestWorkflowDto getInfo(String externalId) {
+        IngestWorkflow ingestWorkflow = store.findByExternalId(externalId);
+        notNull(ingestWorkflow, () -> new MissingObject(IngestWorkflow.class, externalId));
         Map<String, Object> variables = getVariables(externalId);
         List<IngestEvent> events = ingestEventStore.findAllOfIngestWorkflow(externalId);
-        IngestWorkflow ingestWorkflow = store.findByExternalId(externalId);
         notNull(ingestWorkflow, () -> new MissingObject(IngestWorkflow.class, ingestWorkflow.getExternalId()));
         Batch batch = ingestWorkflow.getBatch();
         ingestWorkflow.setBatch(null);

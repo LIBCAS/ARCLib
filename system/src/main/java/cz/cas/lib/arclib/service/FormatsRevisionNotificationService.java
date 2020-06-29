@@ -2,12 +2,12 @@ package cz.cas.lib.arclib.service;
 
 import cz.cas.lib.arclib.domain.FormatsRevisionNotification;
 import cz.cas.lib.arclib.domain.User;
+import cz.cas.lib.arclib.domainbase.exception.MissingObject;
 import cz.cas.lib.arclib.mail.ArclibMailCenter;
 import cz.cas.lib.arclib.security.authorization.Roles;
 import cz.cas.lib.arclib.security.authorization.assign.AssignedRoleService;
 import cz.cas.lib.arclib.security.user.UserDetails;
 import cz.cas.lib.arclib.store.FormatsRevisionNotificationStore;
-import cz.cas.lib.arclib.domainbase.exception.MissingObject;
 import cz.cas.lib.core.scheduling.job.Job;
 import cz.cas.lib.core.scheduling.job.JobService;
 import cz.cas.lib.core.script.ScriptType;
@@ -131,6 +131,10 @@ public class FormatsRevisionNotificationService {
         toBeNotified.addAll(assignedRoleService.getUsersWithRole(Roles.ADMIN));
         toBeNotified.stream()
                 .forEach(user -> arclibMailCenter.sendFormatsRevisionNotification(user.getEmail(), message, Instant.now()));
+    }
+
+    public Collection<FormatsRevisionNotification> findAll() {
+        return store.findAll();
     }
 
     @Inject

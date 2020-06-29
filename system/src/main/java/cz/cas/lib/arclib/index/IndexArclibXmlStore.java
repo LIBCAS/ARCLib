@@ -5,10 +5,14 @@ import cz.cas.lib.arclib.index.solr.arclibxml.IndexedAipState;
 import cz.cas.lib.arclib.index.solr.arclibxml.IndexedArclibXmlDocument;
 import cz.cas.lib.core.index.dto.Params;
 import cz.cas.lib.core.index.dto.Result;
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVRecord;
+import org.springframework.core.io.Resource;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -19,7 +23,7 @@ public interface IndexArclibXmlStore<T> {
      *
      * @throws BadArgument if the value of {@link AipXmlNodeValueType#TIME}, {@link AipXmlNodeValueType#DATE} or {@link AipXmlNodeValueType#DATETIME} field can't be parsed.
      */
-    void createIndex(String arclibXml, String producerId, String producerName, String userName, IndexedAipState aipState, boolean debuggingModeActive);
+    void createIndex(byte[] arclibXml, String producerId, String producerName, String userName, IndexedAipState aipState, boolean debuggingModeActive, boolean latestVersion);
 
     /**
      * Finds documents.
@@ -38,14 +42,22 @@ public interface IndexArclibXmlStore<T> {
      * @return
      */
     Map<String, Object> findArclibXmlIndexDocument(String externalId);
+
     /**
      * changes the aip state of the record
      */
-    void changeAipState(String arclibXmlDocumentId, IndexedAipState newState);
+    void changeAipState(String arclibXmlDocumentId, IndexedAipState newState, byte[] aipXml);
+
+    /**
+     * updates the <i>latest</i> flag of the ARCLib XML record
+     */
+    void setLatestFlag(String arclibXmlDocumentId, boolean flag, byte[] aipXml);
 
     void removeIndex(String id);
 
     String getMainDocumentIndexType();
+
+    Resource getArclibXmlDefinition();
 
     /**
      * parses CSV file into configuration used by indexer
@@ -58,39 +70,33 @@ public interface IndexArclibXmlStore<T> {
         ArclibXmlIndexTypeConfig mainCollection = new ArclibXmlIndexTypeConfig(null, getMainDocumentIndexType());
         Map<String, ArclibXmlIndexTypeConfig> indexTypeToConfigMap = new HashMap<>();
         indexTypeToConfigMap.put(mainCollection.getIndexType(), mainCollection);
-        try (BufferedReader br = new BufferedReader(new InputStreamReader(getClass().getClassLoader().getResourceAsStream("index/arclibXmlDefinition.csv")))) {
-            br.readLine();
-            String line = br.readLine();
-            while (line != null) {
-                String arr[] = line.split(",", -1);
-                if (arr.length != 8)
-                    throw new IllegalArgumentException(String.format("wrong format of ARCLib xml definition line: %s", line));
-                //configuration of fields of main collection (i.e. not nested fields)
-                if (!arr[5].isEmpty() && arr[7].isEmpty()) {
-                    mainCollection.getIndexedFieldConfig().add(new ArclibXmlField(arr[5], arr[6], arr[1], !"N".equals(arr[4])));
-                    line = br.readLine();
-                    continue;
+
+        BufferedReader br = new BufferedReader(new InputStreamReader(getArclibXmlDefinition().getInputStream(), StandardCharsets.UTF_8));
+        Iterable<CSVRecord> records = CSVFormat.EXCEL.withDelimiter(',').withHeader().withSkipHeaderRecord(true).parse(br);
+
+        for (CSVRecord record : records) {
+            //configuration of fields of main collection (i.e. not nested fields)
+            if (!record.get(6).isEmpty() && record.get(8).isEmpty()) {
+                mainCollection.getIndexedFieldConfig().add(new ArclibXmlField(record.get(6), record.get(7), record.get(1), !"N".equals(record.get(5))));
+                continue;
+            }
+            //declaration of nested collection, configuration of its fields follows
+            if (record.get(6).isEmpty() && !record.get(8).isEmpty() && "N".equals(record.get(5))) {
+                indexTypeToConfigMap.put(record.get(8), new ArclibXmlIndexTypeConfig(record.get(1), record.get(8)));
+                continue;
+            }
+            //configuration of fields of particular nested collection
+            if (!record.get(6).isEmpty() && !record.get(8).isEmpty()) {
+                ArclibXmlIndexTypeConfig childConfig = indexTypeToConfigMap.get(record.get(8));
+                if (childConfig == null)
+                    throw new IllegalArgumentException("Found config line for field: " + record.get(6) + " of child: " + record.get(8) + " but the child was not defined yet. There must be a child defining line preceeding this one with: 1) xpath set to the root of the child, 2) multiplicity set to N, 3) empty field name and field type, 4) child name set to: " + record.get(8));
+                if (!record.get(1).startsWith(childConfig.getRootXpath()))
+                    throw new IllegalArgumentException("Found config line for field: " + record.get(6) + " of child: " + record.get(8) + " which xpath: " + record.get(1) + " does not have the prefix equal to the root xpath: " + childConfig.getRootXpath());
+                String childRelativeXpath = record.get(1).replace(childConfig.getRootXpath(), "");
+                if (childRelativeXpath.charAt(0) == '/' && childRelativeXpath.charAt(1) != '/') {
+                    childRelativeXpath = childRelativeXpath.substring(1);
                 }
-                //declaration of nested collection, configuration of its fields follows
-                if (arr[5].isEmpty() && !arr[7].isEmpty() && "N".equals(arr[4])) {
-                    indexTypeToConfigMap.put(arr[7], new ArclibXmlIndexTypeConfig(arr[1], arr[7]));
-                    line = br.readLine();
-                    continue;
-                }
-                //configuration of fields of particular nested collection
-                if (!arr[5].isEmpty() && !arr[7].isEmpty()) {
-                    ArclibXmlIndexTypeConfig childConfig = indexTypeToConfigMap.get(arr[7]);
-                    if (childConfig == null)
-                        throw new IllegalArgumentException("Found config line for field: " + arr[5] + " of child: " + arr[7] + " but the child was not defined yet. There must be a child defining line preceeding this one with: 1) xpath set to the root of the child, 2) multiplicity set to N, 3) empty field name and field type, 4) child name set to: " + arr[7]);
-                    if (!arr[1].startsWith(childConfig.getRootXpath()))
-                        throw new IllegalArgumentException("Found config line for field: " + arr[5] + " of child: " + arr[7] + " which xpath: " + arr[1] + " does not have the prefix equal to the root xpath: " + childConfig.getRootXpath());
-                    String childRelativeXpath = arr[1].replace(childConfig.getRootXpath(), "");
-                    if (childRelativeXpath.charAt(0) == '/' && childRelativeXpath.charAt(1) != '/') {
-                        childRelativeXpath = childRelativeXpath.substring(1);
-                    }
-                    childConfig.getIndexedFieldConfig().add(new ArclibXmlField(arr[5], arr[6], childRelativeXpath, !"N".equals(arr[4])));
-                }
-                line = br.readLine();
+                childConfig.getIndexedFieldConfig().add(new ArclibXmlField(record.get(6), record.get(7), childRelativeXpath, !"N".equals(record.get(5))));
             }
         }
         return indexTypeToConfigMap;

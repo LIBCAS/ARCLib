@@ -3,12 +3,15 @@ package cz.cas.lib.arclib.bpm.delegate;
 import cz.cas.lib.arclib.bpm.BpmConstants;
 import cz.cas.lib.arclib.bpm.FixityGeneratorDelegate;
 import cz.cas.lib.arclib.domain.ingestWorkflow.IngestEvent;
+import cz.cas.lib.arclib.service.IngestWorkflowService;
 import cz.cas.lib.arclib.service.fixity.Crc32Counter;
 import cz.cas.lib.arclib.service.fixity.Md5Counter;
+import cz.cas.lib.arclib.service.fixity.MetsChecksumType;
 import cz.cas.lib.arclib.service.fixity.Sha512Counter;
 import cz.cas.lib.arclib.service.preservationPlanning.ToolService;
 import cz.cas.lib.arclib.store.IngestEventStore;
-import cz.cas.lib.arclib.store.IngestWorkflowStore;
+import org.apache.commons.lang3.EnumUtils;
+import org.apache.commons.lang3.tuple.Triple;
 import org.camunda.bpm.engine.test.Deployment;
 import org.camunda.bpm.engine.test.mock.Mocks;
 import org.junit.Before;
@@ -19,7 +22,7 @@ import org.mockito.MockitoAnnotations;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.verify;
@@ -37,7 +40,7 @@ public class FixityGeneratorDelegateTest extends DelegateTest {
     @Mock
     private IngestEventStore ingestEventStore;
     @Mock
-    private IngestWorkflowStore ingestWorkflowStore;
+    private IngestWorkflowService ingestWorkflowService;
     @Mock
     private ToolService toolService;
 
@@ -50,7 +53,7 @@ public class FixityGeneratorDelegateTest extends DelegateTest {
         fixityGeneratorDelegate.setSha512Counter(new Sha512Counter());
         fixityGeneratorDelegate.setWorkspace(WS.toString());
         fixityGeneratorDelegate.setIngestEventStore(ingestEventStore);
-        fixityGeneratorDelegate.setIngestWorkflowStore(ingestWorkflowStore);
+        fixityGeneratorDelegate.setIngestWorkflowService(ingestWorkflowService);
         fixityGeneratorDelegate.setToolService(toolService);
         Mocks.register("fixityGeneratorDelegate", fixityGeneratorDelegate);
     }
@@ -64,17 +67,32 @@ public class FixityGeneratorDelegateTest extends DelegateTest {
         variables.put(BpmConstants.ProcessVariables.ingestWorkflowId, INGEST_WORKFLOW_ID);
         variables.put(BpmConstants.ProcessVariables.ingestWorkflowExternalId, EXTERNAL_ID);
         variables.put(BpmConstants.Ingestion.sipFileName, SIP_ZIP.getFileName().toString());
-        variables.put(BpmConstants.MessageDigestCalculation.mapOfEventIdsToMd5Calculations, new HashMap<>());
-        variables.put(BpmConstants.MessageDigestCalculation.mapOfEventIdsToCrc32Calculations, new HashMap<>());
-        variables.put(BpmConstants.MessageDigestCalculation.mapOfEventIdsToSha512Calculations, new HashMap<>());
+        variables.put(BpmConstants.FixityGeneration.mapOfEventIdsToSipMd5, new HashMap<>());
+        variables.put(BpmConstants.FixityGeneration.mapOfEventIdsToSipCrc32, new HashMap<>());
+        variables.put(BpmConstants.FixityGeneration.mapOfEventIdsToSipSha512, new HashMap<>());
+        variables.put(BpmConstants.ProcessVariables.sipFolderWorkspacePath, SIP.toString());
+        variables.put(BpmConstants.FixityGeneration.mapOfEventIdsToSipContentFixityData, new HashMap<String, Map<String, Triple<Long, String, String>>>());
+
         startJob(PROCESS_INSTANCE_KEY, variables);
 
-        Map<String, String> md5Calculations = (Map<String, String>) rule.getHistoryService().createHistoricVariableInstanceQuery().variableName(BpmConstants.MessageDigestCalculation.mapOfEventIdsToMd5Calculations).singleResult().getValue();
-        Map<String, String> crc32Calculations =  (Map<String, String>) rule.getHistoryService().createHistoricVariableInstanceQuery().variableName(BpmConstants.MessageDigestCalculation.mapOfEventIdsToCrc32Calculations).singleResult().getValue();
-        Map<String, String> sha512Calculations =  (Map<String, String>) rule.getHistoryService().createHistoricVariableInstanceQuery().variableName(BpmConstants.MessageDigestCalculation.mapOfEventIdsToSha512Calculations).singleResult().getValue();
+        Map<String, String> md5Calculations = (Map<String, String>) rule.getHistoryService().createHistoricVariableInstanceQuery().variableName(BpmConstants.FixityGeneration.mapOfEventIdsToSipMd5).singleResult().getValue();
+        Map<String, String> crc32Calculations = (Map<String, String>) rule.getHistoryService().createHistoricVariableInstanceQuery().variableName(BpmConstants.FixityGeneration.mapOfEventIdsToSipCrc32).singleResult().getValue();
+        Map<String, String> sha512Calculations = (Map<String, String>) rule.getHistoryService().createHistoricVariableInstanceQuery().variableName(BpmConstants.FixityGeneration.mapOfEventIdsToSipSha512).singleResult().getValue();
         assertThat(crc32Calculations.entrySet().iterator().next().getValue(), is(CRC32));
         assertThat(md5Calculations.entrySet().iterator().next().getValue(), is(MD5));
         assertThat(sha512Calculations.entrySet().iterator().next().getValue(), is(SHA512));
         verify(ingestEventStore).save(any(IngestEvent.class));
+
+
+        Map<String, Map<String, Triple<Long, String, String>>> fileFixites = (Map<String, Map<String, Triple<Long, String, String>>>) rule.getHistoryService().createHistoricVariableInstanceQuery().variableName(BpmConstants.FixityGeneration.mapOfEventIdsToSipContentFixityData).singleResult().getValue();
+        assertThat(fileFixites.keySet(), hasSize(1));
+        Map<String, Triple<Long, String, String>> fixities = fileFixites.entrySet().iterator().next().getValue();
+        assertThat(fixities.keySet(), hasSize(33));
+        Triple<Long, String, String> fileFixity = fixities.get("txt/txt_7033d800-0935-11e4-beed-5ef3fc9ae867_0006.txt");
+        assertThat(fileFixity, notNullValue());
+        assertThat(fileFixity.getLeft(), is(8657L));
+        MetsChecksumType checksumType = EnumUtils.getEnum(MetsChecksumType.class, fileFixity.getMiddle());
+        assertThat(checksumType, is(MetsChecksumType.SHA512));
+        assertThat(fileFixity.getRight(), is("145f3bbf4f0457c49543eaaa73bac4cd8eb088173d41ae5c9f91ee513ac39801f70d0484b8506844357d0dfdd61f1ca82578bc8f9257b3d3bc2e046721090859"));
     }
 }

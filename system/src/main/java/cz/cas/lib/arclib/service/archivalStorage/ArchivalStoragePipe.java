@@ -28,7 +28,7 @@ public class ArchivalStoragePipe {
 
     /**
      * passes simple request to archival storage and fill the response with the archval storage response
-     * should be used only for requests which returns JSON body
+     * should be used only for requests which returns JSON or empty body (not binary data)
      *
      * @param response
      * @param request

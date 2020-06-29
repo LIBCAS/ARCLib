@@ -8,7 +8,7 @@
                 xmlns:xlink="http://www.w3.org/1999/xlink"
 >
     <!-- == SPECIFICATION OF INPUT FILES == -->
-    <!--Path to SIP passed from the Java code-->
+    <!--Path to SIP passed from the Java code (with trailing / (slash))-->
     <xsl:param name="pathToSip"/>
     <!--Path to main XML record (METS in the root folder) of SIP passed from the Java code-->
     <xsl:param name="sipMetadataPath"/>
@@ -20,7 +20,7 @@
     <!-- == CUSTOM TEMPLATES == -->
     <xsl:template match="/METS:mets">
         <xsl:variable name="amdSecs"
-                      select="document(//METS:fileGrp[@ID='TECHMDGRP']/METS:file/METS:FLocat/concat('file:///', $pathToSip,@xlink:href))"/>
+                      select="document(//METS:fileGrp[@ID='TECHMDGRP']/METS:file/METS:FLocat/concat('file:///', string-join(tokenize($sipMetadataPath, '/')[position() lt last()], '/'),'/',@xlink:href))"/>
 
         <xsl:copy>
             <xsl:attribute name="LABEL">

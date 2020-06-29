@@ -1,6 +1,5 @@
 package cz.cas.lib.arclib.service.formatIdentification;
 
-import cz.cas.lib.arclib.service.formatIdentification.droid.CsvResultColumn;
 import cz.cas.lib.arclib.service.formatIdentification.droid.DroidFormatIdentificationTool;
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.Before;
@@ -26,7 +25,7 @@ public class DroidFormatIdentificationToolTest {
 
     @Before
     public void setUp() {
-        formatIdentificationTool = new DroidFormatIdentificationTool(CsvResultColumn.PUID);
+        formatIdentificationTool = new DroidFormatIdentificationTool();
     }
 
     @Test

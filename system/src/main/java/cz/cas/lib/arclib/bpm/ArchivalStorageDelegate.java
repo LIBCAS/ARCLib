@@ -4,27 +4,22 @@ import cz.cas.lib.arclib.domain.Hash;
 import cz.cas.lib.arclib.domain.HashType;
 import cz.cas.lib.arclib.domain.IngestToolFunction;
 import cz.cas.lib.arclib.domain.ingestWorkflow.IngestWorkflow;
-import cz.cas.lib.arclib.index.IndexArclibXmlStore;
-import cz.cas.lib.arclib.index.solr.arclibxml.IndexedArclibXmlDocument;
+import cz.cas.lib.arclib.domainbase.exception.GeneralException;
+import cz.cas.lib.arclib.service.archivalStorage.ArchivalStorageException;
 import cz.cas.lib.arclib.service.archivalStorage.ArchivalStorageService;
 import cz.cas.lib.arclib.service.archivalStorage.ArchivalStorageServiceDebug;
-import cz.cas.lib.arclib.store.IngestWorkflowStore;
-import cz.cas.lib.arclib.domainbase.exception.GeneralException;
 import cz.cas.lib.core.util.Utils;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.camunda.bpm.engine.delegate.DelegateExecution;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import javax.inject.Inject;
-import java.io.ByteArrayInputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Map;
 
-import static cz.cas.lib.arclib.bpm.BpmConstants.MessageDigestCalculation;
+import static cz.cas.lib.arclib.bpm.BpmConstants.FixityGeneration;
 import static cz.cas.lib.arclib.bpm.BpmConstants.ProcessVariables;
 
 @Slf4j
@@ -32,8 +27,6 @@ import static cz.cas.lib.arclib.bpm.BpmConstants.ProcessVariables;
 public class ArchivalStorageDelegate extends ArclibDelegate {
     private ArchivalStorageService archivalStorageService;
     private ArchivalStorageServiceDebug archivalStorageServiceDebug;
-    private IngestWorkflowStore ingestWorkflowStore;
-    private IndexArclibXmlStore indexArclibXmlStore;
     @Getter
     private String toolName = "ARCLib_" + IngestToolFunction.transfer;
 
@@ -46,36 +39,28 @@ public class ArchivalStorageDelegate extends ArclibDelegate {
      * @param execution delegate execution storing BPM variables
      */
     @Override
-    public void executeArclibDelegate(DelegateExecution execution) throws IOException {
+    public void executeArclibDelegate(DelegateExecution execution) throws IOException, ArchivalStorageException {
         String ingestWorkflowExternalId = getIngestWorkflowExternalId(execution);
         log.debug("Execution of Archival storage delegate started for ingest workflow " + ingestWorkflowExternalId + ".");
-        IngestWorkflow ingestWorkflow = ingestWorkflowStore.findByExternalId(ingestWorkflowExternalId);
+        IngestWorkflow ingestWorkflow = ingestWorkflowService.findByExternalId(ingestWorkflowExternalId);
 
-        Map<String, Object> indexedFields = indexArclibXmlStore.findArclibXmlIndexDocument(ingestWorkflow.getExternalId());
+        String preferredFixityGenerationEventId = (String) execution.getVariable(FixityGeneration.preferredFixityGenerationEventId);
+        Utils.notNull(preferredFixityGenerationEventId, () -> new GeneralException("Failed to retrieve SIP hash because message digest calculation has not been performed."));
 
-        String arclibXml = (String) ((ArrayList) indexedFields.get(IndexedArclibXmlDocument.DOCUMENT)).get(0);
-
-        String preferredMessageDigestCalculationEventId = (String) execution.getVariable(MessageDigestCalculation.preferredMessageDigestCalculationEventId);
-        Utils.notNull(preferredMessageDigestCalculationEventId, () -> new GeneralException("Failed to retrieve SIP hash because message digest calculation has not been performed."));
-
-        Map<String, String> mapOfEventIdsToSha512Calculations = (Map<String, String>) execution.getVariable(MessageDigestCalculation.mapOfEventIdsToSha512Calculations);
-        String sipHashValue = mapOfEventIdsToSha512Calculations.get(preferredMessageDigestCalculationEventId);
+        Map<String, String> mapOfEventIdsToSha512Calculations = (Map<String, String>) execution.getVariable(FixityGeneration.mapOfEventIdsToSipSha512);
+        String sipHashValue = mapOfEventIdsToSha512Calculations.get(preferredFixityGenerationEventId);
 
         Hash sipHash = new Hash(sipHashValue, HashType.Sha512);
         String sipId = (String) execution.getVariable(ProcessVariables.sipId);
         boolean debuggingModeActive = isInDebugMode(execution);
 
         try (FileInputStream sip = new FileInputStream(getSipZipPath(execution).toFile());
-             ByteArrayInputStream xml = new ByteArrayInputStream(arclibXml.getBytes())) {
+             FileInputStream xml = new FileInputStream(getAipXmlPath(execution).toFile())) {
             switch (ingestWorkflow.getVersioningLevel()) {
                 case NO_VERSIONING:
                 case SIP_PACKAGE_VERSIONING:
                     if (!debuggingModeActive) {
-                        ResponseEntity<String> response = archivalStorageService.storeAip(sipId, sip, xml, sipHash,
-                                ingestWorkflow.getArclibXmlHash());
-                        if (!response.getStatusCode().is2xxSuccessful())
-                            throw new GeneralException("Storing of SIP " + sipId + " to archival storage failed." +
-                                    "Error code: " + response.getStatusCode() + ", reason: " + response.getBody());
+                        archivalStorageService.storeAip(sipId, sip, xml, sipHash, ingestWorkflow.getArclibXmlHash());
                     } else {
                         archivalStorageServiceDebug.storeAip(sipId, sip, xml);
                     }
@@ -84,11 +69,7 @@ public class ArchivalStorageDelegate extends ArclibDelegate {
                 case ARCLIB_XML_VERSIONING:
                     Integer xmlVersionNumber = ingestWorkflow.getXmlVersionNumber();
                     if (!debuggingModeActive) {
-                        ResponseEntity<String> response = archivalStorageService.updateXml(sipId, xml,
-                                ingestWorkflow.getArclibXmlHash(), xmlVersionNumber, false);
-                        if (!response.getStatusCode().is2xxSuccessful())
-                            throw new GeneralException("Failed storing of version number " + xmlVersionNumber +
-                                    " of ArclibXml of SIP " + sipId + " to archival storage. " + "Reason: " + response.getBody());
+                        archivalStorageService.updateXml(sipId, xml, ingestWorkflow.getArclibXmlHash(), xmlVersionNumber, false);
                     } else {
                         archivalStorageServiceDebug.updateXml(sipId, xml, xmlVersionNumber);
                     }
@@ -110,15 +91,5 @@ public class ArchivalStorageDelegate extends ArclibDelegate {
     @Inject
     public void setArchivalStorageServiceDebug(ArchivalStorageServiceDebug archivalStorageServiceDebug) {
         this.archivalStorageServiceDebug = archivalStorageServiceDebug;
-    }
-
-    @Inject
-    public void setIngestWorkflowStore(IngestWorkflowStore ingestWorkflowStore) {
-        this.ingestWorkflowStore = ingestWorkflowStore;
-    }
-
-    @Inject
-    public void setIndexArclibXmlStore(IndexArclibXmlStore indexArclibXmlStore) {
-        this.indexArclibXmlStore = indexArclibXmlStore;
     }
 }

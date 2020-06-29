@@ -120,23 +120,23 @@ public class IncidentServiceTest extends TransformerFactoryWorkaroundTest {
         sip.setAuthorialPackage(authorialPackage);
 
         IngestWorkflow ingestWorkflow = new IngestWorkflow();
+        ingestWorkflow.setExternalId("iw1");
         Batch batch = new Batch();
         batch.setId(BATCH_ID);
         ingestWorkflow.setBatch(batch);
         ingestWorkflow.setSip(sip);
+        ingestWorkflow.setXmlVersionNumber(1);
 
         IngestWorkflow ingestWorkflow2 = new IngestWorkflow();
+        ingestWorkflow2.setExternalId("iw2");
         ingestWorkflow2.setBatch(batch);
         ingestWorkflow2.setSip(sip);
+        ingestWorkflow2.setXmlVersionNumber(2);
 
         when(ingestWorkflowService.findByExternalId(EXTERNAL_ID)).thenReturn(ingestWorkflow);
         when(ingestWorkflowService.findByExternalId(EXTERNAL_ID_2)).thenReturn(ingestWorkflow2);
         when(authorialPackageUpdateLockStore.findByAuthorialPackageId(anyString())).thenReturn(null);
         when(batchService.find(BATCH_ID)).thenReturn(batch);
-
-
-        //when(ingestWorkflowService.getStore()).thenReturn(ingestWorkflowStore);
-
 
         byte[] bpmn = Files.readAllBytes(Paths.get("src/test/resources/bpmn/incidentTest.bpmn"));
         repositoryService.createDeployment().addInputStream("incidentTest.bpmn", new ByteArrayInputStream(bpmn)).deploy();

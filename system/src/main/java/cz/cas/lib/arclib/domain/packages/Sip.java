@@ -55,4 +55,6 @@ public class Sip extends DatedObject {
      * Číslo verzie
      */
     private Integer versionNumber;
+
+    private Long sizeInBytes;
 }

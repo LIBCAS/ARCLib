@@ -14,7 +14,7 @@ import cz.cas.lib.arclib.formatlibrary.service.FormatDefinitionService;
 import cz.cas.lib.arclib.formatlibrary.store.DbFormatDefinitionStore;
 import cz.cas.lib.arclib.mail.ArclibMailCenter;
 import cz.cas.lib.arclib.service.IngestIssueService;
-import cz.cas.lib.arclib.service.formatIdentification.droid.CsvResultColumn;
+import cz.cas.lib.arclib.service.IngestWorkflowService;
 import cz.cas.lib.arclib.service.formatIdentification.droid.DroidFormatIdentificationTool;
 import cz.cas.lib.arclib.service.preservationPlanning.ToolService;
 import cz.cas.lib.arclib.store.IngestIssueDefinitionStore;
@@ -40,7 +40,7 @@ import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.assertThat;
 
 public class FormatIdentificationToolTest extends SrDbTest {
-    private static final String INGEST_CONFIG = "{\"formatIdentification\":[{\"type\":\"DROID\",\"parsedColumn\": \"PUID\",\"pathsAndFormats\":[ {\"filePath\":\"\", \"format\":\"fmt/101\"}, {\"filePath\":\".*/another/filepath\", \"format\":\"format1\"}]}]}";
+    private static final String INGEST_CONFIG = "{\"formatIdentification\":{\"0\":{\"type\":\"DROID\",\"pathsAndFormats\":{\"0\":{\"filePath\":\"\", \"format\":\"fmt/101\"}, \"1\":{\"filePath\":\".*/another/filepath\", \"format\":\"format1\"}}}}}";
 
     private IngestWorkflow ingestWorkflow;
     private IngestWorkflowStore ingestWorkflowStore;
@@ -121,12 +121,14 @@ public class FormatIdentificationToolTest extends SrDbTest {
         objectMapper = new ObjectMapper();
         INGEST_CONFIG_JSON_NODE = objectMapper.readTree(INGEST_CONFIG);
 
-        formatIdentificationTool = new DroidFormatIdentificationTool(CsvResultColumn.PUID);
+        formatIdentificationTool = new DroidFormatIdentificationTool();
         formatIdentificationTool.inject(formatDefinitionService, ingestIssueService, ingestIssueDefinitionStore, ingestWorkflow, t, 0);
 
         formatIdentificationDelegate = new FormatIdentificationDelegate();
         formatIdentificationDelegate.setToolService(toolService);
-        formatIdentificationDelegate.setIngestWorkflowStore(ingestWorkflowStore);
+        IngestWorkflowService ingestWorkflowService = new IngestWorkflowService();
+        ingestWorkflowService.setStore(ingestWorkflowStore);
+        formatIdentificationDelegate.setIngestWorkflowService(ingestWorkflowService);
         formatIdentificationDelegate.setFormatDefinitionService(formatDefinitionService);
         formatIdentificationDelegate.setIngestIssueDefinitionStore(ingestIssueDefinitionStore);
         formatIdentificationDelegate.setIngestIssueService(ingestIssueService);
@@ -138,24 +140,22 @@ public class FormatIdentificationToolTest extends SrDbTest {
 
     @Test
     public void testDroidConfigParser() throws IOException, ConfigParserException {
-        String droidConfig = "{\"formatIdentification\":[{\"type\":\"DROID\",\"parsedColumn\":\"PUID\"}]}";
+        String droidConfig = "{\"formatIdentification\":{\"0\":{\"type\":\"DROID\"}}}";
         JsonNode jsonRoot = new ObjectMapper().readTree(droidConfig);
         FormatIdentificationTool a = formatIdentificationDelegate.initialize(jsonRoot, ingestWorkflow, 0);
         assertThat(a, instanceOf(DroidFormatIdentificationTool.class));
-        DroidFormatIdentificationTool ca = (DroidFormatIdentificationTool) a;
-        assertThat(ca.getParsedColumn(), equalTo(CsvResultColumn.PUID));
     }
 
     @Test
     public void testDroidConfigParserException() throws IOException {
-        String droidConfig = "{\"formatIdentification\":[{\"type\":\"blah\",\"parsedColumn\":\"PUID\"}]}";
+        String droidConfig = "{\"formatIdentification\":{\"0\":{\"type\":\"blah\"}}}";
         JsonNode jsonRoot = new ObjectMapper().readTree(droidConfig);
         assertThrown(() -> formatIdentificationDelegate.initialize(jsonRoot, ingestWorkflow, 0)).isInstanceOf(ConfigParserException.class);
     }
 
     @Test
     public void testPathsToConfigParser() throws IOException, IncidentException {
-        String droidConfig = "{\"formatIdentification\":[{\"pathsAndFormats\":[ {\"filePath\":\"this/is/a/filepath\", \"format\":\"fmt/101\"}, {\"filePath\":\"this/is/another/filepath\", \"format\":\"fmt/993\"}]}]}";
+        String droidConfig = "{\"formatIdentification\":{\"0\":{\"pathsAndFormats\":{\"0\":{\"filePath\":\"this/is/a/filepath\", \"format\":\"fmt/101\"}, \"1\":{\"filePath\":\"this/is/another/filepath\", \"format\":\"fmt/993\"}}}}}";
         JsonNode jsonRoot = new ObjectMapper().readTree(droidConfig);
         List<Pair<String, String>> pathToFormatDtos = formatIdentificationTool.parsePathsAndFormats(jsonRoot, ingestWorkflow.getExternalId());
         assertThat(pathToFormatDtos, hasSize(2));
@@ -168,28 +168,14 @@ public class FormatIdentificationToolTest extends SrDbTest {
 
     @Test
     public void testPathsToConfigParserExceptionWrongType() throws IOException {
-        String droidConfig = "{\"formatIdentification\":[{\"type\":\"blah\",\"parsedColumn\":\"PUID\"}]}";
+        String droidConfig = "{\"formatIdentification\":{\"0\":{\"type\":\"blah\"}}}";
         JsonNode jsonRoot = new ObjectMapper().readTree(droidConfig);
         assertThrown(() -> formatIdentificationDelegate.initialize(jsonRoot, ingestWorkflow, 0)).isInstanceOf(ConfigParserException.class);
     }
 
     @Test
     public void testPathsToConfigParserExceptionMissingType() throws Exception {
-        String droidConfig = "{\"formatIdentification\":[{\"parsedColumn\":\"PUID\"}]}";
-        JsonNode jsonRoot = new ObjectMapper().readTree(droidConfig);
-        assertThrown(() -> formatIdentificationDelegate.initialize(jsonRoot, ingestWorkflow, 0)).isInstanceOf(ConfigParserException.class);
-    }
-
-    @Test
-    public void testPathsToConfigParserExceptionWrongParsedColumn() throws IOException {
-        String droidConfig = "{\"formatIdentification\":[{\"type\":\"blah\",\"parsedColumn\":\"blah\"}]}";
-        JsonNode jsonRoot = new ObjectMapper().readTree(droidConfig);
-        assertThrown(() -> formatIdentificationDelegate.initialize(jsonRoot, ingestWorkflow, 0)).isInstanceOf(ConfigParserException.class);
-    }
-
-    @Test
-    public void testPathsToConfigParserExceptionMissingParsedColumn() throws IOException {
-        String droidConfig = "{\"formatIdentification\":[{\"type\":\"blah\"}]}";
+        String droidConfig = "{\"formatIdentification\":{\"0\":{}}}";
         JsonNode jsonRoot = new ObjectMapper().readTree(droidConfig);
         assertThrown(() -> formatIdentificationDelegate.initialize(jsonRoot, ingestWorkflow, 0)).isInstanceOf(ConfigParserException.class);
     }
@@ -197,12 +183,12 @@ public class FormatIdentificationToolTest extends SrDbTest {
     @Test
     public void testPathsToConfigParserExceptionWrongPathsToFormats() throws IOException, IncidentException {
         //no exception thrown when an empty array is provided
-        String droidConfig = "{\"formatIdentification\":[{\"type\":\"DROID\",\"parsedColumn\": \"PUID\",\"pathsAndFormats\":[]}]}";
+        String droidConfig = "{\"formatIdentification\":{\"0\":{\"type\":\"DROID\",\"pathsAndFormats\":{}}}}";
         JsonNode jsonRoot = new ObjectMapper().readTree(droidConfig);
         formatIdentificationTool.parsePathsAndFormats(jsonRoot, ingestWorkflow.getExternalId());
 
         //exception thrown when an invalid element is provided in the array
-        String droidConfig2 = "{\"formatIdentification\":[{\"type\":\"DROID\",\"parsedColumn\": \"PUID\",\"pathsAndFormats\":[{}]}]}";
+        String droidConfig2 = "{\"formatIdentification\":{\"0\":{\"type\":\"DROID\",\"pathsAndFormats\":{\"0\":{}}}}}";
         JsonNode jsonRoot2 = new ObjectMapper().readTree(droidConfig2);
         assertThrown(() -> formatIdentificationTool.parsePathsAndFormats(jsonRoot2, ingestWorkflow.getExternalId()))
                 .isInstanceOf(IncidentException.class);
@@ -212,10 +198,9 @@ public class FormatIdentificationToolTest extends SrDbTest {
 
         IngestIssue issue = (IngestIssue) issues.toArray()[0];
         assertThat(issue.isSuccess(), is(false));
-        assertThat(issue.getDescription(), is("invalid config: [{}] at: /formatIdentification/0/pathsAndFormats " +
+        assertThat(issue.getDescription(), startsWith("invalid config: {\"0\":{}} at: /formatIdentification/0/pathsAndFormats " +
                 "supported values: [List of pairs of paths to files and their respective file formats, e.g." +
-                " [ {\"filePath\":\"this/is/a/filepath\", \"format\":\"fmt/101\"}, {\"filePath\":" +
-                "\"this/is/another/filepath\", \"format\":\"fmt/993\"} ]]"));
+                " {\"0\":{\"filePath\""));
 
         assertThat(issue.getIngestIssueDefinition().getName(), is("Invalid config."));
     }

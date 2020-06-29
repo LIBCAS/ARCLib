@@ -23,9 +23,9 @@ public class FixityCounterTests {
     private Crc32Counter crc32Counter;
     private Sha512Counter sha512Counter;
 
-    private static final String FILE_SHA512 = "efa0bf9b43ec678e524c7211089ab1a4be8fa72f8a027169219bc95572175315ef5f9866e5d47fc6af54c0e0c4cb0ae087cf524ca6222024740fe80991e82387";
-    private static final String FILE_MD5 = "dc1f353409839d7fa5fb94d72cd28d65";
-    private static final String FILE_CRC32 = "8823e419";
+    private static final String FILE_SHA512 = "28e2bcfb7724d64c3e166ff8a541a20f4005c4e453fdc657237554da443bb0e2550304c4e7f143437a72479d30a517d61f290040220e7eeaeda21ac23caedde9";
+    private static final String FILE_MD5 = "6226f7cbe59e99a90b5cef6f94f966fd";
+    private static final String FILE_CRC32 = "0f149d8b";
 
     private static final Path FOLDER_PATH = Paths.get("src/test/resources/testFolder");
     private static final Path FILE_PATH = FOLDER_PATH.resolve("clean.txt");
