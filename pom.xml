@@ -25,7 +25,7 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-
+        <java.version>11</java.version>
         <spring.kerberos.version>1.0.1.RELEASE</spring.kerberos.version>
         <passay.version>1.2.0</passay.version>
         <jjwt.version>0.7.0</jjwt.version>
@@ -180,8 +180,8 @@
                     <artifactId>maven-compiler-plugin</artifactId>
                     <version>3.2</version>
                     <configuration>
-                        <source>1.8</source>
-                        <target>1.8</target>
+                        <source>${java.version}</source>
+                        <target>${java.version}</target>
                     </configuration>
                 </plugin>
                 <plugin>
@@ -206,19 +206,6 @@
                             <phase>verify</phase>
                             <goals>
                                 <goal>jar-no-fork</goal>
-                            </goals>
-                        </execution>
-                    </executions>
-                </plugin>
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-javadoc-plugin</artifactId>
-                    <version>2.10.4</version>
-                    <executions>
-                        <execution>
-                            <id>attach-javadocs</id>
-                            <goals>
-                                <goal>jar</goal>
                             </goals>
                         </execution>
                     </executions>
