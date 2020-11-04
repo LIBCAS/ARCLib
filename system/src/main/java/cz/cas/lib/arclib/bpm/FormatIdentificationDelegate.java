@@ -3,23 +3,19 @@ package cz.cas.lib.arclib.bpm;
 import com.fasterxml.jackson.databind.JsonNode;
 import cz.cas.lib.arclib.domain.IngestToolFunction;
 import cz.cas.lib.arclib.domain.ingestWorkflow.IngestEvent;
-import cz.cas.lib.arclib.domain.ingestWorkflow.IngestIssue;
 import cz.cas.lib.arclib.domain.ingestWorkflow.IngestWorkflow;
 import cz.cas.lib.arclib.domain.preservationPlanning.FormatOccurrence;
-import cz.cas.lib.arclib.domain.preservationPlanning.IngestIssueDefinitionCode;
 import cz.cas.lib.arclib.domain.preservationPlanning.Tool;
 import cz.cas.lib.arclib.domain.profiles.ProducerProfile;
 import cz.cas.lib.arclib.exception.bpm.ConfigParserException;
 import cz.cas.lib.arclib.exception.bpm.IncidentException;
 import cz.cas.lib.arclib.formatlibrary.domain.FormatDefinition;
 import cz.cas.lib.arclib.formatlibrary.service.FormatDefinitionService;
-import cz.cas.lib.arclib.service.IngestIssueService;
 import cz.cas.lib.arclib.service.ProducerProfileService;
 import cz.cas.lib.arclib.service.formatIdentification.FormatIdentificationTool;
 import cz.cas.lib.arclib.service.formatIdentification.FormatIdentificationToolType;
 import cz.cas.lib.arclib.service.formatIdentification.droid.DroidFormatIdentificationTool;
 import cz.cas.lib.arclib.store.FormatOccurrenceStore;
-import cz.cas.lib.arclib.store.IngestIssueDefinitionStore;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
@@ -45,8 +41,6 @@ public class FormatIdentificationDelegate extends ArclibDelegate {
     private FormatOccurrenceStore formatOccurrenceStore;
     private ProducerProfileService producerProfileService;
     private FormatDefinitionService formatDefinitionService;
-    private IngestIssueService ingestIssueService;
-    private IngestIssueDefinitionStore ingestIssueDefinitionStore;
     /**
      * Performs the format analysis of files in SIP.
      *
@@ -93,33 +87,21 @@ public class FormatIdentificationDelegate extends ArclibDelegate {
      *                               of {@link FormatIdentificationTool}
      */
     public FormatIdentificationTool initialize(JsonNode root, IngestWorkflow iw, int formatIdentificationToolCounter) throws ConfigParserException {
-        try {
-            FormatIdentificationToolType formatIdentificationToolType = parseEnumFromConfig(root,
-                    FORMAT_IDENTIFICATON_TOOL_EXPR + "/" + formatIdentificationToolCounter + IDENTIFIER_TYPE_EXPR,
-                    FormatIdentificationToolType.class);
-            FormatIdentificationTool tool;
-            switch (formatIdentificationToolType) {
-                case DROID:
-                    log.debug("Format identification tool initialized with DROID.");
-                    tool = new DroidFormatIdentificationTool();
-                    break;
-                default:
-                    throw new ConfigParserException(FORMAT_IDENTIFICATON_TOOL_EXPR + "/" + formatIdentificationToolCounter + IDENTIFIER_TYPE_EXPR, "not supported", FormatIdentificationToolType.class);
-            }
-            Tool toolEntity = toolService.createNewToolVersionIfNeeded(tool.getToolName(), tool.getToolVersion(),IngestToolFunction.format_identification);
-            tool.inject(formatDefinitionService, ingestIssueService, ingestIssueDefinitionStore, iw, toolEntity, formatIdentificationToolCounter);
-            return tool;
-        } catch (ConfigParserException e) {
-            ingestIssueService.save(new IngestIssue(
-                    iw,
-                    toolService.findByNameAndVersion(getToolName(),getToolVersion()),
-                    ingestIssueDefinitionStore.findByCode(IngestIssueDefinitionCode.CONFIG_PARSE_ERROR),
-                    null,
-                    e.getMessage(),
-                    false
-            ));
-            throw e;
+        FormatIdentificationToolType formatIdentificationToolType = parseEnumFromConfig(root,
+                FORMAT_IDENTIFICATON_TOOL_EXPR + "/" + formatIdentificationToolCounter + IDENTIFIER_TYPE_EXPR,
+                FormatIdentificationToolType.class);
+        FormatIdentificationTool tool;
+        switch (formatIdentificationToolType) {
+            case DROID:
+                log.debug("Format identification tool initialized with DROID.");
+                tool = new DroidFormatIdentificationTool();
+                break;
+            default:
+                throw new ConfigParserException(FORMAT_IDENTIFICATON_TOOL_EXPR + "/" + formatIdentificationToolCounter + IDENTIFIER_TYPE_EXPR, "not supported", FormatIdentificationToolType.class);
         }
+        Tool toolEntity = toolService.createNewToolVersionIfNeeded(tool.getToolName(), tool.getToolVersion(), IngestToolFunction.format_identification);
+        tool.inject(formatDefinitionService, ingestIssueService, ingestIssueDefinitionStore, iw, toolEntity, formatIdentificationToolCounter);
+        return tool;
     }
 
     private void updateFormatOccurrences(Map<String, List<Pair<String, String>>> analyzedFormats, String producerProfileExId) {
@@ -143,16 +125,6 @@ public class FormatIdentificationDelegate extends ArclibDelegate {
     @Inject
     public void setFormatDefinitionService(FormatDefinitionService formatDefinitionService) {
         this.formatDefinitionService = formatDefinitionService;
-    }
-
-    @Inject
-    public void setIngestIssueService(IngestIssueService ingestIssueService) {
-        this.ingestIssueService = ingestIssueService;
-    }
-
-    @Inject
-    public void setIngestIssueDefinitionStore(IngestIssueDefinitionStore ingestIssueDefinitionStore) {
-        this.ingestIssueDefinitionStore = ingestIssueDefinitionStore;
     }
 
     @Inject

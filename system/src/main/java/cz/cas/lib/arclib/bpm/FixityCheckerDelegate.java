@@ -22,6 +22,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 
+import static cz.cas.lib.arclib.bpm.ArclibXmlExtractorDelegate.SIP_PROFILE_CONFIG_ENTRY;
 import static cz.cas.lib.arclib.bpm.BpmConstants.FixityCheck;
 import static cz.cas.lib.arclib.bpm.BpmConstants.ProcessVariables;
 import static cz.cas.lib.core.util.Utils.listFilesMatchingGlobPattern;
@@ -51,9 +52,9 @@ public class FixityCheckerDelegate extends ArclibDelegate {
         String ingestWorkflowExternalId = getIngestWorkflowExternalId(execution);
         log.debug("Execution of Fixity checker delegate started for ingest workflow " + ingestWorkflowExternalId + ".");
 
-        String sipProfileId = getStringVariable(execution, ProcessVariables.sipProfileId);
         JsonNode config = getConfigRoot(execution);
-        SipProfile sipProfile = sipProfileService.find(sipProfileId);
+        String sipProfileExternalId = config.get(SIP_PROFILE_CONFIG_ENTRY).textValue();
+        SipProfile sipProfile = sipProfileService.findByExternalId(sipProfileExternalId);
         Path sipFolderWorkspacePath = Paths.get((String) execution.getVariable(ProcessVariables.sipFolderWorkspacePath));
 
         int fixityCheckToolCounter = (int) execution.getVariable(FixityCheck.fixityCheckToolCounter);
@@ -62,8 +63,9 @@ public class FixityCheckerDelegate extends ArclibDelegate {
         String sipMetadataPathGlobPattern = sipProfile.getSipMetadataPathGlobPattern();
         List<File> matchingFiles = listFilesMatchingGlobPattern(new File(sipFolderWorkspacePath.toAbsolutePath().toString()), sipMetadataPathGlobPattern);
 
-        if (matchingFiles.size() == 0) throw new GeneralException("File with metadata for ingest workflow with external id "
-                + ingestWorkflowExternalId + " does not exist at path given by glob pattern: " + sipMetadataPathGlobPattern);
+        if (matchingFiles.size() == 0)
+            throw new GeneralException("File with metadata for ingest workflow with external id "
+                    + ingestWorkflowExternalId + " does not exist at path given by glob pattern: " + sipMetadataPathGlobPattern);
 
         if (matchingFiles.size() > 1) throw new GeneralException("Multiple files found " +
                 "at the path given by glob pattern: " + sipMetadataPathGlobPattern);

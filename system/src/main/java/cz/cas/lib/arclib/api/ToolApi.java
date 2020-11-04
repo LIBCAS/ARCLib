@@ -1,11 +1,13 @@
 package cz.cas.lib.arclib.api;
 
 import cz.cas.lib.arclib.domain.preservationPlanning.Tool;
-import cz.cas.lib.arclib.dto.ToolUpdateDto;
-import cz.cas.lib.arclib.service.preservationPlanning.ToolService;
 import cz.cas.lib.arclib.domainbase.exception.BadArgument;
 import cz.cas.lib.arclib.domainbase.exception.MissingObject;
+import cz.cas.lib.arclib.dto.ToolUpdateDto;
+import cz.cas.lib.arclib.security.authorization.data.Permissions;
+import cz.cas.lib.arclib.service.preservationPlanning.ToolService;
 import io.swagger.annotations.*;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import javax.inject.Inject;
@@ -21,17 +23,19 @@ public class ToolApi {
     private ToolService service;
 
 
-    @ApiOperation(value = "Gets all instances", response = Collection.class)
+    @ApiOperation(value = "Gets all instances [Perm.TOOL_RECORDS_READ]", response = Collection.class)
     @ApiResponses({@ApiResponse(code = 200, message = "Successful response", response = Collection.class)})
+    @PreAuthorize("hasAuthority('" + Permissions.TOOL_RECORDS_READ + "')")
     @RequestMapping(method = RequestMethod.GET)
     public Collection<Tool> listAll() {
         return service.findAll();
     }
 
-    @ApiOperation(value = "Gets one instance specified by id.", response = Tool.class)
+    @ApiOperation(value = "Gets one instance specified by id. [Perm.TOOL_RECORDS_READ]", response = Tool.class)
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Successful response", response = Tool.class),
             @ApiResponse(code = 404, message = "Instance does not exist")})
+    @PreAuthorize("hasAuthority('" + Permissions.TOOL_RECORDS_READ + "')")
     @RequestMapping(value = "/{id}", method = RequestMethod.GET)
     public Tool get(@ApiParam(value = "Id of the instance", required = true)
                     @PathVariable("id") String id) {
@@ -72,11 +76,12 @@ public class ToolApi {
 //        service.delete(tool);
 //    }
 
-    @ApiOperation(value = "Updates instance",
+    @ApiOperation(value = "Updates instance [Perm.TOOL_RECORDS_WRITE]",
             response = Tool.class)
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Successful response", response = Tool.class),
             @ApiResponse(code = 400, message = "Specified id does not correspond to the id of the instance")})
+    @PreAuthorize("hasAuthority('" + Permissions.TOOL_RECORDS_WRITE + "')")
     @RequestMapping(value = "/{id}", method = RequestMethod.PUT)
     public Tool update(@ApiParam(value = "Id of the instance", required = true)
                        @PathVariable("id") String id,

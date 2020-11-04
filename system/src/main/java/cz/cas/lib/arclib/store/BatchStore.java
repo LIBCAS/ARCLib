@@ -7,7 +7,6 @@ import cz.cas.lib.arclib.domain.ingestWorkflow.QIngestWorkflow;
 import cz.cas.lib.arclib.domain.profiles.ProducerProfile;
 import cz.cas.lib.arclib.index.solr.entity.IndexedBatch;
 import cz.cas.lib.core.index.solr.IndexedDatedStore;
-import cz.cas.lib.core.store.Transactional;
 import lombok.Getter;
 import org.springframework.data.solr.core.query.Criteria;
 import org.springframework.data.solr.core.query.SimpleQuery;
@@ -20,7 +19,6 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @Repository
-@Transactional
 public class BatchStore extends IndexedDatedStore<Batch, QBatch, IndexedBatch> {
 
     public BatchStore() {
@@ -41,7 +39,7 @@ public class BatchStore extends IndexedDatedStore<Batch, QBatch, IndexedBatch> {
 
     public Batch findWithIngestWorkflowsFilled(String batchId) {
         QIngestWorkflow qIw = QIngestWorkflow.ingestWorkflow;
-        return query()
+        Batch batch = query()
                 .select(qObject())
                 .where(qObject().id.eq(batchId))
                 .where(qObject().deleted.isNull())
@@ -49,6 +47,8 @@ public class BatchStore extends IndexedDatedStore<Batch, QBatch, IndexedBatch> {
                 .where(qIw.deleted.isNull())
                 .fetchJoin()
                 .fetchOne();
+        detachAll();
+        return batch;
     }
 
     public List<Batch> findAllDeployed() {

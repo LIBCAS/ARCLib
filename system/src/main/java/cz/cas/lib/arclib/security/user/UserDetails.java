@@ -3,24 +3,40 @@ package cz.cas.lib.arclib.security.user;
 import cz.cas.lib.arclib.domain.User;
 
 /**
- * Extends base spring UserDetails and adds id
+ * Extends base Spring UserDetails and adds specific access methods for ARClib
  */
 public interface UserDetails extends org.springframework.security.core.userdetails.UserDetails {
-    default String getId() {
+
+    String getId();
+
+    String getProducerId();
+
+    User getUser();
+
+
+    @Override
+    default String getPassword() {
         return null;
     }
 
-    default User getUser() {return null;}
-
-    default String getProducerId() {
-        return null;
+    @Override
+    default boolean isAccountNonExpired() {
+        return true;
     }
 
-    default String getEmail() {
-        return null;
+    @Override
+    default boolean isAccountNonLocked() {
+        return true;
     }
 
-    default String getFullName() {
-        return getUsername();
+    @Override
+    default boolean isCredentialsNonExpired() {
+        return true;
     }
+
+    @Override
+    default boolean isEnabled() {
+        return true;
+    }
+
 }

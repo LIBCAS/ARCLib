@@ -18,7 +18,7 @@ import cz.cas.lib.arclib.index.IndexArclibXmlStore;
 import cz.cas.lib.arclib.index.solr.arclibxml.IndexedAipState;
 import cz.cas.lib.arclib.index.solr.arclibxml.IndexedArclibXmlDocument;
 import cz.cas.lib.arclib.index.solr.arclibxml.IndexedArclibXmlStore;
-import cz.cas.lib.arclib.security.authorization.Roles;
+import cz.cas.lib.arclib.security.authorization.data.Permissions;
 import cz.cas.lib.arclib.security.user.UserDetails;
 import cz.cas.lib.arclib.service.archivalStorage.ArchivalStorageException;
 import cz.cas.lib.arclib.service.archivalStorage.ArchivalStorageService;
@@ -100,7 +100,7 @@ public class AipService {
 
         notNull(arclibXmlIndexDocument, () -> new MissingObject(IndexedArclibXmlDocument.class, xmlId));
         String producerId = (String) ((ArrayList) arclibXmlIndexDocument.get(IndexedArclibXmlDocument.PRODUCER_ID)).get(0);
-        if (!hasRole(userDetails, Roles.SUPER_ADMIN) && !userDetails.getProducerId().equals(producerId)) {
+        if (!hasRole(userDetails, Permissions.SUPER_ADMIN_PRIVILEGE) && !userDetails.getProducerId().equals(producerId)) {
             throw new ForbiddenObject(IngestWorkflow.class, xmlId);
         }
         return new AipDetailDto(arclibXmlIndexDocument, ingestWorkflow);
@@ -297,7 +297,7 @@ public class AipService {
                 verifyHash(xml, hash);
 
                 log.debug(opLogId + "validating AIP XML");
-                arclibXmlValidator.validateArclibXml(new ByteArrayInputStream(xml.getBytes()), aipId, authorialId, sipVersionNumber, sipVersionOf);
+                arclibXmlValidator.validateFinalXml(xml, aipId, authorialId, sipVersionNumber, sipVersionOf);
 
                 log.debug(opLogId + "generating metadata update event");
                 String updatedXml = arclibXmlGenerator.addUpdateMetadata(xml, reason, userDetails.getUsername(), newIngestWorkflow);
@@ -319,7 +319,7 @@ public class AipService {
                         updatedXml.getBytes(),
                         producer.getId(),
                         producer.getName(),
-                        userDetails.getUser().getUsername(),
+                        userDetails.getUsername(),
                         IndexedAipState.ARCHIVED,
                         false,
                         true);

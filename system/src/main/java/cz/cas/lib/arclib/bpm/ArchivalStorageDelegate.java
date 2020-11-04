@@ -2,7 +2,6 @@ package cz.cas.lib.arclib.bpm;
 
 import cz.cas.lib.arclib.domain.Hash;
 import cz.cas.lib.arclib.domain.HashType;
-import cz.cas.lib.arclib.domain.IngestToolFunction;
 import cz.cas.lib.arclib.domain.ingestWorkflow.IngestWorkflow;
 import cz.cas.lib.arclib.domainbase.exception.GeneralException;
 import cz.cas.lib.arclib.service.archivalStorage.ArchivalStorageException;
@@ -28,7 +27,7 @@ public class ArchivalStorageDelegate extends ArclibDelegate {
     private ArchivalStorageService archivalStorageService;
     private ArchivalStorageServiceDebug archivalStorageServiceDebug;
     @Getter
-    private String toolName = "ARCLib_" + IngestToolFunction.transfer;
+    private String toolName = "ARCLib_archival_storage_transfer";
 
     /**
      * Stores SIP to archival storage.

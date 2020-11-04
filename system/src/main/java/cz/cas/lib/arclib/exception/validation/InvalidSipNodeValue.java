@@ -10,7 +10,7 @@ import lombok.Setter;
 @AllArgsConstructor
 public class InvalidSipNodeValue extends GeneralException {
     private String sipId;
-    private String validationProfileId;
+    private String validationProfileExternalId;
     private String regex;
     private String actualValue;
     private String filePath;
@@ -20,7 +20,7 @@ public class InvalidSipNodeValue extends GeneralException {
     public String toString() {
         return "InvalidNodeValue{" +
                 "sipId='" + sipId + '\'' +
-                ", validationProfileId='" + validationProfileId + '\'' +
+                ", validationProfileExternalId='" + validationProfileExternalId + '\'' +
                 ", regex='" + regex + '\'' +
                 ", actualValue='" + actualValue + '\'' +
                 ", filePath='" + filePath + '\'' +

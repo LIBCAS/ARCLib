@@ -1,4 +1,4 @@
-package cz.cas.lib.arclib.security.authorization.assign.audit;
+package cz.cas.lib.arclib.security.authorization.deprecated.assign.audit;
 
 import cz.cas.lib.arclib.domainbase.audit.AuditEvent;
 import lombok.Getter;

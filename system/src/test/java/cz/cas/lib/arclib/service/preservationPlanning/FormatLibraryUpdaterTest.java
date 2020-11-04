@@ -10,7 +10,7 @@ import cz.cas.lib.arclib.formatlibrary.domain.*;
 import cz.cas.lib.arclib.formatlibrary.service.*;
 import cz.cas.lib.arclib.formatlibrary.store.*;
 import cz.cas.lib.arclib.mail.ArclibMailCenter;
-import cz.cas.lib.arclib.security.user.UserDelegate;
+import cz.cas.lib.arclib.security.user.UserDetailsImpl;
 import cz.cas.lib.core.mail.AsyncMailSender;
 import helper.DbTest;
 import org.apache.commons.lang3.tuple.Pair;
@@ -50,7 +50,7 @@ public class FormatLibraryUpdaterTest extends DbTest {
     private RelatedFormatStore relatedFormatStore;
     private User user;
     private FormatDefinitionService formatDefinitionService;
-    private UserDelegate userDelegate;
+    private UserDetailsImpl userDetailsImpl;
     private DbFormatDefinitionStore formatDefinitionStore;
     private FormatDeveloperService formatDeveloperService;
     private FormatIdentifierService formatIdentifierService;
@@ -78,7 +78,7 @@ public class FormatLibraryUpdaterTest extends DbTest {
         asyncMailSender.setSender(new JavaMailSenderImpl());
 
         user = new User();
-        userDelegate = new UserDelegate(user);
+        userDetailsImpl = new UserDetailsImpl(user);
 
         formatIdentifierStore = new FormatIdentifierStore();
         formatIdentifierStore.setEntityManager(getEm());
@@ -112,17 +112,17 @@ public class FormatLibraryUpdaterTest extends DbTest {
         formatLibraryUpdater.setFormatIdentifierService(formatIdentifierService);
         formatLibraryUpdater.setFormatLibraryNotifier(Optional.of(mailCenter));
         formatLibraryUpdater.setFormatDeveloperService(formatDeveloperService);
-        formatLibraryUpdater.setUserDetails(userDelegate);
+        formatLibraryUpdater.setUserDetails(userDetailsImpl);
 
         DbFormatDefinitionStore dbFormatDefinitionStore = new DbFormatDefinitionStore();
         dbFormatDefinitionStore.setEntityManager(getEm());
         dbFormatDefinitionStore.setQueryFactory(new JPAQueryFactory(getEm()));
-        dbFormatDefinitionStore.setUserDetails(userDelegate);
+        dbFormatDefinitionStore.setUserDetails(userDetailsImpl);
 
         formatDefinitionStore = new DbFormatDefinitionStore();
         formatDefinitionStore.setEntityManager(getEm());
         formatDefinitionStore.setQueryFactory(new JPAQueryFactory(getEm()));
-        formatDefinitionStore.setUserDetails(userDelegate);
+        formatDefinitionStore.setUserDetails(userDetailsImpl);
 
         formatDefinitionService = new FormatDefinitionService();
         formatDefinitionService.setStore(formatDefinitionStore);

@@ -2,13 +2,19 @@ package cz.cas.lib.arclib.bpm;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import cz.cas.lib.arclib.domain.ingestWorkflow.IngestIssue;
+import cz.cas.lib.arclib.domain.preservationPlanning.IngestIssueDefinitionCode;
 import cz.cas.lib.arclib.domainbase.exception.GeneralException;
+import cz.cas.lib.arclib.exception.bpm.IncidentException;
+import cz.cas.lib.arclib.service.IngestIssueService;
 import cz.cas.lib.arclib.service.IngestWorkflowService;
 import cz.cas.lib.arclib.service.preservationPlanning.ToolService;
 import cz.cas.lib.arclib.store.IngestEventStore;
+import cz.cas.lib.arclib.store.IngestIssueDefinitionStore;
 import cz.cas.lib.core.store.TransactionalNew;
 import lombok.Getter;
 import org.apache.commons.lang3.tuple.Pair;
+import org.camunda.bpm.engine.delegate.BpmnError;
 import org.camunda.bpm.engine.delegate.DelegateExecution;
 import org.camunda.bpm.engine.delegate.JavaDelegate;
 import org.springframework.beans.factory.annotation.Value;
@@ -32,6 +38,8 @@ public abstract class ArclibDelegate implements VariableMapper, IngestTool, Java
     protected IngestEventStore ingestEventStore;
     protected ToolService toolService;
     protected IngestWorkflowService ingestWorkflowService;
+    protected IngestIssueService ingestIssueService;
+    protected IngestIssueDefinitionStore ingestIssueDefinitionStore;
     @Getter
     private String toolVersion = null;
 
@@ -60,7 +68,30 @@ public abstract class ArclibDelegate implements VariableMapper, IngestTool, Java
     @TransactionalNew
     @Override
     public void execute(DelegateExecution execution) throws Exception {
-        executeArclibDelegate(execution);
+        try {
+            executeArclibDelegate(execution);
+        } catch (IncidentException e) {
+            if (e.getProvidedIssues() != null && !e.getProvidedIssues().isEmpty())
+                ingestIssueService.save(e.getProvidedIssues());
+            else
+                persistSingleUnresolvedIssue(execution, e.getDefaultIssueDefinitionCode(), e.toString());
+            throw e;
+        } catch (BpmnError e) {
+            throw e;
+        } catch (Exception e) {
+            persistSingleUnresolvedIssue(execution, IngestIssueDefinitionCode.INTERNAL_ERROR, e.toString());
+            throw new IncidentException("Ingest workflow internal runtime exception: " + e.toString(), e);
+        }
+    }
+
+    private void persistSingleUnresolvedIssue(DelegateExecution execution, IngestIssueDefinitionCode definitionCode, String description) {
+        ingestIssueService.save(new IngestIssue(
+                ingestWorkflowService.findByExternalId(getIngestWorkflowExternalId(execution)),
+                toolService.findByNameAndVersion(getToolName(), getToolVersion()),
+                ingestIssueDefinitionStore.findByCode(definitionCode),
+                null,
+                description,
+                false));
     }
 
     /**
@@ -173,5 +204,15 @@ public abstract class ArclibDelegate implements VariableMapper, IngestTool, Java
     @Inject
     public void setIngestWorkflowService(IngestWorkflowService ingestWorkflowService) {
         this.ingestWorkflowService = ingestWorkflowService;
+    }
+
+    @Inject
+    public void setIngestIssueService(IngestIssueService ingestIssueService) {
+        this.ingestIssueService = ingestIssueService;
+    }
+
+    @Inject
+    public void setIngestIssueDefinitionStore(IngestIssueDefinitionStore ingestIssueDefinitionStore) {
+        this.ingestIssueDefinitionStore = ingestIssueDefinitionStore;
     }
 }

@@ -12,16 +12,20 @@
         </METS:agent>
         <METS:altRecordID TYPE="original SIP identifier">Hlasy ze Siona, 1861-1916</METS:altRecordID>
     </METS:metsHdr>
-    <METS:dmdSec ID="DCMD_TITLE_0001">
-        <METS:mdWrap MDTYPE="DC" MIMETYPE="text/xml">
-            <METS:xmlData>
-                <dcterms:sipVersionNumber xmlns:dcterms="http://purl.org/dc/terms/">1</dcterms:sipVersionNumber>
-                <dcterms:sipVersionOf xmlns:dcterms="http://purl.org/dc/terms/">initial version</dcterms:sipVersionOf>
-                <dcterms:xmlVersionNumber xmlns:dcterms="http://purl.org/dc/terms/">1</dcterms:xmlVersionNumber>
-                <dcterms:xmlVersionOf xmlns:dcterms="http://purl.org/dc/terms/">initial version</dcterms:xmlVersionOf>
-            </METS:xmlData>
-        </METS:mdWrap>
-    </METS:dmdSec>
+    <METS:amdSec>
+        <METS:digiprovMD ID="ARCLIB_SIP_INFO">
+            <METS:mdWrap MDTYPE="PREMIS">
+                <METS:xmlData>
+                    <ARCLib:sipInfo xmlns:ARCLib="http://arclib.lib.cas.cz/ARCLIB_XSD">
+                        <ARCLib:sipVersionNumber>1</ARCLib:sipVersionNumber>
+                        <ARCLib:sipVersionOf>initial version</ARCLib:sipVersionOf>
+                        <ARCLib:xmlVersionNumber>1</ARCLib:xmlVersionNumber>
+                        <ARCLib:xmlVersionOf>initial version</ARCLib:xmlVersionOf>
+                    </ARCLib:sipInfo>
+                </METS:xmlData>
+            </METS:mdWrap>
+        </METS:digiprovMD>
+    </METS:amdSec>
     <METS:amdSec>
         <METS:techMD ID="techMD_1">
             <METS:mdWrap MDTYPE="PREMIS">

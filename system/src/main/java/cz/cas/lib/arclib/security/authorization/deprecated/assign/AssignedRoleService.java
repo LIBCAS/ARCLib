@@ -1,13 +1,10 @@
-package cz.cas.lib.arclib.security.authorization.assign;
+package cz.cas.lib.arclib.security.authorization.deprecated.assign;
 
 import com.google.common.collect.Sets;
-import cz.cas.lib.arclib.domain.User;
 import cz.cas.lib.arclib.domainbase.audit.AuditLogger;
-import cz.cas.lib.arclib.security.authorization.assign.audit.RoleAddEvent;
-import cz.cas.lib.arclib.security.authorization.assign.audit.RoleDelEvent;
-import cz.cas.lib.arclib.security.authorization.role.Role;
-import cz.cas.lib.arclib.security.user.UserDetails;
-import cz.cas.lib.arclib.service.UserService;
+import cz.cas.lib.arclib.security.authorization.deprecated.Role;
+import cz.cas.lib.arclib.security.authorization.deprecated.assign.audit.RoleAddEvent;
+import cz.cas.lib.arclib.security.authorization.deprecated.assign.audit.RoleDelEvent;
 import cz.cas.lib.core.store.Transactional;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.security.core.GrantedAuthority;
@@ -16,22 +13,15 @@ import org.springframework.stereotype.Service;
 
 import javax.inject.Inject;
 import java.time.Instant;
-import java.util.Collection;
-import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static cz.cas.lib.core.util.Utils.unwrap;
-
+// Fixme: change tests from roles to perms
 @ConditionalOnProperty(prefix = "security.roles.internal", name = "enabled", havingValue = "true")
 @Service
 public class AssignedRoleService {
     private AssignedRoleStore store;
-
     private AuditLogger logger;
-
-    private UserDetails userDetails;
-    private UserService userService;
 
     @Transactional
     public Set<Role> getAssignedRoles(String userId) {
@@ -39,19 +29,8 @@ public class AssignedRoleService {
     }
 
     @Transactional
-    public Set<Role> getAssignedRolesMine() {
-        UserDetails unwrapped = unwrap(userDetails);
-
-        if (unwrapped != null) {
-            return getAssignedRoles(unwrapped.getId());
-        } else {
-            return null;
-        }
-    }
-
-    @Transactional
     public void saveAssignedRoles(String userId, Set<Role> newRoles) {
-        Set<Role> oldRoles = getAssignedRoles(userId);
+        Set<Role> oldRoles = store.findAssignedRoles(userId);
 
         Sets.SetView<Role> removedRoles = Sets.difference(oldRoles, newRoles);
         Sets.SetView<Role> addedRoles = Sets.difference(newRoles, oldRoles);
@@ -67,21 +46,9 @@ public class AssignedRoleService {
         });
     }
 
-    public Collection<String> getIdsOfUsersWithRole(String roleName) {
-        return store.getUsersWithRole(roleName);
-    }
-
-    public Collection<User> getUsersWithRole(String roleName) {
-        return userService.findAllInList(store.getUsersWithRole(roleName));
-    }
-
-    public Collection<String> getEmailsOfUsersWithRole(String roleName) {
-        return userService.findAllInList(store.getUsersWithRole(roleName)).stream().map(User::getEmail).filter(Objects::nonNull).collect(Collectors.toList());
-    }
-
     @Transactional
     public Set<GrantedAuthority> getAuthorities(String userId) {
-        Set<Role> roles = getAssignedRoles(userId);
+        Set<Role> roles = store.findAssignedRoles(userId);
 
         return roles.stream()
                 .map(Role::getName)
@@ -89,6 +56,7 @@ public class AssignedRoleService {
                 .map(SimpleGrantedAuthority::new)
                 .collect(Collectors.toSet());
     }
+
 
     @Inject
     public void setStore(AssignedRoleStore store) {
@@ -100,13 +68,4 @@ public class AssignedRoleService {
         this.logger = logger;
     }
 
-    @Inject
-    public void setUserDetails(UserDetails userDetails) {
-        this.userDetails = userDetails;
-    }
-
-    @Inject
-    public void setUserService(UserService userService) {
-        this.userService = userService;
-    }
 }

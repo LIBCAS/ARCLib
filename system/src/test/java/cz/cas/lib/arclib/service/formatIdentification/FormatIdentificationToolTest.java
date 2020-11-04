@@ -157,7 +157,7 @@ public class FormatIdentificationToolTest extends SrDbTest {
     public void testPathsToConfigParser() throws IOException, IncidentException {
         String droidConfig = "{\"formatIdentification\":{\"0\":{\"pathsAndFormats\":{\"0\":{\"filePath\":\"this/is/a/filepath\", \"format\":\"fmt/101\"}, \"1\":{\"filePath\":\"this/is/another/filepath\", \"format\":\"fmt/993\"}}}}}";
         JsonNode jsonRoot = new ObjectMapper().readTree(droidConfig);
-        List<Pair<String, String>> pathToFormatDtos = formatIdentificationTool.parsePathsAndFormats(jsonRoot, ingestWorkflow.getExternalId());
+        List<Pair<String, String>> pathToFormatDtos = formatIdentificationTool.parsePathsAndFormats(jsonRoot);
         assertThat(pathToFormatDtos, hasSize(2));
 
         assertThat(asList(pathToFormatDtos.get(0).getLeft(), pathToFormatDtos.get(1).getLeft()),
@@ -185,12 +185,12 @@ public class FormatIdentificationToolTest extends SrDbTest {
         //no exception thrown when an empty array is provided
         String droidConfig = "{\"formatIdentification\":{\"0\":{\"type\":\"DROID\",\"pathsAndFormats\":{}}}}";
         JsonNode jsonRoot = new ObjectMapper().readTree(droidConfig);
-        formatIdentificationTool.parsePathsAndFormats(jsonRoot, ingestWorkflow.getExternalId());
+        formatIdentificationTool.parsePathsAndFormats(jsonRoot);
 
         //exception thrown when an invalid element is provided in the array
         String droidConfig2 = "{\"formatIdentification\":{\"0\":{\"type\":\"DROID\",\"pathsAndFormats\":{\"0\":{}}}}}";
         JsonNode jsonRoot2 = new ObjectMapper().readTree(droidConfig2);
-        assertThrown(() -> formatIdentificationTool.parsePathsAndFormats(jsonRoot2, ingestWorkflow.getExternalId()))
+        assertThrown(() -> formatIdentificationTool.parsePathsAndFormats(jsonRoot2))
                 .isInstanceOf(IncidentException.class);
 
         Collection<IngestIssue> issues = ingestIssueStore.findAll();

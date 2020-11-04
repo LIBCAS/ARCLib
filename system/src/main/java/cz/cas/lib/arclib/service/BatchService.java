@@ -2,6 +2,8 @@ package cz.cas.lib.arclib.service;
 
 import cz.cas.lib.arclib.domain.Batch;
 import cz.cas.lib.arclib.domainbase.exception.MissingObject;
+import cz.cas.lib.arclib.dto.BatchDetailDto;
+import cz.cas.lib.arclib.dto.BatchDetailIngestWorkflowDto;
 import cz.cas.lib.arclib.dto.BatchDto;
 import cz.cas.lib.arclib.store.BatchStore;
 import cz.cas.lib.core.index.dto.Params;
@@ -37,7 +39,6 @@ public class BatchService implements DelegateAdapter<Batch> {
      * @param params params for filtering
      * @return result containing the list of batches
      */
-    @Transactional
     public Result<Batch> getBatches(Params params) {
         return delegate.findAll(params);
     }
@@ -62,11 +63,24 @@ public class BatchService implements DelegateAdapter<Batch> {
      * @param id id of the batch
      * @return batch with the ingest workflows filled
      */
-    @Transactional
     public Batch get(String id) {
         Batch batch = delegate.findWithIngestWorkflowsFilled(id);
         notNull(batch, () -> new MissingObject(Batch.class, id));
         return batch;
+    }
+
+    /**
+     * Gets batch together with the associated ingest workflows.
+     *
+     * @param id id of the batch
+     * @return batch with the ingest workflows filled
+     */
+    public BatchDetailDto getDetailView(String id) {
+        Batch batch = delegate.findWithIngestWorkflowsFilled(id);
+        BatchDetailDto batchDetailDto = beanMappingService.mapTo(batch, BatchDetailDto.class);
+        batchDetailDto.setIngestWorkflows(beanMappingService.mapTo(batch.getIngestWorkflows(), BatchDetailIngestWorkflowDto.class));
+        notNull(batch, () -> new MissingObject(Batch.class, id));
+        return batchDetailDto;
     }
 
     @Inject

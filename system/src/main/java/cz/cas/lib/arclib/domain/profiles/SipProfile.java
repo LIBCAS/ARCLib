@@ -24,6 +24,11 @@ import javax.validation.constraints.NotNull;
 public class SipProfile extends NamedObject {
 
     /**
+     * Externé id
+     */
+    private String externalId;
+
+    /**
      * XSL obsah profilu
      */
     @Column(length = 10485760)

@@ -1,7 +1,6 @@
 package cz.cas.lib.arclib.security;
 
 import cz.cas.lib.arclib.domainbase.audit.AuditLogger;
-import cz.cas.lib.arclib.security.authorization.assign.AssignedRoleService;
 import cz.cas.lib.arclib.security.ldap.ArclibAuthenticationProvider;
 import cz.cas.lib.arclib.security.ldap.ArclibUserDetailsService;
 import cz.cas.lib.core.security.BaseSecurityInitializer;
@@ -23,8 +22,6 @@ public class SecurityInitializer extends BaseSecurityInitializer {
 
     private AuditLogger auditLogger;
 
-    private AssignedRoleService roleService;
-
     private LdapContextSource contextSource;
 
     private LdapUserSearch userSearch;
@@ -38,7 +35,7 @@ public class SecurityInitializer extends BaseSecurityInitializer {
         BindAuthenticator authenticator = new BindAuthenticator(contextSource);
         authenticator.setUserSearch(userSearch);
 
-        ArclibAuthenticationProvider provider = new ArclibAuthenticationProvider(authenticator, roleService, userDetailsUpdater);
+        ArclibAuthenticationProvider provider = new ArclibAuthenticationProvider(authenticator, userDetailsUpdater);
 
         return asArray(provider);
     }
@@ -74,8 +71,4 @@ public class SecurityInitializer extends BaseSecurityInitializer {
         this.userDetailsUpdater = userDetailsUpdater;
     }
 
-    @Inject
-    public void setRoleService(AssignedRoleService roleService) {
-        this.roleService = roleService;
-    }
 }

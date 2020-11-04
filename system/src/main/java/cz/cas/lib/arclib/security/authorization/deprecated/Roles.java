@@ -1,10 +1,11 @@
-package cz.cas.lib.arclib.security.authorization;
+package cz.cas.lib.arclib.security.authorization.deprecated;
 
 /**
  * List of all Roles
  * <p>
  * Important! Every permission needs to have ROLE_ prefix for spring security to work.
  */
+@Deprecated
 public class Roles {
     public static final String ARCHIVIST = "ROLE_ARCHIVIST";
     public static final String ADMIN = "ROLE_ADMIN";

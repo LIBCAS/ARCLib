@@ -1,11 +1,13 @@
 package cz.cas.lib.arclib.utils;
 
-import cz.cas.lib.arclib.domainbase.exception.GeneralException;
 import cz.cas.lib.arclib.exception.validation.MissingNode;
+import cz.cas.lib.arclib.exception.validation.MultipleNodesFound;
+import cz.cas.lib.arclib.exception.validation.SchemaValidationError;
 import cz.cas.lib.core.util.Utils;
 import lombok.SneakyThrows;
 import net.sf.saxon.jaxp.SaxonTransformerFactory;
 import org.dom4j.InvalidXPathException;
+import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
@@ -30,10 +32,7 @@ import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.StringReader;
-import java.io.StringWriter;
+import java.io.*;
 
 public class XmlUtils {
 
@@ -60,6 +59,44 @@ public class XmlUtils {
 
         try {
             return (NodeList) xPath.compile(expression).evaluate(doc, XPathConstants.NODESET);
+        } catch (XPathExpressionException e) {
+            throw new InvalidXPathException(expression, e.getMessage());
+        }
+    }
+
+    /**
+     * Searches XML element with XPath and returns single node found or throws exception if there is no or multiple nodes
+     *
+     * @param xml        input stream with the XML in which the element is being searched
+     * @param expression XPath expression used in search
+     * @return {@link Node} singe node found
+     * @throws IOException        if the XML at the specified path is missing
+     * @throws SAXException       if the XML cannot be parsed
+     * @throws MissingNode        if the node is not found
+     * @throws MultipleNodesFound if multiple nodes were found
+     */
+    public static Node findSingleNodeWithXPath(InputStream xml, String expression)
+            throws IOException, SAXException, ParserConfigurationException {
+        DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
+        DocumentBuilder dBuilder;
+
+        dBuilder = dbFactory.newDocumentBuilder();
+
+        Document doc = dBuilder.parse(xml);
+        doc.getDocumentElement().normalize();
+
+        XPath xPath = XPathFactory.newInstance().newXPath();
+
+        try {
+            NodeList elementsFound = (NodeList) xPath.compile(expression).evaluate(doc, XPathConstants.NODESET);
+            switch (elementsFound.getLength()) {
+                case 0:
+                    throw new MissingNode(expression);
+                case 1:
+                    return elementsFound.item(0);
+                default:
+                    throw new MultipleNodesFound(expression);
+            }
         } catch (XPathExpressionException e) {
             throw new InvalidXPathException(expression, e.getMessage());
         }
@@ -145,25 +182,24 @@ public class XmlUtils {
      *
      * @param xml     XML in which the element is being searched
      * @param schemas XSD schemas against which the XML is validated
+     * @param logSpec brief description of the XML and/or context of the validation.. used in log msg
      * @throws SAXException if the XSD schema is invalid
      * @throws IOException  if the XML at the specified path is missing
      */
-    public static void validateWithXMLSchema(InputStream xml, InputStream[] schemas) throws IOException, SAXException {
+    public static void validateWithXMLSchema(String xml, InputStream[] schemas, String logSpec) {
         SchemaFactory factory =
                 SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
-
         Source[] sources = new Source[schemas.length];
         for (int i = 0; i < schemas.length; i++) {
             sources[i] = new StreamSource(schemas[i]);
         }
-
-        Schema schema = factory.newSchema(sources);
-        Validator validator = schema.newValidator();
-
         try {
-            validator.validate(new StreamSource(xml));
-        } catch (SAXException e) {
-            throw new GeneralException(e);
+            Schema schema = factory.newSchema(sources);
+            Validator validator = schema.newValidator();
+            validator.validate(new StreamSource(new ByteArrayInputStream(xml.getBytes())));
+        } catch (IOException | SAXException e) {
+            LoggerFactory.getLogger(XmlUtils.class).error("Error during schema validation of XML: " + xml);
+            throw new SchemaValidationError(logSpec + " - XML schema validation failed. Details: " + e.toString() + ". More details (whole XML) can be found in application log.", e);
         }
     }
 

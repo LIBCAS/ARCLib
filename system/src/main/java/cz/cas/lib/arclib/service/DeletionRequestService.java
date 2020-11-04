@@ -9,7 +9,7 @@ import cz.cas.lib.arclib.exception.AipStateChangeException;
 import cz.cas.lib.arclib.exception.ForbiddenException;
 import cz.cas.lib.arclib.index.solr.arclibxml.IndexedAipState;
 import cz.cas.lib.arclib.mail.ArclibMailCenter;
-import cz.cas.lib.arclib.security.authorization.Roles;
+import cz.cas.lib.arclib.security.authorization.data.Permissions;
 import cz.cas.lib.arclib.security.user.UserDetails;
 import cz.cas.lib.arclib.store.AipDeletionRequestStore;
 import cz.cas.lib.core.store.Transactional;
@@ -96,7 +96,7 @@ public class DeletionRequestService {
 //        deletionRequests = deletionRequests.stream().filter(r -> r.getDeleted() == null ||
 //                r.getRequester().getId().equals(userDetails.getId())).collect(Collectors.toList());
         Collection<AipDeletionRequest> deletionRequests = aipDeletionRequestStore.findAll();
-        if (!hasRole(userDetails, Roles.SUPER_ADMIN)) {
+        if (!hasRole(userDetails, Permissions.SUPER_ADMIN_PRIVILEGE)) {
             deletionRequests = deletionRequests.stream()
                     .filter(request -> {
                         User requester = request.getRequester();

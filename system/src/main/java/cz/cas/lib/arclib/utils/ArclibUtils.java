@@ -40,7 +40,6 @@ public class ArclibUtils {
     public static final String PREMIS = "premis";
     public static final String XSI = "xsi";
     public static final String ARCLIB = "arclib";
-    public static final String DCTERMS = "dcterms";
     public static final String DC = "dc";
 
     /**

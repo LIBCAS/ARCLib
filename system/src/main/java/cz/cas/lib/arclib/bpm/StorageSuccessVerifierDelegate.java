@@ -1,6 +1,5 @@
 package cz.cas.lib.arclib.bpm;
 
-import cz.cas.lib.arclib.domain.IngestToolFunction;
 import cz.cas.lib.arclib.domain.VersioningLevel;
 import cz.cas.lib.arclib.domain.ingestWorkflow.IngestWorkflow;
 import cz.cas.lib.arclib.domain.ingestWorkflow.IngestWorkflowState;
@@ -36,7 +35,7 @@ public class StorageSuccessVerifierDelegate extends ArclibDelegate {
     private Boolean deleteSipFromTransferArea;
     private AipService aipService;
     @Getter
-    private String toolName = "ARCLib_" + IngestToolFunction.transfer;
+    private String toolName = "ARCLib_archival_storage_verification";
 
     /**
      * Verifies that archival storage has succeeded to persist the SIP (update the ArclibXml).

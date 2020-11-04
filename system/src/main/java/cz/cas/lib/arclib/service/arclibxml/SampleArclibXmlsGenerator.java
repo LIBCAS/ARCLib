@@ -30,11 +30,11 @@ import static cz.cas.lib.core.util.Utils.executeProcessDefaultResultHandle;
 @Slf4j
 @Service
 public class SampleArclibXmlsGenerator {
-    public static final Path SAMPLE_DATA_FOLDER = Paths.get("src/main/resources/sampleData");
+    public static final Path SAMPLE_DATA_FOLDER = Paths.get("system/src/main/resources/sampleData");
 
     private static final String REGEX = "([a-z0-9]*)";
     private static final String SHA_512_EXTENSION = ".SHA512";
-    private static final Path INIT_SQL_PATH = Paths.get("src/main/resources/init.sql");
+    private static final Path INIT_SQL_PATH = Paths.get("system/src/main/resources/sql/arclibInit.sql");
 
     private static final Path SAMPLE_ARCLIB_XML_PATH_1 = Paths.get("4b/66/65/4b66655a-819a-474f-8203-6c432815df1f_xml_1");
     private static final Path SAMPLE_ARCLIB_XML_PATH_2 = Paths.get("4b/66/65/4b66655a-819a-474f-8203-6c432815df1f_xml_2");
@@ -171,7 +171,7 @@ public class SampleArclibXmlsGenerator {
 
         //update 'xml version number'
         XPath xmlVersionNumberPath = doc.createXPath(
-                "/mets:mets/mets:dmdSec/mets:mdWrap/mets:xmlData/dcterms:xmlVersionNumber");
+                "/mets:mets/mets:amdSec/mets:digiprovMD[@ID='ARCLIB_SIP_INFO']/mets:mdWrap/mets:xmlData/arclib:sipInfo/arclib:xmlVersionNumber");
         xmlVersionNumberPath.setNamespaceURIs(uris);
         Element xmlVersionNumberElement = (Element) xmlVersionNumberPath.selectSingleNode(doc);
         if (xmlVersionNumberElement == null) throw new MissingNode(xmlVersionNumberPath.getText());
@@ -179,7 +179,7 @@ public class SampleArclibXmlsGenerator {
 
         //update 'xml version of'
         XPath xmlVersionOfPath = doc.createXPath(
-                "/mets:mets/mets:dmdSec/mets:mdWrap/mets:xmlData/dcterms:xmlVersionOf");
+                "/mets:mets/mets:amdSec/mets:digiprovMD[@ID='ARCLIB_SIP_INFO']/mets:mdWrap/mets:xmlData/arclib:sipInfo/arclib:xmlVersionOf");
         xmlVersionOfPath.setNamespaceURIs(uris);
         Element xmlVersionOfElement = (Element) xmlVersionOfPath.selectSingleNode(doc);
         if (xmlVersionOfElement == null) throw new MissingNode(xmlVersionOfPath.getText());
@@ -187,7 +187,7 @@ public class SampleArclibXmlsGenerator {
 
         //update 'sip version number'
         XPath sipVersionNumberPath = doc.createXPath(
-                "/mets:mets/mets:dmdSec/mets:mdWrap/mets:xmlData/dcterms:sipVersionNumber");
+                "/mets:mets/mets:amdSec/mets:digiprovMD[@ID='ARCLIB_SIP_INFO']/mets:mdWrap/mets:xmlData/arclib:sipInfo/arclib:sipVersionNumber");
         sipVersionNumberPath.setNamespaceURIs(uris);
         Element sipVersionNumberElement = (Element) sipVersionNumberPath.selectSingleNode(doc);
         if (sipVersionNumberElement == null) throw new MissingNode(sipVersionNumberPath.getText());
@@ -195,7 +195,7 @@ public class SampleArclibXmlsGenerator {
 
         //update 'sip version of'
         XPath sipVersionOfPath = doc.createXPath(
-                "/mets:mets/mets:dmdSec/mets:mdWrap/mets:xmlData/dcterms:sipVersionOf");
+                "/mets:mets/mets:amdSec/mets:digiprovMD[@ID='ARCLIB_SIP_INFO']/mets:mdWrap/mets:xmlData/arclib:sipInfo/arclib:sipVersionOf");
         sipVersionOfPath.setNamespaceURIs(uris);
         Element sipVersionOfElement = (Element) sipVersionOfPath.selectSingleNode(doc);
         if (sipVersionOfElement == null) throw new MissingNode(sipVersionOfPath.getText());
@@ -211,8 +211,7 @@ public class SampleArclibXmlsGenerator {
 
     @Inject
     public void setUris(@Value("${namespaces.mets}") String mets, @Value("${namespaces.xsi}") String xsi, @Value("${namespaces.arclib}") String arclib, @Value("${namespaces" +
-            ".premis}") String premis, @Value("${namespaces.oai_dc}") String oai_dc, @Value("${namespaces.dc}") String dc,
-                        @Value("${namespaces.dcterms}") String dcterms) {
+            ".premis}") String premis, @Value("${namespaces.oai_dc}") String oai_dc, @Value("${namespaces.dc}") String dc) {
         Map<String, String> uris = new HashMap<>();
         uris.put(METS, mets);
         uris.put(ARCLIB, arclib);
@@ -220,7 +219,6 @@ public class SampleArclibXmlsGenerator {
         uris.put(XSI, xsi);
         uris.put(OAIS_DC, oai_dc);
         uris.put(DC, dc);
-        uris.put(DCTERMS, dcterms);
 
         this.uris = uris;
     }

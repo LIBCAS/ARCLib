@@ -72,7 +72,7 @@ public abstract class FormatIdentificationTool implements IngestTool {
             Map<String, List<Pair<String, String>>> identifiedFormats, JsonNode configRoot, String externalId)
             throws IncidentException {
         //list of paths and formats with predefined values to help to resolve the format identification ambiguity
-        List<Pair<String, String>> predefinedFormats = parsePathsAndFormats(configRoot, externalId);
+        List<Pair<String, String>> predefinedFormats = parsePathsAndFormats(configRoot);
 
         //map of files to lists of formats for which it was unable to unambiguously determine the format
         TreeMap<String, List<Pair<String, String>>> unresolvableFormats = new TreeMap<>();
@@ -123,12 +123,11 @@ public abstract class FormatIdentificationTool implements IngestTool {
     /**
      * Parse list of predefined pairs of a file path and a file format from the JSON config
      *
-     * @param root       JSON config
-     * @param externalId external id of the ingest workflow
+     * @param root JSON config
      * @return list parsed out pairs of paths and formats
      * @throws ConfigParserException JSON configuration is invalid
      */
-    public List<Pair<String, String>> parsePathsAndFormats(JsonNode root, String externalId) throws IncidentException {
+    public List<Pair<String, String>> parsePathsAndFormats(JsonNode root) throws IncidentException {
         ObjectMapper om = new ObjectMapper();
         List<Pair<String, String>> result = new ArrayList<>();
 
@@ -137,35 +136,19 @@ public abstract class FormatIdentificationTool implements IngestTool {
             return result;
 
         if (pathsToFormatsNode.getNodeType() != JsonNodeType.OBJECT)
-            invokeInvalidConfigIssue(FORMAT_IDENTIFICATON_TOOL_EXPR +  "/" + formatIdentificationToolCounter + PATHS_AND_FORMATS_EXPR, pathsToFormatsNode.toString(), externalId);
+            throw new ConfigParserException(FORMAT_IDENTIFICATON_TOOL_EXPR + "/" + formatIdentificationToolCounter + PATHS_AND_FORMATS_EXPR, pathsToFormatsNode.toString(), EXPECTED_JSON_INPUT);
+
         Map<String, Map> list = om.convertValue(pathsToFormatsNode, Map.class);
 
         for (Map pathToFormat : list.values()) {
             String filePath = (String) pathToFormat.get(FILE_PATH_EXPR);
             String format = (String) pathToFormat.get(FORMAT_EXPR);
             if (filePath == null || format == null) {
-                invokeInvalidConfigIssue(FORMAT_IDENTIFICATON_TOOL_EXPR +  "/" + formatIdentificationToolCounter + PATHS_AND_FORMATS_EXPR, pathsToFormatsNode.toString(), externalId);
+                throw new ConfigParserException(FORMAT_IDENTIFICATON_TOOL_EXPR + "/" + formatIdentificationToolCounter + PATHS_AND_FORMATS_EXPR, pathsToFormatsNode.toString(), EXPECTED_JSON_INPUT);
             }
             result.add(Pair.of(filePath, format));
         }
         return result;
-    }
-
-    @Transactional
-    private void invokeInvalidConfigIssue(String configPath, String nodeValue, String externalId)
-            throws IncidentException {
-        log.warn("Invoking invalid config issue for ingest workflow " + externalId + ".");
-
-        IngestIssue issue = new IngestIssue(
-                ingestWorkflow,
-                toolEntity,
-                ingestIssueDefinitionStore.findByCode(IngestIssueDefinitionCode.CONFIG_PARSE_ERROR),
-                null,
-                IngestIssue.createInvalidConfigNote(configPath, nodeValue, EXPECTED_JSON_INPUT),
-                false
-        );
-        ingestIssueService.save(issue);
-        throw new IncidentException(issue);
     }
 
     @Transactional
@@ -188,7 +171,6 @@ public abstract class FormatIdentificationTool implements IngestTool {
                                                 String externalId) throws IncidentException {
         log.warn("Invoking unresolvable formats issue for ingest workflow " + externalId + ".");
         List<IngestIssue> issues = new ArrayList<>();
-        StringBuilder allFilesSb = new StringBuilder();
 
         ambiguousFormats.entrySet().stream()
                 .forEach(item -> {
@@ -209,10 +191,8 @@ public abstract class FormatIdentificationTool implements IngestTool {
                                 false
                         ));
                     });
-                    allFilesSb.append(oneFileSb);
                 });
-        ingestIssueService.save(issues);
-        throw new IncidentException(allFilesSb.toString());
+        throw new IncidentException(issues);
     }
 
     public void inject(FormatDefinitionService formatDefinitionService,

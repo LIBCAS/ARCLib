@@ -1,7 +1,5 @@
 package cz.cas.lib.arclib.service;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import cz.cas.lib.arclib.domain.Batch;
 import cz.cas.lib.arclib.domain.BatchState;
 import cz.cas.lib.arclib.domain.Hash;
@@ -28,7 +26,6 @@ import cz.cas.lib.arclib.service.fixity.Sha512Counter;
 import cz.cas.lib.arclib.store.AuthorialPackageStore;
 import cz.cas.lib.arclib.store.SipStore;
 import cz.cas.lib.arclib.utils.ArclibUtils;
-import cz.cas.lib.arclib.utils.JsonUtils;
 import cz.cas.lib.arclib.utils.XmlUtils;
 import cz.cas.lib.arclib.utils.ZipUtils;
 import cz.cas.lib.core.util.Utils;
@@ -42,11 +39,9 @@ import org.camunda.bpm.engine.runtime.Incident;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jms.annotation.JmsListener;
 import org.springframework.jms.core.JmsTemplate;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionCallback;
 import org.springframework.transaction.support.TransactionTemplate;
-import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
@@ -68,7 +63,7 @@ import static cz.cas.lib.core.util.Utils.*;
 
 @Slf4j
 @Service
-public class WorkerService implements WorkerServiceI {
+public class WorkerService {
 
     private IngestWorkflowService ingestWorkflowService;
     private AuthorialPackageStore authorialPackageStore;
@@ -98,8 +93,6 @@ public class WorkerService implements WorkerServiceI {
      *
      * @param dto DTO with the external id of the ingest workflow to process and id of the user that triggered the ingest process
      */
-    @Override
-    @Async
     @JmsListener(destination = "worker")
     public void startProcessingOfIngestWorkflow(JmsDto dto) {
         String externalId = dto.getId();
@@ -127,18 +120,17 @@ public class WorkerService implements WorkerServiceI {
 
             if (tooManyFailedIngestWorkflows(batch)) {
                 log.error("Processing of batch " + batchId + " stopped because of too many ingest workflow failures.");
-                template.convertAndSend("cancel", batchId);
+                template.convertAndSend("cancel", new JmsDto(batchId, dto.getUserId()));
                 return;
             }
-
-            ingestWorkflow.setProcessingState(IngestWorkflowState.PROCESSING);
-            ingestWorkflowService.save(ingestWorkflow);
-            log.info("State of ingest workflow with external id " + externalId + " changed to PROCESSING.");
 
             transactionTemplate.execute((TransactionCallback<Void>) status -> {
                 try {
                     //all DB operations in the template will be rolled back in case of any exception
+                    ingestWorkflow.setProcessingState(IngestWorkflowState.PROCESSING);
+                    ingestWorkflowService.save(ingestWorkflow);
                     processIngestWorkflow(ingestWorkflow, dto.getUserId());
+                    log.info("State of ingest workflow with external id " + externalId + " changed to PROCESSING.");
                 } catch (IOException e) {
                     throw new UncheckedIOException(e);
                 }
@@ -171,8 +163,6 @@ public class WorkerService implements WorkerServiceI {
      * @param incidentDto dto containing incident id and config
      * @throws MissingObject if incident can't be found by id
      */
-    @Override
-    @Async
     @JmsListener(destination = "incident")
     public void solveIncident(SolveIncidentDto incidentDto) {
         log.info("Trying to solve incident with ID " + incidentDto.getIncidentId() + " using config " + incidentDto.getConfig() + ".");
@@ -216,9 +206,6 @@ public class WorkerService implements WorkerServiceI {
         Path sipFolderWorkspacePath = getIngestWorkflowWorkspacePath(ingestWorkflow.getExternalId(), workspace)
                 .resolve(rootDirNameAndSizeInBytes.getLeft());
 
-        String ingestWorkflowConfig = computeIngestWorkflowConfig(batch.getWorkflowConfig(), producerProfile
-                .getWorkflowConfig(), ingestWorkflow.getExternalId());
-
         List<String> filePaths = ArclibUtils.listFilePaths(sipFolderWorkspacePath);
         createSipAndAuthorialPackages(ingestWorkflow, sipFolderWorkspacePath, filePaths, userId, rootDirNameAndSizeInBytes.getRight());
 
@@ -226,11 +213,10 @@ public class WorkerService implements WorkerServiceI {
         initVars.put(Ingestion.sipFileName, ingestWorkflow.getFileName());
         initVars.put(Ingestion.dateTime, Instant.now().truncatedTo(ChronoUnit.SECONDS).toString());
         initVars.put(Ingestion.authorialId, ingestWorkflow.getSip().getAuthorialPackage().getAuthorialId());
-        initVars.put(ProcessVariables.sipProfileId, sipProfile.getId());
         initVars.put(ProcessVariables.sipFolderWorkspacePath, sipFolderWorkspacePath.toString());
         initVars.put(ProcessVariables.ingestWorkflowExternalId, ingestWorkflow.getExternalId());
         initVars.put(ProcessVariables.batchId, batch.getId());
-        initVars.put(ProcessVariables.latestConfig, ingestWorkflowConfig);
+        initVars.put(ProcessVariables.latestConfig, ingestWorkflow.getInitialConfig());
         initVars.put(ProcessVariables.responsiblePerson, userId);
         initVars.put(ProcessVariables.producerId, producerProfile.getProducer().getId());
         initVars.put(ProcessVariables.sipId, ingestWorkflow.getSip().getId());
@@ -238,7 +224,6 @@ public class WorkerService implements WorkerServiceI {
         initVars.put(ProcessVariables.xmlVersion, ingestWorkflow.getXmlVersionNumber());
         initVars.put(ProcessVariables.debuggingModeActive, producerProfile.isDebuggingModeActive());
         initVars.put(ProcessVariables.producerProfileExternalId, producerProfile.getExternalId());
-        initVars.put(Validation.validationProfileId, producerProfile.getValidationProfile().getId());
         initVars.put(ArchivalStorage.aipSavedCheckRetries, aipSavedCheckRetries);
         initVars.put(ArchivalStorage.aipSavedCheckTimeout, aipSavedCheckTimeout);
         initVars.put(ArchivalStorage.aipStoreRetries, aipStoreRetries);
@@ -504,67 +489,21 @@ public class WorkerService implements WorkerServiceI {
                 "at the path given by glob pattern: " + pathToXmlGlobPattern);
 
         File metadataFile = matchingFiles.get(0);
+        String authorialId;
         try (FileInputStream fis = new FileInputStream(metadataFile)) {
-            elems = XmlUtils.findWithXPath(fis, xPathToId);
+            authorialId = XmlUtils.findSingleNodeWithXPath(fis, xPathToId).getTextContent();
         } catch (SAXException | ParserConfigurationException e) {
             throw new GeneralException("Error in XPath expression to authorial id: " + xPathToId, e);
         } catch (IOException e) {
             throw new GeneralException("File with metadata for ingest workflow with external id " + ingestWorkflow.getExternalId()
                     + " is inaccessible at path: " + metadataFile.getPath(), e);
         }
-
-        if (elems.getLength() == 0) {
-            throw new GeneralException("Non existent path to authorial id: " + xPathToId);
-        }
-        if (elems.getLength() > 1) {
-            throw new GeneralException("Ambiguous path to authorial id: " + xPathToId);
-        }
-        Node item = elems.item(0);
-        String authorialId = item.getTextContent();
-
         if (authorialId.isEmpty()) throw new GeneralException("Authorial id of SIP at XPath " + xPathToId +
                 " in file " + pathToXmlGlobPattern + " is empty.");
         log.debug("Authorial id of SIP for ingest workflow with external id " + ingestWorkflow.getExternalId() +
                 " has been successfully extracted. Authorial id is: " + authorialId + ".");
 
         return authorialId;
-    }
-
-    /**
-     * Computes resulting ingest workflow config by merging producer and batch ingest configs.
-     * If there are two equally named attributes the batch config has the priority over the producer config.
-     *
-     * @param batchIngestConfig    ingest config provided with the batch
-     * @param producerIngestConfig ingest config of the producer
-     * @param externalId           external id of the ingest workflow
-     * @return computed ingest config
-     */
-    private String computeIngestWorkflowConfig(String batchIngestConfig, String producerIngestConfig,
-                                               String externalId) throws IOException {
-        ObjectMapper mapper = new ObjectMapper();
-
-        if (producerIngestConfig.isEmpty()) {
-            throw new IllegalArgumentException("Producer ingest workflow config json for ingest workflow with external id "
-                    + externalId + " is empty.");
-        }
-        log.debug("Producer ingest workflow config json for ingest workflow with external id " +
-                externalId + ": " + producerIngestConfig);
-
-        JsonNode ingestConfig = mapper.readTree(producerIngestConfig);
-
-        if (batchIngestConfig != null) {
-            log.debug("Batch ingest workflow config json for ingest workflow with external id " +
-                    externalId + ": " + batchIngestConfig);
-            JsonNode batchIngestConfigJson = mapper.readTree(batchIngestConfig);
-            ingestConfig = JsonUtils.merge(ingestConfig, batchIngestConfigJson);
-        } else {
-            log.debug("Batch ingest workflow config json for ingest workflow with external id " + externalId
-                    + " is empty.");
-        }
-
-        log.debug("Result ingest workflow config json for ingest workflow with external id " + externalId + ": "
-                + ingestConfig);
-        return mapper.writeValueAsString(ingestConfig);
     }
 
     @Inject

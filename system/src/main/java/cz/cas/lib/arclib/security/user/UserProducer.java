@@ -24,7 +24,7 @@ public class UserProducer {
             }
         }
 
-        if (principal instanceof UserDelegate) {
+        if (principal instanceof UserDetailsImpl) {
             return (UserDetails) principal;
         } else
             return null;

@@ -1,8 +1,7 @@
 package cz.cas.lib.arclib.security.ldap;
 
 import cz.cas.lib.arclib.domain.User;
-import cz.cas.lib.arclib.security.authorization.assign.AssignedRoleService;
-import cz.cas.lib.arclib.security.user.UserDelegate;
+import cz.cas.lib.arclib.security.user.UserDetailsImpl;
 import org.springframework.ldap.core.DirContextAdapter;
 import org.springframework.ldap.core.DirContextOperations;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -15,30 +14,24 @@ import org.springframework.security.ldap.authentication.LdapAuthenticator;
 import org.springframework.security.ldap.userdetails.UserDetailsContextMapper;
 
 import java.util.Collection;
-import java.util.Set;
 
 public class ArclibAuthenticationProvider extends LdapAuthenticationProvider implements UserDetailsContextMapper {
     private ArclibUserDetailsService updater;
-    private AssignedRoleService roleService;
 
-    public ArclibAuthenticationProvider(LdapAuthenticator authenticator, AssignedRoleService roleService, ArclibUserDetailsService updater) {
+    public ArclibAuthenticationProvider(LdapAuthenticator authenticator, ArclibUserDetailsService updater) {
         super(authenticator);
         this.setUserDetailsContextMapper(this);
         this.updater = updater;
-        this.roleService = roleService;
     }
 
     @Override
     protected Authentication createSuccessfulAuthentication(UsernamePasswordAuthenticationToken authentication, UserDetails details) {
-        if (details instanceof UserDelegate) {
-            UserDelegate delegate = (UserDelegate) details;
-            User external = delegate.getUser();
+        if (details instanceof UserDetailsImpl) {
+            UserDetailsImpl delegate = (UserDetailsImpl) details;
+            User external = delegate.getUser(); // without roles
 
-            User user = updater.updateFromExternal(external);
+            User user = updater.updateFromExternal(external); // loads user from DB with roles and their permissions
             delegate.setUser(user);
-
-            Set<GrantedAuthority> authorities = roleService.getAuthorities(user.getId());
-            delegate.setAuthorities(authorities);
 
             return super.createSuccessfulAuthentication(authentication, delegate);
         } else {
@@ -47,16 +40,16 @@ public class ArclibAuthenticationProvider extends LdapAuthenticationProvider imp
     }
 
     @Override
-    public UserDetails mapUserFromContext(DirContextOperations ctx, String username, Collection<? extends GrantedAuthority> authorities) {
-
+    public UserDetails mapUserFromContext(DirContextOperations ctx, String username, Collection<? extends GrantedAuthority> ignored) {
         User user = new User();
         user.setFirstName(ctx.getStringAttribute("givenName"));
         user.setLastName(ctx.getStringAttribute("sn"));
         user.setEmail(ctx.getStringAttribute("mail"));
+        user.setInstitution(ctx.getStringAttribute("o"));
         user.setLdapDn(ctx.getDn().toString());
         user.setUsername(username);
 
-        return new UserDelegate(user, authorities);
+        return new UserDetailsImpl(user);
     }
 
     @Override

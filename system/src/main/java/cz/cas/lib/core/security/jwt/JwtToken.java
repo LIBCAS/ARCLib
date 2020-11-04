@@ -31,8 +31,8 @@ public class JwtToken extends AbstractAuthenticationToken {
         setAuthenticated(false);
     }
 
-    public JwtToken(UserDetails principal, Claims claims, Collection<? extends GrantedAuthority> authorities) {
-        super(authorities);
+    public JwtToken(UserDetails principal, Claims claims) {
+        super(principal.getAuthorities());
         this.principal = principal;
         this.claims = claims;
         setAuthenticated(true);

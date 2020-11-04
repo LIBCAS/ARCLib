@@ -2,11 +2,11 @@ package cz.cas.lib.arclib.mail;
 
 import cz.cas.lib.arclib.domain.User;
 import cz.cas.lib.arclib.domain.preservationPlanning.Tool;
-import cz.cas.lib.arclib.formatlibrary.service.FormatLibraryNotifier;
-import cz.cas.lib.arclib.security.authorization.Roles;
-import cz.cas.lib.arclib.security.authorization.assign.AssignedRoleService;
-import cz.cas.lib.arclib.service.UserService;
 import cz.cas.lib.arclib.domainbase.exception.GeneralException;
+import cz.cas.lib.arclib.formatlibrary.service.FormatLibraryNotifier;
+import cz.cas.lib.arclib.security.authorization.data.Permissions;
+import cz.cas.lib.arclib.security.authorization.logic.UserRoleService;
+import cz.cas.lib.arclib.service.UserService;
 import cz.cas.lib.core.mail.MailCenter;
 import cz.cas.lib.core.util.Utils;
 import freemarker.template.TemplateException;
@@ -28,7 +28,7 @@ import java.util.Map;
 @Service
 public class ArclibMailCenter extends MailCenter implements FormatLibraryNotifier {
 
-    private AssignedRoleService assignedRoleService;
+    private UserRoleService assignedRoleService;
     private UserService userService;
 
     /**
@@ -79,7 +79,7 @@ public class ArclibMailCenter extends MailCenter implements FormatLibraryNotifie
      * @param created  time when the notification was created
      */
     public void sendNewUserRegisteredNotification(String username, Instant created) {
-        Collection<User> recipients = assignedRoleService.getUsersWithRole(Roles.SUPER_ADMIN);
+        Collection<User> recipients = assignedRoleService.getUsersWithPermission(Permissions.SUPER_ADMIN_PRIVILEGE);
         recipients.forEach(user -> sendNotificationInternal(user.getEmail(), username, null, created, "templates/en/newUserNotification.ftl"));
     }
 
@@ -101,7 +101,7 @@ public class ArclibMailCenter extends MailCenter implements FormatLibraryNotifie
             }
         }
         if (recipients == null)
-            recipients = assignedRoleService.getEmailsOfUsersWithRole(Roles.SUPER_ADMIN);
+            recipients = assignedRoleService.getEmailsOfUsersWithPermission(Permissions.SUPER_ADMIN_PRIVILEGE);
         recipients.forEach(email -> sendNotificationInternal(email, null, message, created, "templates/en/formatLibraryUpdateNotification.ftl"));
         log.debug("Sent notification mail about update of format library to mail addresses " +
                 Arrays.toString(recipients.toArray()) + ".");
@@ -160,7 +160,7 @@ public class ArclibMailCenter extends MailCenter implements FormatLibraryNotifie
      * @param newVersion of the tool
      */
     public void sendNewToolVersionNotification(Tool oldVersion, Tool newVersion) {
-        Collection<User> recipients = assignedRoleService.getUsersWithRole(Roles.SUPER_ADMIN);
+        Collection<User> recipients = assignedRoleService.getUsersWithPermission(Permissions.SUPER_ADMIN_PRIVILEGE);
         String msg = "Name: " + newVersion.getName() + "\nPrevious version: " + (oldVersion == null ? "no previous version" : oldVersion.getVersion()) + "\nNew version: " + newVersion.getVersion();
         recipients.forEach(user -> sendNotificationInternal(user.getEmail(), newVersion.getId(), msg, Instant.now(), "templates/en/newToolVersionNotification.ftl"));
         log.debug("Sent notification mail about new tool version detected and created to mail addresses " +
@@ -187,7 +187,7 @@ public class ArclibMailCenter extends MailCenter implements FormatLibraryNotifie
     }
 
     @Inject
-    public void setAssignedRoleService(AssignedRoleService assignedRoleService) {
+    public void setAssignedRoleService(UserRoleService assignedRoleService) {
         this.assignedRoleService = assignedRoleService;
     }
 

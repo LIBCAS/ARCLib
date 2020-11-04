@@ -43,7 +43,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 public class IngestIntegrationTest extends TransformerFactoryWorkaroundTest implements ApiTest {
 
     private static final String SIP_MD5 = "6f1ed002ab5595859014ebf0951522d9";
-    private static final Path BPMN_TEST_PATH = Paths.get("src/main/resources/bpmn/ingestWorkflow.bpmn");
+    private static final Path BPMN_TEST_PATH = Paths.get("system/src/main/resources/bpmn/ingestWorkflow.bpmn");
     private static final String PRODUCER_CONFIG = "{}";
     private static final String CORRUPTED_FILE_NAME = "eicar.com";
     private static final Path CORRUPTED_FILE_REPRESENTANT = Paths.get("src/test/resources").resolve(CORRUPTED_FILE_NAME);

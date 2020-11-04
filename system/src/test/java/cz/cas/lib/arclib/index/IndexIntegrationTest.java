@@ -11,8 +11,9 @@ import cz.cas.lib.arclib.index.solr.arclibxml.IndexedAipState;
 import cz.cas.lib.arclib.index.solr.arclibxml.IndexedArclibXmlDocument;
 import cz.cas.lib.arclib.index.solr.arclibxml.IndexedArclibXmlStore;
 import cz.cas.lib.arclib.init.SolrTestRecordsInitializer;
-import cz.cas.lib.arclib.security.authorization.Roles;
-import cz.cas.lib.arclib.security.user.UserDelegate;
+import cz.cas.lib.arclib.security.authorization.data.Permissions;
+import cz.cas.lib.arclib.security.authorization.data.UserRole;
+import cz.cas.lib.arclib.security.user.UserDetailsImpl;
 import cz.cas.lib.arclib.store.AipQueryStore;
 import cz.cas.lib.arclib.store.ProducerStore;
 import cz.cas.lib.arclib.store.UserStore;
@@ -30,7 +31,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.solr.core.SolrTemplate;
 import org.springframework.data.solr.core.query.Criteria;
 import org.springframework.data.solr.core.query.SimpleQuery;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.annotation.Resource;
@@ -39,15 +39,11 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static cz.cas.lib.arclib.index.solr.arclibxml.IndexedArclibXmlDocument.*;
 import static cz.cas.lib.arclib.init.SolrTestRecordsInitializer.PRODUCER_ID;
 import static cz.cas.lib.arclib.init.SolrTestRecordsInitializer.USER_ID;
-import static cz.cas.lib.core.util.Utils.asList;
 import static helper.ThrowableAssertion.assertThrown;
 import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.assertThat;
@@ -60,8 +56,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 public class IndexIntegrationTest extends TransformerFactoryWorkaroundTest implements ApiTest {
 
     private Producer producer = new Producer(PRODUCER_ID);
-    private User user = new User(USER_ID, producer);
-    private UserDelegate userDelegate = new UserDelegate(user, asList(new SimpleGrantedAuthority(Roles.ADMIN)));
+    private User user = new User(USER_ID, producer, Set.of(new UserRole("ADMIN", "Admin role", Set.of(Permissions.ADMIN_PRIVILEGE))));
+    private UserDetailsImpl userDetailsImpl = new UserDetailsImpl(user);
     public static final String XML1_ID = "ARCLIB_900000003";
     public static final String XML2_ID = "ARCLIB_900000004";
     public static final String XML3_ID = "ARCLIB_900000005";
@@ -104,8 +100,8 @@ public class IndexIntegrationTest extends TransformerFactoryWorkaroundTest imple
         solrTestRecordsInitializer.init();
         producerStore.save(producer);
         userStore.save(user);
-        api.setUserDetails(userDelegate);
-        ((IndexedArclibXmlStore) api.getIndexArclibXmlStore()).setUserDetails(userDelegate);
+        api.setUserDetails(userDetailsImpl);
+        ((IndexedArclibXmlStore) api.getIndexArclibXmlStore()).setUserDetails(userDetailsImpl);
     }
 
     /**
@@ -194,7 +190,7 @@ public class IndexIntegrationTest extends TransformerFactoryWorkaroundTest imple
     @Ignore
     @Test
     public void testQueryMultiValues() throws Exception {
-        String arclibXml = new String(Files.readAllBytes(Paths.get("src/main/resources/sampleData/8b/2e/fa/8b2efafd-b637-4b97-a8f7-1b97dd4ee622_xml_2")), StandardCharsets.UTF_8);
+        String arclibXml = new String(Files.readAllBytes(Paths.get("system/src/main/resources/sampleData/8b/2e/fa/8b2efafd-b637-4b97-a8f7-1b97dd4ee622_xml_2")), StandardCharsets.UTF_8);
         indexArclibXmlStore.createIndex(arclibXml.getBytes(), PRODUCER_ID, "", "", null, false, false);
         mvc(api).perform(get("/api/aip/list")
                 .param("filter[0].field", "dublin_core")

@@ -15,11 +15,14 @@ import cz.cas.lib.arclib.store.IngestEventStore;
 import cz.cas.lib.arclib.store.IngestWorkflowStore;
 import cz.cas.lib.arclib.store.ToolStore;
 import cz.cas.lib.arclib.store.ValidationProfileStore;
+import cz.cas.lib.core.sequence.Generator;
 import org.camunda.bpm.engine.test.Deployment;
 import org.camunda.bpm.engine.test.mock.Mocks;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -27,8 +30,11 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Random;
 
 import static helper.ThrowableAssertion.assertThrown;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
 
 /**
  * Ensure the validator.bpmn process is working correctly
@@ -36,7 +42,6 @@ import static helper.ThrowableAssertion.assertThrown;
 @Deployment(resources = "bpmn/validator.bpmn")
 public class ValidatorDelegateTest extends DelegateTest {
 
-    private static final String INGEST_CONFIG = "{}";
     private static final String PROCESS_INSTANCE_KEY = "validatorProcess";
     public static final String SIP_ID = "d523cb06-6e3e-407f-9054-0ee9b191b927";
 
@@ -46,6 +51,8 @@ public class ValidatorDelegateTest extends DelegateTest {
     private ToolStore toolStore = new ToolStore();
     private IngestWorkflowStore ingestWorkflowStore = new IngestWorkflowStore();
     private ToolService toolService = new ToolService();
+    @Mock
+    private Generator generator;
 
     @BeforeClass
     public static void beforeClass() {
@@ -57,8 +64,11 @@ public class ValidatorDelegateTest extends DelegateTest {
 
     @Before
     public void before() {
+        MockitoAnnotations.initMocks(this);
+        when(generator.generate(any())).thenReturn(String.valueOf(new Random().nextInt()));
         Validator validator = new Validator();
         store = new ValidationProfileStore();
+        store.setGenerator(generator);
 
         initializeStores(store, ingestEventStore, ingestWorkflowStore, toolStore);
         validatorDelegate.setService(validator);
@@ -96,10 +106,9 @@ public class ValidatorDelegateTest extends DelegateTest {
         variables.put(BpmConstants.ProcessVariables.ingestWorkflowId, INGEST_WORKFLOW_ID);
         variables.put(BpmConstants.ProcessVariables.ingestWorkflowExternalId, EXTERNAL_ID);
         variables.put(BpmConstants.ProcessVariables.sipId, SIP_ID);
-        variables.put(BpmConstants.ProcessVariables.latestConfig, INGEST_CONFIG);
+        variables.put(BpmConstants.ProcessVariables.latestConfig, String.format("{\"%s\":\"%s\"}", ValidatorDelegate.VALIDATION_PROFILE_CONFIG_ENTRY, validationProfile.getExternalId()));
         variables.put(BpmConstants.Ingestion.sipFileName, ORIGINAL_SIP_FILE_NAME);
         variables.put(BpmConstants.ProcessVariables.responsiblePerson, "user");
-        variables.put(BpmConstants.Validation.validationProfileId, validationProfile.getId());
         variables.put(BpmConstants.ProcessVariables.sipFolderWorkspacePath, SIP.toAbsolutePath().toString());
 
         startJob(PROCESS_INSTANCE_KEY, variables);
@@ -119,12 +128,11 @@ public class ValidatorDelegateTest extends DelegateTest {
         Map variables = new HashMap();
         variables.put(BpmConstants.ProcessVariables.ingestWorkflowId, INGEST_WORKFLOW_ID);
         variables.put(BpmConstants.ProcessVariables.ingestWorkflowExternalId, EXTERNAL_ID);
-        variables.put(BpmConstants.ProcessVariables.latestConfig, INGEST_CONFIG);
+        variables.put(BpmConstants.ProcessVariables.latestConfig, String.format("{\"%s\":\"%s\"}", ValidatorDelegate.VALIDATION_PROFILE_CONFIG_ENTRY, validationProfile.getExternalId()));
         variables.put(BpmConstants.ProcessVariables.sipId, SIP_ID);
         variables.put(BpmConstants.ProcessVariables.responsiblePerson, "user");
         variables.put(BpmConstants.Ingestion.sipFileName, ORIGINAL_SIP_FILE_NAME);
         variables.put(BpmConstants.ProcessVariables.sipFolderWorkspacePath, SIP.toString());
-        variables.put(BpmConstants.Validation.validationProfileId, validationProfile.getId());
 
         assertThrown(() -> startJob(PROCESS_INSTANCE_KEY, variables)).isInstanceOf(MissingFile.class);
     }

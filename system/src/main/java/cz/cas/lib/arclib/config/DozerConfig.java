@@ -2,6 +2,7 @@ package cz.cas.lib.arclib.config;
 
 import cz.cas.lib.arclib.domain.Batch;
 import cz.cas.lib.arclib.domain.IngestRoutine;
+import cz.cas.lib.arclib.domain.ingestWorkflow.IngestWorkflow;
 import cz.cas.lib.arclib.domain.ingestWorkflow.WorkflowDefinition;
 import cz.cas.lib.arclib.domain.packages.AipDeletionRequest;
 import cz.cas.lib.arclib.domain.profiles.ProducerProfile;
@@ -24,6 +25,14 @@ public class DozerConfig {
                     .fields("created", "created", FieldsMappingOptions.copyByReference())
                     .fields("updated", "updated", FieldsMappingOptions.copyByReference())
                     .fields("producer", "producerProfile.producer", FieldsMappingOptions.copyByReference());
+            mapping(BatchDetailDto.class, Batch.class)
+                    .fields("created", "created", FieldsMappingOptions.copyByReference())
+                    .fields("updated", "updated", FieldsMappingOptions.copyByReference())
+                    .fields("producerProfile", "producerProfile", FieldsMappingOptions.copyByReference());
+            mapping(BatchDetailIngestWorkflowDto.class, IngestWorkflow.class)
+                    .fields("created", "created", FieldsMappingOptions.copyByReference())
+                    .fields("updated", "updated", FieldsMappingOptions.copyByReference())
+                    .fields("sipAuthorialId", "sip.authorialPackage.authorialId", FieldsMappingOptions.copyByReference());
             mapping(ProducerProfileDto.class, ProducerProfile.class)
                     .fields("created", "created", FieldsMappingOptions.copyByReference())
                     .fields("updated", "updated", FieldsMappingOptions.copyByReference())

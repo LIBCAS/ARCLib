@@ -48,9 +48,9 @@ public class JwtTokenProvider implements AuthenticationProvider {
                         .parseClaimsJws((String) token.getPrincipal())
                         .getBody();
 
-                UserDetails user = handler.parseClaims(claims);
+                UserDetails user = handler.parseClaims(claims); // fully load user with roles and permissions from DB
 
-                return new JwtToken(user, claims, user.getAuthorities());
+                return new JwtToken(user, claims);
             } catch (ClaimJwtException ex) {
                 throw new BadCredentialsException("JWT error", ex);
             }

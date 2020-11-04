@@ -2,15 +2,16 @@ package cz.cas.lib.arclib.formatlibrary.api;
 
 import cz.cas.lib.arclib.domainbase.exception.BadArgument;
 import cz.cas.lib.arclib.domainbase.exception.MissingObject;
+import cz.cas.lib.arclib.formatlibrary.Permissions;
 import cz.cas.lib.arclib.formatlibrary.domain.Format;
 import cz.cas.lib.arclib.formatlibrary.domain.Risk;
 import cz.cas.lib.arclib.formatlibrary.service.FormatService;
 import cz.cas.lib.arclib.formatlibrary.store.RiskStore;
 import io.swagger.annotations.*;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
-import javax.annotation.security.RolesAllowed;
 import javax.inject.Inject;
 import java.util.Collection;
 import java.util.List;
@@ -25,13 +26,13 @@ public class RiskApi {
     private RiskStore store;
     private FormatService formatService;
 
-    @ApiOperation(value = "Saves an instance. Roles.SUPER_ADMIN", notes = "Returns single instance (possibly with computed attributes)",
+    @ApiOperation(value = "Saves an instance. [Perm.RISK_RECORDS_WRITE]", notes = "Returns single instance (possibly with computed attributes)",
             response = Risk.class)
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Successful response", response = Risk.class),
             @ApiResponse(code = 400, message = "Specified id does not correspond to the id of the instance")})
-    @RolesAllowed({Roles.SUPER_ADMIN})
-    @RequestMapping(value = "/{id}", method = RequestMethod.PUT)
+    @PreAuthorize("hasAuthority('" + Permissions.RISK_RECORDS_WRITE + "')")
+    @PutMapping(value = "/{id}")
     @Transactional
     public Risk save(@ApiParam(value = "Id of the instance", required = true)
                      @PathVariable("id") String id,
@@ -42,12 +43,12 @@ public class RiskApi {
         return store.save(request);
     }
 
-    @ApiOperation(value = "Deletes an instance. Roles.SUPER_ADMIN")
+    @ApiOperation(value = "Deletes an instance. [Perm.RISK_RECORDS_WRITE]")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Successful response"),
             @ApiResponse(code = 404, message = "Instance does not exist")})
-    @RolesAllowed({Roles.SUPER_ADMIN})
-    @RequestMapping(value = "/{id}", method = RequestMethod.DELETE)
+    @PreAuthorize("hasAuthority('" + Permissions.RISK_RECORDS_WRITE + "')")
+    @DeleteMapping(value = "/{id}")
     @Transactional
     public void delete(@ApiParam(value = "Id of the instance", required = true)
                        @PathVariable("id") String id) {
@@ -57,11 +58,12 @@ public class RiskApi {
         store.delete(risk);
     }
 
-    @ApiOperation(value = "Gets one instance specified by id", response = Risk.class)
+    @ApiOperation(value = "Gets one instance specified by id [Perm.RISK_RECORDS_READ]", response = Risk.class)
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Successful response", response = Risk.class),
             @ApiResponse(code = 404, message = "Instance does not exist")})
-    @RequestMapping(value = "/{id}", method = RequestMethod.GET)
+    @PreAuthorize("hasAuthority('" + Permissions.RISK_RECORDS_READ + "')")
+    @GetMapping(value = "/{id}")
     @Transactional
     public Risk get(@ApiParam(value = "Id of the instance", required = true)
                     @PathVariable("id") String id) {
@@ -71,18 +73,20 @@ public class RiskApi {
         return entity;
     }
 
-    @ApiOperation(value = "Gets all instances that respect the selected parameters",
+    @ApiOperation(value = "Gets all instances that respect the selected parameters [Perm.RISK_RECORDS_READ]",
             response = Collection.class)
     @ApiResponses({@ApiResponse(code = 200, message = "Successful response", response = Collection.class)})
-    @RequestMapping(method = RequestMethod.GET)
+    @PreAuthorize("hasAuthority('" + Permissions.RISK_RECORDS_READ + "')")
+    @GetMapping
     @Transactional
     public Collection<Risk> list() {
         return store.findAll();
     }
 
-    @ApiOperation(value = "Gets formats related to risk",
+    @ApiOperation(value = "Gets formats related to risk [Perm.RISK_RECORDS_READ]",
             response = Format.class, responseContainer = "List")
-    @RequestMapping(method = RequestMethod.GET, value = "/{id}/related_formats")
+    @PreAuthorize("hasAuthority('" + Permissions.RISK_RECORDS_READ + "')")
+    @GetMapping(value = "/{id}/related_formats")
     public List<Format> listFormatsOfRisk(
             @ApiParam(value = "Id of the risk", required = true) @PathVariable("id") String id) {
         return formatService.findFormatsOfRisk(id);

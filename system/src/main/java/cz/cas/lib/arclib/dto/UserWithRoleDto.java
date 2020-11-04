@@ -1,7 +1,7 @@
 package cz.cas.lib.arclib.dto;
 
 import cz.cas.lib.arclib.domain.User;
-import cz.cas.lib.arclib.security.authorization.role.Role;
+import cz.cas.lib.arclib.security.authorization.deprecated.Role;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;

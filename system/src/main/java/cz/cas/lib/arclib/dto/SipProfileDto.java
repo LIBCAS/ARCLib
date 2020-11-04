@@ -17,4 +17,5 @@ public class SipProfileDto {
     private Instant created;
     private Instant updated;
     private Boolean editable;
+    private String externalId;
 }

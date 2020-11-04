@@ -7,7 +7,7 @@ import cz.cas.lib.arclib.domainbase.exception.MissingAttribute;
 import cz.cas.lib.arclib.domainbase.exception.MissingObject;
 import cz.cas.lib.arclib.dto.IngestRoutineDto;
 import cz.cas.lib.arclib.exception.ForbiddenException;
-import cz.cas.lib.arclib.security.authorization.Roles;
+import cz.cas.lib.arclib.security.authorization.data.Permissions;
 import cz.cas.lib.arclib.security.user.UserDetails;
 import cz.cas.lib.arclib.store.IngestRoutineStore;
 import cz.cas.lib.arclib.store.ProducerProfileStore;
@@ -140,7 +140,7 @@ public class IngestRoutineService {
      * @return list of ingest routine instances
      */
     public Collection<IngestRoutine> find() {
-        if (ArclibUtils.hasRole(userDetails, Roles.SUPER_ADMIN)) {
+        if (ArclibUtils.hasRole(userDetails, Permissions.SUPER_ADMIN_PRIVILEGE)) {
             return store.findAll();
         } else {
             return store.findByProducerId(userDetails.getProducerId());

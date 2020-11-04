@@ -7,19 +7,13 @@ import cz.cas.lib.arclib.domain.profiles.QProducerProfile;
 import cz.cas.lib.arclib.domain.profiles.SipProfile;
 import cz.cas.lib.arclib.domain.profiles.ValidationProfile;
 import cz.cas.lib.arclib.index.solr.entity.IndexedProducerProfile;
-import cz.cas.lib.core.index.dto.Filter;
-import cz.cas.lib.core.index.dto.FilterOperation;
-import cz.cas.lib.core.index.dto.Params;
-import cz.cas.lib.core.index.dto.Result;
 import cz.cas.lib.core.index.solr.IndexedNamedStore;
 import cz.cas.lib.core.sequence.Generator;
 import lombok.Getter;
+import lombok.NonNull;
 import org.springframework.stereotype.Repository;
 
 import javax.inject.Inject;
-import java.util.List;
-
-import static cz.cas.lib.core.util.Utils.asList;
 
 @Repository
 public class ProducerProfileStore extends IndexedNamedStore<ProducerProfile, QProducerProfile, IndexedProducerProfile> {
@@ -43,25 +37,10 @@ public class ProducerProfileStore extends IndexedNamedStore<ProducerProfile, QPr
         return super.save(entity);
     }
 
-    public ProducerProfile findByExternalId(String number) {
-        Params params = new Params();
-        params.setPageSize(null);
-
-        Filter filter = new Filter();
-        filter.setField("externalId");
-        filter.setOperation(FilterOperation.EQ);
-        filter.setValue(number);
-        params.setFilter(asList(filter));
-
-        Result<ProducerProfile> all = findAll(params);
-
-        List<ProducerProfile> items = all.getItems();
-        ProducerProfile producerProfile = null;
-
-        if (items.size() > 0) {
-            producerProfile = items.get(0);
-        }
-        return producerProfile;
+    public ProducerProfile findByExternalId(@NonNull String number) {
+        ProducerProfile entity = query().select(qObject()).where(qObject().externalId.eq(number)).fetchOne();
+        detachAll();
+        return entity;
     }
 
     @Override

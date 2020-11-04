@@ -1,65 +1,88 @@
 package cz.cas.lib.arclib.domain;
 
 import cz.cas.lib.arclib.domainbase.domain.DatedObject;
+import cz.cas.lib.arclib.security.authorization.data.Permissions;
+import cz.cas.lib.arclib.security.authorization.data.UserRole;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.BatchSize;
+import org.hibernate.annotations.Fetch;
+import org.hibernate.annotations.FetchMode;
 
-import javax.persistence.Entity;
-import javax.persistence.ManyToOne;
-import javax.persistence.Table;
+import javax.persistence.*;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Užívateľ
  */
 @Getter
 @Setter
+@AllArgsConstructor
+@NoArgsConstructor
 @BatchSize(size = 100)
 @Entity
 @Table(name = "arclib_user")
-@AllArgsConstructor
-@NoArgsConstructor
 public class User extends DatedObject {
-    /**
-     * Používateľské meno
-     */
+
+    /** Používateľské meno */
     private String username;
 
-    /**
-     * Krstné meno
-     */
+    /** Krstné meno */
     private String firstName;
 
-    /**
-     * Priezvisko
-     */
+    /** Priezvisko */
     private String lastName;
 
-    /**
-     * Email
-     */
+    /** Email */
     private String email;
 
-    /**
-     * Unikátny identifikátor v rámci LDAPu
-     */
+    /** Unikátny identifikátor v rámci LDAPu */
     private String ldapDn;
 
-    /**
-     * Dodávateľ
-     */
+    /** Dodávateľ */
     @ManyToOne
     private Producer producer;
+
+    /** Instituce */
+    private String institution;
+
+    /**
+     * Authorization Roles of User
+     * User can have multiple roles. Each {@link UserRole} has its own {@link Permissions}.
+     * Permissions (their String representation) are validated by @PreAuthorize annotation.
+     */
+    @BatchSize(size = 100)
+    @Fetch(FetchMode.SELECT)
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(name = "arclib_assigned_user_role",
+            joinColumns = @JoinColumn(name = "arclib_user_id"),
+            inverseJoinColumns = @JoinColumn(name = "arclib_role_id"))
+    private Set<UserRole> roles = new HashSet<>();
+
 
     public User(String id) {
         setId(id);
     }
 
-    public User(String id, Producer p) {
+    public User(String id, Producer p, Set<UserRole> roles) {
         setId(id);
         setProducer(p);
+        setRoles(roles);
+    }
+
+    /**
+     * All permissions of user deducted from user's roles
+     *
+     * @return user's permission set
+     */
+    public Set<String> jointPermissions() {
+        Set<UserRole> userRoles = getRoles();
+        Set<String> userPermissions = new HashSet<>();
+        userRoles.forEach(role -> userPermissions.addAll(role.getPermissions()));
+        return userPermissions;
     }
 
     public String getFullName() {

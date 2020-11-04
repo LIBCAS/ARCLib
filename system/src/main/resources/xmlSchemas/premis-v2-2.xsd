@@ -74,7 +74,7 @@ is added to the list of patterns supported in EDTF.
            attributeFormDefault="unqualified">
     <!--
  Import XLink-->
-    <xs:import namespace="http://www.w3.org/1999/xlink" schemaLocation="http://www.loc.gov/standards/xlink/xlink.xsd"/>
+    <xs:import namespace="http://www.w3.org/1999/xlink" schemaLocation="classpath:/xmlSchemas/xlink.xsd"/>
     <!--
 
 An instance is 

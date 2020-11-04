@@ -71,7 +71,7 @@ public class IngestWorkflow extends DatedObject {
     /**
      * Hash balíku dodaný spolu s balíkom
      */
-    @ManyToOne(cascade=CascadeType.MERGE)
+    @OneToOne(cascade = CascadeType.MERGE)
     protected Hash hash;
 
     /**
@@ -114,8 +114,11 @@ public class IngestWorkflow extends DatedObject {
     /**
      * Hash ArclibXml
      */
-    @ManyToOne(cascade=CascadeType.ALL)
+    @ManyToOne(cascade = CascadeType.ALL)
     private Hash arclibXmlHash;
+
+    @Column(length = 10485760)
+    private String initialConfig;
 
     public boolean wasIngestedInDebugMode() {
         return batch != null && batch.isDebuggingModeActive();

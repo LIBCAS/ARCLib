@@ -2,15 +2,17 @@ package cz.cas.lib.arclib.service.validator;
 
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import cz.cas.lib.arclib.domain.profiles.ValidationProfile;
+import cz.cas.lib.arclib.domainbase.exception.MissingObject;
 import cz.cas.lib.arclib.exception.validation.InvalidSipNodeValue;
 import cz.cas.lib.arclib.exception.validation.MissingFile;
 import cz.cas.lib.arclib.exception.validation.SchemaValidationError;
 import cz.cas.lib.arclib.exception.validation.WrongNodeValue;
 import cz.cas.lib.arclib.store.ValidationProfileStore;
-import cz.cas.lib.arclib.domainbase.exception.MissingObject;
+import cz.cas.lib.core.sequence.Generator;
 import helper.DbTest;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.xml.sax.SAXException;
 
@@ -22,14 +24,19 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Random;
 
 import static helper.ThrowableAssertion.assertThrown;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
 
 public class ValidatorTest extends DbTest {
 
     private Validator service;
 
     private ValidationProfileStore store;
+    @Mock
+    private Generator generator;
 
     private static final String INGEST_WORKFLOW_ID = "7033d800-0935-11e4-beed-5ef3fc9ae867";
     public static final Path SIP_PATH = Paths.get("src/test/resources/SIP_package").resolve(INGEST_WORKFLOW_ID);
@@ -42,6 +49,8 @@ public class ValidatorTest extends DbTest {
         store = new ValidationProfileStore();
         store.setEntityManager(getEm());
         store.setQueryFactory(new JPAQueryFactory(getEm()));
+        store.setGenerator(generator);
+        when(generator.generate(any())).thenReturn(String.valueOf(new Random().nextInt()));
 
         service = new Validator();
         service.setValidationProfileStore(store);
@@ -58,7 +67,7 @@ public class ValidatorTest extends DbTest {
         store.save(validationProfile);
         flushCache();
 
-        service.validateSip(SIP_ID, SIP_PATH.toString(), validationProfile.getId());
+        service.validateSip(SIP_ID, SIP_PATH.toString(), validationProfile.getExternalId());
     }
 
     @Test
@@ -77,7 +86,7 @@ public class ValidatorTest extends DbTest {
         store.save(validationProfile);
         flushCache();
 
-        service.validateSip(SIP_ID, SIP_PATH.toString(), validationProfile.getId());
+        service.validateSip(SIP_ID, SIP_PATH.toString(), validationProfile.getExternalId());
     }
 
     @Test
@@ -91,7 +100,7 @@ public class ValidatorTest extends DbTest {
         store.save(validationProfile);
         flushCache();
 
-        assertThrown(() -> service.validateSip(SIP_ID, SIP_PATH.toString(), validationProfile.getId())).isInstanceOf(MissingFile.class);
+        assertThrown(() -> service.validateSip(SIP_ID, SIP_PATH.toString(), validationProfile.getExternalId())).isInstanceOf(MissingFile.class);
     }
 
     @Test
@@ -106,7 +115,7 @@ public class ValidatorTest extends DbTest {
         store.save(validationProfile);
         flushCache();
 
-        service.validateSip(SIP_ID, SIP_PATH.toString(), validationProfile.getId());
+        service.validateSip(SIP_ID, SIP_PATH.toString(), validationProfile.getExternalId());
     }
 
     @Test
@@ -120,7 +129,7 @@ public class ValidatorTest extends DbTest {
         store.save(validationProfile);
         flushCache();
 
-        assertThrown(() -> service.validateSip(SIP_ID, SIP_PATH.toString(), validationProfile.getId())).isInstanceOf(SchemaValidationError.class);
+        assertThrown(() -> service.validateSip(SIP_ID, SIP_PATH.toString(), validationProfile.getExternalId())).isInstanceOf(SchemaValidationError.class);
     }
 
     @Test
@@ -135,7 +144,7 @@ public class ValidatorTest extends DbTest {
         store.save(validationProfile);
         flushCache();
 
-        service.validateSip(SIP_ID, SIP_PATH.toString(), validationProfile.getId());
+        service.validateSip(SIP_ID, SIP_PATH.toString(), validationProfile.getExternalId());
     }
 
     @Test
@@ -149,7 +158,7 @@ public class ValidatorTest extends DbTest {
         store.save(validationProfile);
         flushCache();
 
-        assertThrown(() -> service.validateSip(SIP_ID, SIP_PATH.toString(), validationProfile.getId())).isInstanceOf(WrongNodeValue.class);
+        assertThrown(() -> service.validateSip(SIP_ID, SIP_PATH.toString(), validationProfile.getExternalId())).isInstanceOf(WrongNodeValue.class);
     }
 
     @Test
@@ -163,7 +172,7 @@ public class ValidatorTest extends DbTest {
         store.save(validationProfile);
         flushCache();
 
-        assertThrown(() -> service.validateSip(SIP_ID, SIP_PATH.toString(), validationProfile.getId())).isInstanceOf(InvalidSipNodeValue.class);
+        assertThrown(() -> service.validateSip(SIP_ID, SIP_PATH.toString(), validationProfile.getExternalId())).isInstanceOf(InvalidSipNodeValue.class);
     }
 
     private String readFromInputStream(InputStream inputStream) throws IOException {

@@ -1,16 +1,16 @@
 package cz.cas.lib.arclib.api;
 
-import cz.cas.lib.arclib.security.authorization.Roles;
+import cz.cas.lib.arclib.domainbase.exception.MissingObject;
+import cz.cas.lib.arclib.security.authorization.data.Permissions;
 import cz.cas.lib.arclib.service.AuthorialPackageService;
 import cz.cas.lib.arclib.service.archivalStorage.ArchivalStorageServiceDebug;
-import cz.cas.lib.arclib.domainbase.exception.MissingObject;
 import cz.cas.lib.core.store.Transactional;
 import io.swagger.annotations.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import javax.annotation.security.RolesAllowed;
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -78,13 +78,13 @@ public class DebugApi {
         IOUtils.copyLarge(xml, response.getOutputStream());
     }
 
-    @ApiOperation(value = "Deletes authorial package. " +
-            "Also deletes all child entities (SIPs, IWs) and for each IW, if it was the only one in the batch deletes also the batch. Roles.ADMIN, Roles.SUPER_ADMIN, Roles.ARCHIVIST",
+    @ApiOperation(value = "Deletes authorial package. [Perm.AUTHORIAL_PACKAGE_DELETE]" +
+            "Also deletes all child entities (SIPs, IWs) and for each IW, if it was the only one in the batch deletes also the batch.",
             notes = "Applicable only for authorial packages processed using a producer profile in the debugging mode.")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Successful response"),
             @ApiResponse(code = 404, message = "Instance does not exist")})
-    @RolesAllowed({Roles.ADMIN, Roles.SUPER_ADMIN, Roles.ARCHIVIST})
+    @PreAuthorize("hasAuthority('" + Permissions.AUTHORIAL_PACKAGE_DELETE + "')")
     @RequestMapping(value = "/authorial_package/{authorialPackageId}/forget", method = RequestMethod.PUT)
     public void forgetAuthorialPackage(@ApiParam(value = "Id of the authorial package to forget", required = true)
                                        @PathVariable("authorialPackageId") String authorialPackageId) {

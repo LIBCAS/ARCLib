@@ -237,7 +237,7 @@ public class WorkerServiceTest extends TransformerFactoryWorkaroundTest {
     }
 
     private void prepareDeployment(Batch batch) throws Exception {
-        try (FileInputStream fos = new FileInputStream(Paths.get("src/main/resources/bpmn/ingest.bpmn").toFile())) {
+        try (FileInputStream fos = new FileInputStream(Paths.get("system/src/main/resources/bpmn/ingest.bpmn").toFile())) {
             String bpmnString = XmlUtils.rewriteValues(fos, "//process/@id|(//BPMNPlane/@bpmnElement)[1]", batch.getId());
             repositoryService.createDeployment().addInputStream(batch.getId() + ".bpmn",
                     new ByteArrayInputStream(bpmnString.getBytes())).name(batch.getId()).deploy();

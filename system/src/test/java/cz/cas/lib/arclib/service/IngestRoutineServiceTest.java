@@ -3,7 +3,7 @@ package cz.cas.lib.arclib.service;
 import cz.cas.lib.arclib.domain.IngestRoutine;
 import cz.cas.lib.arclib.domain.User;
 import cz.cas.lib.arclib.domain.profiles.ProducerProfile;
-import cz.cas.lib.arclib.security.user.UserDelegate;
+import cz.cas.lib.arclib.security.user.UserDetailsImpl;
 import cz.cas.lib.arclib.store.IngestRoutineStore;
 import cz.cas.lib.arclib.store.ProducerProfileStore;
 import cz.cas.lib.arclib.store.UserStore;
@@ -36,7 +36,7 @@ public class IngestRoutineServiceTest extends SrDbTest {
     private JobRunner jobRunner;
     private User user;
     private ScriptExecutor scriptExecutor;
-    private UserDelegate userDelegate;
+    private UserDetailsImpl userDetailsImpl;
     private String PATH_TO_SCRIPT = "/testScript.groovy";
 
     @Before
@@ -54,10 +54,10 @@ public class IngestRoutineServiceTest extends SrDbTest {
         initializeStores(producerProfileStore, jobStore, userStore, ingestRoutineStore);
 
         user = new User();
-        userDelegate = new UserDelegate(user);
+        userDetailsImpl = new UserDetailsImpl(user);
 
         ingestRoutineService = new IngestRoutineService();
-        ingestRoutineService.setUserDetails(userDelegate);
+        ingestRoutineService.setUserDetails(userDetailsImpl);
         ingestRoutineService.setBatchStartScript(new ClassPathResource(PATH_TO_SCRIPT));
         ingestRoutineService.setProducerProfileStore(producerProfileStore);
 

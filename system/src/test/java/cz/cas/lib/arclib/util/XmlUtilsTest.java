@@ -1,8 +1,10 @@
 package cz.cas.lib.arclib.util;
 
-import cz.cas.lib.arclib.utils.XmlUtils;
 import cz.cas.lib.arclib.domainbase.exception.GeneralException;
+import cz.cas.lib.arclib.exception.validation.SchemaValidationError;
+import cz.cas.lib.arclib.utils.XmlUtils;
 import helper.ThrowableAssertion;
+import org.apache.commons.io.IOUtils;
 import org.dom4j.InvalidXPathException;
 import org.hamcrest.Matchers;
 import org.junit.Test;
@@ -89,8 +91,8 @@ public class XmlUtilsTest {
 
         String validationProfilePath = getClass().getResource("/validation/validationProfileMixedChecks.xml").getPath();
 
-        XmlUtils.validateWithXMLSchema(new FileInputStream(validationProfilePath), new InputStream[]{new FileInputStream
-                (xsdPath)});
+        XmlUtils.validateWithXMLSchema(IOUtils.toString(new FileInputStream(validationProfilePath)), new InputStream[]{new FileInputStream
+                (xsdPath)}, "");
     }
 
     @Test
@@ -99,8 +101,8 @@ public class XmlUtilsTest {
 
         String validationProfilePath = getClass().getResource("/validation/validationProfileInvalidProfile.xml").getPath();
 
-        ThrowableAssertion.assertThrown(() -> XmlUtils.validateWithXMLSchema(new FileInputStream(validationProfilePath),
-                new InputStream[]{new FileInputStream(xsdPath)})).isInstanceOf(GeneralException.class);
+        ThrowableAssertion.assertThrown(() -> XmlUtils.validateWithXMLSchema(IOUtils.toString(new FileInputStream(validationProfilePath)),
+                new InputStream[]{new FileInputStream(xsdPath)}, "")).isInstanceOf(GeneralException.class);
     }
 
     @Test
@@ -109,7 +111,7 @@ public class XmlUtilsTest {
 
         String validationProfilePath = getClass().getResource("/validation/validationProfileMixedChecks.xml").getPath();
 
-        ThrowableAssertion.assertThrown(() -> XmlUtils.validateWithXMLSchema(new FileInputStream(validationProfilePath),
-                new InputStream[]{new FileInputStream(xsdPath)})).isInstanceOf(SAXException.class);
+        ThrowableAssertion.assertThrown(() -> XmlUtils.validateWithXMLSchema(IOUtils.toString(new FileInputStream(validationProfilePath)),
+                new InputStream[]{new FileInputStream(xsdPath)}, "")).isInstanceOf(SchemaValidationError.class);
     }
 }

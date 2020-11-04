@@ -1,10 +1,10 @@
 package cz.cas.lib.core.store;
 
 import com.querydsl.jpa.impl.JPAQueryFactory;
-import cz.cas.lib.arclib.security.authorization.assign.AssignedRole;
-import cz.cas.lib.arclib.security.authorization.assign.AssignedRoleStore;
-import cz.cas.lib.arclib.security.authorization.role.Role;
-import cz.cas.lib.arclib.security.authorization.role.RoleStore;
+import cz.cas.lib.arclib.security.authorization.deprecated.assign.AssignedRole;
+import cz.cas.lib.arclib.security.authorization.deprecated.assign.AssignedRoleStore;
+import cz.cas.lib.arclib.security.authorization.deprecated.Role;
+import cz.cas.lib.arclib.security.authorization.deprecated.RoleStore;
 import helper.DbTest;
 import org.junit.Before;
 import org.junit.Test;

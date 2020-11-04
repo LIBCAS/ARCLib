@@ -4,6 +4,8 @@ spring:
     url: jdbc:postgresql://localhost:5432/arclib
     driver-class-name: org.postgresql.Driver
     name: mainPool
+    username: changeme
+    password: changeme
   solr-arclib-xml-datasource:
     url: jdbc:solr://localhost:9983/?collection=arclibXmlC
   jpa:
@@ -24,6 +26,12 @@ spring:
   liquibase:
     changeLog: classpath:/dbchangelog.arclib.xml
     url: jdbc:postgresql://localhost:5432/arclib
+  mail:
+    host: changeme
+    port: 465
+    username: changeme
+    password: changeme
+    protocol: smtp
 camunda:
   bpm:
     application:
@@ -35,6 +43,14 @@ camunda:
     job-execution:
       enabled: true
       active: true
+      #Max time one particular task may take. Default is 300 000. Increasing may lead to deadlocks so avoid it if possible.
+      #Message indicating the timeouts may look like this:
+      #update or delete on table "act_ge_bytearray" violates foreign key constraint "act_fk_job_exception" on table "act_ru_job"
+      #
+      #Before increasing this timeout, try lower the load of the server (lover JMS pool size or Camunda job-execution pool size).
+      #If some workflow contains task which runs for too long even if the server is not heavy-loaded, then consider
+      #executing it outside of engine and notifying the engine with message once the task is done.
+      # lockTimeInMillis: 300000
     metrics:
       enabled: false
       db-reporter-activate: false
@@ -47,8 +63,8 @@ arclib:
   arclibXmlValidator:
     pathToAipId: /mets/@OBJID
     pathToAuthorialId: /mets/metsHdr/altRecordID[@TYPE='original SIP identifier']
-    pathToSipVersionNumber: /mets/dmdSec/mdWrap/xmlData/sipVersionNumber
-    pathToPhysicalVersionOf: /mets/dmdSec/mdWrap/xmlData/sipVersionOf
+    pathToSipVersionNumber: /mets/amdSec/digiprovMD[@ID='ARCLIB_SIP_INFO']/mdWrap/xmlData/sipInfo/sipVersionNumber
+    pathToPhysicalVersionOf: /mets/amdSec/digiprovMD[@ID='ARCLIB_SIP_INFO']/mdWrap/xmlData/sipInfo/sipVersionOf
   arclibXmlDefinition: classpath:index/arclibXmlDefinition.csv
   arclibXmlSchema: classpath:xmlSchemas/arclibXml.xsd
   metsSchema: classpath:xmlSchemas/mets.xsd
@@ -78,7 +94,6 @@ namespaces:
   premis: info:lc/xmlns/premis-v2
   oai_dc: http://www.openarchives.org/OAI/2.0/oai_dc/
   dc: http://purl.org/dc/elements/1.1/
-  dcterms: http://purl.org/dc/terms/
   xsi: http://www.w3.org/2001/XMLSchema-instance
 mail:
   sender:
@@ -96,6 +111,16 @@ security:
   roles:
     internal:
       enabled: true
+  ldap:
+    enabled: true
+    server: changeme
+    bind:
+      dn: changeme
+      pwd: changeme
+    user:
+      type: filter
+      filter: changeme
+      search-base: changeme
 bpm:
   enabled: true
 solr:
@@ -111,3 +136,10 @@ formatLibrary:
   updateCron: "0 0 0 1 * ?"
   formatDetailListUrl: http://www.nationalarchives.gov.uk/PRONOM/Format/proFormatListAction.aspx
   formatListUrl: http://www.nationalarchives.gov.uk/PRONOM/Format/proFormatDetailListAction.aspx
+logging:
+  path: ../logs
+  level:
+    org.apache.solr: WARN
+    org.hibernate: WARN
+    org.hibernate.SQL: WARN
+    com.mysema: WARN

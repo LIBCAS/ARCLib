@@ -7,6 +7,5 @@ public enum IngestToolFunction {
     format_identification,
     virus_check,
     metadata_extraction,
-    metadata_modification,
-    transfer
+    information_package_creation
 }

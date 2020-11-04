@@ -1,6 +1,6 @@
-package cz.cas.lib.arclib.security.authorization.assign;
+package cz.cas.lib.arclib.security.authorization.deprecated.assign;
 
-import cz.cas.lib.arclib.security.authorization.role.Role;
+import cz.cas.lib.arclib.security.authorization.deprecated.Role;
 import cz.cas.lib.arclib.domainbase.domain.DomainObject;
 import lombok.Getter;
 import lombok.Setter;

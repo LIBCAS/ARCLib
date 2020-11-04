@@ -1,5 +1,6 @@
 package cz.cas.lib.arclib.bpm;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import cz.cas.lib.arclib.domain.IngestToolFunction;
 import cz.cas.lib.arclib.domain.ingestWorkflow.IngestEvent;
 import cz.cas.lib.arclib.service.validator.Validator;
@@ -23,7 +24,8 @@ public class ValidatorDelegate extends ArclibDelegate {
 
     protected Validator service;
     @Getter
-    private String toolName="ARCLib_"+ IngestToolFunction.validation;
+    private String toolName = "ARCLib_" + IngestToolFunction.validation;
+    public static final String VALIDATION_PROFILE_CONFIG_ENTRY = "validationProfile";
 
     /**
      * Executes the validation process for the given SIP. In case of a validation error a BPMN error is thrown.
@@ -31,8 +33,9 @@ public class ValidatorDelegate extends ArclibDelegate {
     @Override
     public void executeArclibDelegate(DelegateExecution execution) {
         log.debug("Execution of Validator delegate started.");
-        String validationProfileId = getStringVariable(execution, BpmConstants.Validation.validationProfileId);
-        notNull(validationProfileId, () -> {
+        JsonNode configRoot = getConfigRoot(execution);
+        String validationProfileExternalId = configRoot.get(VALIDATION_PROFILE_CONFIG_ENTRY).textValue();
+        notNull(validationProfileExternalId, () -> {
             throw new IllegalArgumentException("null id of the validation profile");
         });
 
@@ -49,7 +52,7 @@ public class ValidatorDelegate extends ArclibDelegate {
 
         try {
             service.validateSip(sipId, (String) execution.getVariable(BpmConstants.ProcessVariables.sipFolderWorkspacePath),
-                    validationProfileId);
+                    validationProfileExternalId);
 
         } catch (ParserConfigurationException | IOException | SAXException | XPathExpressionException e) {
             throw new BpmnError(BpmConstants.ErrorCodes.ProcessFailure, "SIP id: " + sipId + ". " + e.getMessage());

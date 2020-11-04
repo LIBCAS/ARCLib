@@ -1,15 +1,20 @@
 package cz.cas.lib.arclib.service;
 
+import com.google.common.collect.Sets;
+import cz.cas.lib.arclib.domain.Producer;
 import cz.cas.lib.arclib.domain.User;
+import cz.cas.lib.arclib.domainbase.audit.AuditLogger;
+import cz.cas.lib.arclib.domainbase.exception.BadArgument;
+import cz.cas.lib.arclib.domainbase.exception.ConflictException;
+import cz.cas.lib.arclib.domainbase.exception.MissingObject;
 import cz.cas.lib.arclib.exception.BadRequestException;
 import cz.cas.lib.arclib.exception.ForbiddenException;
-import cz.cas.lib.arclib.security.authorization.Roles;
-import cz.cas.lib.arclib.security.authorization.assign.AssignedRoleService;
-import cz.cas.lib.arclib.security.authorization.role.Role;
-import cz.cas.lib.arclib.security.authorization.role.RoleStore;
+import cz.cas.lib.arclib.security.authorization.data.Permissions;
+import cz.cas.lib.arclib.security.authorization.data.UserRole;
+import cz.cas.lib.arclib.security.authorization.deprecated.assign.audit.RoleAddEvent;
+import cz.cas.lib.arclib.security.authorization.deprecated.assign.audit.RoleDelEvent;
 import cz.cas.lib.arclib.security.user.UserDetails;
 import cz.cas.lib.arclib.store.UserStore;
-import cz.cas.lib.arclib.domainbase.exception.MissingObject;
 import cz.cas.lib.core.rest.data.DelegateAdapter;
 import cz.cas.lib.core.store.Transactional;
 import lombok.Getter;
@@ -17,12 +22,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import javax.inject.Inject;
-import java.util.HashSet;
+import java.time.Instant;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import static cz.cas.lib.arclib.utils.ArclibUtils.hasRole;
+import static cz.cas.lib.core.util.Utils.eq;
 import static cz.cas.lib.core.util.Utils.notNull;
 
 @Slf4j
@@ -32,67 +38,72 @@ public class UserService implements DelegateAdapter<User> {
     @Getter
     private UserStore delegate;
     private UserDetails userDetails;
-    private RoleStore roleStore;
-    private AssignedRoleService assignedRoleService;
-    private UserStore userStore;
+    private AuditLogger logger;
 
-    /**
-     * Save assigned roles to user
-     *
-     * @param userId id of the user to be assigned with roles
-     * @param roles  set of roles to assign
-     */
+
     @Transactional
-    public void saveRoles(String userId, Set<Role> roles) throws BadRequestException, ForbiddenException {
-        log.debug("Saving assigned roles to user " + userId + ".");
+    public User saveUser(String id, User user) {
+        notNull(user, () -> new BadArgument("user is null"));
+        eq(id, user.getId(), () -> new BadArgument("id"));
+        notNull(user.getUsername(), () -> new BadArgument("missing username"));
 
-        User user = userStore.find(userId);
-        notNull(user, () -> new MissingObject(User.class, userId));
-        //if user does not have producer and the roles contains at least one role different to SUPER_ADMIN
-        if (user.getProducer() == null &&
-                !(roles.isEmpty() || (roles.size() == 1 && Roles.SUPER_ADMIN.equals(roles.iterator().next().getName())))) {
-            throw new BadRequestException(
-                    "User has to have producer assigned. Only users without any role or only with one role equal to " +
-                            Roles.SUPER_ADMIN + " does not have to be bound with producer.");
+        User existing = delegate.find(id);
+        notNull(existing, () -> new MissingObject(User.class, id));
+        if (!user.getUsername().equals(existing.getUsername()))
+            throw new ConflictException("Username can't be updated");
+
+
+        if (!hasRole(userDetails, Permissions.SUPER_ADMIN_PRIVILEGE)) {
+            user.setProducer(new Producer(userDetails.getProducerId()));
+            if (user.jointPermissions().contains(Permissions.SUPER_ADMIN_PRIVILEGE)) {
+                throw new ForbiddenException("You are not allowed to assign permission: " + Permissions.SUPER_ADMIN_PRIVILEGE);
+            }
+        } else {
+            notNull(user.getProducer(), () -> new BadRequestException("user has to have producer assigned"));
         }
-        if (!hasRole(userDetails, Roles.SUPER_ADMIN)) {
-            List<Role> rolesInDb = roleStore.findAllInList(roles.stream().map(Role::getId).collect(Collectors.toList()));
-            if (rolesInDb.stream().anyMatch(r -> r.getName().equals(Roles.SUPER_ADMIN)))
-                throw new ForbiddenException("you are not allowed to assign " + Roles.SUPER_ADMIN);
-        }
-        assignedRoleService.saveAssignedRoles(userId, roles);
+
+        logRoleSaving(id, existing.getRoles(), user.getRoles());
+        return delegate.save(user);
     }
 
     @Override
     @Transactional
-    public void delete(User u) throws ForbiddenException {
-        if (!hasRole(userDetails, Roles.SUPER_ADMIN)) {
-            Set<Role> userRoles = assignedRoleService.getAssignedRoles(u.getId());
-            if (userRoles.stream().anyMatch(r -> r.getName().equals(Roles.SUPER_ADMIN)))
-                throw new ForbiddenException("you are not allowed to delete a user with " + Roles.SUPER_ADMIN);
+    public void delete(User user) throws ForbiddenException {
+        if (!hasRole(userDetails, Permissions.SUPER_ADMIN_PRIVILEGE)) {
+            if (user.jointPermissions().contains(Permissions.SUPER_ADMIN_PRIVILEGE))
+                throw new ForbiddenException("you are not allowed to delete a user that is a Super Admin (permission: " + Permissions.SUPER_ADMIN_PRIVILEGE + ")");
         }
-        assignedRoleService.saveAssignedRoles(u.getId(),new HashSet<>());
-        delegate.delete(u);
+
+        logRoleSaving(user.getId(), user.getRoles(), Collections.emptySet());
+        user.setRoles(Collections.emptySet());
+        save(user);
+
+        delegate.delete(user);
+    }
+
+    @Transactional
+    public void revokeRole(String roleId) {
+        List<User> usersWithRole = delegate.findByRole(roleId);
+        usersWithRole.forEach(user -> {
+            user.getRoles().removeIf(userRole -> userRole.getId().equals(roleId));
+        });
+        delegate.save(usersWithRole);
     }
 
     public User findUserByUsername(String username) {
-        return userStore.findUserByUsername(username);
+        return delegate.findUserByUsername(username);
     }
 
-
-    @Inject
-    public void setAssignedRoleService(AssignedRoleService assignedRoleService) {
-        this.assignedRoleService = assignedRoleService;
+    public List<User> findUsersByPermission(String permission) {
+        return delegate.findByPermission(permission);
     }
 
-    @Inject
-    public void setRoleStore(RoleStore roleStore) {
-        this.roleStore = roleStore;
-    }
+    private void logRoleSaving(String userId, Set<UserRole> oldRoles, Set<UserRole> newRoles) {
+        Sets.SetView<UserRole> removedRoles = Sets.difference(oldRoles, newRoles);
+        Sets.SetView<UserRole> addedRoles = Sets.difference(newRoles, oldRoles);
 
-    @Inject
-    public void setDelegate(UserStore delegate) {
-        this.delegate = delegate;
+        removedRoles.forEach(role -> logger.logEvent(new RoleDelEvent(Instant.now(), userId, role.getId(), role.getName())));
+        addedRoles.forEach(role -> logger.logEvent(new RoleAddEvent(Instant.now(), userId, role.getId(), role.getName())));
     }
 
     @Inject
@@ -101,7 +112,12 @@ public class UserService implements DelegateAdapter<User> {
     }
 
     @Inject
-    public void setUserStore(UserStore userStore) {
-        this.userStore = userStore;
+    public void setDelegate(UserStore delegate) {
+        this.delegate = delegate;
+    }
+
+    @Inject
+    public void setLogger(AuditLogger logger) {
+        this.logger = logger;
     }
 }

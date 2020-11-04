@@ -18,3 +18,9 @@ testdata
 /export
 /doc
 coverage-error.log
+fileStorage/
+workspace/
+create_db.log
+create_db_error.log
+multipart_tmp/
+application.yml

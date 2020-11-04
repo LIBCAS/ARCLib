@@ -4,9 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.JsonNodeType;
 import cz.cas.lib.arclib.domain.IngestToolFunction;
 import cz.cas.lib.arclib.domain.ingestWorkflow.IngestEvent;
-import cz.cas.lib.arclib.domain.ingestWorkflow.IngestIssue;
 import cz.cas.lib.arclib.domain.ingestWorkflow.IngestWorkflow;
-import cz.cas.lib.arclib.domain.preservationPlanning.IngestIssueDefinitionCode;
 import cz.cas.lib.arclib.domain.preservationPlanning.Tool;
 import cz.cas.lib.arclib.exception.bpm.ConfigParserException;
 import cz.cas.lib.arclib.exception.bpm.IncidentException;
@@ -42,8 +40,6 @@ public class AntivirusDelegate extends ArclibDelegate {
     public static final String ANTIVIRUS_CMD = "/cmd";
     private Path quarantinePath;
     private FormatDefinitionService formatDefinitionService;
-    private IngestIssueService ingestIssueService;
-    private IngestIssueDefinitionStore ingestIssueDefinitionStore;
     @Getter
     private String toolName = "ARCLib_" + IngestToolFunction.virus_check;
 
@@ -72,59 +68,37 @@ public class AntivirusDelegate extends ArclibDelegate {
     }
 
     public Antivirus initialize(JsonNode root, IngestWorkflow iw, DelegateExecution ex, int antivirusToolCounter) throws ConfigParserException {
-        try {
-            InfectedSipAction infectedSipAction = parseEnumFromConfig(root,
-                    ANTIVIRUS_TOOL_EXPR + "/" + antivirusToolCounter + AntivirusDelegate.INFECTED_SIP_ACTION, InfectedSipAction.class);
-            AntivirusType avType = parseEnumFromConfig(root, ANTIVIRUS_TOOL_EXPR + "/" + antivirusToolCounter + AntivirusDelegate.ANTIVIRUS_TYPE, AntivirusType.class);
-            Antivirus antivirusToBeUsed;
-            switch (avType) {
-                case CLAMAV:
-                    String cmdExpr = ANTIVIRUS_TOOL_EXPR + "/" + antivirusToolCounter + ANTIVIRUS_CMD;
-                    JsonNode cmdNode = root.at(cmdExpr);
-                    if (cmdNode.getNodeType() != JsonNodeType.OBJECT || cmdNode.size() < 1)
-                        throw new ConfigParserException(cmdExpr, cmdNode.toString(), "Antivirus executable, with full path if not in $PATH variable, with switches");
-                    Map<String, String> list = objectMapper.convertValue(cmdNode, Map.class);
-                    String[] cmd = list.values().toArray(new String[0]);
-                    antivirusToBeUsed = new ClamAntivirus(cmd);
-                    break;
-                default:
-                    throw new ConfigParserException(ANTIVIRUS_TOOL_EXPR + "/" + antivirusToolCounter + AntivirusDelegate.ANTIVIRUS_TYPE,
-                            "not supported", AntivirusType.class);
-            }
-            //e.g. 'CLAMAV version: [ClamAV 0.100.2/25043/Tue Oct 16 23:06:18 2018]'
-            String fullToolVersion = antivirusToBeUsed.getToolVersion();
-            //e.g. 'CLAMAV version: ClamAV 0.100.2'
-            String shortToolVersion = fullToolVersion.substring(1, fullToolVersion.indexOf("/"));
-
-            Tool toolEntity = toolService.createNewToolVersionIfNeeded(antivirusToBeUsed.getToolName(), shortToolVersion, IngestToolFunction.virus_check);
-            antivirusToBeUsed.inject(formatDefinitionService, ingestIssueService, toolEntity, ingestIssueDefinitionStore, quarantinePath, infectedSipAction, getFormatIdentificationResult(ex));
-            return antivirusToBeUsed;
-        } catch (ConfigParserException e) {
-            ingestIssueService.save(new IngestIssue(
-                    iw,
-                    toolService.findByNameAndVersion(getToolName(), getToolVersion()),
-                    ingestIssueDefinitionStore.findByCode(IngestIssueDefinitionCode.CONFIG_PARSE_ERROR),
-                    null,
-                    e.getMessage(),
-                    false
-            ));
-            throw e;
+        InfectedSipAction infectedSipAction = parseEnumFromConfig(root,
+                ANTIVIRUS_TOOL_EXPR + "/" + antivirusToolCounter + AntivirusDelegate.INFECTED_SIP_ACTION, InfectedSipAction.class);
+        AntivirusType avType = parseEnumFromConfig(root, ANTIVIRUS_TOOL_EXPR + "/" + antivirusToolCounter + AntivirusDelegate.ANTIVIRUS_TYPE, AntivirusType.class);
+        Antivirus antivirusToBeUsed;
+        switch (avType) {
+            case CLAMAV:
+                String cmdExpr = ANTIVIRUS_TOOL_EXPR + "/" + antivirusToolCounter + ANTIVIRUS_CMD;
+                JsonNode cmdNode = root.at(cmdExpr);
+                if (cmdNode.getNodeType() != JsonNodeType.OBJECT || cmdNode.size() < 1)
+                    throw new ConfigParserException(cmdExpr, cmdNode.toString(), "Antivirus executable, with full path if not in $PATH variable, with switches");
+                Map<String, String> list = objectMapper.convertValue(cmdNode, Map.class);
+                String[] cmd = list.values().toArray(new String[0]);
+                antivirusToBeUsed = new ClamAntivirus(cmd);
+                break;
+            default:
+                throw new ConfigParserException(ANTIVIRUS_TOOL_EXPR + "/" + antivirusToolCounter + AntivirusDelegate.ANTIVIRUS_TYPE,
+                        "not supported", AntivirusType.class);
         }
+        //e.g. 'CLAMAV version: [ClamAV 0.100.2/25043/Tue Oct 16 23:06:18 2018]'
+        String fullToolVersion = antivirusToBeUsed.getToolVersion();
+        //e.g. 'CLAMAV version: ClamAV 0.100.2'
+        String shortToolVersion = fullToolVersion.substring(1, fullToolVersion.indexOf("/"));
+
+        Tool toolEntity = toolService.createNewToolVersionIfNeeded(antivirusToBeUsed.getToolName(), shortToolVersion, IngestToolFunction.virus_check);
+        antivirusToBeUsed.inject(formatDefinitionService, ingestIssueService, toolEntity, ingestIssueDefinitionStore, quarantinePath, infectedSipAction, getFormatIdentificationResult(ex));
+        return antivirusToBeUsed;
     }
 
     @Inject
     public void setFormatDefinitionService(FormatDefinitionService formatDefinitionService) {
         this.formatDefinitionService = formatDefinitionService;
-    }
-
-    @Inject
-    public void setIngestIssueService(IngestIssueService ingestIssueService) {
-        this.ingestIssueService = ingestIssueService;
-    }
-
-    @Inject
-    public void setIngestIssueDefinitionStore(IngestIssueDefinitionStore ingestIssueDefinitionStore) {
-        this.ingestIssueDefinitionStore = ingestIssueDefinitionStore;
     }
 
     @Inject

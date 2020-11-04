@@ -10,7 +10,7 @@ import lombok.Setter;
 @AllArgsConstructor
 public class WrongNodeValue extends GeneralException {
     private String sipId;
-    private String validationProfileId;
+    private String validationProfileExternalId;
     private String expectedValue;
     private String actualValue;
     private String filePath;
@@ -20,7 +20,7 @@ public class WrongNodeValue extends GeneralException {
     public String toString() {
         return "WrongNodeValue{" +
                 "sipId='" + sipId + '\'' +
-                ", validationProfileId='" + validationProfileId + '\'' +
+                ", validationProfileExternalId='" + validationProfileExternalId + '\'' +
                 ", expectedValue='" + expectedValue + '\'' +
                 ", actualValue='" + actualValue + '\'' +
                 ", filePath='" + filePath + '\'' +

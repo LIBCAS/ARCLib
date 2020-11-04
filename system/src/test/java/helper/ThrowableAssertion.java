@@ -1,10 +1,12 @@
 package helper;
 
+import lombok.Getter;
 import org.hamcrest.Matchers;
 import org.junit.Assert;
 
 public class ThrowableAssertion {
 
+    @Getter
     private final Throwable caught;
 
     public ThrowableAssertion(Throwable caught) {

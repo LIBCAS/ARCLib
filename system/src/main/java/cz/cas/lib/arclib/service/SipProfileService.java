@@ -1,9 +1,9 @@
 package cz.cas.lib.arclib.service;
 
 import cz.cas.lib.arclib.domain.profiles.SipProfile;
+import cz.cas.lib.arclib.domainbase.exception.ForbiddenOperation;
 import cz.cas.lib.arclib.dto.SipProfileDto;
 import cz.cas.lib.arclib.store.SipProfileStore;
-import cz.cas.lib.arclib.domainbase.exception.ForbiddenOperation;
 import cz.cas.lib.core.store.Transactional;
 import org.dom4j.DocumentException;
 import org.dom4j.io.SAXReader;
@@ -41,6 +41,8 @@ public class SipProfileService {
     public SipProfile find(String id) {
         return store.find(id);
     }
+
+    public SipProfile findByExternalId(String externalId) {return store.findByExternalId(externalId);}
 
     public Collection<SipProfile> findAll() {
         return store.findAll();

@@ -19,7 +19,7 @@ import cz.cas.lib.arclib.domain.preservationPlanning.Tool;
 import cz.cas.lib.arclib.domain.profiles.ProducerProfile;
 import cz.cas.lib.arclib.domain.profiles.SipProfile;
 import cz.cas.lib.arclib.index.solr.arclibxml.IndexedArclibXmlStore;
-import cz.cas.lib.arclib.security.user.UserDelegate;
+import cz.cas.lib.arclib.security.user.UserDetailsImpl;
 import cz.cas.lib.arclib.service.IngestIssueService;
 import cz.cas.lib.arclib.service.IngestWorkflowService;
 import cz.cas.lib.arclib.service.SipProfileService;
@@ -75,7 +75,6 @@ public class ArclibXmlGeneratorDelegateTest extends DelegateTest {
     private static final Integer SIP_VERSION = 2;
     private static final Integer XML_VERSION = 3;
     private static final String PRODUCER_ID = "2354235FD2";
-    private static final String VALIDATION_PROFILE_ID = "3523423523";
     private static final String FILE_NAME = "7033d800-0935-11e4-beed-5ef3fc9ae867";
 
     private static final String SIP_HASH = "50FDE99373B04363727473D00AE938A4F4DEBFD0AFB1D428337D81905F6863B3CC303BB3" +
@@ -124,7 +123,7 @@ public class ArclibXmlGeneratorDelegateTest extends DelegateTest {
     private IngestWorkflow ingestWorkflow;
     private IngestWorkflow relatedIngestWorkflow;
     private Batch batch;
-    private UserDelegate userDelegate;
+    private UserDetailsImpl userDetailsImpl;
     private User user;
     private Sip sip;
     private Sip previousVersionSip;
@@ -150,8 +149,7 @@ public class ArclibXmlGeneratorDelegateTest extends DelegateTest {
                 "http://arclib.lib.cas.cz/ARCLIB_XSD",
                 "info:lc/xmlns/premis-v2",
                 "http://www.openarchives.org/OAI/2.0/oai_dc/",
-                "http://purl.org/dc/elements/1.1/",
-                "http://purl.org/dc/terms/");
+                "http://purl.org/dc/elements/1.1/");
         indexedArclibXmlStore.setArclibXmlDefinition(new ClassPathResource(ARCLIB_XML_DEFINITION));
         indexedArclibXmlStore.init();
 
@@ -200,9 +198,16 @@ public class ArclibXmlGeneratorDelegateTest extends DelegateTest {
         sequence3.setId(ingestIssueDefinitionStore.getSEQUENCE_ID());
         sequenceStore.save(sequence3);
 
+        Sequence sequence4 = new Sequence();
+        sequence4.setCounter(2L);
+        sequence4.setFormat("'#'#");
+        sequence4.setId(sipProfileStore.getSEQUENCE_ID());
+        sequenceStore.save(sequence4);
+
         producerProfileStore.setGenerator(generator);
         ingestWorkflowStore.setGenerator(generator);
         ingestIssueDefinitionStore.setGenerator(generator);
+        sipProfileStore.setGenerator(generator);
 
         extractor = new ArclibXmlXsltExtractor();
         extractor.setSipProfileService(sipProfileService);
@@ -213,17 +218,16 @@ public class ArclibXmlGeneratorDelegateTest extends DelegateTest {
                 "http://arclib.lib.cas.cz/ARCLIB_XSD",
                 "info:lc/xmlns/premis-v2",
                 "http://www.openarchives.org/OAI/2.0/oai_dc/",
-                "http://purl.org/dc/elements/1.1/",
-                "http://purl.org/dc/terms/"
+                "http://purl.org/dc/elements/1.1/"
         );
         arclibXmlGenerator.setArclibVersion("1.0");
         arclibXmlGenerator.setIngestWorkflowStore(ingestWorkflowStore);
         arclibXmlGenerator.setIngestEventStore(ingestEventStore);
 
         user = new User();
-        userDelegate = new UserDelegate(user);
+        userDetailsImpl = new UserDetailsImpl(user);
 
-        indexedArclibXmlStore.setUserDetails(userDelegate);
+        indexedArclibXmlStore.setUserDetails(userDetailsImpl);
 
         arclibXmlExtractorDelegate = new ArclibXmlExtractorDelegate();
         arclibXmlExtractorDelegate.setObjectMapper(new ObjectMapper());
@@ -375,7 +379,6 @@ public class ArclibXmlGeneratorDelegateTest extends DelegateTest {
 
         variables.put(BpmConstants.ProcessVariables.ingestWorkflowId, INGEST_WORKFLOW_ID);
         variables.put(BpmConstants.ProcessVariables.ingestWorkflowExternalId, EXTERNAL_ID);
-        variables.put(BpmConstants.ProcessVariables.sipProfileId, sipProfile.getId());
         variables.put(BpmConstants.ProcessVariables.sipVersion, SIP_VERSION);
         variables.put(BpmConstants.ProcessVariables.xmlVersion, XML_VERSION);
         variables.put(BpmConstants.ProcessVariables.responsiblePerson, user.getId());
@@ -386,8 +389,7 @@ public class ArclibXmlGeneratorDelegateTest extends DelegateTest {
         variables.put(BpmConstants.Ingestion.sipFileName, SIP_FILE_NAME);
         variables.put(BpmConstants.Ingestion.dateTime, "2018-05-11T10:27:00Z");
         variables.put(BpmConstants.Ingestion.authorialId, authorialPackage.getAuthorialId());
-
-        variables.put(BpmConstants.Validation.validationProfileId, VALIDATION_PROFILE_ID);
+        variables.put(BpmConstants.ProcessVariables.latestConfig, String.format("{\"%s\":\"%s\"}", ArclibXmlExtractorDelegate.SIP_PROFILE_CONFIG_ENTRY, sipProfile.getExternalId()));
 
         variables.put(BpmConstants.FixityGeneration.preferredFixityGenerationEventId, fixityGenerationEvent.getId());
 

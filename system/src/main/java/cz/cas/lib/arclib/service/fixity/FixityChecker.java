@@ -92,7 +92,6 @@ public abstract class FixityChecker implements IngestTool {
                 );
             }
         }
-        ingestIssueService.save(issues);
 
         Path[] problemFiles = files.values().stream().flatMap(Collection::stream).toArray(Path[]::new);
         String errorMsg = IngestIssueDefinitionCode.FILE_UNSUPPORTED_CHECKSUM_TYPE +
@@ -100,7 +99,8 @@ public abstract class FixityChecker implements IngestTool {
                 " files: " + Arrays.toString(problemFiles);
 
         if (parsedConfigValue.getLeft() == null)
-            throw new IncidentException(errorMsg);
+            throw new IncidentException(issues);
+        ingestIssueService.save(issues);
         if (!parsedConfigValue.getLeft())
             throw new BpmnError(BpmConstants.ErrorCodes.ProcessFailure, errorMsg);
     }
@@ -128,11 +128,11 @@ public abstract class FixityChecker implements IngestTool {
                     parsedConfigValue.getLeft() != null)
             );
         }
-        ingestIssueService.save(issues);
         String errorMsg = IngestIssueDefinitionCode.FILE_INVALID_CHECKSUM + " issue occurred, files: " + Arrays.toString(files.toArray());
 
         if (parsedConfigValue.getLeft() == null)
-            throw new IncidentException(errorMsg);
+            throw new IncidentException(issues);
+        ingestIssueService.save(issues);
         if (!parsedConfigValue.getLeft())
             throw new BpmnError(BpmConstants.ErrorCodes.ProcessFailure, errorMsg);
     }
@@ -159,11 +159,11 @@ public abstract class FixityChecker implements IngestTool {
                     parsedConfigValue.getLeft() != null)
             );
         }
-        ingestIssueService.save(issues);
         String errorMsg = IngestIssueDefinitionCode.FILE_MISSING + " issue occurred, files: " + Arrays.toString(files.toArray());
 
         if (parsedConfigValue.getLeft() == null)
-            throw new IncidentException(errorMsg);
+            throw new IncidentException(issues);
+        ingestIssueService.save(issues);
         if (!parsedConfigValue.getLeft())
             throw new BpmnError(BpmConstants.ErrorCodes.ProcessFailure, errorMsg);
     }

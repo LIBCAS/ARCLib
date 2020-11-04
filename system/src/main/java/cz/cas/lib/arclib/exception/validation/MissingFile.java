@@ -10,14 +10,14 @@ import lombok.Setter;
 @AllArgsConstructor
 public class MissingFile extends GeneralException {
     private String sipId;
-    private String validationProfileId;
+    private String validationProfileExternalId;
     private String filePath;
 
     @Override
     public String toString() {
         return "MissingFile{" +
                 "sipId='" + sipId + '\'' +
-                ", validationProfileId='" + validationProfileId + '\'' +
+                ", validationProfileExternalId='" + validationProfileExternalId + '\'' +
                 ", filePath='" + filePath + '\'' +
                 '}';
     }

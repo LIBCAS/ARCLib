@@ -1,6 +1,7 @@
 package cz.cas.lib.arclib.report;
 
 import cz.cas.lib.arclib.api.ReportApi;
+import cz.cas.lib.arclib.security.authorization.data.Permissions;
 import cz.cas.lib.core.store.Transactional;
 import helper.ApiTest;
 import helper.TransformerFactoryWorkaroundTest;
@@ -36,7 +37,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @Transactional
 @Rollback(false)
-@WithMockCustomUser
+@WithMockCustomUser(permissions = {Permissions.REPORT_TEMPLATE_RECORDS_READ, Permissions.REPORT_TEMPLATE_RECORDS_WRITE})
 public class ReportApiTests extends TransformerFactoryWorkaroundTest implements ApiTest {
 
     @Inject

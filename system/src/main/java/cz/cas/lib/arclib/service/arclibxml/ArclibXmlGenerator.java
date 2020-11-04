@@ -48,6 +48,7 @@ public class ArclibXmlGenerator {
     public static final String EVENT_ID_NUMBER_FORMAT = "%03d";
     public static final String OBJ_NUMBER_FORMAT = "%03d";
     public static final String AGENT_NUMBER_FORMAT = "%03d";
+    public static final String XML_UPDATE_PREMIS_EVENT = "metadata_modification";
 
     private IngestWorkflowStore ingestWorkflowStore;
     private Map<String, String> uris;
@@ -63,7 +64,7 @@ public class ArclibXmlGenerator {
      * @throws DocumentException provided <code>xml</code> could not be parsed
      */
     @Transactional
-    public Document generateMetadata(String xml, Map<String, Object> variables) throws DocumentException {
+    public Document generateMetadata(String xml, Map<String, Object> variables, IngestEvent generationEvent) throws DocumentException {
         List<Pair<String, String>> filePathsAndObjIdentifiers = new ArrayList<>();
 
         String ingestWorkflowExternalId = (String) variables.get(ProcessVariables.ingestWorkflowExternalId);
@@ -79,12 +80,6 @@ public class ArclibXmlGenerator {
 
         SAXReader reader = new SAXReader();
         Document doc = reader.read(new ByteArrayInputStream(xml.getBytes(StandardCharsets.UTF_8)));
-
-        //change 'mets' namespace prefix to upper case 'METS'
-        Namespace oldNs = Namespace.get(uris.get(METS));
-        Namespace newNs = Namespace.get("METS", uris.get(METS));
-        Visitor visitor = new NamespaceChangingVisitor(oldNs, newNs);
-        doc.accept(visitor);
 
         XPath metsXPath = doc.createXPath("/METS:mets");
         Element metsElement = (Element) metsXPath.selectSingleNode(doc);
@@ -106,16 +101,13 @@ public class ArclibXmlGenerator {
         /*
           Add SIP and XML versions and related SIP and XML
          */
-        XPath xmlDataXPath = doc.createXPath("/METS:mets/METS:dmdSec/METS:mdWrap[@MDTYPE='DC']/METS:xmlData");
-        Element xmlDataElement = (Element) xmlDataXPath.selectSingleNode(doc);
-        if (xmlDataElement == null) throw new MissingNode(xmlDataXPath.getText());
-        addSipAndXmlVersion(xmlDataElement, ingestWorkflow);
+        addSipAndXmlVersion(metsElement, ingestWorkflow);
 
         /*
           Add premis:agents and respective premis:events
          */
         Set<String> eventIdentifiers = new HashSet<>();
-        Element element = addPremisAgentsAndEvents(metsElement, variables, eventIdentifiers);
+        Element element = addPremisAgentsAndEvents(metsElement, variables, eventIdentifiers, generationEvent);
         int positionOfPremisAgentsAndEvents = metsElement.elements().indexOf(element);
 
         /*
@@ -162,22 +154,31 @@ public class ArclibXmlGenerator {
         sipIdentifierElement.addAttribute("TYPE", "original SIP identifier");
     }
 
-    private void addSipAndXmlVersion(Element xmlDataElement, IngestWorkflow ingestWorkflow) {
-        Element sipVersionNumber = xmlDataElement.addElement("dcterms:sipVersionNumber", uris.get(DCTERMS));
+    private void addSipAndXmlVersion(Element metsElement, IngestWorkflow ingestWorkflow) {
+        Element amdSecEl = metsElement.addElement("METS:amdSec");
+
+        Element digiprovMdEl = amdSecEl.addElement("METS:digiprovMD");
+        digiprovMdEl.addAttribute("ID", "ARCLIB_SIP_INFO");
+        Element mdWrapEl = digiprovMdEl.addElement("METS:mdWrap");
+        mdWrapEl.addAttribute("MDTYPE", "OTHER");
+        Element xmlDataEl = mdWrapEl.addElement("METS:xmlData");
+        Element arclibSipInfoEl = xmlDataEl.addElement("ARCLib:sipInfo", uris.get(ARCLIB));
+
+        Element sipVersionNumber = arclibSipInfoEl.addElement("ARCLib:sipVersionNumber");
         sipVersionNumber.addText(String.valueOf(ingestWorkflow.getSip().getVersionNumber()));
 
         Sip previousVersionSip = ingestWorkflow.getSip().getPreviousVersionSip();
         String previousVersionSipId = previousVersionSip != null ? previousVersionSip.getId() : INITIAL_VERSION;
-        Element sipVersionOf = xmlDataElement.addElement("dcterms:sipVersionOf", uris.get(DCTERMS));
+        Element sipVersionOf = arclibSipInfoEl.addElement("ARCLib:sipVersionOf");
         sipVersionOf.addText(previousVersionSipId);
 
-        Element xmlVersionNumber = xmlDataElement.addElement("dcterms:xmlVersionNumber", uris.get(DCTERMS));
+        Element xmlVersionNumber = arclibSipInfoEl.addElement("ARCLib:xmlVersionNumber");
         xmlVersionNumber.addText(String.valueOf(ingestWorkflow.getXmlVersionNumber()));
 
         IngestWorkflow relatedWorkflow = ingestWorkflow.getRelatedWorkflow();
         String previousVersionXmlId = relatedWorkflow != null && ingestWorkflow.getXmlVersionNumber() > 1
                 ? relatedWorkflow.getExternalId() : INITIAL_VERSION;
-        Element xmlVersionOf = xmlDataElement.addElement("dcterms:xmlVersionOf", uris.get(DCTERMS));
+        Element xmlVersionOf = arclibSipInfoEl.addElement("ARCLib:xmlVersionOf");
         xmlVersionOf.addText(previousVersionXmlId);
     }
 
@@ -186,10 +187,11 @@ public class ArclibXmlGenerator {
      *
      * @return created METS:amdSec element to which the agents and events are added
      */
-    private Element addPremisAgentsAndEvents(Element metsElement, Map<String, Object> variables, Set<String> eventIdentifiers) {
+    private Element addPremisAgentsAndEvents(Element metsElement, Map<String, Object> variables, Set<String> eventIdentifiers, IngestEvent generationEvent) {
         String iwExternalId = (String) variables.get(ProcessVariables.ingestWorkflowExternalId);
 
         List<IngestEvent> allEvents = ingestEventStore.findAllOfIngestWorkflow(iwExternalId);
+        allEvents.add(generationEvent);
         /*
           Add premis:agent elements
          */
@@ -481,7 +483,7 @@ public class ArclibXmlGenerator {
     }
 
     private void addAggregatedFormats(Element xmlDataElement, Map<String, Object> variables) {
-        Element arclibFormatsElement = xmlDataElement.addElement("ARCLIB:formats", uris.get(ARCLIB));
+        Element arclibFormatsElement = xmlDataElement.addElement("ARCLib:formats", uris.get(ARCLIB));
         String preferredFormatIdentificationEventId = (String) variables.get(FormatIdentification.preferredFormatIdentificationEventId);
         if (preferredFormatIdentificationEventId == null)
             return;
@@ -498,30 +500,30 @@ public class ArclibXmlGenerator {
 
             aggregatedFormats.keySet()
                     .forEach(formatToIdentifier -> {
-                        Element arclibFormatElement = arclibFormatsElement.addElement("ARCLIB:format");
+                        Element arclibFormatElement = arclibFormatsElement.addElement("ARCLib:format");
 
-                        Element formatRegistryKeyElement = arclibFormatElement.addElement("ARCLIB:formatRegistryKey");
+                        Element formatRegistryKeyElement = arclibFormatElement.addElement("ARCLib:formatRegistryKey");
                         formatRegistryKeyElement.setText(formatToIdentifier.getLeft());
 
-                        Element formatRegistryNameElement = arclibFormatElement.addElement("ARCLIB:formatRegistryName");
+                        Element formatRegistryNameElement = arclibFormatElement.addElement("ARCLib:formatRegistryName");
                         formatRegistryNameElement.setText("PRONOM");
 
                         Tool formatIdentificationTool = preferredFormatIdentificationEvent.getTool();
 
                         Element creatingApplicationNameElement =
-                                arclibFormatElement.addElement("ARCLIB:creatingApplicationName");
+                                arclibFormatElement.addElement("ARCLib:creatingApplicationName");
                         creatingApplicationNameElement.setText(formatIdentificationTool.getName());
 
                         Element creatingApplicationVersionElement =
-                                arclibFormatElement.addElement("ARCLIB:creatingApplicationVersion");
+                                arclibFormatElement.addElement("ARCLib:creatingApplicationVersion");
                         creatingApplicationVersionElement.setText(formatIdentificationTool.getVersion());
 
                         Element dateCreatedByApplicationElement =
-                                arclibFormatElement.addElement("ARCLIB:dateCreatedByApplication");
+                                arclibFormatElement.addElement("ARCLib:dateCreatedByApplication");
                         dateCreatedByApplicationElement.setText((preferredFormatIdentificationEvent.getUpdated()
                                 .truncatedTo(ChronoUnit.SECONDS)).toString().substring(0, 10));
 
-                        Element fileCountElement = arclibFormatElement.addElement("ARCLIB:fileCount");
+                        Element fileCountElement = arclibFormatElement.addElement("ARCLib:fileCount");
                         fileCountElement.setText(Long.toString(aggregatedFormats.get(formatToIdentifier)));
                     });
         }
@@ -562,7 +564,7 @@ public class ArclibXmlGenerator {
 
         //update 'xml version number'
         XPath xmlVersionNumberPath = doc.createXPath(
-                "/mets:mets/mets:dmdSec/mets:mdWrap/mets:xmlData/dcterms:xmlVersionNumber");
+                "/mets:mets/mets:amdSec/mets:digiprovMD[@ID='ARCLIB_SIP_INFO']/mets:mdWrap/mets:xmlData/arclib:sipInfo/arclib:xmlVersionNumber");
         xmlVersionNumberPath.setNamespaceURIs(uris);
         Element xmlVersionNumberElement = (Element) xmlVersionNumberPath.selectSingleNode(doc);
         if (xmlVersionNumberElement == null) throw new MissingNode(xmlVersionNumberPath.getText());
@@ -570,7 +572,7 @@ public class ArclibXmlGenerator {
 
         //update 'xml version of'
         XPath xmlVersionOfPath = doc.createXPath(
-                "/mets:mets/mets:dmdSec/mets:mdWrap/mets:xmlData/dcterms:xmlVersionOf");
+                "/mets:mets/mets:amdSec/mets:digiprovMD[@ID='ARCLIB_SIP_INFO']/mets:mdWrap/mets:xmlData/arclib:sipInfo/arclib:xmlVersionOf");
         xmlVersionOfPath.setNamespaceURIs(uris);
         Element xmlVersionOfElement = (Element) xmlVersionOfPath.selectSingleNode(doc);
         if (xmlVersionOfElement == null) throw new MissingNode(xmlVersionOfPath.getText());
@@ -592,7 +594,7 @@ public class ArclibXmlGenerator {
         }
 
         int nextModEventNumber = 1;
-        XPath modificationEventXpath = doc.createXPath("/mets:mets/mets:amdSec/mets:digiprovMD/mets:mdWrap/mets:xmlData/premis:event/premis:eventIdentifier/premis:eventIdentifierValue[starts-with(text(),'" + IngestToolFunction.metadata_modification + "')]");
+        XPath modificationEventXpath = doc.createXPath("/mets:mets/mets:amdSec/mets:digiprovMD/mets:mdWrap/mets:xmlData/premis:event/premis:eventIdentifier/premis:eventIdentifierValue[starts-with(text(),'" + XML_UPDATE_PREMIS_EVENT + "')]");
         modificationEventXpath.setNamespaceURIs(uris);
         List<Node> modificationEventNodes = modificationEventXpath.selectNodes(doc);
         if (modificationEventNodes != null) {
@@ -605,7 +607,7 @@ public class ArclibXmlGenerator {
         }
 
         String eventIdentifier = EVENT + String.format(EVENT_NUMBER_FORMAT, eventNumber);
-        String eventIdValue = toEventId(IngestToolFunction.metadata_modification) + "_" + String.format(EVENT_ID_NUMBER_FORMAT, nextModEventNumber);
+        String eventIdValue = XML_UPDATE_PREMIS_EVENT+"_event_" + String.format(EVENT_ID_NUMBER_FORMAT, nextModEventNumber);
 
         XPath amdSecPath = doc.createXPath("/mets:mets/mets:amdSec[mets:digiprovMD/mets:mdWrap/mets:xmlData/premis:event]");
         amdSecPath.setNamespaceURIs(uris);
@@ -613,7 +615,7 @@ public class ArclibXmlGenerator {
 
         String eventDetail = "XML was modified by user " + username + " from the reason: " + reason;
         addEvent(amdSecForEventsElement, eventIdValue, eventIdentifier, true, AGENT_ARCLIB,
-                eventDetail, "metadata modification", Instant.now().truncatedTo(ChronoUnit.SECONDS).toString());
+                eventDetail, XML_UPDATE_PREMIS_EVENT.replace("_"," "), Instant.now().truncatedTo(ChronoUnit.SECONDS).toString());
 
         log.debug("Ingest Workflow: " + ingestWorkflow.getId() + ": " + eventDetail);
         return prettyPrint(doc);
@@ -639,8 +641,7 @@ public class ArclibXmlGenerator {
 
     @Inject
     public void setUris(@Value("${namespaces.mets}") String mets, @Value("${namespaces.xsi}") String xsi, @Value("${namespaces.arclib}") String arclib, @Value("${namespaces" +
-            ".premis}") String premis, @Value("${namespaces.oai_dc}") String oai_dc, @Value("${namespaces.dc}") String dc,
-                        @Value("${namespaces.dcterms}") String dcterms) {
+            ".premis}") String premis, @Value("${namespaces.oai_dc}") String oai_dc, @Value("${namespaces.dc}") String dc) {
         Map<String, String> uris = new HashMap<>();
         uris.put(METS, mets);
         uris.put(ARCLIB, arclib);
@@ -648,7 +649,6 @@ public class ArclibXmlGenerator {
         uris.put(XSI, xsi);
         uris.put(OAIS_DC, oai_dc);
         uris.put(DC, dc);
-        uris.put(DCTERMS, dcterms);
 
         this.uris = uris;
     }

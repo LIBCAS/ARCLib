@@ -1,7 +1,5 @@
 <configuration>
-    <logger name="org.hibernate" level="WARN"/>
-    <logger name="org.hibernate.SQL" level="WARN"/>
-    <logger name="com.mysema" level="WARN"/>
+    <property name="LOG_PATH" value="${LOG_PATH:-${LOG_TEMP:-${java.io.tmpdir:-/tmp}}}" />
 
     <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
         <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
@@ -27,10 +25,10 @@
     </appender>
 
     <appender name="AUDITFILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>../logs/arclib.audit.log</file>
+        <file>${LOG_PATH}/arclib.audit.log</file>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
             <!-- daily rollover -->
-            <fileNamePattern>../logs/arclib.audit.%d{yyyy-MM-dd}.log</fileNamePattern>
+            <fileNamePattern>${LOG_PATH}/arclib.audit.%d{yyyy-MM-dd}.log</fileNamePattern>
 
             <!-- keep 30 days' worth of history capped at 500MB total size -->
             <maxHistory>30</maxHistory>
@@ -50,7 +48,7 @@
 
     <appender name="ARCLIB" class="ch.qos.logback.core.ConsoleAppender">
         <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
-            <level>debug</level>
+            <level>trace</level>
         </filter>
         <encoder>
             <charset>utf8</charset>
@@ -59,10 +57,10 @@
     </appender>
 
     <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>../logs/arclib.log</file>
+        <file>${LOG_PATH}/arclib.log</file>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
             <!-- daily rollover -->
-            <fileNamePattern>../logs/arclib.%d{yyyy-MM-dd}.log</fileNamePattern>
+            <fileNamePattern>${LOG_PATH}/arclib.%d{yyyy-MM-dd}.log</fileNamePattern>
 
             <!-- keep 30 days' worth of history capped at 500MB total size -->
             <maxHistory>30</maxHistory>
@@ -77,10 +75,10 @@
     </appender>
 
     <appender name="ERRORFILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>../logs/arclib.error.log</file>
+        <file>${LOG_PATH}/arclib.error.log</file>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
             <!-- daily rollover -->
-            <fileNamePattern>../logs/arclib.error.%d{yyyy-MM-dd}.log</fileNamePattern>
+            <fileNamePattern>${LOG_PATH}/arclib.error.%d{yyyy-MM-dd}.log</fileNamePattern>
 
             <!-- keep 30 days' worth of history capped at 500MB total size -->
             <maxHistory>30</maxHistory>
@@ -95,10 +93,10 @@
     </appender>
 
     <appender name="DEBUGFILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>../logs/arclib.debug.log</file>
+        <file>${LOG_PATH}/arclib.debug.log</file>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
             <!-- daily rollover -->
-            <fileNamePattern>../logs/arclib.debug.%d{yyyy-MM-dd}.log</fileNamePattern>
+            <fileNamePattern>${LOG_PATH}/arclib.debug.%d{yyyy-MM-dd}.log</fileNamePattern>
 
             <!-- keep 10 days' worth of history capped at 500MB total size -->
             <maxHistory>10</maxHistory>
@@ -112,18 +110,14 @@
         </encoder>
     </appender>
 
-    <logger name="cz.cas.lib.core.audit" level="TRACE" additivity="false">
+    <logger name="cz.cas.lib.arclib.domainbase.audit" level="TRACE" additivity="false">
         <appender-ref ref="AUDIT"/>
         <appender-ref ref="AUDITFILE"/>
     </logger>
-    <logger name="cz.cas.lib.arclib" level="TRACE" additivity="false">
+    <logger name="cz.cas.lib.arclib" level="DEBUG" additivity="false">
         <appender-ref ref="ARCLIB"/>
-    </logger>
-    <logger name="cz.cas.lib.arclib" level="DEBUG">
-        <appender-ref ref="DEBUGFILE"/>
-    </logger>
-    <logger name="cz.cas.lib.arclib.error" level="ERROR">
         <appender-ref ref="ERRORFILE"/>
+        <appender-ref ref="DEBUGFILE"/>
     </logger>
     <logger name="org.springframework.data.solr.core.SolrTemplate" level="DEBUG">
         <appender-ref ref="DEBUGFILE"/>

@@ -7,8 +7,8 @@ import com.fasterxml.jackson.datatype.hibernate5.Hibernate5Module;
 import cz.cas.lib.arclib.domainbase.exception.GeneralException;
 import cz.cas.lib.arclib.index.solr.ReindexService;
 import cz.cas.lib.arclib.mail.ArclibMailCenter;
-import cz.cas.lib.arclib.security.authorization.Roles;
-import cz.cas.lib.arclib.security.authorization.assign.AssignedRoleService;
+import cz.cas.lib.arclib.security.authorization.data.Permissions;
+import cz.cas.lib.arclib.security.authorization.logic.UserRoleService;
 import cz.cas.lib.arclib.service.BatchService;
 import cz.cas.lib.arclib.service.IngestErrorHandler;
 import cz.cas.lib.arclib.service.incident.CustomIncidentHandler;
@@ -73,7 +73,7 @@ public class PostInitializer implements ApplicationListener<ContextRefreshedEven
     @Inject
     private ArclibMailCenter mailCenter;
     @Inject
-    private AssignedRoleService assignedRoleService;
+    private UserRoleService assignedRoleService;
     @Value("${arclib.path.fileStorage}")
     private String fileStorage;
     @Value("${arclib.cron.bpmDefUndeploy}")
@@ -151,22 +151,22 @@ public class PostInitializer implements ApplicationListener<ContextRefreshedEven
         if (!Files.exists(Paths.get(fileStorage))) {
             String message = "Transfer area is not reachable.";
             log.warn(message);
-            assignedRoleService.getUsersWithRole(Roles.SUPER_ADMIN).stream()
+            assignedRoleService.getUsersWithPermission(Permissions.SUPER_ADMIN_PRIVILEGE).stream()
                     .forEach(user -> mailCenter.sendTransferAreaNotReachableNotification(user.getEmail(), message, Instant.now()));
             return;
         }
 
         log.debug("Checking reachability of transfer areas for every producer.");
         producerStore.findAll().forEach(producer -> {
-                Path fullTransferAreaPath = Paths.get(fileStorage, producer.getTransferAreaPath());
-                if (!Files.exists(fullTransferAreaPath)) {
-                    String message = "Transfer area at " + fullTransferAreaPath + " of producer " +
-                            producer.getName() + " is not reachable.";
-                    log.warn(message);
-                    assignedRoleService.getUsersWithRole(Roles.SUPER_ADMIN).stream()
-                            .forEach(user -> mailCenter.sendTransferAreaNotReachableNotification(user.getEmail(), message, Instant.now()));
-                }
-            });
+            Path fullTransferAreaPath = Paths.get(fileStorage, producer.getTransferAreaPath());
+            if (!Files.exists(fullTransferAreaPath)) {
+                String message = "Transfer area at " + fullTransferAreaPath + " of producer " +
+                        producer.getName() + " is not reachable.";
+                log.warn(message);
+                assignedRoleService.getUsersWithPermission(Permissions.SUPER_ADMIN_PRIVILEGE).stream()
+                        .forEach(user -> mailCenter.sendTransferAreaNotReachableNotification(user.getEmail(), message, Instant.now()));
+            }
+        });
     }
 
     private void scheduleBatchBpmUndeployment() {

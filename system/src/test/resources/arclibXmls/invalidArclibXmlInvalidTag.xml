@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no" ?>
 <METS:mets LABEL="Z dějin malenovického hradu , [1953]" TYPE="Monograph" OBJID="TEST_OBJ_ID"
-           xmlns:ARCLIB="http://arclib.lib.cas.cz/ARCLIB_XSD"
+           xmlns:ARCLib="http://arclib.lib.cas.cz/ARCLIB_XSD"
            xmlns:METS="http://www.loc.gov/METS/"
            xmlns:xlink="http://www.w3.org/1999/xlink"
            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -84,17 +84,6 @@
             </METS:xmlData>
         </METS:mdWrap>
     </METS:dmdSec>
-    <METS:dmdSec ID="DCMD_VOLUME_0001">
-        <METS:mdWrap MDTYPE="DC" MIMETYPE="text/xml">
-            <METS:xmlData>
-                <oai_dc:dc
-                        xsi:schemaLocation="http://purl.org/dc/terms/ http://dublincore.org/schemas/xmls/qdc/dcterms.xsd"
-                        xmlns:oai_dc="http://purl.org/dc/terms/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-                    <oai_dc:isVersionOf></oai_dc:isVersionOf>
-                </oai_dc:dc>
-            </METS:xmlData>
-        </METS:mdWrap>
-    </METS:dmdSec>
     <METS:amdSec>
         <METS:techMD ID="TEST_ID">
             <METS:mdWrap MDTYPE="PREMIS">
@@ -167,19 +156,19 @@
         <METS:techMD ID="TEST_ID_2">
             <METS:mdWrap MDTYPE="OTHER">
                 <METS:xmlData>
-                    <ARCLIB:formats>
-                        <ARCLIB:format>
-                            <ARCLIB:fileFormat></ARCLIB:fileFormat>
-                            <ARCLIB:fileCount></ARCLIB:fileCount>
-                            <ARCLIB:identificationTool></ARCLIB:identificationTool>
-                        </ARCLIB:format>
-                    </ARCLIB:formats>
-                    <ARCLIB:devices>
-                        <ARCLIB:device>
-                            <ARCLIB:deviceId></ARCLIB:deviceId>
-                            <ARCLIB:fileCount></ARCLIB:fileCount>
-                        </ARCLIB:device>
-                    </ARCLIB:devices>
+                    <ARCLib:formats>
+                        <ARCLib:format>
+                            <ARCLib:fileFormat></ARCLib:fileFormat>
+                            <ARCLib:fileCount></ARCLib:fileCount>
+                            <ARCLib:identificationTool></ARCLib:identificationTool>
+                        </ARCLib:format>
+                    </ARCLib:formats>
+                    <ARCLib:devices>
+                        <ARCLib:device>
+                            <ARCLib:deviceId></ARCLib:deviceId>
+                            <ARCLib:fileCount></ARCLib:fileCount>
+                        </ARCLib:device>
+                    </ARCLib:devices>
                 </METS:xmlData>
             </METS:mdWrap>
         </METS:techMD>
@@ -216,20 +205,20 @@
         <METS:digiprovMD ID="TEST_ID_4">
             <METS:mdWrap MDTYPE="OTHER">
                 <METS:xmlData>
-                    <ARCLIB:eventAgents>
-                        <ARCLIB:eventAgent>
-                            <ARCLIB:agentName>TEST AGENT NAME</ARCLIB:agentName>
-                            <ARCLIB:eventCount>3</ARCLIB:eventCount>
-                            <ARCLIB:eventDate>2017-05-30T09:30:10.5</ARCLIB:eventDate>
-                            <ARCLIB:eventType>transfer</ARCLIB:eventType>
-                        </ARCLIB:eventAgent>
-                        <ARCLIB:eventAgent>
-                            <ARCLIB:agentName>TEST AGENT NAME 2</ARCLIB:agentName>
-                            <ARCLIB:eventCount>2</ARCLIB:eventCount>
-                            <ARCLIB:eventDate>2017-05-30T09:30:10.5</ARCLIB:eventDate>
-                            <ARCLIB:eventType>validation</ARCLIB:eventType>
-                        </ARCLIB:eventAgent>
-                    </ARCLIB:eventAgents>
+                    <ARCLib:eventAgents>
+                        <ARCLib:eventAgent>
+                            <ARCLib:agentName>TEST AGENT NAME</ARCLib:agentName>
+                            <ARCLib:eventCount>3</ARCLib:eventCount>
+                            <ARCLib:eventDate>2017-05-30T09:30:10.5</ARCLib:eventDate>
+                            <ARCLib:eventType>transfer</ARCLib:eventType>
+                        </ARCLib:eventAgent>
+                        <ARCLib:eventAgent>
+                            <ARCLib:agentName>TEST AGENT NAME 2</ARCLib:agentName>
+                            <ARCLib:eventCount>2</ARCLib:eventCount>
+                            <ARCLib:eventDate>2017-05-30T09:30:10.5</ARCLib:eventDate>
+                            <ARCLib:eventType>validation</ARCLib:eventType>
+                        </ARCLib:eventAgent>
+                    </ARCLib:eventAgents>
                 </METS:xmlData>
             </METS:mdWrap>
         </METS:digiprovMD>

@@ -4,8 +4,8 @@ import cz.cas.lib.arclib.domain.FormatsRevisionNotification;
 import cz.cas.lib.arclib.domain.User;
 import cz.cas.lib.arclib.domainbase.exception.MissingObject;
 import cz.cas.lib.arclib.mail.ArclibMailCenter;
-import cz.cas.lib.arclib.security.authorization.Roles;
-import cz.cas.lib.arclib.security.authorization.assign.AssignedRoleService;
+import cz.cas.lib.arclib.security.authorization.data.Permissions;
+import cz.cas.lib.arclib.security.authorization.logic.UserRoleService;
 import cz.cas.lib.arclib.security.user.UserDetails;
 import cz.cas.lib.arclib.store.FormatsRevisionNotificationStore;
 import cz.cas.lib.core.scheduling.job.Job;
@@ -39,7 +39,7 @@ public class FormatsRevisionNotificationService {
     @Getter
     private JobService jobService;
     private Resource formatsRevisionNotificationScript;
-    private AssignedRoleService assignedRoleService;
+    private UserRoleService assignedRoleService;
     private ArclibMailCenter arclibMailCenter;
 
     /**
@@ -127,8 +127,8 @@ public class FormatsRevisionNotificationService {
      */
     public void sendFormatsRevisionNotification(String message) {
         Collection<User> toBeNotified = new HashSet<>();
-        toBeNotified.addAll(assignedRoleService.getUsersWithRole(Roles.SUPER_ADMIN));
-        toBeNotified.addAll(assignedRoleService.getUsersWithRole(Roles.ADMIN));
+        toBeNotified.addAll(assignedRoleService.getUsersWithPermission(Permissions.SUPER_ADMIN_PRIVILEGE));
+        toBeNotified.addAll(assignedRoleService.getUsersWithPermission(Permissions.ADMIN_PRIVILEGE));
         toBeNotified.stream()
                 .forEach(user -> arclibMailCenter.sendFormatsRevisionNotification(user.getEmail(), message, Instant.now()));
     }
@@ -158,7 +158,7 @@ public class FormatsRevisionNotificationService {
     }
 
     @Inject
-    public void setAssignedRoleService(AssignedRoleService assignedRoleService) {
+    public void setAssignedRoleService(UserRoleService assignedRoleService) {
         this.assignedRoleService = assignedRoleService;
     }
 

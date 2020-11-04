@@ -12,7 +12,7 @@ import cz.cas.lib.arclib.domain.profiles.ProducerProfile;
 import cz.cas.lib.arclib.domain.profiles.SipProfile;
 import cz.cas.lib.arclib.index.solr.arclibxml.IndexedArclibXmlDocument;
 import cz.cas.lib.arclib.index.solr.arclibxml.IndexedArclibXmlStore;
-import cz.cas.lib.arclib.security.user.UserDelegate;
+import cz.cas.lib.arclib.security.user.UserDetailsImpl;
 import cz.cas.lib.arclib.service.BatchService;
 import cz.cas.lib.arclib.service.IngestWorkflowService;
 import cz.cas.lib.arclib.service.archivalStorage.ArchivalStorageService;
@@ -81,7 +81,7 @@ public class ArchivalStorageDelegateTest extends DelegateTest {
     private SipProfile sipProfile;
     private IngestWorkflow ingestWorkflow;
     private Batch batch;
-    private UserDelegate userDelegate;
+    private UserDetailsImpl userDetailsImpl;
     private User user;
     private Sip sip;
     private Sip previousVersionSip;
@@ -132,6 +132,12 @@ public class ArchivalStorageDelegateTest extends DelegateTest {
         sequence2.setId(producerProfileStore.getSEQUENCE_ID());
         sequenceStore.save(sequence2);
 
+        Sequence sequence3 = new Sequence();
+        sequence3.setCounter(2L);
+        sequence3.setFormat("'#'#");
+        sequence3.setId(sipProfileStore.getSEQUENCE_ID());
+        sequenceStore.save(sequence3);
+
         archivalStorageService = new ArchivalStorageService();
         archivalStorageService.setBaseEndpoint("");
 
@@ -140,14 +146,15 @@ public class ArchivalStorageDelegateTest extends DelegateTest {
 
         producerProfileStore.setGenerator(generator);
         ingestWorkflowStore.setGenerator(generator);
+        sipProfileStore.setGenerator(generator);
 
         batchService = new BatchService();
         batchService.setDelegate(batchStore);
 
         user = new User();
-        userDelegate = new UserDelegate(user);
+        userDetailsImpl = new UserDetailsImpl(user);
 
-        indexedArclibXmlStore.setUserDetails(userDelegate);
+        indexedArclibXmlStore.setUserDetails(userDetailsImpl);
 
         archivalStorageDelegate = new ArchivalStorageDelegate();
         IngestWorkflowService ingestWorkflowService = new IngestWorkflowService();

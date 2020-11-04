@@ -1,4 +1,4 @@
-package cz.cas.lib.arclib.security.authorization.role;
+package cz.cas.lib.arclib.security.authorization.deprecated;
 
 import cz.cas.lib.arclib.domainbase.store.DatedStore;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;

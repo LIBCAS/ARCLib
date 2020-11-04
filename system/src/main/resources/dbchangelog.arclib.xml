@@ -875,4 +875,225 @@
         <modifyDataType tableName="arclib_aip_query" columnName="query" newDataType="nclob"/>
         <modifyDataType tableName="arclib_aip_query" columnName="result" newDataType="nclob"/>
     </changeSet>
+    <changeSet id="arclib:9" author="tomasek">
+        <addColumn tableName="arclib_validation_profile">
+            <column name="external_id" type="varchar(255)"/>
+        </addColumn>
+        <addColumn tableName="arclib_sip_profile">
+            <column name="external_id" type="varchar(255)"/>
+        </addColumn>
+        <insert tableName="uas_sequence">
+            <column name="id" value="9124111c-aca2-4f64-9e81-c7293aa24f47"/>
+            <column name="created" valueComputed="${now}"/>
+            <column name="name" value="validation_profile"/>
+            <column name="list_order" valueNumeric="0"/>
+            <column name="deletable" valueBoolean="false"/>
+            <column name="active" valueBoolean="true"/>
+            <column name="format" value="0"/>
+            <column name="counter" valueNumeric="1"/>
+        </insert>
+        <insert tableName="uas_sequence">
+            <column name="id" value="c6eda528-df7e-4fa8-9aff-92c138a01771"/>
+            <column name="created" valueComputed="${now}"/>
+            <column name="name" value="sip_profile"/>
+            <column name="list_order" valueNumeric="0"/>
+            <column name="deletable" valueBoolean="false"/>
+            <column name="active" valueBoolean="true"/>
+            <column name="format" value="0"/>
+            <column name="counter" valueNumeric="1"/>
+        </insert>
+    </changeSet>
+    <changeSet id="arclib:10" author="tomasek">
+        <addColumn tableName="arclib_ingest_workflow">
+            <column name="initial_config" type="nclob"/>
+        </addColumn>
+    </changeSet>
+    <changeSet id="arclib:11" author="tomasek">
+        <addColumn tableName="arclib_user">
+            <column name="institution" type="nvarchar(255)"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="arclib:12" author="radvan">
+        <createTable tableName="arclib_user_role">
+            <column name="id" type="varchar(255)">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="arclib_user_role_pkey"/>
+            </column>
+            <column name="name" type="varchar(255)"/>
+            <column name="description" type="varchar(255)"/>
+        </createTable>
+
+        <createTable tableName="arclib_role_permission">
+            <column name="arclib_role_id" type="varchar(255)">
+                <constraints referencedTableName="arclib_user_role" referencedColumnNames="id"
+                             foreignKeyName="arclib_role_permission_role_fk"/>
+            </column>
+            <column name="perm" type="varchar(255)"/>
+        </createTable>
+
+        <createTable tableName="arclib_assigned_user_role">
+            <column name="arclib_user_id" type="varchar(255)">
+                <constraints nullable="false" primaryKey="true" foreignKeyName="arclib_assigned_role_user_fk"
+                             referencedTableName="arclib_user" referencedColumnNames="id" deleteCascade="true"/>
+            </column>
+            <column name="arclib_role_id" type="varchar(255)">
+                <constraints nullable="false" primaryKey="true" foreignKeyName="arclib_assigned_role_role_fk"
+                             referencedTableName="arclib_user_role" referencedColumnNames="id" deleteCascade="true"/>
+            </column>
+        </createTable>
+
+        <sql>
+            INSERT INTO arclib_user_role (id, name, description) VALUES ('b7a43ad5-883f-4741-948b-08678fa38604', 'SUPER_ADMIN', 'Superadministrátor');
+            INSERT INTO arclib_user_role (id, name, description) VALUES ('7354de69-e7b6-4276-96e1-6be55aa096d0', 'ADMIN', 'Administrátor');
+            INSERT INTO arclib_user_role (id, name, description) VALUES ('3dd3f98e-082c-4274-9eed-1b5fb1c25e6d', 'ANALYST', 'Analytik');
+            INSERT INTO arclib_user_role (id, name, description) VALUES ('6bf01064-9ab5-41cc-977f-eccf4468c5ea', 'ARCHIVIST', 'Archivář');
+
+            -- SUPER_ADMIN
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('b7a43ad5-883f-4741-948b-08678fa38604', 'USER_RECORDS_READ');
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('b7a43ad5-883f-4741-948b-08678fa38604', 'USER_RECORDS_WRITE');
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('b7a43ad5-883f-4741-948b-08678fa38604', 'ADMIN_PRIVILEGE');
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('b7a43ad5-883f-4741-948b-08678fa38604', 'SUPER_ADMIN_PRIVILEGE');
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('b7a43ad5-883f-4741-948b-08678fa38604', 'BATCH_PROCESSING_READ');
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('b7a43ad5-883f-4741-948b-08678fa38604', 'BATCH_PROCESSING_WRITE');
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('b7a43ad5-883f-4741-948b-08678fa38604', 'AUTHORIAL_PACKAGE_DELETE');
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('b7a43ad5-883f-4741-948b-08678fa38604', 'DELETION_REQUESTS_READ');
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('b7a43ad5-883f-4741-948b-08678fa38604', 'DELETION_REQUESTS_WRITE');
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('b7a43ad5-883f-4741-948b-08678fa38604', 'EXPORT_ROUTINE_READ');
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('b7a43ad5-883f-4741-948b-08678fa38604', 'EXPORT_ROUTINE_WRITE');
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('b7a43ad5-883f-4741-948b-08678fa38604', 'FORMAT_RECORDS_READ');
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('b7a43ad5-883f-4741-948b-08678fa38604', 'FORMAT_RECORDS_WRITE');
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('b7a43ad5-883f-4741-948b-08678fa38604', 'NOTIFICATION_RECORDS_READ');
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('b7a43ad5-883f-4741-948b-08678fa38604', 'NOTIFICATION_RECORDS_WRITE');
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('b7a43ad5-883f-4741-948b-08678fa38604', 'INCIDENT_RECORDS_READ');
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('b7a43ad5-883f-4741-948b-08678fa38604', 'INCIDENT_RECORDS_WRITE');
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('b7a43ad5-883f-4741-948b-08678fa38604', 'ISSUE_DEFINITIONS_READ');
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('b7a43ad5-883f-4741-948b-08678fa38604', 'ISSUE_DEFINITIONS_WRITE');
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('b7a43ad5-883f-4741-948b-08678fa38604', 'INGEST_ROUTINE_RECORDS_READ');
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('b7a43ad5-883f-4741-948b-08678fa38604', 'INGEST_ROUTINE_RECORDS_WRITE');
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('b7a43ad5-883f-4741-948b-08678fa38604', 'INGEST_WORKFLOWS_READ');
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('b7a43ad5-883f-4741-948b-08678fa38604', 'PRODUCER_RECORDS_READ');
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('b7a43ad5-883f-4741-948b-08678fa38604', 'PRODUCER_RECORDS_WRITE');
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('b7a43ad5-883f-4741-948b-08678fa38604', 'PRODUCER_PROFILE_RECORDS_READ');
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('b7a43ad5-883f-4741-948b-08678fa38604', 'PRODUCER_PROFILE_RECORDS_WRITE');
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('b7a43ad5-883f-4741-948b-08678fa38604', 'REPORT_TEMPLATE_RECORDS_READ');
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('b7a43ad5-883f-4741-948b-08678fa38604', 'REPORT_TEMPLATE_RECORDS_WRITE');
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('b7a43ad5-883f-4741-948b-08678fa38604', 'SIP_PROFILE_RECORDS_READ');
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('b7a43ad5-883f-4741-948b-08678fa38604', 'SIP_PROFILE_RECORDS_WRITE');
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('b7a43ad5-883f-4741-948b-08678fa38604', 'TOOL_RECORDS_READ');
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('b7a43ad5-883f-4741-948b-08678fa38604', 'TOOL_RECORDS_WRITE');
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('b7a43ad5-883f-4741-948b-08678fa38604', 'VALIDATION_PROFILE_RECORDS_READ');
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('b7a43ad5-883f-4741-948b-08678fa38604', 'VALIDATION_PROFILE_RECORDS_WRITE');
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('b7a43ad5-883f-4741-948b-08678fa38604', 'WORKFLOW_DEFINITION_RECORDS_READ');
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('b7a43ad5-883f-4741-948b-08678fa38604', 'WORKFLOW_DEFINITION_RECORDS_WRITE');
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('b7a43ad5-883f-4741-948b-08678fa38604', 'DELETION_ACKNOWLEDGE_PRIVILEGE');
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('b7a43ad5-883f-4741-948b-08678fa38604', 'RISK_RECORDS_READ');
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('b7a43ad5-883f-4741-948b-08678fa38604', 'RISK_RECORDS_WRITE');
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('b7a43ad5-883f-4741-948b-08678fa38604', 'EXPORT_FILES');
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('b7a43ad5-883f-4741-948b-08678fa38604', 'UPDATE_XML');
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('b7a43ad5-883f-4741-948b-08678fa38604', 'LOGICAL_FILE_REMOVE');
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('b7a43ad5-883f-4741-948b-08678fa38604', 'LOGICAL_FILE_RENEW');
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('b7a43ad5-883f-4741-948b-08678fa38604', 'AIP_RECORDS_READ');
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('b7a43ad5-883f-4741-948b-08678fa38604', 'AIP_QUERY_RECORDS_READ');
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('b7a43ad5-883f-4741-948b-08678fa38604', 'AIP_QUERY_RECORDS_WRITE');
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('b7a43ad5-883f-4741-948b-08678fa38604', 'STORAGE_ADMINISTRATION_READ');
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('b7a43ad5-883f-4741-948b-08678fa38604', 'STORAGE_ADMINISTRATION_WRITE');
+
+
+            -- ADMIN
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('7354de69-e7b6-4276-96e1-6be55aa096d0', 'USER_RECORDS_READ');
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('7354de69-e7b6-4276-96e1-6be55aa096d0', 'USER_RECORDS_WRITE');
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('7354de69-e7b6-4276-96e1-6be55aa096d0', 'ADMIN_PRIVILEGE');
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('7354de69-e7b6-4276-96e1-6be55aa096d0', 'AUTHORIAL_PACKAGE_DELETE');
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('7354de69-e7b6-4276-96e1-6be55aa096d0', 'BATCH_PROCESSING_READ');
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('7354de69-e7b6-4276-96e1-6be55aa096d0', 'BATCH_PROCESSING_WRITE');
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('7354de69-e7b6-4276-96e1-6be55aa096d0', 'DELETION_REQUESTS_READ');
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('7354de69-e7b6-4276-96e1-6be55aa096d0', 'DELETION_REQUESTS_WRITE');
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('7354de69-e7b6-4276-96e1-6be55aa096d0', 'EXPORT_ROUTINE_READ');
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('7354de69-e7b6-4276-96e1-6be55aa096d0', 'EXPORT_ROUTINE_WRITE');
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('7354de69-e7b6-4276-96e1-6be55aa096d0', 'FORMAT_RECORDS_READ');
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('7354de69-e7b6-4276-96e1-6be55aa096d0', 'INCIDENT_RECORDS_READ');
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('7354de69-e7b6-4276-96e1-6be55aa096d0', 'INCIDENT_RECORDS_WRITE');
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('7354de69-e7b6-4276-96e1-6be55aa096d0', 'ISSUE_DEFINITIONS_READ');
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('7354de69-e7b6-4276-96e1-6be55aa096d0', 'INGEST_ROUTINE_RECORDS_READ');
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('7354de69-e7b6-4276-96e1-6be55aa096d0', 'INGEST_ROUTINE_RECORDS_WRITE');
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('7354de69-e7b6-4276-96e1-6be55aa096d0', 'INGEST_WORKFLOWS_READ');
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('7354de69-e7b6-4276-96e1-6be55aa096d0', 'PRODUCER_PROFILE_RECORDS_READ');
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('7354de69-e7b6-4276-96e1-6be55aa096d0', 'PRODUCER_PROFILE_RECORDS_WRITE');
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('7354de69-e7b6-4276-96e1-6be55aa096d0', 'REPORT_TEMPLATE_RECORDS_READ');
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('7354de69-e7b6-4276-96e1-6be55aa096d0', 'REPORT_TEMPLATE_RECORDS_WRITE');
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('7354de69-e7b6-4276-96e1-6be55aa096d0', 'SIP_PROFILE_RECORDS_READ');
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('7354de69-e7b6-4276-96e1-6be55aa096d0', 'SIP_PROFILE_RECORDS_WRITE');
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('7354de69-e7b6-4276-96e1-6be55aa096d0', 'TOOL_RECORDS_READ');
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('7354de69-e7b6-4276-96e1-6be55aa096d0', 'VALIDATION_PROFILE_RECORDS_READ');
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('7354de69-e7b6-4276-96e1-6be55aa096d0', 'VALIDATION_PROFILE_RECORDS_WRITE');
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('7354de69-e7b6-4276-96e1-6be55aa096d0', 'WORKFLOW_DEFINITION_RECORDS_READ');
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('7354de69-e7b6-4276-96e1-6be55aa096d0', 'WORKFLOW_DEFINITION_RECORDS_WRITE');
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('7354de69-e7b6-4276-96e1-6be55aa096d0', 'DELETION_ACKNOWLEDGE_PRIVILEGE');
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('7354de69-e7b6-4276-96e1-6be55aa096d0', 'RISK_RECORDS_READ');
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('7354de69-e7b6-4276-96e1-6be55aa096d0', 'EXPORT_FILES');
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('7354de69-e7b6-4276-96e1-6be55aa096d0', 'UPDATE_XML');
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('7354de69-e7b6-4276-96e1-6be55aa096d0', 'LOGICAL_FILE_REMOVE');
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('7354de69-e7b6-4276-96e1-6be55aa096d0', 'LOGICAL_FILE_RENEW');
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('7354de69-e7b6-4276-96e1-6be55aa096d0', 'AIP_RECORDS_READ');
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('7354de69-e7b6-4276-96e1-6be55aa096d0', 'AIP_QUERY_RECORDS_READ');
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('7354de69-e7b6-4276-96e1-6be55aa096d0', 'AIP_QUERY_RECORDS_WRITE');
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('7354de69-e7b6-4276-96e1-6be55aa096d0', 'STORAGE_ADMINISTRATION_READ');
+
+
+            -- ANALYST:
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('3dd3f98e-082c-4274-9eed-1b5fb1c25e6d', 'BATCH_PROCESSING_READ');
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('3dd3f98e-082c-4274-9eed-1b5fb1c25e6d', 'BATCH_PROCESSING_WRITE');
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('3dd3f98e-082c-4274-9eed-1b5fb1c25e6d', 'DELETION_REQUESTS_READ');
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('3dd3f98e-082c-4274-9eed-1b5fb1c25e6d', 'DELETION_REQUESTS_WRITE');
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('3dd3f98e-082c-4274-9eed-1b5fb1c25e6d', 'FORMAT_RECORDS_READ');
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('3dd3f98e-082c-4274-9eed-1b5fb1c25e6d', 'INCIDENT_RECORDS_READ');
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('3dd3f98e-082c-4274-9eed-1b5fb1c25e6d', 'INCIDENT_RECORDS_WRITE');
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('3dd3f98e-082c-4274-9eed-1b5fb1c25e6d', 'ISSUE_DEFINITIONS_READ');
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('3dd3f98e-082c-4274-9eed-1b5fb1c25e6d', 'INGEST_ROUTINE_RECORDS_READ');
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('3dd3f98e-082c-4274-9eed-1b5fb1c25e6d', 'INGEST_ROUTINE_RECORDS_WRITE');
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('3dd3f98e-082c-4274-9eed-1b5fb1c25e6d', 'INGEST_WORKFLOWS_READ');
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('3dd3f98e-082c-4274-9eed-1b5fb1c25e6d', 'PRODUCER_PROFILE_RECORDS_READ');
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('3dd3f98e-082c-4274-9eed-1b5fb1c25e6d', 'PRODUCER_PROFILE_RECORDS_WRITE');
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('3dd3f98e-082c-4274-9eed-1b5fb1c25e6d', 'REPORT_TEMPLATE_RECORDS_READ');
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('3dd3f98e-082c-4274-9eed-1b5fb1c25e6d', 'REPORT_TEMPLATE_RECORDS_WRITE');
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('3dd3f98e-082c-4274-9eed-1b5fb1c25e6d', 'SIP_PROFILE_RECORDS_READ');
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('3dd3f98e-082c-4274-9eed-1b5fb1c25e6d', 'TOOL_RECORDS_READ');
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('3dd3f98e-082c-4274-9eed-1b5fb1c25e6d', 'VALIDATION_PROFILE_RECORDS_READ');
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('3dd3f98e-082c-4274-9eed-1b5fb1c25e6d', 'WORKFLOW_DEFINITION_RECORDS_READ');
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('3dd3f98e-082c-4274-9eed-1b5fb1c25e6d', 'DELETION_ACKNOWLEDGE_PRIVILEGE');
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('3dd3f98e-082c-4274-9eed-1b5fb1c25e6d', 'RISK_RECORDS_READ');
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('3dd3f98e-082c-4274-9eed-1b5fb1c25e6d', 'EXPORT_FILES');
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('3dd3f98e-082c-4274-9eed-1b5fb1c25e6d', 'LOGICAL_FILE_REMOVE');
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('3dd3f98e-082c-4274-9eed-1b5fb1c25e6d', 'LOGICAL_FILE_RENEW');
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('3dd3f98e-082c-4274-9eed-1b5fb1c25e6d', 'AIP_RECORDS_READ');
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('3dd3f98e-082c-4274-9eed-1b5fb1c25e6d', 'AIP_QUERY_RECORDS_READ');
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('3dd3f98e-082c-4274-9eed-1b5fb1c25e6d', 'AIP_QUERY_RECORDS_WRITE');
+
+
+            -- ARCHIVIST
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('6bf01064-9ab5-41cc-977f-eccf4468c5ea', 'BATCH_PROCESSING_READ');
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('6bf01064-9ab5-41cc-977f-eccf4468c5ea', 'BATCH_PROCESSING_WRITE');
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('6bf01064-9ab5-41cc-977f-eccf4468c5ea', 'AUTHORIAL_PACKAGE_DELETE');
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('6bf01064-9ab5-41cc-977f-eccf4468c5ea', 'DELETION_REQUESTS_READ');
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('6bf01064-9ab5-41cc-977f-eccf4468c5ea', 'DELETION_REQUESTS_WRITE');
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('6bf01064-9ab5-41cc-977f-eccf4468c5ea', 'FORMAT_RECORDS_READ');
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('6bf01064-9ab5-41cc-977f-eccf4468c5ea', 'INCIDENT_RECORDS_READ');
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('6bf01064-9ab5-41cc-977f-eccf4468c5ea', 'ISSUE_DEFINITIONS_READ');
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('6bf01064-9ab5-41cc-977f-eccf4468c5ea', 'INGEST_ROUTINE_RECORDS_READ');
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('6bf01064-9ab5-41cc-977f-eccf4468c5ea', 'INGEST_ROUTINE_RECORDS_WRITE');
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('6bf01064-9ab5-41cc-977f-eccf4468c5ea', 'INGEST_WORKFLOWS_READ');
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('6bf01064-9ab5-41cc-977f-eccf4468c5ea', 'PRODUCER_PROFILE_RECORDS_READ');
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('6bf01064-9ab5-41cc-977f-eccf4468c5ea', 'SIP_PROFILE_RECORDS_READ');
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('6bf01064-9ab5-41cc-977f-eccf4468c5ea', 'TOOL_RECORDS_READ');
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('6bf01064-9ab5-41cc-977f-eccf4468c5ea', 'VALIDATION_PROFILE_RECORDS_READ');
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('6bf01064-9ab5-41cc-977f-eccf4468c5ea', 'WORKFLOW_DEFINITION_RECORDS_READ');
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('6bf01064-9ab5-41cc-977f-eccf4468c5ea', 'DELETION_ACKNOWLEDGE_PRIVILEGE');
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('6bf01064-9ab5-41cc-977f-eccf4468c5ea', 'RISK_RECORDS_READ');
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('6bf01064-9ab5-41cc-977f-eccf4468c5ea', 'EXPORT_FILES');
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('6bf01064-9ab5-41cc-977f-eccf4468c5ea', 'LOGICAL_FILE_REMOVE');
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('6bf01064-9ab5-41cc-977f-eccf4468c5ea', 'AIP_RECORDS_READ');
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('6bf01064-9ab5-41cc-977f-eccf4468c5ea', 'AIP_QUERY_RECORDS_READ');
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('6bf01064-9ab5-41cc-977f-eccf4468c5ea', 'AIP_QUERY_RECORDS_WRITE');
+        </sql>
+    </changeSet>
 </databaseChangeLog>

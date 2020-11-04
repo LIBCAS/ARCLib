@@ -1,14 +1,13 @@
 package cz.cas.lib.arclib.service.validator;
 
 import cz.cas.lib.arclib.domain.profiles.ValidationProfile;
+import cz.cas.lib.arclib.domainbase.exception.MissingObject;
 import cz.cas.lib.arclib.exception.validation.InvalidSipNodeValue;
 import cz.cas.lib.arclib.exception.validation.MissingFile;
 import cz.cas.lib.arclib.exception.validation.SchemaValidationError;
 import cz.cas.lib.arclib.exception.validation.WrongNodeValue;
 import cz.cas.lib.arclib.store.ValidationProfileStore;
 import cz.cas.lib.arclib.utils.XmlUtils;
-import cz.cas.lib.arclib.domainbase.exception.GeneralException;
-import cz.cas.lib.arclib.domainbase.exception.MissingObject;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.w3c.dom.Document;
@@ -27,6 +26,7 @@ import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -50,16 +50,16 @@ public class Validator {
      *
      * @param sipId               id of the SIP
      * @param sipPath             file path to the sip package to validate
-     * @param validationProfileId id of the validation profile
+     * @param validationProfileExternalId id of the validation profile
      * @throws SAXException             if validation profile cannot be parsed
      * @throws XPathExpressionException if there is error in the XPath expression
      */
-    public void validateSip(String sipId, String sipPath, String validationProfileId)
+    public void validateSip(String sipId, String sipPath, String validationProfileExternalId)
             throws ParserConfigurationException, IOException, SAXException, XPathExpressionException {
-        log.debug("Validation of SIP " + sipId + " with profile " + validationProfileId + " started.");
+        log.debug("Validation of SIP " + sipId + " with profile " + validationProfileExternalId + " started.");
 
-        ValidationProfile profile = validationProfileStore.find(validationProfileId);
-        notNull(profile, () -> new MissingObject(ValidationProfile.class, validationProfileId));
+        ValidationProfile profile = validationProfileStore.findByExternalId(validationProfileExternalId);
+        notNull(profile, () -> new MissingObject(ValidationProfile.class, validationProfileExternalId));
 
         DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
         DocumentBuilder dBuilder;
@@ -69,11 +69,11 @@ public class Validator {
         Document validationProfileDoc = dBuilder.parse(new ByteArrayInputStream(validationProfileXml.getBytes()));
         validationProfileDoc.getDocumentElement().normalize();
 
-        performFileExistenceChecks(sipPath, validationProfileDoc, validationProfileId, sipId);
-        performValidationSchemaChecks(sipPath, validationProfileDoc, validationProfileId, sipId);
-        performNodeValueChecks(sipPath, validationProfileDoc, validationProfileId, sipId);
+        performFileExistenceChecks(sipPath, validationProfileDoc, validationProfileExternalId, sipId);
+        performValidationSchemaChecks(sipPath, validationProfileDoc, validationProfileExternalId, sipId);
+        performNodeValueChecks(sipPath, validationProfileDoc, validationProfileExternalId, sipId);
 
-        log.debug("Validation of SIP " + sipId + " with profile " + validationProfileId + " succeeded.");
+        log.debug("Validation of SIP " + sipId + " with profile " + validationProfileExternalId + " succeeded.");
     }
 
     /**
@@ -82,11 +82,11 @@ public class Validator {
      *
      * @param sipPath              path to the SIP
      * @param validationProfileDoc document with the validation profile
-     * @param validationProfileId  id of the validation profile
+     * @param validationProfileExternalId  id of the validation profile
      * @param sipId                id of the SIP
      * @throws XPathExpressionException if there is an error in the XPath expression
      */
-    private void performFileExistenceChecks(String sipPath, Document validationProfileDoc, String validationProfileId,
+    private void performFileExistenceChecks(String sipPath, Document validationProfileDoc, String validationProfileExternalId,
                                             String sipId) throws XPathExpressionException, IOException {
         XPath xPath = XPathFactory.newInstance().newXPath();
 
@@ -99,9 +99,9 @@ public class Validator {
 
             List<File> matchingFiles = listFilesMatchingGlobPattern(new File(sipPath), relativePath);
             if (matchingFiles.size() == 0) {
-                log.debug("Validation of SIP " + sipId + " with profile " + validationProfileId +
+                log.debug("Validation of SIP " + sipId + " with profile " + validationProfileExternalId +
                         " failed. File at \"" + relativePath + "\" is missing.");
-                throw new MissingFile(sipId, validationProfileId, relativePath);
+                throw new MissingFile(sipId, validationProfileExternalId, relativePath);
             }
         }
     }
@@ -112,14 +112,14 @@ public class Validator {
      *
      * @param sipPath              path to the SIP
      * @param validationProfileDoc document with the validation profile
-     * @param validationProfileId  id of the validation profile
+     * @param validationProfileExternalId  id of the validation profile
      * @param sipId                id of the SIP
      * @throws XPathExpressionException if there is an error in the XPath expression
      * @throws SAXException             if the XSD schema is invalid
      * @throws IOException              if the validated file is inaccessible or the XSD schema is unreadable
      */
-    private void performValidationSchemaChecks(String sipPath, Document validationProfileDoc, String validationProfileId,
-                                               String sipId) throws SAXException, XPathExpressionException, IOException {
+    private void performValidationSchemaChecks(String sipPath, Document validationProfileDoc, String validationProfileExternalId,
+                                               String sipId) throws XPathExpressionException, IOException {
         XPath xPath = XPathFactory.newInstance().newXPath();
 
         NodeList nodes = (NodeList) xPath.compile("/profile/rule/validationSchemaCheck")
@@ -131,16 +131,16 @@ public class Validator {
             String schema = element.getElementsByTagName("schema").item(0).getTextContent();
 
             List<File> matchingFiles = listFilesMatchingGlobPattern(new File(sipPath), filePathGlobPattern);
-            if (matchingFiles.size() == 0) throw new MissingFile(sipId, validationProfileId, filePathGlobPattern);
+            if (matchingFiles.size() == 0) throw new MissingFile(sipId, validationProfileExternalId, filePathGlobPattern);
 
             for (File file: matchingFiles) {
-                try (FileInputStream fos = new FileInputStream(file)) {
-                    XmlUtils.validateWithXMLSchema(fos, new InputStream[]{
-                            new ByteArrayInputStream(schema.getBytes(StandardCharsets.UTF_8.name()))});
-                } catch (GeneralException e) {
-                    log.debug("Validation of SIP " + sipId + " with profile " + validationProfileId + " failed. File at \"" +
+                try {
+                    XmlUtils.validateWithXMLSchema(Files.readString(file.toPath()), new InputStream[]{
+                            new ByteArrayInputStream(schema.getBytes(StandardCharsets.UTF_8.name()))}, "validationSchemaCheck rule");
+                } catch (SchemaValidationError e) {
+                    log.error("Validation of SIP " + sipId + " with profile " + validationProfileExternalId + " failed. File at \"" +
                             filePathGlobPattern + "\" is not valid against its corresponding schema.");
-                    throw new SchemaValidationError(sipId, validationProfileId, filePathGlobPattern, schema, e.getMessage());
+                    throw e;
                 }
             }
         }
@@ -153,13 +153,13 @@ public class Validator {
      *
      * @param sipPath              path to the SIP
      * @param validationProfileDoc document with the validation profile
-     * @param validationProfileId  id of the validation profile
+     * @param validationProfileExternalId  id of the validation profile
      * @param sipId                id of the SIP
      * @throws XPathExpressionException if there is an error in the XPath expression
      * @throws SAXException             if the validationProfileDoc cannot be parsed
      * @throws IOException              if some file addressed from the validation profile is inaccessible
      */
-    private void performNodeValueChecks(String sipPath, Document validationProfileDoc, String validationProfileId,
+    private void performNodeValueChecks(String sipPath, Document validationProfileDoc, String validationProfileExternalId,
                                         String sipId)
             throws ParserConfigurationException, XPathExpressionException, SAXException, IOException {
         XPath xPath = XPathFactory.newInstance().newXPath();
@@ -171,23 +171,23 @@ public class Validator {
 
             String filePathGlobPattern = element.getElementsByTagName("filePathGlobPattern").item(0).getTextContent();
             List<File> matchingFiles = listFilesMatchingGlobPattern(new File(sipPath), filePathGlobPattern);
-            if (matchingFiles.size() == 0) throw new MissingFile(sipId, validationProfileId, filePathGlobPattern);
+            if (matchingFiles.size() == 0) throw new MissingFile(sipId, validationProfileExternalId, filePathGlobPattern);
 
             String expression = element.getElementsByTagName("xPath").item(0).getTextContent();
 
             for (File file: matchingFiles) {
-                try (FileInputStream fos = new FileInputStream(file)) {
-                    String actualValue = XmlUtils.findWithXPath(fos, expression).item(0).getTextContent();
+                try (FileInputStream fis = new FileInputStream(file)) {
+                    String actualValue = XmlUtils.findSingleNodeWithXPath(fis, expression).getTextContent();
 
                     Node valueElement = element.getElementsByTagName("value").item(0);
                     if (valueElement != null) {
                         String expectedValue = valueElement.getTextContent();
                         //compare with value
                         if (!expectedValue.equals(actualValue)) {
-                            log.debug("Validation of SIP " + sipId + " with profile " + validationProfileId +
+                            log.debug("Validation of SIP " + sipId + " with profile " + validationProfileExternalId +
                                     " failed. Expected value of node at path \"" + expression + "\" is " + expectedValue +
                                     ". Actual value is " + actualValue + ".");
-                            throw new WrongNodeValue(sipId, validationProfileId, expectedValue, actualValue,
+                            throw new WrongNodeValue(sipId, validationProfileExternalId, expectedValue, actualValue,
                                     file.getPath(), expression);
                         }
                     } else {
@@ -197,10 +197,10 @@ public class Validator {
                         Pattern pattern = Pattern.compile(regex);
                         Matcher m = pattern.matcher(actualValue);
                         if (!m.matches()) {
-                            log.debug("Validation of SIP " + sipId + " with profile " + validationProfileId +
+                            log.debug("Validation of SIP " + sipId + " with profile " + validationProfileExternalId +
                                     " failed. Value " + actualValue + " of node at " + "path \"" + expression +
                                     "\" does not match regex " + regex + ".");
-                            throw new InvalidSipNodeValue(sipId, validationProfileId, regex, actualValue,
+                            throw new InvalidSipNodeValue(sipId, validationProfileExternalId, regex, actualValue,
                                     file.getPath(), expression);
                         }
                     }

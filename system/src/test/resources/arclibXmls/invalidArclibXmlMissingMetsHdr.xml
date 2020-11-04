@@ -98,10 +98,6 @@
                     <dc:source>ABA001</dc:source>
                     <dc:source>54 B 294</dc:source>
                 </oai_dc:dc>
-                <dcterms:sipVersionNumber xmlns:dcterms="http://purl.org/dc/terms/">1</dcterms:sipVersionNumber>
-                <dcterms:sipVersionOf xmlns:dcterms="http://purl.org/dc/terms/">initial version</dcterms:sipVersionOf>
-                <dcterms:xmlVersionNumber xmlns:dcterms="http://purl.org/dc/terms/">2</dcterms:xmlVersionNumber>
-                <dcterms:xmlVersionOf xmlns:dcterms="http://purl.org/dc/terms/">ARCLIB_900000003</dcterms:xmlVersionOf>
             </METS:xmlData>
         </METS:mdWrap>
     </METS:dmdSec>
@@ -181,6 +177,20 @@
             </METS:xmlData>
         </METS:mdWrap>
     </METS:dmdSec>
+    <METS:amdSec>
+        <METS:digiprovMD ID="ARCLIB_SIP_INFO">
+            <METS:mdWrap MDTYPE="PREMIS">
+                <METS:xmlData>
+                    <ARCLib:sipInfo xmlns:ARCLib="http://arclib.lib.cas.cz/ARCLIB_XSD">
+                        <ARCLib:sipVersionNumber>1</ARCLib:sipVersionNumber>
+                        <ARCLib:sipVersionOf>initial version</ARCLib:sipVersionOf>
+                        <ARCLib:xmlVersionNumber>1</ARCLib:xmlVersionNumber>
+                        <ARCLib:xmlVersionOf>initial version</ARCLib:xmlVersionOf>
+                    </ARCLib:sipInfo>
+                </METS:xmlData>
+            </METS:mdWrap>
+        </METS:digiprovMD>
+    </METS:amdSec>
     <METS:amdSec>
         <METS:techMD ID="ARCLIB_001">
             <METS:mdWrap MDTYPE="OTHER">
@@ -487,40 +497,40 @@
                             <premis:linkingEventIdentifierValue>metadata_extraction_event_001</premis:linkingEventIdentifierValue>
                         </premis:linkingEventIdentifier>
                     </premis:object>
-                    <ARCLIB:formats xmlns:ARCLIB="http://arclib.lib.cas.cz/ARCLIB_XSD">
-                        <ARCLIB:format>
-                            <ARCLIB:formatRegistryKey>x-fmt/392</ARCLIB:formatRegistryKey>
-                            <ARCLIB:formatRegistryName>PRONOM</ARCLIB:formatRegistryName>
-                            <ARCLIB:creatingApplicationName>DROID</ARCLIB:creatingApplicationName>
-                            <ARCLIB:creatingApplicationVersion>DROID: version: 6.4, Signature files: 1. Type: Container Version: 20171130 File name: container-signature-20171130.xml 2. Type: Binary Version: 93 File name: DROID_SignatureFile_V93.xml</ARCLIB:creatingApplicationVersion>
-                            <ARCLIB:dateCreatedByApplication>2019-03-05</ARCLIB:dateCreatedByApplication>
-                            <ARCLIB:fileCount>20</ARCLIB:fileCount>
-                        </ARCLIB:format>
-                        <ARCLIB:format>
-                            <ARCLIB:formatRegistryKey>fmt/101</ARCLIB:formatRegistryKey>
-                            <ARCLIB:formatRegistryName>PRONOM</ARCLIB:formatRegistryName>
-                            <ARCLIB:creatingApplicationName>DROID</ARCLIB:creatingApplicationName>
-                            <ARCLIB:creatingApplicationVersion>DROID: version: 6.4, Signature files: 1. Type: Container Version: 20171130 File name: container-signature-20171130.xml 2. Type: Binary Version: 93 File name: DROID_SignatureFile_V93.xml</ARCLIB:creatingApplicationVersion>
-                            <ARCLIB:dateCreatedByApplication>2019-03-05</ARCLIB:dateCreatedByApplication>
-                            <ARCLIB:fileCount>22</ARCLIB:fileCount>
-                        </ARCLIB:format>
-                        <ARCLIB:format>
-                            <ARCLIB:formatRegistryKey>x-fmt/111</ARCLIB:formatRegistryKey>
-                            <ARCLIB:formatRegistryName>PRONOM</ARCLIB:formatRegistryName>
-                            <ARCLIB:creatingApplicationName>DROID</ARCLIB:creatingApplicationName>
-                            <ARCLIB:creatingApplicationVersion>DROID: version: 6.4, Signature files: 1. Type: Container Version: 20171130 File name: container-signature-20171130.xml 2. Type: Binary Version: 93 File name: DROID_SignatureFile_V93.xml</ARCLIB:creatingApplicationVersion>
-                            <ARCLIB:dateCreatedByApplication>2019-03-05</ARCLIB:dateCreatedByApplication>
-                            <ARCLIB:fileCount>10</ARCLIB:fileCount>
-                        </ARCLIB:format>
-                        <ARCLIB:format>
-                            <ARCLIB:formatRegistryKey>fmt/993</ARCLIB:formatRegistryKey>
-                            <ARCLIB:formatRegistryName>PRONOM</ARCLIB:formatRegistryName>
-                            <ARCLIB:creatingApplicationName>DROID</ARCLIB:creatingApplicationName>
-                            <ARCLIB:creatingApplicationVersion>DROID: version: 6.4, Signature files: 1. Type: Container Version: 20171130 File name: container-signature-20171130.xml 2. Type: Binary Version: 93 File name: DROID_SignatureFile_V93.xml</ARCLIB:creatingApplicationVersion>
-                            <ARCLIB:dateCreatedByApplication>2019-03-05</ARCLIB:dateCreatedByApplication>
-                            <ARCLIB:fileCount>1</ARCLIB:fileCount>
-                        </ARCLIB:format>
-                    </ARCLIB:formats>
+                    <ARCLib:formats xmlns:ARCLib="http://arclib.lib.cas.cz/ARCLIB_XSD">
+                        <ARCLib:format>
+                            <ARCLib:formatRegistryKey>x-fmt/392</ARCLib:formatRegistryKey>
+                            <ARCLib:formatRegistryName>PRONOM</ARCLib:formatRegistryName>
+                            <ARCLib:creatingApplicationName>DROID</ARCLib:creatingApplicationName>
+                            <ARCLib:creatingApplicationVersion>DROID: version: 6.4, Signature files: 1. Type: Container Version: 20171130 File name: container-signature-20171130.xml 2. Type: Binary Version: 93 File name: DROID_SignatureFile_V93.xml</ARCLib:creatingApplicationVersion>
+                            <ARCLib:dateCreatedByApplication>2019-03-05</ARCLib:dateCreatedByApplication>
+                            <ARCLib:fileCount>20</ARCLib:fileCount>
+                        </ARCLib:format>
+                        <ARCLib:format>
+                            <ARCLib:formatRegistryKey>fmt/101</ARCLib:formatRegistryKey>
+                            <ARCLib:formatRegistryName>PRONOM</ARCLib:formatRegistryName>
+                            <ARCLib:creatingApplicationName>DROID</ARCLib:creatingApplicationName>
+                            <ARCLib:creatingApplicationVersion>DROID: version: 6.4, Signature files: 1. Type: Container Version: 20171130 File name: container-signature-20171130.xml 2. Type: Binary Version: 93 File name: DROID_SignatureFile_V93.xml</ARCLib:creatingApplicationVersion>
+                            <ARCLib:dateCreatedByApplication>2019-03-05</ARCLib:dateCreatedByApplication>
+                            <ARCLib:fileCount>22</ARCLib:fileCount>
+                        </ARCLib:format>
+                        <ARCLib:format>
+                            <ARCLib:formatRegistryKey>x-fmt/111</ARCLib:formatRegistryKey>
+                            <ARCLib:formatRegistryName>PRONOM</ARCLib:formatRegistryName>
+                            <ARCLib:creatingApplicationName>DROID</ARCLib:creatingApplicationName>
+                            <ARCLib:creatingApplicationVersion>DROID: version: 6.4, Signature files: 1. Type: Container Version: 20171130 File name: container-signature-20171130.xml 2. Type: Binary Version: 93 File name: DROID_SignatureFile_V93.xml</ARCLib:creatingApplicationVersion>
+                            <ARCLib:dateCreatedByApplication>2019-03-05</ARCLib:dateCreatedByApplication>
+                            <ARCLib:fileCount>10</ARCLib:fileCount>
+                        </ARCLib:format>
+                        <ARCLib:format>
+                            <ARCLib:formatRegistryKey>fmt/993</ARCLib:formatRegistryKey>
+                            <ARCLib:formatRegistryName>PRONOM</ARCLib:formatRegistryName>
+                            <ARCLib:creatingApplicationName>DROID</ARCLib:creatingApplicationName>
+                            <ARCLib:creatingApplicationVersion>DROID: version: 6.4, Signature files: 1. Type: Container Version: 20171130 File name: container-signature-20171130.xml 2. Type: Binary Version: 93 File name: DROID_SignatureFile_V93.xml</ARCLib:creatingApplicationVersion>
+                            <ARCLib:dateCreatedByApplication>2019-03-05</ARCLib:dateCreatedByApplication>
+                            <ARCLib:fileCount>1</ARCLib:fileCount>
+                        </ARCLib:format>
+                    </ARCLib:formats>
                 </METS:xmlData>
             </METS:mdWrap>
         </METS:techMD>

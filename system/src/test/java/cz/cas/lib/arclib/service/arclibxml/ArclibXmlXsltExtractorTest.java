@@ -1,6 +1,7 @@
 package cz.cas.lib.arclib.service.arclibxml;
 
 import com.google.common.io.Resources;
+import cz.cas.lib.arclib.bpm.ArclibXmlExtractorDelegate;
 import cz.cas.lib.arclib.bpm.BpmConstants;
 import cz.cas.lib.arclib.domain.Batch;
 import cz.cas.lib.arclib.domain.ingestWorkflow.IngestWorkflow;
@@ -87,9 +88,16 @@ public class ArclibXmlXsltExtractorTest extends SrDbTest {
         sequence.setId(ingestWorkflowStore.getSEQUENCE_ID());
         sequenceStore.save(sequence);
 
+        Sequence sequence2 = new Sequence();
+        sequence2.setCounter(2L);
+        sequence2.setFormat("'#'#");
+        sequence2.setId(sipProfileStore.getSEQUENCE_ID());
+        sequenceStore.save(sequence2);
+
         generator = new Generator();
         generator.setStore(sequenceStore);
         ingestWorkflowStore.setGenerator(generator);
+        sipProfileStore.setGenerator(generator);
 
         ingestWorkflow = new IngestWorkflow();
         ingestWorkflow.setFileName(ORIGINAL_SIP_FILE_NAME);
@@ -117,11 +125,11 @@ public class ArclibXmlXsltExtractorTest extends SrDbTest {
     @Test
     public void extractMetadataTest() throws TransformerException, IOException {
         Map<String, Object> variables = asMap(BpmConstants.ProcessVariables.batchId, batch.getId());
-        variables.put(BpmConstants.ProcessVariables.sipProfileId, sipProfile.getId());
+        variables.put(BpmConstants.ProcessVariables.latestConfig, String.format("{\"%s\":\"%s\"}", ArclibXmlExtractorDelegate.SIP_PROFILE_CONFIG_ENTRY, sipProfile.getExternalId()));
         variables.put(BpmConstants.ProcessVariables.ingestWorkflowExternalId, ingestWorkflow.getExternalId());
         variables.put(BpmConstants.Ingestion.sipFileName, ingestWorkflow.getFileName());
         variables.put(BpmConstants.ProcessVariables.sipFolderWorkspacePath,SIP.toAbsolutePath().toString());
-        String extractionResult = arclibXmlXsltExtractor.extractMetadata(variables).replace("\\", "");
+        String extractionResult = arclibXmlXsltExtractor.extractMetadata(sipProfile.getExternalId(), variables).replace("\\", "");
         assertThat(extractionResult.contains("mets:mets"), is(true));
         assertThat(extractionResult.contains("<ARCLib:eventAgent>"), is(true));
     }

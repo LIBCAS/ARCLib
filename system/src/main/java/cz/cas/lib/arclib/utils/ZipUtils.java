@@ -32,7 +32,7 @@ public class ZipUtils {
      * @throws cz.cas.lib.arclib.domainbase.exception.GeneralException if there is not exactly one root folder inside the ZIP
      */
     public static String unzipSip(Path zipInput, Path destDirectory, String ingestWorkflowLogId) {
-        try (ZipFile zipFile = new ZipFile(zipInput.toFile())) {
+            try (ZipFile zipFile = new ZipFile(zipInput.toFile())) {
             Files.createDirectories(destDirectory);
             Enumeration<? extends ZipEntry> entries = zipFile.entries();
             Set<String> rootDirNames = new HashSet<>();
@@ -47,16 +47,16 @@ public class ZipUtils {
                     Files.createDirectories(filePath);
                 }
             }
-            if (rootDirNames.size() != 1) {
-                throw new GeneralException("Invalid input ZIP format. ZIP has to include exactly one root folder. But " + rootDirNames.size() + " were found (" + Arrays.toString(rootDirNames.toArray()) + ")");
+                if (rootDirNames.size() != 1) {
+                    throw new GeneralException("Invalid input ZIP format. ZIP has to include exactly one root folder. But " + rootDirNames.size() + " were found (" + Arrays.toString(rootDirNames.toArray()) + ")");
+                }
+                log.debug("SIP content for ingest workflow external id " + ingestWorkflowLogId + " in zip archive has been" +
+                        " extracted to workspace.");
+                return rootDirNames.iterator().next();
+            } catch (Exception e) {
+                throw new GeneralException("Unable to unzip SIP content for ingest workflow external id "
+                        + ingestWorkflowLogId + " to path: " + destDirectory.toAbsolutePath().toString() + ". See log for causing exception stacktrace. If you see errors like ..malformed.. or ..invalid CEN header.. the cause may be that name of some zipped file/folder contains non-standard characters and entries names are not encoded in UTF-8", e);
             }
-            log.debug("SIP content for ingest workflow external id " + ingestWorkflowLogId + " in zip archive has been" +
-                    " extracted to workspace.");
-            return rootDirNames.iterator().next();
-        } catch (IOException e) {
-            throw new GeneralException("Unable to unzip SIP content for ingest workflow external id "
-                    + ingestWorkflowLogId + " to path: " + destDirectory.toAbsolutePath().toString(), e);
-        }
     }
 
     /**

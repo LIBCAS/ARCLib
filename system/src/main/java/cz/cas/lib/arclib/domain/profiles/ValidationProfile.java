@@ -1,7 +1,6 @@
 package cz.cas.lib.arclib.domain.profiles;
 
 import cz.cas.lib.arclib.domainbase.domain.NamedObject;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -19,13 +18,21 @@ import javax.persistence.Table;
 @BatchSize(size = 100)
 @Entity
 @Table(name = "arclib_validation_profile")
-@AllArgsConstructor
 @NoArgsConstructor
 public class ValidationProfile extends NamedObject {
+
+    /**
+     * Externé id
+     */
+    private String externalId;
 
     /**
      * XML obsah profilu
      */
     @Column(length = 10485760)
     private String xml;
+
+    public ValidationProfile(String xml) {
+        this.xml = xml;
+    }
 }

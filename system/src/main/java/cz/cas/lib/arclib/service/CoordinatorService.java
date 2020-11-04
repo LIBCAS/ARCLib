@@ -1,6 +1,12 @@
 package cz.cas.lib.arclib.service;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.databind.node.TextNode;
+import cz.cas.lib.arclib.bpm.ArclibXmlExtractorDelegate;
 import cz.cas.lib.arclib.bpm.BpmConstants;
+import cz.cas.lib.arclib.bpm.ValidatorDelegate;
 import cz.cas.lib.arclib.domain.*;
 import cz.cas.lib.arclib.domain.ingestWorkflow.*;
 import cz.cas.lib.arclib.domain.profiles.ProducerProfile;
@@ -13,6 +19,7 @@ import cz.cas.lib.arclib.security.user.UserDetails;
 import cz.cas.lib.arclib.store.HashStore;
 import cz.cas.lib.arclib.store.IngestRoutineStore;
 import cz.cas.lib.arclib.utils.ArclibUtils;
+import cz.cas.lib.arclib.utils.JsonUtils;
 import cz.cas.lib.arclib.utils.XmlUtils;
 import cz.cas.lib.core.store.Transactional;
 import lombok.extern.slf4j.Slf4j;
@@ -124,6 +131,7 @@ public class CoordinatorService {
         ingestWorkflow.setProcessingState(IngestWorkflowState.NEW);
         ingestWorkflow.setHash(hash);
         ingestWorkflow.setFileName(fileName);
+        ingestWorkflow.setInitialConfig(computeIngestWorkflowConfig(workflowConfig, producerProfile));
         String batchId = transactionTemplate.execute(s -> {
             hashStore.save(hash);
             ingestWorkflowService.save(ingestWorkflow);
@@ -145,7 +153,7 @@ public class CoordinatorService {
      * @param routineId         id of the ingest routine
      * @return id of the created batch or 'null' if no batch has been created
      */
-    public String processBatchOfSips(String externalId, String workflowConfig, String transferAreaPath, String userId, String routineId) {
+    public String processBatchOfSips(String externalId, String workflowConfig, String transferAreaPath, String userId, String routineId) throws IOException {
         IngestRoutine ingestRoutine = ingestRoutineStore.find(routineId);
         if (skipRoutineIfPreviousBatchProcessing && ingestRoutine.getCurrentlyProcessingBatch() != null) {
             log.warn("skipping ingest routine job because there is still batch with id: " + ingestRoutine.getCurrentlyProcessingBatch().getId() + " processing");
@@ -164,6 +172,8 @@ public class CoordinatorService {
                 new IllegalArgumentException("null producer in the producer profile with external id " + producerProfile.getExternalId())
         );
 
+        String mergedWorkflowConfig = computeIngestWorkflowConfig(workflowConfig, producerProfile);
+
         Path fullTransferAreaPath = computeTransferAreaPath(transferAreaPath, producer);
         File transferArea = new File(fullTransferAreaPath.toString());
         if (!transferArea.exists()) {
@@ -173,7 +183,7 @@ public class CoordinatorService {
         String assignedUserId = userId == null ? userDetails.getId() : userId;
         List<IngestWorkflow> ingestWorkflows = new ArrayList<>();
         String batchId = transactionTemplate.execute(s -> {
-            ingestWorkflows.addAll(scanTransferArea(transferArea));
+            ingestWorkflows.addAll(scanTransferArea(transferArea, mergedWorkflowConfig));
             if (ingestWorkflows.isEmpty())
                 return null;
             Batch batch = prepareBatch(ingestWorkflows, producerProfile, workflowConfig, fullTransferAreaPath, assignedUserId);
@@ -352,7 +362,7 @@ public class CoordinatorService {
      * @param folder folder containing files to be processed
      * @return list of created ingest workflows
      */
-    private List<IngestWorkflow> scanTransferArea(File folder) {
+    private List<IngestWorkflow> scanTransferArea(File folder, String initialIngestWorkflowConfig) {
         log.debug("Scanning transfer area at path " + folder.toPath().toString() + " for SIP packages.");
         List<IngestWorkflow> ingestWorkflows = Arrays
                 .stream(folder.listFiles())
@@ -361,6 +371,7 @@ public class CoordinatorService {
                     IngestWorkflow ingestWorkflow = new IngestWorkflow();
                     ingestWorkflow.setProcessingState(IngestWorkflowState.NEW);
                     ingestWorkflow.setFileName(f.getName());
+                    ingestWorkflow.setInitialConfig(initialIngestWorkflowConfig);
 
                     Path pathToChecksumFile = getSipSumsTransferAreaPath(f.toPath());
                     try {
@@ -474,6 +485,38 @@ public class CoordinatorService {
         );
         Path fullTransferAreaPath = Paths.get(fileStorage, producerTransferAreaPath);
         return batchTransferAreaPath != null ? fullTransferAreaPath.resolve(batchTransferAreaPath) : fullTransferAreaPath;
+    }
+
+    /**
+     * Computes resulting ingest workflow config by merging producer and batch ingest configs.
+     * If there are two equally named attributes the batch config has the priority over the producer config.
+     *
+     * @param batchIngestConfig ingest config provided with the batch
+     * @param producerProfile   producer profile
+     * @return computed ingest config
+     */
+    private String computeIngestWorkflowConfig(String batchIngestConfig, ProducerProfile producerProfile) throws IOException {
+        ObjectMapper mapper = new ObjectMapper();
+
+        String producerIngestConfig = producerProfile.getWorkflowConfig();
+        if (producerIngestConfig == null || producerIngestConfig.isBlank())
+            producerIngestConfig = "{}";
+        JsonNode ingestConfig = mapper.readTree(producerIngestConfig);
+        ((ObjectNode) ingestConfig).set(ArclibXmlExtractorDelegate.SIP_PROFILE_CONFIG_ENTRY, new TextNode(producerProfile.getSipProfile().getExternalId()));
+        ((ObjectNode) ingestConfig).set(ValidatorDelegate.VALIDATION_PROFILE_CONFIG_ENTRY, new TextNode(producerProfile.getValidationProfile().getExternalId()));
+
+        log.debug("Producer ingest workflow config: " + ingestConfig.toString());
+
+        if (batchIngestConfig != null) {
+            log.debug("Batch ingest workflow config: " + batchIngestConfig);
+            JsonNode batchIngestConfigJson = mapper.readTree(batchIngestConfig);
+            ingestConfig = JsonUtils.merge(ingestConfig, batchIngestConfigJson);
+        } else {
+            log.debug("Batch ingest workflow is empty");
+        }
+
+        log.debug("Result ingest workflow config: " + ingestConfig);
+        return mapper.writeValueAsString(ingestConfig);
     }
 
     @Inject

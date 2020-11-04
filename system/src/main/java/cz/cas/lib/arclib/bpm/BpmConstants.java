@@ -21,7 +21,6 @@ public class BpmConstants {
         public static final String latestConfig = "latestConfig";
         public static final String errorCode = "errorCode";
         public static final String errorMessage = "errorMessage";
-        public static final String sipProfileId = "sipProfileId";
         public static final String debuggingModeActive = "debuggingModeActive";
         public static final String producerProfileExternalId = "producerProfileExternalId";
     }
@@ -30,10 +29,6 @@ public class BpmConstants {
         public static final String dateTime = "ingestionDateTime";
         public static final String sipFileName = "sipFileName";
         public static final String authorialId = "authorialId";
-    }
-
-    public static class Validation {
-        public static final String validationProfileId = "validationProfileId";
     }
 
     public static class FixityCheck {

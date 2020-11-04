@@ -5,15 +5,15 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import cz.cas.lib.arclib.domain.AipQuery;
 import cz.cas.lib.arclib.domain.ExportRoutine;
 import cz.cas.lib.arclib.domain.User;
+import cz.cas.lib.arclib.domainbase.exception.GeneralException;
+import cz.cas.lib.arclib.domainbase.exception.MissingAttribute;
+import cz.cas.lib.arclib.domainbase.exception.MissingObject;
 import cz.cas.lib.arclib.index.solr.arclibxml.IndexedArclibXmlDocument;
-import cz.cas.lib.arclib.security.authorization.Roles;
+import cz.cas.lib.arclib.security.authorization.data.Permissions;
 import cz.cas.lib.arclib.security.user.UserDetails;
 import cz.cas.lib.arclib.store.AipQueryStore;
 import cz.cas.lib.arclib.store.ExportRoutineStore;
 import cz.cas.lib.arclib.utils.ArclibUtils;
-import cz.cas.lib.arclib.domainbase.exception.GeneralException;
-import cz.cas.lib.arclib.domainbase.exception.MissingAttribute;
-import cz.cas.lib.arclib.domainbase.exception.MissingObject;
 import cz.cas.lib.core.index.dto.Result;
 import cz.cas.lib.core.scheduling.job.Job;
 import cz.cas.lib.core.scheduling.job.JobService;
@@ -237,7 +237,7 @@ public class ExportRoutineService {
      */
     @Transactional
     public Collection<ExportRoutine> find() {
-        if (ArclibUtils.hasRole(userDetails, Roles.SUPER_ADMIN)) {
+        if (ArclibUtils.hasRole(userDetails, Permissions.SUPER_ADMIN_PRIVILEGE)) {
             return store.findAll();
         } else {
             return store.findByProducerId(userDetails.getProducerId());

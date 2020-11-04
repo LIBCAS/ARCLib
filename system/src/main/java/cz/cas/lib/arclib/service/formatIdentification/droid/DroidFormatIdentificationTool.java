@@ -130,7 +130,7 @@ public class DroidFormatIdentificationTool extends FormatIdentificationTool {
                 puids.add(Pair.of(puid, method));
                 filePathsToPuidValues.put(filePath, puids);
 
-                log.debug("File at path \"" + filePath + "\" has been identified with format: " + puid +
+                log.trace("File at path \"" + filePath + "\" has been identified with format: " + puid +
                         ". Identification method: " + method + ".");
             }
         } catch (IOException e) {

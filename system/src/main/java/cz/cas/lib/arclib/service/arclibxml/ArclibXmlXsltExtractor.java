@@ -2,8 +2,8 @@ package cz.cas.lib.arclib.service.arclibxml;
 
 import cz.cas.lib.arclib.bpm.BpmConstants;
 import cz.cas.lib.arclib.domain.profiles.SipProfile;
-import cz.cas.lib.arclib.service.SipProfileService;
 import cz.cas.lib.arclib.domainbase.exception.GeneralException;
+import cz.cas.lib.arclib.service.SipProfileService;
 import cz.cas.lib.core.store.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import net.sf.saxon.jaxp.SaxonTransformerFactory;
@@ -40,9 +40,8 @@ public class ArclibXmlXsltExtractor {
      * @throws TransformerException extraction of metadata from SIP using XSLT failed
      */
     @Transactional
-    public String extractMetadata(Map<String, Object> bpmVariables) throws TransformerException, IOException {
-        String sipProfileId = (String) bpmVariables.get(BpmConstants.ProcessVariables.sipProfileId);
-        SipProfile sipProfile = sipProfileService.find(sipProfileId);
+    public String extractMetadata(String sipProfileExternalId, Map<String, Object> bpmVariables) throws TransformerException, IOException {
+        SipProfile sipProfile = sipProfileService.findByExternalId(sipProfileExternalId);
 
         String externalId = (String) bpmVariables.get(BpmConstants.ProcessVariables.ingestWorkflowExternalId);
         Path sipFolderWorkspacePath = Paths.get((String) bpmVariables.get(BpmConstants.ProcessVariables.sipFolderWorkspacePath));
@@ -61,7 +60,7 @@ public class ArclibXmlXsltExtractor {
         File metadataFile = matchingFiles.get(0);
         String sipProfileXsd = sipProfile.getXsl();
 
-        log.debug("Extracting metadata for SIP at path " + sipFolderWorkspacePath + " using SIP profile with id " + sipProfileId + ".");
+        log.debug("Extracting metadata for SIP at path " + sipFolderWorkspacePath + " using SIP profile with id " + sipProfileExternalId + ".");
 
 
         TransformerFactory tf = SaxonTransformerFactory.newInstance();

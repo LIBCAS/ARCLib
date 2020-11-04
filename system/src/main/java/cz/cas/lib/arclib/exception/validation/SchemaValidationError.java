@@ -9,20 +9,11 @@ import lombok.Setter;
 @Setter
 @AllArgsConstructor
 public class SchemaValidationError extends GeneralException {
-    private String sipId;
-    private String validationProfileId;
-    private String xmlPath;
-    private String xsdSchema;
-    private String message;
+    public SchemaValidationError(String message) {
+        super(message);
+    }
 
-    @Override
-    public String toString() {
-        return "SchemaValidationError{" +
-                "sipId='" + sipId + '\'' +
-                ", validationProfileId=' \n" + validationProfileId + '\'' +
-                ", xmlPath=' \n" + xmlPath + '\'' +
-                ", xsdSchema=' \n" + xsdSchema + '\'' +
-                ", message=' \n" + message + '\'' +
-                '}';
+    public SchemaValidationError(String message, Throwable cause) {
+        super(message, cause);
     }
 }
