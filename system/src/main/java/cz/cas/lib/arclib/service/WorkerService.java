@@ -213,6 +213,7 @@ public class WorkerService {
         initVars.put(Ingestion.sipFileName, ingestWorkflow.getFileName());
         initVars.put(Ingestion.dateTime, Instant.now().truncatedTo(ChronoUnit.SECONDS).toString());
         initVars.put(Ingestion.authorialId, ingestWorkflow.getSip().getAuthorialPackage().getAuthorialId());
+        initVars.put(ProcessVariables.randomPriority, new Random().nextInt(100));
         initVars.put(ProcessVariables.sipFolderWorkspacePath, sipFolderWorkspacePath.toString());
         initVars.put(ProcessVariables.ingestWorkflowExternalId, ingestWorkflow.getExternalId());
         initVars.put(ProcessVariables.batchId, batch.getId());

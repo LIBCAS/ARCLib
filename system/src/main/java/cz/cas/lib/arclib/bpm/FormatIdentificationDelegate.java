@@ -50,9 +50,7 @@ public class FormatIdentificationDelegate extends ArclibDelegate {
      */
     @Override
     public void executeArclibDelegate(DelegateExecution execution) throws IncidentException, IOException {
-        IngestWorkflow iw = ingestWorkflowService.findByExternalId(getIngestWorkflowExternalId(execution));
-        log.debug("Execution of Format identifier delegate started for ingest workflow " + iw.getExternalId() + ".");
-
+        IngestWorkflow iw = ingestWorkflowService.findByExternalId(ingestWorkflowExternalId);
         JsonNode configRoot = getConfigRoot(execution);
 
         //map that captures format identification events and the respective format identification results
@@ -75,7 +73,6 @@ public class FormatIdentificationDelegate extends ArclibDelegate {
         IngestEvent event = ingestEventStore.save(new IngestEvent(new IngestWorkflow(iw.getId()), formatIdentificationTool.getToolEntity(), true, null));
         mapOfEventIdsToMapsOfFilesToFormats.put(event.getId(), resultingFormats);
         if (formatIdentificationToolCounter == 0) execution.setVariable(BpmConstants.FormatIdentification.preferredFormatIdentificationEventId, event.getId());
-        log.debug("Execution of Format identifier delegate finished for ingest workflow " + iw.getExternalId() + ".");
     }
 
     /**

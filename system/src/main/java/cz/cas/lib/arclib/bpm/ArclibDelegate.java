@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import cz.cas.lib.arclib.domain.ingestWorkflow.IngestIssue;
 import cz.cas.lib.arclib.domain.preservationPlanning.IngestIssueDefinitionCode;
+import cz.cas.lib.arclib.domain.preservationPlanning.Tool;
 import cz.cas.lib.arclib.domainbase.exception.GeneralException;
 import cz.cas.lib.arclib.exception.bpm.IncidentException;
 import cz.cas.lib.arclib.service.IngestIssueService;
@@ -13,6 +14,7 @@ import cz.cas.lib.arclib.store.IngestEventStore;
 import cz.cas.lib.arclib.store.IngestIssueDefinitionStore;
 import cz.cas.lib.core.store.TransactionalNew;
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
 import org.camunda.bpm.engine.delegate.BpmnError;
 import org.camunda.bpm.engine.delegate.DelegateExecution;
@@ -31,6 +33,7 @@ import static cz.cas.lib.arclib.utils.ArclibUtils.getSipZipWorkspacePath;
 import static cz.cas.lib.core.util.Utils.notNull;
 
 @Service
+@Slf4j
 public abstract class ArclibDelegate implements VariableMapper, IngestTool, JavaDelegate {
 
     protected ObjectMapper objectMapper;
@@ -40,6 +43,7 @@ public abstract class ArclibDelegate implements VariableMapper, IngestTool, Java
     protected IngestWorkflowService ingestWorkflowService;
     protected IngestIssueService ingestIssueService;
     protected IngestIssueDefinitionStore ingestIssueDefinitionStore;
+    protected String ingestWorkflowExternalId;
     @Getter
     private String toolVersion = null;
 
@@ -69,7 +73,10 @@ public abstract class ArclibDelegate implements VariableMapper, IngestTool, Java
     @Override
     public void execute(DelegateExecution execution) throws Exception {
         try {
+            ingestWorkflowExternalId = getIngestWorkflowExternalId(execution);
+            log.debug("Execution of {} started for ingest workflow {}", getClass().getSimpleName(), ingestWorkflowExternalId);
             executeArclibDelegate(execution);
+            log.debug("Execution of {} ended for ingest workflow {}", getClass().getSimpleName(), ingestWorkflowExternalId);
         } catch (IncidentException e) {
             if (e.getProvidedIssues() != null && !e.getProvidedIssues().isEmpty())
                 ingestIssueService.save(e.getProvidedIssues());
@@ -85,13 +92,18 @@ public abstract class ArclibDelegate implements VariableMapper, IngestTool, Java
     }
 
     private void persistSingleUnresolvedIssue(DelegateExecution execution, IngestIssueDefinitionCode definitionCode, String description) {
-        ingestIssueService.save(new IngestIssue(
-                ingestWorkflowService.findByExternalId(getIngestWorkflowExternalId(execution)),
-                toolService.findByNameAndVersion(getToolName(), getToolVersion()),
-                ingestIssueDefinitionStore.findByCode(definitionCode),
-                null,
-                description,
-                false));
+        Tool tool = toolService.findByNameAndVersion(getToolName(), getToolVersion());
+        if (tool == null)
+            log.info("could not create issue of type: {} with description: {} because the tool with name: {} and version: {} does not exist in DB",
+                    definitionCode, description, getToolName(), getToolVersion());
+        else
+            ingestIssueService.save(new IngestIssue(
+                    ingestWorkflowService.findByExternalId(getIngestWorkflowExternalId(execution)),
+                    toolService.getByNameAndVersion(getToolName(), getToolVersion()),
+                    ingestIssueDefinitionStore.findByCode(definitionCode),
+                    null,
+                    description,
+                    false));
     }
 
     /**
@@ -178,7 +190,7 @@ public abstract class ArclibDelegate implements VariableMapper, IngestTool, Java
      * @param execution delegate execution containing BPM variables
      * @return latest JSON config
      */
-    public String getLatestConfig(DelegateExecution execution) {
+    private String getLatestConfig(DelegateExecution execution) {
         return getStringVariable(execution, BpmConstants.ProcessVariables.latestConfig);
     }
 

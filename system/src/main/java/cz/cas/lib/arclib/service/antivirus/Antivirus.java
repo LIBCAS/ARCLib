@@ -85,10 +85,10 @@ public abstract class Antivirus implements IngestTool {
                 } catch (IOException e) {
                     throw new GeneralException("can't move sip " + pathToSip + " to quarantine " + ingestWorkflowQuarantinePath, e);
                 }
-                throw new BpmnError(BpmConstants.ErrorCodes.ProcessFailure, failureMessage);
+                throw new BpmnError(BpmConstants.ErrorCodes.ProcessFailure, ArclibUtils.trimBpmnErrorMsg(failureMessage));
             case CANCEL:
                 ingestIssueService.save(issues);
-                throw new BpmnError(BpmConstants.ErrorCodes.ProcessFailure, failureMessage);
+                throw new BpmnError(BpmConstants.ErrorCodes.ProcessFailure, ArclibUtils.trimBpmnErrorMsg(failureMessage));
         }
     }
 

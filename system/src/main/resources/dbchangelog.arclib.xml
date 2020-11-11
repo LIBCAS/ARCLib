@@ -1096,4 +1096,9 @@
             INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('6bf01064-9ab5-41cc-977f-eccf4468c5ea', 'AIP_QUERY_RECORDS_WRITE');
         </sql>
     </changeSet>
+    <changeSet id="13" author="tomasek">
+        <createIndex tableName="act_ru_job" indexName="">
+            <column name="priority_" descending="true"/>
+        </createIndex>
+    </changeSet>
 </databaseChangeLog>

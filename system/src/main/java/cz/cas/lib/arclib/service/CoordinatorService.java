@@ -20,7 +20,6 @@ import cz.cas.lib.arclib.store.HashStore;
 import cz.cas.lib.arclib.store.IngestRoutineStore;
 import cz.cas.lib.arclib.utils.ArclibUtils;
 import cz.cas.lib.arclib.utils.JsonUtils;
-import cz.cas.lib.arclib.utils.XmlUtils;
 import cz.cas.lib.core.store.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.camunda.bpm.engine.RepositoryService;
@@ -47,7 +46,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static cz.cas.lib.arclib.utils.ArclibUtils.*;
+import static cz.cas.lib.arclib.utils.ArclibUtils.ZIP_EXTENSION;
+import static cz.cas.lib.arclib.utils.ArclibUtils.getSipSumsTransferAreaPath;
 import static cz.cas.lib.core.util.Utils.asList;
 import static cz.cas.lib.core.util.Utils.notNull;
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
@@ -156,11 +156,11 @@ public class CoordinatorService {
     public String processBatchOfSips(String externalId, String workflowConfig, String transferAreaPath, String userId, String routineId) throws IOException {
         IngestRoutine ingestRoutine = ingestRoutineStore.find(routineId);
         if (skipRoutineIfPreviousBatchProcessing && ingestRoutine.getCurrentlyProcessingBatch() != null) {
-            log.warn("skipping ingest routine job because there is still batch with id: " + ingestRoutine.getCurrentlyProcessingBatch().getId() + " processing");
+            log.debug("Skipping job of ingest routine: {} because there is still batch with id: {} processing", routineId, ingestRoutine.getCurrentlyProcessingBatch().getId());
             return null;
         }
 
-        log.info("Processing of a batch of SIP packages has been triggered.");
+        log.info("Processing of a batch of SIP packages has been triggered, routine id: {}", routineId);
 
         if (workflowConfig.isEmpty()) throw new BadArgument("Workflow config is empty.");
 
@@ -177,15 +177,17 @@ public class CoordinatorService {
         Path fullTransferAreaPath = computeTransferAreaPath(transferAreaPath, producer);
         File transferArea = new File(fullTransferAreaPath.toString());
         if (!transferArea.exists()) {
-            throw new GeneralException("There is no folder on the path " + fullTransferAreaPath.toString() +
-                    ". Please specify a valid path.");
+            log.error("There is no folder on the path: {} ", fullTransferAreaPath.toString());
+            return null;
         }
         String assignedUserId = userId == null ? userDetails.getId() : userId;
         List<IngestWorkflow> ingestWorkflows = new ArrayList<>();
         String batchId = transactionTemplate.execute(s -> {
             ingestWorkflows.addAll(scanTransferArea(transferArea, mergedWorkflowConfig));
-            if (ingestWorkflows.isEmpty())
+            if (ingestWorkflows.isEmpty()) {
                 return null;
+            }
+            log.debug("Merged workflow config to be used: {}", mergedWorkflowConfig);
             Batch batch = prepareBatch(ingestWorkflows, producerProfile, workflowConfig, fullTransferAreaPath, assignedUserId);
             if (ingestRoutine.getCurrentlyProcessingBatch() == null) {
                 ingestRoutine.setCurrentlyProcessingBatch(batch);
@@ -417,8 +419,7 @@ public class CoordinatorService {
         Batch batch = new Batch(ingestWorkflows, BatchState.PROCESSING, producerProfile, workflowConfig,
                 transferAreaPath.toString(), producerProfile.isDebuggingModeActive(), true, false);
         try {
-            String bpmnString = XmlUtils.rewriteValues(bpmnDefinition,
-                    "//process/@id|(//BPMNPlane/@bpmnElement)[1]", toBatchDeploymentName(batch.getId()));
+            String bpmnString = ArclibUtils.prepareBpmnDefinitionForDeployment(bpmnDefinition, batch.getId());
             repositoryService.createDeployment().addInputStream(batch.getId() + ".bpmn",
                     new ByteArrayInputStream(bpmnString.getBytes())).name(batch.getId()).deploy();
         } catch (Exception e) {
@@ -505,17 +506,15 @@ public class CoordinatorService {
         ((ObjectNode) ingestConfig).set(ArclibXmlExtractorDelegate.SIP_PROFILE_CONFIG_ENTRY, new TextNode(producerProfile.getSipProfile().getExternalId()));
         ((ObjectNode) ingestConfig).set(ValidatorDelegate.VALIDATION_PROFILE_CONFIG_ENTRY, new TextNode(producerProfile.getValidationProfile().getExternalId()));
 
-        log.debug("Producer ingest workflow config: " + ingestConfig.toString());
+        log.trace("Producer ingest workflow config: " + ingestConfig.toString());
 
         if (batchIngestConfig != null) {
-            log.debug("Batch ingest workflow config: " + batchIngestConfig);
+            log.trace("Batch ingest workflow config: " + batchIngestConfig);
             JsonNode batchIngestConfigJson = mapper.readTree(batchIngestConfig);
             ingestConfig = JsonUtils.merge(ingestConfig, batchIngestConfigJson);
         } else {
-            log.debug("Batch ingest workflow is empty");
+            log.trace("Batch ingest workflow is empty");
         }
-
-        log.debug("Result ingest workflow config: " + ingestConfig);
         return mapper.writeValueAsString(ingestConfig);
     }
 

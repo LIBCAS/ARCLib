@@ -6,21 +6,18 @@ import cz.cas.lib.arclib.utils.XmlUtils;
 import helper.ThrowableAssertion;
 import org.apache.commons.io.IOUtils;
 import org.dom4j.InvalidXPathException;
-import org.hamcrest.Matchers;
 import org.junit.Test;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
 import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.transform.TransformerException;
 import javax.xml.xpath.XPathExpressionException;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
 import static helper.ThrowableAssertion.assertThrown;
-import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
 
@@ -74,15 +71,6 @@ public class XmlUtilsTest {
                 "/profile/nonExistentTag");
 
         assertThat(nodeList.getLength(), is(0));
-    }
-
-    @Test
-    public void rewriteValues() throws ParserConfigurationException, XPathExpressionException, TransformerException,
-            IOException, SAXException {
-        String newXml = XmlUtils.rewriteValues(XML, "//process/@id", "newval");
-        assertThat(newXml.contains("newval"), Matchers.is(true));
-        assertThat(newXml.contains("Process_1"), Matchers.is(false));
-        assertThat(XmlUtils.rewriteValues(newXml, "//process/@id", "Process_1"), equalTo(XML));
     }
 
     @Test

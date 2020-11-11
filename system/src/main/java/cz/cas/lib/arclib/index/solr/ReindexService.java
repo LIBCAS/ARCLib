@@ -45,16 +45,6 @@ public class ReindexService {
     /**
      * formats are omitted as there are too many records
      */
-    public void reindexAll() {
-        batchStore.reindex();
-        producerProfileStore.reindex();
-        userStore.reindex();
-        ingestIssueStore.reindex();
-    }
-
-    /**
-     * formats are omitted as there are too many records
-     */
     public void dropReindexAll() {
         batchStore.dropReindex();
         producerProfileStore.dropReindex();
@@ -66,16 +56,8 @@ public class ReindexService {
         formatStore.dropReindex();
     }
 
-    public void reindexFormat() {
-        formatStore.reindex();
-    }
-
     public void dropReindexFormatDefinition() {
         formatDefinitionStore.dropReindex();
-    }
-
-    public void reindexFormatDefinition() {
-        formatDefinitionStore.reindex();
     }
 
     public void reindexArclibXml() {

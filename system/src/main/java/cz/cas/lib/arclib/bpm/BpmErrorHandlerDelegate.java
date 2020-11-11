@@ -25,16 +25,13 @@ public class BpmErrorHandlerDelegate extends ArclibDelegate {
      */
     @Override
     public void executeArclibDelegate(DelegateExecution execution) {
-        String externalId = getIngestWorkflowExternalId(execution);
-        log.debug("Execution of Bpm error handler delegate started for ingest workflow with external id " + externalId + ".");
-
         String errorCode = getStringVariable(execution, BpmConstants.ProcessVariables.errorCode);
         String errorMessage = getStringVariable(execution, BpmConstants.ProcessVariables.errorMessage);
         IngestWorkflowFailureInfo failureInfo = new IngestWorkflowFailureInfo(
                 errorCode + " : " + errorMessage, null, IngestWorkflowFailureType.BPM_ERROR
         );
         String responsiblePerson = getStringVariable(execution, BpmConstants.ProcessVariables.responsiblePerson);
-        ingestErrorHandler.handleError(externalId, failureInfo, execution.getProcessInstanceId(), responsiblePerson);
+        ingestErrorHandler.handleError(ingestWorkflowExternalId, failureInfo, execution.getProcessInstanceId(), responsiblePerson);
     }
 
     @Inject

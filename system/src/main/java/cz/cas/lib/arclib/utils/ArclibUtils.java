@@ -9,24 +9,37 @@ import cz.cas.lib.arclib.exception.bpm.ConfigParserException;
 import cz.cas.lib.arclib.formatlibrary.domain.FormatDefinition;
 import cz.cas.lib.arclib.formatlibrary.service.FormatDefinitionService;
 import cz.cas.lib.arclib.security.user.UserDetails;
+import net.sf.saxon.jaxp.SaxonTransformerFactory;
 import org.apache.commons.lang3.tuple.Pair;
 import org.dom4j.Document;
 import org.dom4j.io.OutputFormat;
 import org.dom4j.io.XMLWriter;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.w3c.dom.Element;
+import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
 
-import java.io.IOException;
-import java.io.StringWriter;
-import java.io.UncheckedIOException;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
+import javax.xml.xpath.XPathConstants;
+import javax.xml.xpath.XPathExpressionException;
+import javax.xml.xpath.XPathFactory;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import static cz.cas.lib.arclib.utils.XmlUtils.nsUnawareDom;
+import static cz.cas.lib.arclib.utils.XmlUtils.nsUnawareXPath;
 import static java.util.stream.Collectors.groupingBy;
 
 public class ArclibUtils {
@@ -286,5 +299,22 @@ public class ArclibUtils {
         else
             formatDefinition = formatDefinitionService.findPreferredDefinitionsByPuid(fileIdentification.getLeft());
         return Pair.of(fileRelativePath, formatDefinition);
+    }
+
+    public static final String trimBpmnErrorMsg(String errorMsg) {
+        return errorMsg.substring(0, 3500) + "... message reduced";
+    }
+
+    public static final String prepareBpmnDefinitionForDeployment(String bpmnDefinition, String ingestBatchId) throws ParserConfigurationException, IOException, SAXException, TransformerException, XPathExpressionException {
+        org.w3c.dom.Document doc = nsUnawareDom(new ByteArrayInputStream(bpmnDefinition.getBytes()));
+        StringWriter stringWriter = new StringWriter();
+        Element processEl = (Element) nsUnawareXPath().compile("/definitions//process").evaluate(doc, XPathConstants.NODE);
+        String batchDeploymentName = toBatchDeploymentName(ingestBatchId);
+        processEl.setAttribute("id", batchDeploymentName);
+        processEl.setAttribute("camunda:jobPriority", "${randomPriority}");
+        Element bpmnPlaneEl = (Element) XPathFactory.newInstance().newXPath().compile("/definitions//BPMNPlane").evaluate(doc, XPathConstants.NODE);
+        bpmnPlaneEl.setAttribute("bpmnElement", batchDeploymentName);
+        SaxonTransformerFactory.newInstance().newTransformer().transform(new DOMSource(doc), new StreamResult(stringWriter));
+        return stringWriter.toString();
     }
 }

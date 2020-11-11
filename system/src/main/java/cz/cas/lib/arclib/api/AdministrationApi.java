@@ -32,15 +32,9 @@ public class AdministrationApi {
     @Inject
     private SampleArclibXmlsGenerator sampleArclibXmlsGenerator;
 
-    @ApiOperation(value = "creates index for all entities in db", notes = "arclibxml and format entities are omitted as there are too many records")
-    @RequestMapping(value = "/reindex", method = RequestMethod.POST)
-    public void reindexAll() {
-        solrReindexService.reindexAll();
-    }
-
     @ApiOperation(value = "deletes all old index records and creates index for all entities in db", notes = "arclibxml and format entities are omitted as there are too many records")
-    @RequestMapping(value = "/dropReindex", method = RequestMethod.POST)
-    public void dropReindexAll() {
+    @RequestMapping(value = "/reindex/core", method = RequestMethod.POST)
+    public void reindexCore() {
         solrReindexService.dropReindexAll();
     }
 
@@ -50,27 +44,15 @@ public class AdministrationApi {
         solrReindexService.reindexArclibXml();
     }
 
-    @ApiOperation(value = "creates index for all Format entities in db")
+    @ApiOperation(value = "deletes all old Format index records and creates index for all Format entities in db")
     @RequestMapping(value = "/reindex/format", method = RequestMethod.POST)
     public void reindexFormat() {
-        solrReindexService.reindexFormat();
-    }
-
-    @ApiOperation(value = "deletes all old Format index records and creates index for all Format entities in db")
-    @RequestMapping(value = "/dropReindex/format", method = RequestMethod.POST)
-    public void dropReindexFormat() {
         solrReindexService.dropReindexFormat();
     }
 
-    @ApiOperation(value = "creates index for all Format definition entities in db")
+    @ApiOperation(value = "deletes all old Format definition index records and creates index for all Format definition entities in db")
     @RequestMapping(value = "/reindex/format_definition", method = RequestMethod.POST)
     public void reindexFormatDefinition() {
-        solrReindexService.reindexFormatDefinition();
-    }
-
-    @ApiOperation(value = "deletes all old Format definition index records and creates index for all Format definition entities in db")
-    @RequestMapping(value = "/dropReindex/format_definition", method = RequestMethod.POST)
-    public void dropReindexFormatDefinition() {
         solrReindexService.dropReindexFormatDefinition();
     }
 

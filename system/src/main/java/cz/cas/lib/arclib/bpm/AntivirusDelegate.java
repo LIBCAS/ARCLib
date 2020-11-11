@@ -50,8 +50,6 @@ public class AntivirusDelegate extends ArclibDelegate {
      */
     @Override
     public void executeArclibDelegate(DelegateExecution execution) throws IncidentException, FileNotFoundException {
-        String ingestWorkflowExternalId = getIngestWorkflowExternalId(execution);
-        log.debug("Execution of Antivirus delegate started for ingest workflow " + ingestWorkflowExternalId + ".");
         IngestWorkflow iw = ingestWorkflowService.findByExternalId(ingestWorkflowExternalId);
         JsonNode configRoot = getConfigRoot(execution);
 
@@ -64,7 +62,6 @@ public class AntivirusDelegate extends ArclibDelegate {
         ingestEventStore.save(new IngestEvent(new IngestWorkflow(iw.getId()), antivirus.getToolEntity(), true, antivirus.getToolVersion()));
 
         execution.setVariable(BpmConstants.Antivirus.antivirusToolCounter, antivirusToolCounter + 1);
-        log.debug("Execution of Antivirus delegate finished for ingest workflow " + ingestWorkflowExternalId + ".");
     }
 
     public Antivirus initialize(JsonNode root, IngestWorkflow iw, DelegateExecution ex, int antivirusToolCounter) throws ConfigParserException {

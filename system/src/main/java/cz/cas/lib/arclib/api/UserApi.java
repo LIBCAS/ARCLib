@@ -3,6 +3,8 @@ package cz.cas.lib.arclib.api;
 import cz.cas.lib.arclib.domain.User;
 import cz.cas.lib.arclib.domainbase.exception.ConflictException;
 import cz.cas.lib.arclib.domainbase.exception.MissingObject;
+import cz.cas.lib.arclib.dto.UserCreateOrUpdateDto;
+import cz.cas.lib.arclib.dto.UserFullnameDto;
 import cz.cas.lib.arclib.security.authorization.data.Permissions;
 import cz.cas.lib.arclib.security.user.UserDetails;
 import cz.cas.lib.arclib.service.UserService;
@@ -22,6 +24,7 @@ import org.springframework.web.bind.annotation.*;
 import javax.inject.Inject;
 import javax.validation.Valid;
 import javax.validation.constraints.Email;
+import java.util.List;
 
 import static cz.cas.lib.arclib.utils.ArclibUtils.hasRole;
 import static cz.cas.lib.core.util.Utils.addPrefilter;
@@ -43,7 +46,7 @@ public class UserApi {
     }
 
 
-    @ApiOperation(value = "Saves an user. [Perm.USER_RECORDS_WRITE]",
+    @ApiOperation(value = "Creates or updates the user. [Perm.USER_RECORDS_WRITE]",
             notes = "if the calling user is Roles.SUPER_ADMIN producer has to be specified, otherwise producer is automatically set to the producer of calling user if not specified",
             response = User.class)
     @ApiResponses(value = {
@@ -52,8 +55,8 @@ public class UserApi {
     @PreAuthorize("hasAuthority('" + Permissions.USER_RECORDS_WRITE + "')")
     @PutMapping(value = "/{id}", produces = APPLICATION_JSON_VALUE, consumes = APPLICATION_JSON_VALUE)
     public User save(@ApiParam(value = "Id of the user", required = true) @PathVariable("id") String id,
-                     @ApiParam(value = "User", required = true) @RequestBody User user) throws ConflictException {
-        return userService.saveUser(id, user);
+                     @ApiParam(value = "User", required = true) @RequestBody UserCreateOrUpdateDto user) throws ConflictException {
+        return userService.createOrUpdate(id, user);
     }
 
     @PreAuthorize("isAuthenticated()")
@@ -64,6 +67,19 @@ public class UserApi {
         user.setEmail(accountUpdateDto.getEmail());
         return userService.save(user);
     }
+
+    @PreAuthorize("isAuthenticated()")
+    @RequestMapping(value = "/me", method = RequestMethod.GET)
+    public User getAccountInfo() {
+        return userService.find(userDetails.getId());
+    }
+
+    @PreAuthorize("isAuthenticated()")
+    @RequestMapping(value = "/list_names", method = RequestMethod.GET)
+    public List<UserFullnameDto> listUserNames() {
+        return userService.listUserNames();
+    }
+
 
     @ApiOperation(value = "Deletes an user. [Perm.USER_RECORDS_WRITE]")
     @ApiResponses(value = {

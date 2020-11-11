@@ -88,7 +88,7 @@ public class ResourceExceptionHandler {
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity accessDeniedException(Exception e) {
         log.info(e.toString());
-        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.toString());
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e.toString());
     }
 
     private ResponseEntity errorResponse(Throwable throwable, HttpStatus status) {

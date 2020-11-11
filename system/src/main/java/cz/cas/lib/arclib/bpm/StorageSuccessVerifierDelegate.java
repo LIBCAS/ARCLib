@@ -58,9 +58,6 @@ public class StorageSuccessVerifierDelegate extends ArclibDelegate {
      */
     @Override
     public void executeArclibDelegate(DelegateExecution execution) throws ArchivalStorageException, IOException {
-        String ingestWorkflowExternalId = (String) execution.getVariable(BpmConstants.ProcessVariables.ingestWorkflowExternalId);
-        log.debug("Execution of Storage success verifier delegate started for ingest workflow " + ingestWorkflowExternalId + ".");
-
         IngestWorkflow ingestWorkflow = ingestWorkflowService.findByExternalId(ingestWorkflowExternalId);
         boolean xmlVersioning = ingestWorkflow.getVersioningLevel() == VersioningLevel.ARCLIB_XML_VERSIONING;
         String aipId = ingestWorkflow.getSip().getId();
@@ -132,7 +129,6 @@ public class StorageSuccessVerifierDelegate extends ArclibDelegate {
                 log.error(objectLogId + " saved in the Archival Storage is in an unexpected state: " + stateInArchivalStorage);
                 break;
         }
-        log.info("Execution of Storage success verifier delegate finished for ingest workflow " + ingestWorkflowExternalId + ".");
     }
 
     @Inject

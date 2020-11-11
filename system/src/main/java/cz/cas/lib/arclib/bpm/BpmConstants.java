@@ -23,6 +23,7 @@ public class BpmConstants {
         public static final String errorMessage = "errorMessage";
         public static final String debuggingModeActive = "debuggingModeActive";
         public static final String producerProfileExternalId = "producerProfileExternalId";
+        public static final String randomPriority = "randomPriority";
     }
 
     public static class Ingestion {

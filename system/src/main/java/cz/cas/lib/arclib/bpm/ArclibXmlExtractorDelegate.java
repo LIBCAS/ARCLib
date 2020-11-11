@@ -40,9 +40,6 @@ public class ArclibXmlExtractorDelegate extends ArclibDelegate {
 
     @Override
     public void executeArclibDelegate(DelegateExecution execution) throws TransformerException, IOException, ParserConfigurationException, SAXException, DocumentException {
-        String ingestWorkflowExternalId = getIngestWorkflowExternalId(execution);
-        log.debug("Execution of ArclibXml extractor delegate started for ingest workflow " + ingestWorkflowExternalId + ".");
-
         //extract metadata from original SIP using XSLT
         JsonNode configRoot = getConfigRoot(execution);
         String sipProfileExternalId = configRoot.get(SIP_PROFILE_CONFIG_ENTRY).textValue();
@@ -61,9 +58,7 @@ public class ArclibXmlExtractorDelegate extends ArclibDelegate {
         validator.validateXsltResult(prettyPrintedExtractedMetadata);
 
         execution.setVariable(BpmConstants.MetadataExtraction.result, prettyPrintedExtractedMetadata.getBytes());
-        ingestEventStore.save(new IngestEvent(ingestWorkflowService.findByExternalId(ingestWorkflowExternalId), toolService.findByNameAndVersion(getToolName(), getToolVersion()), true, null));
-
-        log.debug("Execution of ArclibXml extractor delegate finished for ingest workflow " + ingestWorkflowExternalId + ".");
+        ingestEventStore.save(new IngestEvent(ingestWorkflowService.findByExternalId(ingestWorkflowExternalId), toolService.getByNameAndVersion(getToolName(), getToolVersion()), true, null));
     }
 
     @Inject

@@ -11,7 +11,6 @@ import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
-import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
 import javax.xml.XMLConstants;
@@ -32,7 +31,10 @@ import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.StringWriter;
 
 public class XmlUtils {
 
@@ -102,20 +104,6 @@ public class XmlUtils {
         }
     }
 
-    /**
-     * Rewrites values of all nodes that match xpath with specified value
-     * XPATH is not namespace aware i.e. you can't specify a namespace
-     *
-     * @param xml       xml document
-     * @param nodeXpath xpath to node
-     * @param value     new value
-     */
-    public static String rewriteValues(String xml, String nodeXpath, String value) throws ParserConfigurationException,
-            XPathExpressionException, TransformerException, IOException, SAXException {
-        Document doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(new InputSource(new StringReader(xml)));
-        return rewriteValuesOfDoc(doc, nodeXpath, value);
-    }
-
     public static StringBuilder extractTextFromAllElements(StringBuilder stringBuilder, Node node) {
         NodeList childNodes = node.getChildNodes();
         switch (node.getNodeType()) {
@@ -132,31 +120,6 @@ public class XmlUtils {
             }
         }
         return stringBuilder;
-    }
-
-    /**
-     * Rewrites values of all nodes that match xpath with specified value
-     * XPATH is not namespace aware i.e. you can't specify a namespace
-     *
-     * @param xml       xml document
-     * @param nodeXpath xpath to node
-     * @param value     new value
-     */
-    public static String rewriteValues(InputStream xml, String nodeXpath, String value) throws
-            ParserConfigurationException, IOException, SAXException, TransformerException, XPathExpressionException {
-        Document doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(xml);
-        return rewriteValuesOfDoc(doc, nodeXpath, value);
-    }
-
-    private static String rewriteValuesOfDoc(Document doc, String nodeXpath, String value) throws TransformerException,
-            XPathExpressionException {
-        StringWriter stringWriter = new StringWriter();
-        NodeList nodes = (NodeList) XPathFactory.newInstance().newXPath().compile(nodeXpath).evaluate(doc, XPathConstants.NODESET);
-        for (int i = 0; i < nodes.getLength(); i++) {
-            nodes.item(i).setNodeValue(value);
-        }
-        SaxonTransformerFactory.newInstance().newTransformer().transform(new DOMSource(doc), new StreamResult(stringWriter));
-        return stringWriter.toString();
     }
 
     /**

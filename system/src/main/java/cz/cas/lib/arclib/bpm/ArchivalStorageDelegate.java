@@ -39,8 +39,6 @@ public class ArchivalStorageDelegate extends ArclibDelegate {
      */
     @Override
     public void executeArclibDelegate(DelegateExecution execution) throws IOException, ArchivalStorageException {
-        String ingestWorkflowExternalId = getIngestWorkflowExternalId(execution);
-        log.debug("Execution of Archival storage delegate started for ingest workflow " + ingestWorkflowExternalId + ".");
         IngestWorkflow ingestWorkflow = ingestWorkflowService.findByExternalId(ingestWorkflowExternalId);
 
         String preferredFixityGenerationEventId = (String) execution.getVariable(FixityGeneration.preferredFixityGenerationEventId);
@@ -78,7 +76,6 @@ public class ArchivalStorageDelegate extends ArclibDelegate {
                     throw new GeneralException("Unknown type of ingest workflow versioning level.");
             }
         }
-        log.debug("Execution of Archival storage delegate finished for ingest workflow " + ingestWorkflowExternalId + ".");
     }
 
 

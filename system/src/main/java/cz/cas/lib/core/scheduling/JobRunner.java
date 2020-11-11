@@ -31,6 +31,7 @@ public class JobRunner {
             result = executor.executeScriptWithConsole(job.getScriptType(), job.getScript(),
                     new HashMap<>(job.getParams()), console);
         } catch (Exception ignored) {
+            log.error("Run of job: " + job.getId() + " failed", ignored);
             success = false;
         }
 

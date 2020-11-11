@@ -76,10 +76,14 @@ public class ToolService {
      * @return the first instance with given name and version
      * @throws IllegalArgumentException if no such tool exists in DB
      */
-    public Tool findByNameAndVersion(@NonNull String name, String version) {
+    public Tool getByNameAndVersion(@NonNull String name, String version) {
         Tool tool = store.findByNameAndVersion(name, version);
-        notNull(tool, () -> new IllegalArgumentException("DB record of tool: " + name + "version: " + version + " not found in tool table although it is expected to be present."));
+        notNull(tool, () -> new IllegalArgumentException("DB record of tool: " + name + " version: " + version + " not found in tool table although it is expected to be present."));
         return tool;
+    }
+
+    public Tool findByNameAndVersion(@NonNull String name, String version) {
+        return store.findByNameAndVersion(name, version);
     }
 
     @Inject

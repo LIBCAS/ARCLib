@@ -55,7 +55,7 @@ camunda:
       enabled: false
       db-reporter-activate: false
 arclib:
-  version: 1.0.1
+  version: 1.0
   path:
     workspace: workspace
     quarantine: workspace/quarantine

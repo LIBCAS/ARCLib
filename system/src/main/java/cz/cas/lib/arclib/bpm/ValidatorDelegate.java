@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import cz.cas.lib.arclib.domain.IngestToolFunction;
 import cz.cas.lib.arclib.domain.ingestWorkflow.IngestEvent;
 import cz.cas.lib.arclib.service.validator.Validator;
+import cz.cas.lib.arclib.utils.ArclibUtils;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.camunda.bpm.engine.delegate.BpmnError;
@@ -32,7 +33,6 @@ public class ValidatorDelegate extends ArclibDelegate {
      */
     @Override
     public void executeArclibDelegate(DelegateExecution execution) {
-        log.debug("Execution of Validator delegate started.");
         JsonNode configRoot = getConfigRoot(execution);
         String validationProfileExternalId = configRoot.get(VALIDATION_PROFILE_CONFIG_ENTRY).textValue();
         notNull(validationProfileExternalId, () -> {
@@ -55,10 +55,9 @@ public class ValidatorDelegate extends ArclibDelegate {
                     validationProfileExternalId);
 
         } catch (ParserConfigurationException | IOException | SAXException | XPathExpressionException e) {
-            throw new BpmnError(BpmConstants.ErrorCodes.ProcessFailure, "SIP id: " + sipId + ". " + e.getMessage());
+            throw new BpmnError(BpmConstants.ErrorCodes.ProcessFailure, ArclibUtils.trimBpmnErrorMsg("SIP id: " + sipId + ". " + e.getMessage()));
         }
-        ingestEventStore.save(new IngestEvent(ingestWorkflowService.findByExternalId(externalId), toolService.findByNameAndVersion(getToolName(), getToolVersion()), true, null));
-        log.debug("Execution of Validator delegate finished.");
+        ingestEventStore.save(new IngestEvent(ingestWorkflowService.findByExternalId(externalId), toolService.getByNameAndVersion(getToolName(), getToolVersion()), true, null));
     }
 
     @Inject

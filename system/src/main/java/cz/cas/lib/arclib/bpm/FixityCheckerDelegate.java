@@ -8,6 +8,7 @@ import cz.cas.lib.arclib.domainbase.exception.GeneralException;
 import cz.cas.lib.arclib.exception.bpm.IncidentException;
 import cz.cas.lib.arclib.service.SipProfileService;
 import cz.cas.lib.arclib.service.fixity.BagitFixityChecker;
+import cz.cas.lib.arclib.service.fixity.CommonChecksumFilesChecker;
 import cz.cas.lib.arclib.service.fixity.FixityChecker;
 import cz.cas.lib.arclib.service.fixity.MetsFixityChecker;
 import lombok.Getter;
@@ -37,6 +38,7 @@ public class FixityCheckerDelegate extends ArclibDelegate {
 
     private MetsFixityChecker metsFixityVerifier;
     private BagitFixityChecker bagitFixityVerifier;
+    private CommonChecksumFilesChecker commonChecksumFilesChecker;
     private SipProfileService sipProfileService;
     @Getter
     private String toolName = "ARCLib_"+ IngestToolFunction.fixity_check;
@@ -49,9 +51,6 @@ public class FixityCheckerDelegate extends ArclibDelegate {
      */
     @Override
     public void executeArclibDelegate(DelegateExecution execution) throws IOException, IncidentException {
-        String ingestWorkflowExternalId = getIngestWorkflowExternalId(execution);
-        log.debug("Execution of Fixity checker delegate started for ingest workflow " + ingestWorkflowExternalId + ".");
-
         JsonNode config = getConfigRoot(execution);
         String sipProfileExternalId = config.get(SIP_PROFILE_CONFIG_ENTRY).textValue();
         SipProfile sipProfile = sipProfileService.findByExternalId(sipProfileExternalId);
@@ -88,11 +87,11 @@ public class FixityCheckerDelegate extends ArclibDelegate {
             default:
                 throw new GeneralException("Unsupported package type: " + sipProfile.getPackageType());
         }
-        IngestEvent fixityCheckEvent = new IngestEvent(ingestWorkflowService.findByExternalId(ingestWorkflowExternalId), toolService.findByNameAndVersion(fixityChecker.getToolName(), fixityChecker.getToolVersion()), true, null);
+        commonChecksumFilesChecker.verifySIP(sipFolderWorkspacePath, sipFolderWorkspacePath, ingestWorkflowExternalId, config, getFormatIdentificationResult(execution));
+        IngestEvent fixityCheckEvent = new IngestEvent(ingestWorkflowService.findByExternalId(ingestWorkflowExternalId), toolService.getByNameAndVersion(fixityChecker.getToolName(), fixityChecker.getToolVersion()), true, null);
         ingestEventStore.save(fixityCheckEvent);
 
         execution.setVariable(FixityCheck.fixityCheckToolCounter, fixityCheckToolCounter + 1);
-        log.debug("Execution of Fixity check delegate finished for ingest workflow " + ingestWorkflowExternalId + ".");
     }
 
     @Inject
@@ -108,5 +107,10 @@ public class FixityCheckerDelegate extends ArclibDelegate {
     @Inject
     public void setBagitFixityVerifier(BagitFixityChecker bagitFixityVerifier) {
         this.bagitFixityVerifier = bagitFixityVerifier;
+    }
+
+    @Inject
+    public void setCommonChecksumFilesChecker(CommonChecksumFilesChecker commonChecksumFilesChecker) {
+        this.commonChecksumFilesChecker = commonChecksumFilesChecker;
     }
 }

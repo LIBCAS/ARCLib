@@ -39,8 +39,6 @@ public class FixityGeneratorDelegate extends ArclibDelegate {
      */
     @Override
     public void executeArclibDelegate(DelegateExecution execution) {
-        String ingestWorkflowExternalId = getIngestWorkflowExternalId(execution);
-        log.debug("Execution of Fixity generator delegate started for ingest workflow " + ingestWorkflowExternalId + ".");
         Path sipZipPath = getSipZipPath(execution);
         try {
             String md5 = bytesToHexString(md5Counter.computeDigest(sipZipPath));
@@ -48,7 +46,7 @@ public class FixityGeneratorDelegate extends ArclibDelegate {
             String crc32 = bytesToHexString(crc32Counter.computeDigest(sipZipPath));
 
             IngestEvent fixityGenerationEvent = new IngestEvent(ingestWorkflowService.findByExternalId(ingestWorkflowExternalId),
-                    toolService.findByNameAndVersion(getToolName(), getToolVersion()), true, null);
+                    toolService.getByNameAndVersion(getToolName(), getToolVersion()), true, null);
             ingestEventStore.save(fixityGenerationEvent);
 
             Map<String, String> mapOfEventIdsToMd5Calculations = (Map<String, String>)
@@ -83,7 +81,6 @@ public class FixityGeneratorDelegate extends ArclibDelegate {
         } catch (IOException e) {
             throw new GeneralException("error occurred during computation of checksum: " + e.getMessage());
         }
-        log.debug("Execution of Fixity generator delegate finished for ingest workflow " + ingestWorkflowExternalId + ".");
     }
 
     @Inject

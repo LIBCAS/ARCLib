@@ -83,7 +83,7 @@ public abstract class FixityChecker implements IngestTool {
                         formatIdentificationResult, formatDefinitionService);
                 issues.add(new IngestIssue(
                         ingestWorkflow,
-                        toolService.findByNameAndVersion(getToolName(), getToolVersion()),
+                        toolService.getByNameAndVersion(getToolName(), getToolVersion()),
                         ingestIssueDefinitionStore.findByCode(IngestIssueDefinitionCode.FILE_UNSUPPORTED_CHECKSUM_TYPE),
                         fileFormat.getRight(),
                         "unsupported checksum algorithm: " + algorithm + " used for file: " + fileFormat.getLeft() +
@@ -102,7 +102,7 @@ public abstract class FixityChecker implements IngestTool {
             throw new IncidentException(issues);
         ingestIssueService.save(issues);
         if (!parsedConfigValue.getLeft())
-            throw new BpmnError(BpmConstants.ErrorCodes.ProcessFailure, errorMsg);
+            throw new BpmnError(BpmConstants.ErrorCodes.ProcessFailure, ArclibUtils.trimBpmnErrorMsg(errorMsg));
     }
 
     @Transactional
@@ -121,7 +121,7 @@ public abstract class FixityChecker implements IngestTool {
                     formatIdentificationResult, formatDefinitionService);
             issues.add(new IngestIssue(
                     ingestWorkflow,
-                    toolService.findByNameAndVersion(getToolName(), getToolVersion()),
+                    toolService.getByNameAndVersion(getToolName(), getToolVersion()),
                     ingestIssueDefinitionStore.findByCode(IngestIssueDefinitionCode.FILE_INVALID_CHECKSUM),
                     fileFormat.getRight(),
                     "invalid checksum of file: " + fileFormat.getLeft() + ". " + parsedConfigValue.getRight(),
@@ -134,7 +134,7 @@ public abstract class FixityChecker implements IngestTool {
             throw new IncidentException(issues);
         ingestIssueService.save(issues);
         if (!parsedConfigValue.getLeft())
-            throw new BpmnError(BpmConstants.ErrorCodes.ProcessFailure, errorMsg);
+            throw new BpmnError(BpmConstants.ErrorCodes.ProcessFailure, ArclibUtils.trimBpmnErrorMsg(errorMsg));
     }
 
     @Transactional
@@ -152,7 +152,7 @@ public abstract class FixityChecker implements IngestTool {
                     formatIdentificationResult, formatDefinitionService);
             issues.add(new IngestIssue(
                     ingestWorkflow,
-                    toolService.findByNameAndVersion(getToolName(), getToolVersion()),
+                    toolService.getByNameAndVersion(getToolName(), getToolVersion()),
                     ingestIssueDefinitionStore.findByCode(IngestIssueDefinitionCode.FILE_MISSING),
                     fileFormat.getRight(),
                     "missing file: " + fileFormat.getLeft() + ". " + parsedConfigValue.getRight(),
@@ -165,7 +165,7 @@ public abstract class FixityChecker implements IngestTool {
             throw new IncidentException(issues);
         ingestIssueService.save(issues);
         if (!parsedConfigValue.getLeft())
-            throw new BpmnError(BpmConstants.ErrorCodes.ProcessFailure, errorMsg);
+            throw new BpmnError(BpmConstants.ErrorCodes.ProcessFailure, ArclibUtils.trimBpmnErrorMsg(errorMsg));
     }
 
     public void setFixityCheckToolCounter(int fixityCheckToolCounter) {

@@ -23,6 +23,7 @@ public class ArclibPlugin implements ProcessEnginePlugin {
     public void preInit(ProcessEngineConfigurationImpl configuration) {
         configuration.setDefaultNumberOfRetries(1);
         configuration.setHistoryLevel(HistoryLevel.HISTORY_LEVEL_FULL);
+        configuration.setJobExecutorAcquireByPriority(true);
         customIncidentHandler.setRuntimeService(configuration.getRuntimeService());
         customIncidentHandler.setManagementService(configuration.getManagementService());
         configuration.setCustomIncidentHandlers(asList(customIncidentHandler));

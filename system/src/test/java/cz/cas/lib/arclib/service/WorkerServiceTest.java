@@ -7,9 +7,10 @@ import cz.cas.lib.arclib.domain.ingestWorkflow.IngestWorkflowState;
 import cz.cas.lib.arclib.dto.JmsDto;
 import cz.cas.lib.arclib.store.BatchStore;
 import cz.cas.lib.arclib.store.IngestWorkflowStore;
-import cz.cas.lib.arclib.utils.XmlUtils;
+import cz.cas.lib.arclib.utils.ArclibUtils;
 import cz.cas.lib.core.store.Transactional;
 import helper.TransformerFactoryWorkaroundTest;
+import org.apache.commons.io.IOUtils;
 import org.camunda.bpm.engine.RepositoryService;
 import org.junit.After;
 import org.junit.Before;
@@ -238,7 +239,7 @@ public class WorkerServiceTest extends TransformerFactoryWorkaroundTest {
 
     private void prepareDeployment(Batch batch) throws Exception {
         try (FileInputStream fos = new FileInputStream(Paths.get("system/src/main/resources/bpmn/ingest.bpmn").toFile())) {
-            String bpmnString = XmlUtils.rewriteValues(fos, "//process/@id|(//BPMNPlane/@bpmnElement)[1]", batch.getId());
+            String bpmnString = ArclibUtils.prepareBpmnDefinitionForDeployment(IOUtils.toString(fos), batch.getId());
             repositoryService.createDeployment().addInputStream(batch.getId() + ".bpmn",
                     new ByteArrayInputStream(bpmnString.getBytes())).name(batch.getId()).deploy();
         }

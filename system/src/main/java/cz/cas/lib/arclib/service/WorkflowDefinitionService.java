@@ -2,6 +2,7 @@ package cz.cas.lib.arclib.service;
 
 import cz.cas.lib.arclib.domain.ingestWorkflow.WorkflowDefinition;
 import cz.cas.lib.arclib.dto.WorkflowDefinitionDto;
+import cz.cas.lib.arclib.exception.ForbiddenException;
 import cz.cas.lib.arclib.store.WorkflowDefinitionStore;
 import cz.cas.lib.core.store.Transactional;
 import org.springframework.stereotype.Service;
@@ -29,6 +30,8 @@ public class WorkflowDefinitionService {
 
     @Transactional
     public WorkflowDefinition save(WorkflowDefinition entity) {
+        if (entity.getBpmnDefinition() != null && entity.getBpmnDefinition().contains("camunda:jobPriority"))
+            throw new ForbiddenException("BPMN definition can't contain job prioritization (camunda:jobPriority)");
         return store.save(entity);
     }
 
