@@ -39,7 +39,7 @@ public class ArclibXmlExtractorDelegate extends ArclibDelegate {
     private Map<String, String> uris;
 
     @Override
-    public void executeArclibDelegate(DelegateExecution execution) throws TransformerException, IOException, ParserConfigurationException, SAXException, DocumentException {
+    public void executeArclibDelegate(DelegateExecution execution, String ingestWorkflowExternalId) throws TransformerException, IOException, ParserConfigurationException, SAXException, DocumentException {
         //extract metadata from original SIP using XSLT
         JsonNode configRoot = getConfigRoot(execution);
         String sipProfileExternalId = configRoot.get(SIP_PROFILE_CONFIG_ENTRY).textValue();

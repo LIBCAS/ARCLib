@@ -50,7 +50,7 @@ public class FixityCheckerDelegate extends ArclibDelegate {
      * </p>
      */
     @Override
-    public void executeArclibDelegate(DelegateExecution execution) throws IOException, IncidentException {
+    public void executeArclibDelegate(DelegateExecution execution, String ingestWorkflowExternalId) throws IOException, IncidentException {
         JsonNode config = getConfigRoot(execution);
         String sipProfileExternalId = config.get(SIP_PROFILE_CONFIG_ENTRY).textValue();
         SipProfile sipProfile = sipProfileService.findByExternalId(sipProfileExternalId);

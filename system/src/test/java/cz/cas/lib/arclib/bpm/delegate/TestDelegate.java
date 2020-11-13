@@ -16,7 +16,7 @@ public class TestDelegate extends ArclibDelegate {
 
     @Transactional
     @Override
-    public void executeArclibDelegate(DelegateExecution execution) throws InterruptedException {
+    public void executeArclibDelegate(DelegateExecution execution, String ingestWorkflowExternalId) throws InterruptedException {
         //simulate the process of ingestion
         log.info("Waiting for two seconds to simulate the process of SIP ingestion...");
         Thread.sleep(2000);

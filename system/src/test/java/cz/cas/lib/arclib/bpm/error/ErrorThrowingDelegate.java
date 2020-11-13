@@ -28,7 +28,7 @@ public class ErrorThrowingDelegate extends ArclibDelegate {
     @Getter
     private String toolName;
     @Override
-    public void executeArclibDelegate(DelegateExecution execution) throws Exception {
+    public void executeArclibDelegate(DelegateExecution execution, String ingestWorkflowExternalId) throws Exception {
         String exceptionTypeString = getStringVariable(execution, execution.getCurrentActivityId());
         if (exceptionTypeString == null) {
             JsonNode configRoot = getConfigRoot(execution);

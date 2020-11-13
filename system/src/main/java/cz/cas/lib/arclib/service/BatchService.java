@@ -77,9 +77,9 @@ public class BatchService implements DelegateAdapter<Batch> {
      */
     public BatchDetailDto getDetailView(String id) {
         Batch batch = delegate.findWithIngestWorkflowsFilled(id);
+        notNull(batch, () -> new MissingObject(Batch.class, id));
         BatchDetailDto batchDetailDto = beanMappingService.mapTo(batch, BatchDetailDto.class);
         batchDetailDto.setIngestWorkflows(beanMappingService.mapTo(batch.getIngestWorkflows(), BatchDetailIngestWorkflowDto.class));
-        notNull(batch, () -> new MissingObject(Batch.class, id));
         return batchDetailDto;
     }
 

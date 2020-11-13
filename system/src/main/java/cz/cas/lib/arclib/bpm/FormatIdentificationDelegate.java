@@ -49,7 +49,7 @@ public class FormatIdentificationDelegate extends ArclibDelegate {
      *                               and it was unable to resolve the conflict with the configuration JSON
      */
     @Override
-    public void executeArclibDelegate(DelegateExecution execution) throws IncidentException, IOException {
+    public void executeArclibDelegate(DelegateExecution execution, String ingestWorkflowExternalId) throws IncidentException, IOException {
         IngestWorkflow iw = ingestWorkflowService.findByExternalId(ingestWorkflowExternalId);
         JsonNode configRoot = getConfigRoot(execution);
 

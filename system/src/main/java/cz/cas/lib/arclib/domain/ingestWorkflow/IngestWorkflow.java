@@ -114,7 +114,7 @@ public class IngestWorkflow extends DatedObject {
     /**
      * Hash ArclibXml
      */
-    @ManyToOne(cascade = CascadeType.ALL)
+    @OneToOne(cascade = CascadeType.ALL)
     private Hash arclibXmlHash;
 
     @Column(length = 10485760)

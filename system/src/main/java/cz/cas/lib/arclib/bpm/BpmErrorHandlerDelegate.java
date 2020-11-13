@@ -24,7 +24,7 @@ public class BpmErrorHandlerDelegate extends ArclibDelegate {
      * @param execution delegate execution containing the BPM variables
      */
     @Override
-    public void executeArclibDelegate(DelegateExecution execution) {
+    public void executeArclibDelegate(DelegateExecution execution, String ingestWorkflowExternalId) {
         String errorCode = getStringVariable(execution, BpmConstants.ProcessVariables.errorCode);
         String errorMessage = getStringVariable(execution, BpmConstants.ProcessVariables.errorMessage);
         IngestWorkflowFailureInfo failureInfo = new IngestWorkflowFailureInfo(

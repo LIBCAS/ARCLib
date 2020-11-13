@@ -57,7 +57,7 @@ public class StorageSuccessVerifierDelegate extends ArclibDelegate {
      * @param execution delegate execution containing BPM variables
      */
     @Override
-    public void executeArclibDelegate(DelegateExecution execution) throws ArchivalStorageException, IOException {
+    public void executeArclibDelegate(DelegateExecution execution, String ingestWorkflowExternalId) throws ArchivalStorageException, IOException {
         IngestWorkflow ingestWorkflow = ingestWorkflowService.findByExternalId(ingestWorkflowExternalId);
         boolean xmlVersioning = ingestWorkflow.getVersioningLevel() == VersioningLevel.ARCLIB_XML_VERSIONING;
         String aipId = ingestWorkflow.getSip().getId();
