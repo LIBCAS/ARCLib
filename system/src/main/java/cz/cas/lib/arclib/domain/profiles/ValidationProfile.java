@@ -1,5 +1,6 @@
 package cz.cas.lib.arclib.domain.profiles;
 
+import cz.cas.lib.arclib.domain.Producer;
 import cz.cas.lib.arclib.domainbase.domain.NamedObject;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -8,6 +9,7 @@ import org.hibernate.annotations.BatchSize;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
 /**
@@ -20,6 +22,12 @@ import javax.persistence.Table;
 @Table(name = "arclib_validation_profile")
 @NoArgsConstructor
 public class ValidationProfile extends NamedObject {
+
+    /**
+     * Dodávateľ
+     */
+    @ManyToOne
+    private Producer producer;
 
     /**
      * Externé id

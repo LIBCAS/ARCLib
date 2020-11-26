@@ -43,10 +43,11 @@ public abstract class ArclibDelegate implements VariableMapper, IngestTool, Java
     protected IngestWorkflowService ingestWorkflowService;
     protected IngestIssueService ingestIssueService;
     protected IngestIssueDefinitionStore ingestIssueDefinitionStore;
+    protected String ingestWorkflowExternalId;
     @Getter
     private String toolVersion = null;
 
-    public abstract void executeArclibDelegate(DelegateExecution execution, String ingestWorkflowExternalId) throws Exception;
+    public abstract void executeArclibDelegate(DelegateExecution execution) throws Exception;
 
     /**
      * Gets {@link JsonNode} representation of the JSON config
@@ -72,9 +73,9 @@ public abstract class ArclibDelegate implements VariableMapper, IngestTool, Java
     @Override
     public void execute(DelegateExecution execution) throws Exception {
         try {
-            String ingestWorkflowExternalId = getIngestWorkflowExternalId(execution);
+            ingestWorkflowExternalId = getIngestWorkflowExternalId(execution);
             log.debug("Execution of {} started for ingest workflow {}", getClass().getSimpleName(), ingestWorkflowExternalId);
-            executeArclibDelegate(execution, ingestWorkflowExternalId);
+            executeArclibDelegate(execution);
             log.debug("Execution of {} ended for ingest workflow {}", getClass().getSimpleName(), ingestWorkflowExternalId);
         } catch (IncidentException e) {
             if (e.getProvidedIssues() != null && !e.getProvidedIssues().isEmpty())

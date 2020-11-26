@@ -20,4 +20,13 @@ public class AipQueryStore extends NamedStore<AipQuery, QAipQuery> {
                 .where(qAipQuery.deleted.isNull())
                 .fetch();
     }
+
+    public AipQuery findWithUser(String id) {
+        QAipQuery qAipQuery = qObject();
+        return query().select(qAipQuery)
+                .where(qAipQuery.id.eq(id))
+                .where(qAipQuery.deleted.isNull())
+                .innerJoin(qAipQuery.user).fetchJoin()
+                .fetchFirst();
+    }
 }

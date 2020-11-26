@@ -9,6 +9,8 @@ import lombok.NonNull;
 import org.springframework.stereotype.Repository;
 
 import javax.inject.Inject;
+import javax.transaction.Transactional;
+import java.util.List;
 
 @Repository
 public class ValidationProfileStore extends NamedStore<ValidationProfile, QValidationProfile> {
@@ -35,8 +37,24 @@ public class ValidationProfileStore extends NamedStore<ValidationProfile, QValid
         return entity;
     }
 
+    @Transactional
+    public List<ValidationProfile> findByProducerId(String producerId) {
+        QValidationProfile validationProfile = qObject();
+
+        List<ValidationProfile> fetch = query()
+                .select(validationProfile)
+                .where(validationProfile.producer.id.eq(producerId))
+                .where(validationProfile.deleted.isNull())
+                .fetch();
+
+        detachAll();
+        return fetch;
+    }
+
+
     @Inject
     public void setGenerator(Generator generator) {
         this.generator = generator;
     }
+
 }

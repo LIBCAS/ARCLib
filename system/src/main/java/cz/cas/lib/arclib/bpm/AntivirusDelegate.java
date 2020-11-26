@@ -49,7 +49,7 @@ public class AntivirusDelegate extends ArclibDelegate {
      * @throws IncidentException if the config cannot be parsed
      */
     @Override
-    public void executeArclibDelegate(DelegateExecution execution, String ingestWorkflowExternalId) throws IncidentException, FileNotFoundException {
+    public void executeArclibDelegate(DelegateExecution execution) throws IncidentException, FileNotFoundException {
         IngestWorkflow iw = ingestWorkflowService.findByExternalId(ingestWorkflowExternalId);
         JsonNode configRoot = getConfigRoot(execution);
 

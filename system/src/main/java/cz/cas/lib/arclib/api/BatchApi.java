@@ -131,11 +131,7 @@ public class BatchApi {
     public Result<BatchDto> listDtos(@ApiParam(value = "Parameters to comply with", required = true)
                                      @ModelAttribute Params params) {
         if (!hasRole(userDetails, Permissions.SUPER_ADMIN_PRIVILEGE)) {
-            if (hasRole(userDetails, Permissions.ADMIN_PRIVILEGE)) {
                 addPrefilter(params, new Filter(PRODUCER, FilterOperation.EQ, userDetails.getProducerId(), null));
-            } else {
-                addPrefilter(params, new Filter(USER, FilterOperation.EQ, userDetails.getId(), null));
-            }
         }
         return batchService.listBatchDtos(params);
     }

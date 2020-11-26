@@ -15,6 +15,7 @@ import javax.persistence.Table;
 @BatchSize(size = 100)
 @Entity
 @Table(name = "arclib_role")
+@Deprecated // use new UserRole
 public class Role extends DatedObject {
 
     protected String name;

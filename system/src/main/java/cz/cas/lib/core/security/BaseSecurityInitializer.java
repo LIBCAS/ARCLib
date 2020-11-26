@@ -1,5 +1,6 @@
 package cz.cas.lib.core.security;
 
+import cz.cas.lib.arclib.security.authorization.logic.CustomAccessDeniedHandler;
 import cz.cas.lib.core.security.basic.BasicAuthenticationFilter;
 import cz.cas.lib.core.security.jwt.JwtFilter;
 import cz.cas.lib.core.security.jwt.JwtPostFilter;
@@ -15,6 +16,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.security.web.access.intercept.FilterSecurityInterceptor;
 import org.springframework.security.web.authentication.AnonymousAuthenticationFilter;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -53,7 +55,9 @@ public abstract class BaseSecurityInitializer extends WebSecurityConfigurerAdapt
                 .and()
                 .csrf().disable()
                 .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).and()
-                .exceptionHandling().and()
+                .exceptionHandling()
+                .accessDeniedHandler(accessDeniedHandler())
+                .and()
                 .headers()
                 .cacheControl().and()
                 .frameOptions().disable()
@@ -83,6 +87,11 @@ public abstract class BaseSecurityInitializer extends WebSecurityConfigurerAdapt
     @Bean
     public AuthenticationManager authenticationManagerBean() throws Exception {
         return super.authenticationManagerBean();
+    }
+
+    @Bean
+    public AccessDeniedHandler accessDeniedHandler() {
+        return new CustomAccessDeniedHandler();
     }
 
     @Inject

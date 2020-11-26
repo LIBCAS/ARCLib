@@ -18,7 +18,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import javax.inject.Inject;
-import java.util.Collection;
 
 import static cz.cas.lib.arclib.utils.ArclibUtils.hasRole;
 import static cz.cas.lib.core.util.Utils.*;
@@ -108,40 +107,6 @@ public class ProducerProfileApi {
         notNull(entity, () -> new MissingObject(producerProfileService.getType(), id));
 
         return entity;
-    }
-
-    @ApiOperation(value = "Gets all instances [Perm.PRODUCER_PROFILE_RECORDS_READ]", notes = "If the calling user is not Roles.SUPER_ADMIN only the producer profiles" +
-            " with producer same as the producer of calling user are returned.", response = Collection.class)
-    @ApiResponses({@ApiResponse(code = 200, message = "Successful response", response = Collection.class)})
-    @PreAuthorize("hasAuthority('" + Permissions.PRODUCER_PROFILE_RECORDS_READ + "')")
-    @RequestMapping(path = "/all", method = RequestMethod.GET)
-    public Collection<ProducerProfile> listAll() {
-        Params params = new Params();
-        params.setPageSize(null);
-
-        if (!hasRole(userDetails, Permissions.SUPER_ADMIN_PRIVILEGE)) {
-            addPrefilter(params, new Filter("producerId", FilterOperation.EQ, userDetails.getProducerId(), null));
-        }
-        Result<ProducerProfile> all = producerProfileService.findAll(params);
-        return all.getItems();
-    }
-
-    @ApiOperation(value = "Gets all instances that respect the selected parameters [Perm.PRODUCER_PROFILE_RECORDS_READ]",
-            notes = "If the calling user is not Roles.SUPER_ADMIN only the producer profiles" +
-                    " with producer same as the producer of calling user are returned. \n" +
-                    "Filter/Sort fields = id, name, created, updated, producerId, ingestWorkflowExternalId," +
-                    " producerName, producerTransferAreaPath, sipProfileId, sipProfileName, hashType," +
-                    " workflowDefinitionId, workflowDefinitionName, validationProfileId, validationProfileName, debuggingModeActive",
-            response = Result.class)
-    @ApiResponses({@ApiResponse(code = 200, message = "Successful response", response = Result.class)})
-    @PreAuthorize("hasAuthority('" + Permissions.PRODUCER_PROFILE_RECORDS_READ + "')")
-    @RequestMapping(method = RequestMethod.GET)
-    public Result<ProducerProfile> list(@ApiParam(value = "Parameters to comply with", required = true)
-                                        @ModelAttribute Params params) {
-        if (!hasRole(userDetails, Permissions.SUPER_ADMIN_PRIVILEGE)) {
-            addPrefilter(params, new Filter("producerId", FilterOperation.EQ, userDetails.getProducerId(), null));
-        }
-        return producerProfileService.findAll(params);
     }
 
     @ApiOperation(value = "Gets DTOs of all instances that respect the selected parameters [Perm.PRODUCER_PROFILE_RECORDS_READ]",

@@ -110,7 +110,7 @@ public class CommonChecksumFilesChecker extends FixityChecker {
                 log.warn("Unable to parse manifest line: " + line);
                 continue;
             }
-            checksumPairs.add(Pair.of(manifestFile.getParent().resolve(matcher.group(2).replace("\\","/")).normalize().toAbsolutePath(), matcher.group(1)))
+            checksumPairs.add(Pair.of(manifestFile.getParent().resolve(matcher.group(2)).normalize().toAbsolutePath(), matcher.group(1)))
             ;
         }
         return checksumPairs;

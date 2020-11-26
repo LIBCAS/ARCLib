@@ -6,6 +6,7 @@ import org.springframework.stereotype.Repository;
 
 @ConditionalOnProperty(prefix = "security.roles.internal", name = "enabled", havingValue = "true")
 @Repository
+@Deprecated
 public class RoleStore extends DatedStore<Role, QRole> {
 
     public RoleStore() {

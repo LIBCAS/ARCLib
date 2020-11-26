@@ -47,13 +47,17 @@ public class DozerConfig {
                     .fields("active", "job.active", FieldsMappingOptions.copyByReference());
             mapping(ValidationProfileDto.class, ValidationProfile.class)
                     .fields("created", "created", FieldsMappingOptions.copyByReference())
-                    .fields("updated", "updated", FieldsMappingOptions.copyByReference());
+                    .fields("updated", "updated", FieldsMappingOptions.copyByReference())
+                    .fields("producer", "producer", FieldsMappingOptions.copyByReference());
+
             mapping(SipProfileDto.class, SipProfile.class)
                     .fields("created", "created", FieldsMappingOptions.copyByReference())
-                    .fields("updated", "updated", FieldsMappingOptions.copyByReference());
+                    .fields("updated", "updated", FieldsMappingOptions.copyByReference())
+                    .fields("producer", "producer", FieldsMappingOptions.copyByReference());
             mapping(WorkflowDefinitionDto.class, WorkflowDefinition.class)
                     .fields("created", "created", FieldsMappingOptions.copyByReference())
-                    .fields("updated", "updated", FieldsMappingOptions.copyByReference());
+                    .fields("updated", "updated", FieldsMappingOptions.copyByReference())
+                    .fields("producer", "producer", FieldsMappingOptions.copyByReference());
             mapping(AipDeletionRequestDto.class, AipDeletionRequest.class)
                     .fields("created", "created", FieldsMappingOptions.copyByReference())
                     .fields("updated", "updated", FieldsMappingOptions.copyByReference())

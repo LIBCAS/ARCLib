@@ -19,6 +19,7 @@ import java.util.stream.Collectors;
 // Fixme: change tests from roles to perms
 @ConditionalOnProperty(prefix = "security.roles.internal", name = "enabled", havingValue = "true")
 @Service
+@Deprecated
 public class AssignedRoleService {
     private AssignedRoleStore store;
     private AuditLogger logger;

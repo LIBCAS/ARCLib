@@ -6,17 +6,13 @@ import cz.cas.lib.arclib.domainbase.exception.MissingObject;
 import cz.cas.lib.arclib.dto.ValidationProfileDto;
 import cz.cas.lib.arclib.security.authorization.data.Permissions;
 import cz.cas.lib.arclib.service.ValidationProfileService;
-import cz.cas.lib.arclib.utils.XmlUtils;
 import io.swagger.annotations.*;
 import lombok.Getter;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.Resource;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import javax.inject.Inject;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.Collection;
 
 import static cz.cas.lib.core.util.Utils.eq;
@@ -28,7 +24,6 @@ import static cz.cas.lib.core.util.Utils.notNull;
 public class ValidationProfileApi {
     @Getter
     private ValidationProfileService service;
-    private Resource validationProfileSchema;
 
     @ApiOperation(value = "Saves an instance. [Perm.VALIDATION_PROFILE_RECORDS_WRITE]",
             notes = "Returns single instance (possibly with computed attributes)",
@@ -38,15 +33,9 @@ public class ValidationProfileApi {
             @ApiResponse(code = 400, message = "Specified id does not correspond to the id of the instance")})
     @PreAuthorize("hasAuthority('" + Permissions.VALIDATION_PROFILE_RECORDS_WRITE + "')")
     @RequestMapping(value = "/{id}", method = RequestMethod.PUT)
-    public ValidationProfile save(@ApiParam(value = "Id of the instance", required = true)
-                                  @PathVariable("id") String id,
-                                  @ApiParam(value = "Single instance", required = true)
-                                  @RequestBody ValidationProfile request) throws IOException {
+    public ValidationProfile save(@ApiParam(value = "Id of the instance", required = true) @PathVariable("id") String id,
+                                  @ApiParam(value = "Single instance", required = true) @RequestBody ValidationProfile request) throws IOException {
         eq(id, request.getId(), () -> new BadArgument("id"));
-
-        String validationProfileXml = request.getXml();
-        XmlUtils.validateWithXMLSchema(validationProfileXml,
-                new InputStream[]{validationProfileSchema.getInputStream()}, "Validation profile XSD");
         return service.save(request);
     }
 
@@ -56,8 +45,7 @@ public class ValidationProfileApi {
             @ApiResponse(code = 404, message = "Instance does not exist")})
     @PreAuthorize("hasAuthority('" + Permissions.VALIDATION_PROFILE_RECORDS_WRITE + "')")
     @RequestMapping(value = "/{id}", method = RequestMethod.DELETE)
-    public void delete(@ApiParam(value = "Id of the instance", required = true)
-                       @PathVariable("id") String id) {
+    public void delete(@ApiParam(value = "Id of the instance", required = true) @PathVariable("id") String id) {
         ValidationProfile entity = service.find(id);
         notNull(entity, () -> new MissingObject(ValidationProfile.class, id));
 
@@ -70,26 +58,17 @@ public class ValidationProfileApi {
             @ApiResponse(code = 404, message = "Instance does not exist")})
     @PreAuthorize("hasAuthority('" + Permissions.VALIDATION_PROFILE_RECORDS_READ + "')")
     @RequestMapping(value = "/{id}", method = RequestMethod.GET)
-    public ValidationProfile get(@ApiParam(value = "Id of the instance", required = true)
-                                 @PathVariable("id") String id) {
+    public ValidationProfile get(@ApiParam(value = "Id of the instance", required = true) @PathVariable("id") String id) {
         ValidationProfile entity = service.find(id);
         notNull(entity, () -> new MissingObject(ValidationProfile.class, id));
 
         return entity;
     }
 
-    @ApiOperation(value = "Gets all instances [Perm.VALIDATION_PROFILE_RECORDS_READ]", response = Collection.class)
-    @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successful response", response = Collection.class)})
-    @PreAuthorize("hasAuthority('" + Permissions.VALIDATION_PROFILE_RECORDS_READ + "')")
-    @RequestMapping(method = RequestMethod.GET)
-    public Collection<ValidationProfile> list() {
-        return service.findAll();
-    }
-
-    @ApiOperation(value = "Gets DTOs of all instances [Perm.VALIDATION_PROFILE_RECORDS_READ]", response = Collection.class)
-    @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successful response", response = Collection.class)})
+    @ApiOperation(value = "Gets DTOs of all instances [Perm.VALIDATION_PROFILE_RECORDS_READ]",
+            notes = "if the calling user is not [Perm.SUPER_ADMIN_PRIVILEGE] only ValidationProfiles assigned to the user's producer are returned. ",
+            response = ValidationProfileDto.class)
+    @ApiResponses(value = {@ApiResponse(code = 200, message = "Successful response", response = ValidationProfileDto.class)})
     @PreAuthorize("hasAuthority('" + Permissions.VALIDATION_PROFILE_RECORDS_READ + "')")
     @RequestMapping(path = "/list_dtos", method = RequestMethod.GET)
     public Collection<ValidationProfileDto> listDtos() {
@@ -99,10 +78,5 @@ public class ValidationProfileApi {
     @Inject
     public void setService(ValidationProfileService service) {
         this.service = service;
-    }
-
-    @Inject
-    public void setValidationProfileSchema(@Value("${arclib.validationProfileSchema}") Resource validationProfileSchema) {
-        this.validationProfileSchema = validationProfileSchema;
     }
 }

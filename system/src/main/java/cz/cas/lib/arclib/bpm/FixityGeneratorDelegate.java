@@ -38,7 +38,7 @@ public class FixityGeneratorDelegate extends ArclibDelegate {
      * Computes 3 types of fixity for whole SIP (CRC32,SHA512,MD5) and also fetches file sizes and computes SHA512 checksum of all SIP files
      */
     @Override
-    public void executeArclibDelegate(DelegateExecution execution, String ingestWorkflowExternalId) {
+    public void executeArclibDelegate(DelegateExecution execution) {
         Path sipZipPath = getSipZipPath(execution);
         try {
             String md5 = bytesToHexString(md5Counter.computeDigest(sipZipPath));

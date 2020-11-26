@@ -1,5 +1,6 @@
 package cz.cas.lib.arclib.domain.profiles;
 
+import cz.cas.lib.arclib.domain.Producer;
 import cz.cas.lib.arclib.domain.packages.PackageType;
 import cz.cas.lib.arclib.domainbase.domain.NamedObject;
 import lombok.AllArgsConstructor;
@@ -22,6 +23,12 @@ import javax.validation.constraints.NotNull;
 @NoArgsConstructor
 @AllArgsConstructor
 public class SipProfile extends NamedObject {
+
+    /**
+     * Dodávateľ
+     */
+    @ManyToOne
+    private Producer producer;
 
     /**
      * Externé id

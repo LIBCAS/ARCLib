@@ -8,6 +8,7 @@ import cz.cas.lib.arclib.dto.AipDetailDto;
 import cz.cas.lib.arclib.dto.AipQueryDto;
 import cz.cas.lib.arclib.exception.AipStateChangeException;
 import cz.cas.lib.arclib.exception.AuthorialPackageNotLockedException;
+import cz.cas.lib.arclib.exception.ForbiddenException;
 import cz.cas.lib.arclib.index.IndexArclibXmlStore;
 import cz.cas.lib.arclib.index.solr.arclibxml.IndexedAipState;
 import cz.cas.lib.arclib.index.solr.arclibxml.IndexedArclibXmlDocument;
@@ -78,12 +79,14 @@ public class AipApi extends ArchivalStoragePipe {
         if (!hasRole(userDetails, Permissions.SUPER_ADMIN_PRIVILEGE)) {
             addPrefilter(params, new Filter(IndexedArclibXmlDocument.PRODUCER_ID, FilterOperation.EQ, userDetails.getProducerId(), null));
         }
-        if (!(hasRole(userDetails, Permissions.ADMIN_PRIVILEGE) || hasRole(userDetails, Permissions.SUPER_ADMIN_PRIVILEGE))) {
-            addPrefilter(params, new Filter(null, FilterOperation.AND, null, asList(
-                    new Filter(IndexedArclibXmlDocument.AIP_STATE, FilterOperation.NEQ, IndexedAipState.REMOVED.toString(), null),
-                    new Filter(IndexedArclibXmlDocument.AIP_STATE, FilterOperation.NEQ, IndexedAipState.DELETED.toString(), null)))
-            );
+        if (!hasRole(userDetails, Permissions.LOGICAL_FILE_RENEW)) {
+            addPrefilter(params, new Filter(IndexedArclibXmlDocument.AIP_STATE, FilterOperation.NEQ, IndexedAipState.REMOVED.toString(), null));
         }
+        if (!(hasRole(userDetails, Permissions.ADMIN_PRIVILEGE) || hasRole(userDetails, Permissions.SUPER_ADMIN_PRIVILEGE))) {
+            addPrefilter(params, new Filter(IndexedArclibXmlDocument.AIP_STATE, FilterOperation.NEQ, IndexedAipState.DELETED.toString(), null));
+        }
+        if (!queryName.isEmpty() && !hasRole(userDetails, Permissions.AIP_QUERY_RECORDS_WRITE))
+            throw new ForbiddenException("To save the search query, the " + Permissions.AIP_QUERY_RECORDS_WRITE + " is required");
         return indexArclibXmlStore.findAll(params, queryName);
     }
 
@@ -138,8 +141,8 @@ public class AipApi extends ArchivalStoragePipe {
         IOUtils.copyLarge(storageResponse, response.getOutputStream());
     }
 
-    @ApiOperation(notes = "If the AIP is in PROCESSING state or the storage is not reachable, the storage checksums are not filled and the consistent flag is set to false [Perm.AIP_RECORDS_READ]",
-            value = "Retrieves information about AIP containing state, whether is consistent etc from the given storage.")
+    @ApiOperation(notes = "If the AIP is in PROCESSING state or the storage is not reachable, the storage checksums are not filled and the consistent flag is set to false",
+            value = "Retrieves information about AIP containing state, whether is consistent etc from the given storage. [Perm.AIP_RECORDS_READ]")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "AIP successfully deleted"),
             @ApiResponse(code = 400, message = "bad request, e.g. the specified id is not a valid UUID"),
@@ -177,13 +180,12 @@ public class AipApi extends ArchivalStoragePipe {
 
     @ApiOperation(value = "Deletes saved query. [Perm.AIP_QUERY_RECORDS_WRITE]",
             notes = "If the calling user is not Roles.SUPER_ADMIN, the users producer must match the producer of the saved query.")
-    @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successful response")})
+    @ApiResponses(value = { @ApiResponse(code = 200, message = "Successful response") })
     @PreAuthorize("hasAuthority('" + Permissions.AIP_QUERY_RECORDS_WRITE + "')")
     @RequestMapping(value = "/saved_query/{id}", method = RequestMethod.DELETE)
     public void deleteSavedQuery(@ApiParam(value = "Id of the instance", required = true)
                                  @PathVariable("id") String id) {
-        AipQuery query = aipQueryService.find(id);
+        AipQuery query = aipQueryService.findWithUserInitialized(id);
         notNull(query, () -> new MissingObject(aipQueryService.getClass(), id));
         if (!hasRole(userDetails, Permissions.SUPER_ADMIN_PRIVILEGE) &&
                 !userDetails.getProducerId().equals(query.getUser().getProducer().getId()))

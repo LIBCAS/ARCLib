@@ -9,6 +9,8 @@ import lombok.NonNull;
 import org.springframework.stereotype.Repository;
 
 import javax.inject.Inject;
+import javax.transaction.Transactional;
+import java.util.List;
 
 @Repository
 public class SipProfileStore extends NamedStore<SipProfile, QSipProfile> {
@@ -30,6 +32,20 @@ public class SipProfileStore extends NamedStore<SipProfile, QSipProfile> {
         return super.save(entity);
     }
 
+    @Transactional
+    public List<SipProfile> findByProducerId(String producerId) {
+        QSipProfile sipProfile = qObject();
+
+        List<SipProfile> fetch = query()
+                .select(sipProfile)
+                .where(sipProfile.producer.id.eq(producerId))
+                .where(sipProfile.deleted.isNull())
+                .fetch();
+
+        detachAll();
+        return fetch;
+    }
+
     public SipProfile findByExternalId(@NonNull String number) {
         SipProfile entity = query().select(qObject()).where(qObject().externalId.eq(number)).fetchOne();
         detachAll();
@@ -40,4 +56,5 @@ public class SipProfileStore extends NamedStore<SipProfile, QSipProfile> {
     public void setGenerator(Generator generator) {
         this.generator = generator;
     }
+
 }

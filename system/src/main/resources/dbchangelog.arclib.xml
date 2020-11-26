@@ -1101,4 +1101,49 @@
             <column name="priority_" descending="true"/>
         </createIndex>
     </changeSet>
+    <changeSet id="14" author="tomasek">
+        <sql>
+            DELETE FROM arclib_role_permission where perm = 'AUTHORIAL_PACKAGE_DELETE';
+        </sql>
+    </changeSet>
+    <changeSet id="15" author="radvan">
+        <sql>
+            -- ANALYST:
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('3dd3f98e-082c-4274-9eed-1b5fb1c25e6d', 'EXPORT_ROUTINE_READ');
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('3dd3f98e-082c-4274-9eed-1b5fb1c25e6d', 'EXPORT_ROUTINE_WRITE');
+            -- ARCHIVIST
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('6bf01064-9ab5-41cc-977f-eccf4468c5ea', 'EXPORT_ROUTINE_READ');
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('6bf01064-9ab5-41cc-977f-eccf4468c5ea', 'EXPORT_ROUTINE_WRITE');
+
+
+            -- New Role 'DELETION_ACKNOWLEDGEMENT'
+            INSERT INTO arclib_user_role (id, name, description) VALUES ('489a96f6-ec4a-4097-916c-842678ffd2ee', 'DELETION_ACKNOWLEDGEMENT', 'Potvrzování smazání');
+
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('489a96f6-ec4a-4097-916c-842678ffd2ee', 'DELETION_ACKNOWLEDGE_PRIVILEGE');
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('489a96f6-ec4a-4097-916c-842678ffd2ee', 'AIP_RECORDS_READ');
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('489a96f6-ec4a-4097-916c-842678ffd2ee', 'DELETION_REQUESTS_READ');
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('489a96f6-ec4a-4097-916c-842678ffd2ee', 'DELETION_REQUESTS_WRITE');
+        </sql>
+
+        <addColumn tableName="arclib_validation_profile">
+            <column name="producer_id" type="varchar(255)">
+                <constraints foreignKeyName="validation_profile_producer_fk"
+                             referencedTableName="arclib_producer" referencedColumnNames="id"/>
+            </column>
+        </addColumn>
+
+        <addColumn tableName="arclib_sip_profile">
+            <column name="producer_id" type="varchar(255)">
+                <constraints foreignKeyName="sip_profile_producer_fk"
+                             referencedTableName="arclib_producer" referencedColumnNames="id"/>
+            </column>
+        </addColumn>
+
+        <addColumn tableName="arclib_workflow_definition">
+            <column name="producer_id" type="varchar(255)">
+                <constraints foreignKeyName="workflow_definition_producer_fk"
+                             referencedTableName="arclib_producer" referencedColumnNames="id"/>
+            </column>
+        </addColumn>
+    </changeSet>
 </databaseChangeLog>

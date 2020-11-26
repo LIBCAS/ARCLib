@@ -109,7 +109,7 @@ public class UserApi {
     }
 
     @ApiOperation(value = "Gets filtered users. [Perm.USER_RECORDS_READ]",
-            notes = "if the calling user is not Roles.SUPER_ADMIN only users assigned to the admin's producer are returned.. " +
+            notes = "if the calling user is not [Perm.SUPER_ADMIN_PRIVILEGE] only users assigned to the admin's producer are returned. " +
                     "sort/filter fields: username, firstName, lastName, email, ldapDn, producerId, producerName", response = Result.class)
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Successful response", response = Result.class)})

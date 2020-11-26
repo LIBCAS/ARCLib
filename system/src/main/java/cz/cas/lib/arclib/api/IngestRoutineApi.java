@@ -61,16 +61,6 @@ public class IngestRoutineApi {
         return ingestRoutineService.find(id);
     }
 
-    @ApiOperation(value = "Gets all instances [Perm.INGEST_ROUTINE_RECORDS_READ]", response = Collection.class)
-    @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successful response", response = Collection.class)})
-    @PreAuthorize("hasAuthority('" + Permissions.INGEST_ROUTINE_RECORDS_READ + "')")
-    @RequestMapping(method = RequestMethod.GET)
-    @Transactional
-    public Collection<IngestRoutine> list() {
-        return ingestRoutineService.find();
-    }
-
     @ApiOperation(value = "Gets DTOs of all instances [Perm.INGEST_ROUTINE_RECORDS_READ]", response = Collection.class)
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Successful response", response = Collection.class)})

@@ -38,7 +38,7 @@ public class ArchivalStorageDelegate extends ArclibDelegate {
      * @param execution delegate execution storing BPM variables
      */
     @Override
-    public void executeArclibDelegate(DelegateExecution execution, String ingestWorkflowExternalId) throws IOException, ArchivalStorageException {
+    public void executeArclibDelegate(DelegateExecution execution) throws IOException, ArchivalStorageException {
         IngestWorkflow ingestWorkflow = ingestWorkflowService.findByExternalId(ingestWorkflowExternalId);
 
         String preferredFixityGenerationEventId = (String) execution.getVariable(FixityGeneration.preferredFixityGenerationEventId);

@@ -77,8 +77,6 @@ public class IngestRoutineService {
      * Creates and stores a scheduled job that performs the tasks to be executed by the ingest routine.
      * The job is performed by the GROOVY script specified in <code>batchStartScript</code>. The script is assigned
      * parameters according to the values derived from the provided instance of <code>ingestRoutine</code>.
-     *
-     * @param ingestRoutine
      */
     private void createOrUpdateIngestRoutineJob(IngestRoutine ingestRoutine) {
         log.debug("Scheduling ingest routine job for ingest routine: " + ingestRoutine.getId());
@@ -139,7 +137,7 @@ public class IngestRoutineService {
      *
      * @return list of ingest routine instances
      */
-    public Collection<IngestRoutine> find() {
+    public Collection<IngestRoutine> findFilteredByProducer() {
         if (ArclibUtils.hasRole(userDetails, Permissions.SUPER_ADMIN_PRIVILEGE)) {
             return store.findAll();
         } else {
@@ -164,14 +162,13 @@ public class IngestRoutineService {
     }
 
     public Collection<IngestRoutineDto> listIngestRoutineDtos() {
-        Collection<IngestRoutine> all = store.findAll();
+        Collection<IngestRoutine> all = this.findFilteredByProducer();
         return beanMappingService.mapTo(all, IngestRoutineDto.class);
     }
 
     /**
      * Finds ingest routine with the given name
      *
-     * @param name
      * @return ingest routine found, <code>null</code> otherwise
      */
     public IngestRoutine findByName(String name) {

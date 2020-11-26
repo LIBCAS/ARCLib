@@ -127,8 +127,7 @@ public class CoordinatorIntegrationTest extends SrDbTest implements ApiTest {
         validationProfileStore.save(validationProfile);
 
         byte[] bpmnDefinition = Files.readAllBytes(BPMN_TEST_PATH);
-        workflowDefinition = new WorkflowDefinition(
-                new String(bpmnDefinition, StandardCharsets.UTF_8));
+        workflowDefinition = new WorkflowDefinition(new String(bpmnDefinition, StandardCharsets.UTF_8));
         workflowDefinitionStore.save(workflowDefinition);
     }
 

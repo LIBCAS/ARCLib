@@ -32,7 +32,7 @@ public class ValidatorDelegate extends ArclibDelegate {
      * Executes the validation process for the given SIP. In case of a validation error a BPMN error is thrown.
      */
     @Override
-    public void executeArclibDelegate(DelegateExecution execution, String ingestWorkflowExternalId) {
+    public void executeArclibDelegate(DelegateExecution execution) {
         JsonNode configRoot = getConfigRoot(execution);
         String validationProfileExternalId = configRoot.get(VALIDATION_PROFILE_CONFIG_ENTRY).textValue();
         notNull(validationProfileExternalId, () -> {

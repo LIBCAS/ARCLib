@@ -12,6 +12,7 @@ import static cz.cas.lib.core.util.Utils.asSet;
 
 @ConditionalOnProperty(prefix = "security.roles.internal", name = "enabled", havingValue = "true")
 @Repository
+@Deprecated
 public class AssignedRoleStore extends DomainStore<AssignedRole, QAssignedRole> {
 
     public AssignedRoleStore() {

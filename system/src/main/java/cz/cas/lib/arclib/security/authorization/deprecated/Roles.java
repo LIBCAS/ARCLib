@@ -5,7 +5,7 @@ package cz.cas.lib.arclib.security.authorization.deprecated;
  * <p>
  * Important! Every permission needs to have ROLE_ prefix for spring security to work.
  */
-@Deprecated
+@Deprecated // use new Permissions interface
 public class Roles {
     public static final String ARCHIVIST = "ROLE_ARCHIVIST";
     public static final String ADMIN = "ROLE_ADMIN";

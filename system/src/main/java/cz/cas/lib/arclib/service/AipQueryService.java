@@ -24,6 +24,10 @@ public class AipQueryService {
         return store.find(id);
     }
 
+    public AipQuery findWithUserInitialized(String id) {
+        return store.findWithUser(id);
+    }
+
     public List<AipQueryDto> listSavedQueryDtos(String userId) {
         List<AipQuery> all = store.findQueriesOfUser(userId);
         return all.stream()

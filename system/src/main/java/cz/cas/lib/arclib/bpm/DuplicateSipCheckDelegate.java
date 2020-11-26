@@ -21,7 +21,7 @@ public class DuplicateSipCheckDelegate extends ArclibDelegate {
     private String toolName = "ARCLib_duplicate_sip_check";
 
     @Override
-    public void executeArclibDelegate(DelegateExecution execution, String ingestWorkflowExternalId) throws IncidentException {
+    public void executeArclibDelegate(DelegateExecution execution) throws IncidentException {
         IngestWorkflow iw = ingestWorkflowService.findByExternalId(ingestWorkflowExternalId);
         if (iw.getVersioningLevel() == ARCLIB_XML_VERSIONING) {
             Pair<Boolean, String> booleanConfig = ArclibUtils.parseBooleanConfig(getConfigRoot(execution), CONFIG_PATH);

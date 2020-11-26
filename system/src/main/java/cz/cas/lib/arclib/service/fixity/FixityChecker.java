@@ -93,7 +93,7 @@ public abstract class FixityChecker implements IngestTool {
             }
         }
 
-        Path[] problemFiles = files.values().stream().flatMap(Collection::stream).map(p->p.relativize(pathToSip)).toArray(Path[]::new);
+        Path[] problemFiles = files.values().stream().flatMap(Collection::stream).toArray(Path[]::new);
         String errorMsg = IngestIssueDefinitionCode.FILE_UNSUPPORTED_CHECKSUM_TYPE +
                 " issue occurred, unsupported checksum types: " + Arrays.toString(files.keySet().toArray()) +
                 " files: " + Arrays.toString(problemFiles);
@@ -115,7 +115,6 @@ public abstract class FixityChecker implements IngestTool {
                 FixityCheckerDelegate.FIXITY_CHECK_TOOL + "/" + fixityCheckToolCounter + FixityCheckerDelegate.CONFIG_INVALID_CHECKSUMS);
         List<IngestIssue> issues = new ArrayList<>();
 
-        List<String> fileRelativePaths = new ArrayList<>();
         for (Path filePath : files) {
             log.info("invalid checksum of file: " + filePath);
             Pair<String, FormatDefinition> fileFormat = ArclibUtils.findFormat(pathToSip, filePath,
@@ -128,9 +127,8 @@ public abstract class FixityChecker implements IngestTool {
                     "invalid checksum of file: " + fileFormat.getLeft() + ". " + parsedConfigValue.getRight(),
                     parsedConfigValue.getLeft() != null)
             );
-            fileRelativePaths.add(fileFormat.getLeft());
         }
-        String errorMsg = IngestIssueDefinitionCode.FILE_INVALID_CHECKSUM + " issue occurred, files: " + Arrays.toString(fileRelativePaths.toArray());
+        String errorMsg = IngestIssueDefinitionCode.FILE_INVALID_CHECKSUM + " issue occurred, files: " + Arrays.toString(files.toArray());
 
         if (parsedConfigValue.getLeft() == null)
             throw new IncidentException(issues);
@@ -148,7 +146,6 @@ public abstract class FixityChecker implements IngestTool {
         Pair<Boolean, String> parsedConfigValue = ArclibUtils.parseBooleanConfig(configRoot, FixityCheckerDelegate.FIXITY_CHECK_TOOL + "/" + fixityCheckToolCounter + FixityCheckerDelegate.CONFIG_MISSING_FILES);
         List<IngestIssue> issues = new ArrayList<>();
 
-        List<String> fileRelativePaths = new ArrayList<>();
         for (Path filePath : files) {
             log.info("missing file: " + filePath);
             Pair<String, FormatDefinition> fileFormat = ArclibUtils.findFormat(pathToSip, filePath,
@@ -161,9 +158,8 @@ public abstract class FixityChecker implements IngestTool {
                     "missing file: " + fileFormat.getLeft() + ". " + parsedConfigValue.getRight(),
                     parsedConfigValue.getLeft() != null)
             );
-            fileRelativePaths.add(fileFormat.getLeft());
         }
-        String errorMsg = IngestIssueDefinitionCode.FILE_MISSING + " issue occurred, files: " + Arrays.toString(fileRelativePaths.toArray());
+        String errorMsg = IngestIssueDefinitionCode.FILE_MISSING + " issue occurred, files: " + Arrays.toString(files.toArray());
 
         if (parsedConfigValue.getLeft() == null)
             throw new IncidentException(issues);

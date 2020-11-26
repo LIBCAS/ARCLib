@@ -21,6 +21,7 @@ import static cz.cas.lib.core.util.Utils.notNull;
 @Api(value = "workflow definition", description = "Api for interaction with workflow definitions")
 @RequestMapping("/api/workflow_definition")
 public class WorkflowDefinitionApi {
+
     @Getter
     private WorkflowDefinitionService service;
 
@@ -32,12 +33,9 @@ public class WorkflowDefinitionApi {
             @ApiResponse(code = 400, message = "Specified id does not correspond to the id of the instance")})
     @PreAuthorize("hasAuthority('" + Permissions.WORKFLOW_DEFINITION_RECORDS_WRITE + "')")
     @RequestMapping(value = "/{id}", method = RequestMethod.PUT)
-    public WorkflowDefinition save(@ApiParam(value = "Id of the instance", required = true)
-                                   @PathVariable("id") String id,
-                                   @ApiParam(value = "Single instance", required = true)
-                                   @RequestBody WorkflowDefinition request) {
+    public WorkflowDefinition save(@ApiParam(value = "Id of the instance", required = true) @PathVariable("id") String id,
+                                   @ApiParam(value = "Single instance", required = true) @RequestBody WorkflowDefinition request) {
         eq(id, request.getId(), () -> new BadArgument("id"));
-
         return service.save(request);
     }
 
@@ -61,26 +59,17 @@ public class WorkflowDefinitionApi {
             @ApiResponse(code = 404, message = "Instance does not exist")})
     @PreAuthorize("hasAuthority('" + Permissions.WORKFLOW_DEFINITION_RECORDS_READ + "')")
     @RequestMapping(value = "/{id}", method = RequestMethod.GET)
-    public WorkflowDefinition get(@ApiParam(value = "Id of the instance", required = true)
-                                  @PathVariable("id") String id) {
+    public WorkflowDefinition get(@ApiParam(value = "Id of the instance", required = true) @PathVariable("id") String id) {
         WorkflowDefinition entity = service.find(id);
         notNull(entity, () -> new MissingObject(WorkflowDefinition.class, id));
 
         return entity;
     }
 
-    @ApiOperation(value = "Gets all instances [Perm.WORKFLOW_DEFINITION_RECORDS_READ]", response = WorkflowDefinition.class)
-    @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successful response", response = Collection.class)})
-    @PreAuthorize("hasAuthority('" + Permissions.WORKFLOW_DEFINITION_RECORDS_READ + "')")
-    @RequestMapping(method = RequestMethod.GET)
-    public Collection<WorkflowDefinition> list() {
-        return service.findAll();
-    }
-
-    @ApiOperation(value = "Gets DTOs of all instances [Perm.WORKFLOW_DEFINITION_RECORDS_READ]", response = WorkflowDefinitionDto.class)
-    @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successful response", response = Collection.class)})
+    @ApiOperation(value = "Gets DTOs of all instances [Perm.WORKFLOW_DEFINITION_RECORDS_READ]",
+            notes = "if the calling user is not [Perm.SUPER_ADMIN_PRIVILEGE] only WorkflowDefinitions assigned to the user's producer are returned. ",
+            response = WorkflowDefinitionDto.class)
+    @ApiResponses(value = {@ApiResponse(code = 200, message = "Successful response", response = WorkflowDefinitionDto.class)})
     @PreAuthorize("hasAuthority('" + Permissions.WORKFLOW_DEFINITION_RECORDS_READ + "')")
     @RequestMapping(path = "/list_dtos", method = RequestMethod.GET)
     public Collection<WorkflowDefinitionDto> listDtos() {
