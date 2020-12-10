@@ -4,3 +4,5 @@ structured documents and its metadata for the needs of Czech memory institutions
 
 Installation process, usage and administration of Arclib is described
 in the Wiki documentation.
+
+More information about ARCLib project is at https://arclib.cz/
