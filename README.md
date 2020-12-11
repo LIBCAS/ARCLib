@@ -11,7 +11,7 @@ The project is led by the Library of the Academy of Sciences of the Czech Republ
 
 The project is developed as an open source software under GNU GPL v3.
 
-Installation process, usage and administration of Arclib is described
+Installation process, usage and administration of ARCLib is described
 in the Wiki documentation.
 
 More information about ARCLib project is at https://arclib.cz/
