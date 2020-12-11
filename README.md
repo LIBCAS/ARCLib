@@ -9,9 +9,9 @@ The ARCLib project responds to needs of memory institutions and especially libra
 
 The project is led by the Library of the Academy of Sciences of the Czech Republic and coopearting partners are Masaryk University, the National Library of the Czech Republic and the Moravian Library in Brno.
 
-**License** The project is developed as an open source software under GNU GPL v3.
+**License:** The project is developed as an open source software under GNU GPL v3.
 
-**Documentation** Installation process, usage and administration of ARCLib is described
+**Documentation:** Installation process, usage and administration of ARCLib is described
 in the Wiki documentation.
 
 **More information about ARCLib project is at https://arclib.cz/**
