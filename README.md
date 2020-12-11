@@ -7,11 +7,11 @@ One of the main goals of the ARCLib project is the development of an open-source
 
 The ARCLib project responds to needs of memory institutions and especially libraries to ensure long-term preservation of digital documents. The project includes the preparation of methodological materials and technical solutions, all of which will be freely available - methodologies in the form of open access publications and developed software tools as open source software.
 
-The project is led by the Library of the Academy of Sciences of the Czech Republic and coopearting partners are Masaryk University, the National Library of the Czech Republic and the Moravian Library in Brno.
+**Team:**The project is led by the Library of the Academy of Sciences of the Czech Republic and coopearting partners are Masaryk University, the National Library of the Czech Republic and the Moravian Library in Brno.
 
 **License:** The project is developed as an open source software under GNU GPL v3.
 
 **Documentation:** Installation process, usage and administration of ARCLib is described
 in the Wiki documentation https://github.com/LIBCAS/ARCLib/wiki.
 
-**More information about ARCLib project is at https://arclib.cz/**
+**More information about ARCLib project and team is at https://arclib.cz/**
