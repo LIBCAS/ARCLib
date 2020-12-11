@@ -1,4 +1,4 @@
-**ARCLib - complex open source Long Term Preservation solution for libraries**
+# ARCLib - complex open source Long Term Preservation solution for libraries**
 
 The ARCLib project is under the designation DG16P02R044 solved in the period 2016-2020 with financial support from the Ministry of Culture of the Czech Republic within the national applied research funding program NAKI II.
 
