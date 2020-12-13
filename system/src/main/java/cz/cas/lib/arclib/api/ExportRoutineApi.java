@@ -3,7 +3,7 @@ package cz.cas.lib.arclib.api;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import cz.cas.lib.arclib.domain.ExportRoutine;
 import cz.cas.lib.arclib.domainbase.exception.BadArgument;
-import cz.cas.lib.arclib.security.authorization.data.Permissions;
+import cz.cas.lib.arclib.security.authorization.permission.Permissions;
 import cz.cas.lib.arclib.service.ExportRoutineService;
 import cz.cas.lib.core.store.Transactional;
 import io.swagger.annotations.*;

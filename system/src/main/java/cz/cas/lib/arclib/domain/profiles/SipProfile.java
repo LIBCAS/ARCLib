@@ -48,10 +48,10 @@ public class SipProfile extends NamedObject {
     private PathToSipId pathToSipId = new PathToSipId();
 
     /**
-     * Cesta k hlavému metadátovému súboru SIPu (napr. METS.xml) v podobe glob vzoru
+     * Cesta k hlavému metadátovému súboru SIPu (napr. METS.xml) v podobe regulárního výrazu
      */
     @Column(length = 10485760)
-    private String sipMetadataPathGlobPattern;
+    private String sipMetadataPathRegex;
 
     /**
      * Typ SIP balíku

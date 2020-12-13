@@ -254,7 +254,7 @@ public class WorkerService {
      * @param ingestWorkflow         ingest workflow
      * @param sipFolderWorkspacePath path to the folder with the content of the SIP in workspace
      * @param filePaths              file paths of the files of the SIP
-     * @param sizeInBytes           size of the data part in bytes
+     * @param sizeInBytes            size of the data part in bytes
      * @throws AuthorialPackageLockedException if the authorial package is locked
      */
     private void createSipAndAuthorialPackages(IngestWorkflow ingestWorkflow, Path sipFolderWorkspacePath,
@@ -366,7 +366,6 @@ public class WorkerService {
      * of all the ingest workflows of the batch, sets the batch state to CANCELED and returns true, otherwise returns false.
      *
      * @param batch batch
-     * @return
      */
     private boolean tooManyFailedIngestWorkflows(Batch batch) {
         List<IngestWorkflow> ingestWorkflows = batch.getIngestWorkflows();
@@ -470,39 +469,32 @@ public class WorkerService {
             throw new IllegalArgumentException("null path to sip id of sip profile with id " + profile.getId());
         });
 
-        String pathToXmlGlobPattern = pathToSipId.getPathToXmlGlobPattern();
-        notNull(pathToXmlGlobPattern, () -> {
-            throw new IllegalArgumentException("null pathToXmlGlobPattern in path to authorial id");
-        });
+        String pathToXmlRegex = pathToSipId.getPathToXmlRegex();
+        notNull(pathToXmlRegex, () -> new IllegalArgumentException("null pathToXmlRegex in path to authorial id"));
 
         String xPathToId = pathToSipId.getXPathToId();
-        notNull(xPathToId, () -> {
-            throw new IllegalArgumentException("null path to id in path to authorial id");
-        });
+        notNull(xPathToId, () -> new IllegalArgumentException("null path to id in path to authorial id"));
 
         NodeList elems;
-        List<File> matchingFiles = listFilesMatchingGlobPattern(new File(sipFolderWorkspacePath.toAbsolutePath().toString()),
-                pathToXmlGlobPattern);
-        if (matchingFiles.size() == 0) throw new GeneralException("File with metadata for ingest workflow with external id "
-                + ingestWorkflow.getExternalId() + " does not exist at path given by glob pattern: " + pathToXmlGlobPattern);
+        List<File> matchingFiles = listFilesMatchingRegex(new File(sipFolderWorkspacePath.toAbsolutePath().toString()), pathToXmlRegex);
+        if (matchingFiles.size() == 0)
+            throw new GeneralException(String.format("File with metadata for ingest workflow with external id %s does not exist at path given by regex: %s", ingestWorkflow.getExternalId(), pathToXmlRegex));
 
-        if (matchingFiles.size() > 1) throw new GeneralException("Multiple files found " +
-                "at the path given by glob pattern: " + pathToXmlGlobPattern);
+        if (matchingFiles.size() > 1)
+            throw new GeneralException(String.format("Multiple files found at the path given by regex: %s", pathToXmlRegex));
 
         File metadataFile = matchingFiles.get(0);
         String authorialId;
         try (FileInputStream fis = new FileInputStream(metadataFile)) {
             authorialId = XmlUtils.findSingleNodeWithXPath(fis, xPathToId).getTextContent();
         } catch (SAXException | ParserConfigurationException e) {
-            throw new GeneralException("Error in XPath expression to authorial id: " + xPathToId, e);
+            throw new GeneralException(String.format("Error in XPath expression to authorial id: %s", xPathToId), e);
         } catch (IOException e) {
-            throw new GeneralException("File with metadata for ingest workflow with external id " + ingestWorkflow.getExternalId()
-                    + " is inaccessible at path: " + metadataFile.getPath(), e);
+            throw new GeneralException(String.format("File with metadata for ingest workflow with external id %s is inaccessible at path: %s", ingestWorkflow.getExternalId(), metadataFile.getPath()), e);
         }
-        if (authorialId.isEmpty()) throw new GeneralException("Authorial id of SIP at XPath " + xPathToId +
-                " in file " + pathToXmlGlobPattern + " is empty.");
-        log.debug("Authorial id of SIP for ingest workflow with external id " + ingestWorkflow.getExternalId() +
-                " has been successfully extracted. Authorial id is: " + authorialId + ".");
+        if (authorialId.isEmpty())
+            throw new GeneralException(String.format("Authorial id of SIP at XPath %s in file %s is empty.", xPathToId, pathToXmlRegex));
+        log.debug(String.format("Authorial id of SIP for ingest workflow with external id %s has been successfully extracted. Authorial id is: %s.", ingestWorkflow.getExternalId(), authorialId));
 
         return authorialId;
     }

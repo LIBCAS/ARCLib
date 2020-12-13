@@ -112,7 +112,7 @@ public class ArclibXmlXsltExtractorTest extends SrDbTest {
         String sipProfileXml = Resources.toString(this.getClass().getResource(
                 "/sipProfiles/comprehensiveSipProfile.xsl"), StandardCharsets.UTF_8);
         sipProfile.setXsl(sipProfileXml);
-        sipProfile.setSipMetadataPathGlobPattern(PATH_TO_METS);
+        sipProfile.setSipMetadataPathRegex(PATH_TO_METS);
         sipProfileStore.save(sipProfile);
 
         sipProfileService = new SipProfileService();

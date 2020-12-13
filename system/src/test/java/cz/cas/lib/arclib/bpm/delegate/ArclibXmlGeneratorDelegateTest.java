@@ -42,6 +42,7 @@ import org.apache.commons.lang3.tuple.Triple;
 import org.camunda.bpm.engine.history.HistoricVariableInstance;
 import org.camunda.bpm.engine.test.Deployment;
 import org.camunda.bpm.engine.test.mock.Mocks;
+import org.dom4j.DocumentException;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -133,7 +134,7 @@ public class ArclibXmlGeneratorDelegateTest extends DelegateTest {
 
     @Before
     @Transactional
-    public void before() throws IOException {
+    public void before() throws IOException, DocumentException {
         hashStore = new HashStore();
         MockitoAnnotations.initMocks(this);
 
@@ -257,7 +258,7 @@ public class ArclibXmlGeneratorDelegateTest extends DelegateTest {
         String sipProfileXml = Resources.toString(this.getClass().getResource(
                 "/sipProfiles/comprehensiveSipProfile.xsl"), StandardCharsets.UTF_8);
         sipProfile.setXsl(sipProfileXml);
-        sipProfile.setSipMetadataPathGlobPattern(PATH_TO_METS);
+        sipProfile.setSipMetadataPathRegex(PATH_TO_METS);
         sipProfileService.setStore(sipProfileStore);
         sipProfileService.save(sipProfile);
 

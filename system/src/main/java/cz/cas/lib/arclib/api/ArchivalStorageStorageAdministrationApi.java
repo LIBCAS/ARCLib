@@ -1,6 +1,6 @@
 package cz.cas.lib.arclib.api;
 
-import cz.cas.lib.arclib.security.authorization.data.Permissions;
+import cz.cas.lib.arclib.security.authorization.permission.Permissions;
 import cz.cas.lib.arclib.service.archivalStorage.ArchivalStoragePipe;
 import io.swagger.annotations.*;
 import lombok.extern.slf4j.Slf4j;
@@ -24,11 +24,18 @@ import static cz.cas.lib.core.util.Utils.checkUUID;
 @Slf4j
 public class ArchivalStorageStorageAdministrationApi extends ArchivalStoragePipe {
 
-    @ApiOperation(value = "[Perm.STORAGE_ADMINISTRATION_READ]")
+    @ApiOperation(value = "retrieve all storages from archival storage [Perm.STORAGE_ADMINISTRATION_READ]")
     @PreAuthorize("hasAuthority('" + Permissions.STORAGE_ADMINISTRATION_READ + "')")
     @RequestMapping(method = RequestMethod.GET)
     public void getAll(HttpServletResponse response, HttpServletRequest request) {
         passToArchivalStorage(response, request, "/administration/storage", HttpMethod.GET, "retrieve all storages", AccessTokenType.ADMIN);
+    }
+
+    @ApiOperation(value = "retrieve all storages as simple DTOs from archival storage [Perm.AIP_RECORDS_READ]")
+    @PreAuthorize("hasAuthority('" + Permissions.AIP_RECORDS_READ + "')")
+    @RequestMapping(value = "/basic", method = RequestMethod.GET)
+    public void getAllAsDtos(HttpServletResponse response, HttpServletRequest request) {
+        passToArchivalStorage(response, request, "/administration/storage/basic", HttpMethod.GET, "retrieve all storages as simple DTOs", AccessTokenType.ADMIN);
     }
 
     @ApiOperation(value = "[Perm.STORAGE_ADMINISTRATION_READ]")

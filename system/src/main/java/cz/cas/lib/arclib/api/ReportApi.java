@@ -4,7 +4,7 @@ import cz.cas.lib.arclib.domainbase.exception.BadArgument;
 import cz.cas.lib.arclib.report.ExportFormat;
 import cz.cas.lib.arclib.report.ExporterService;
 import cz.cas.lib.arclib.report.Report;
-import cz.cas.lib.arclib.security.authorization.data.Permissions;
+import cz.cas.lib.arclib.security.authorization.permission.Permissions;
 import cz.cas.lib.arclib.service.ReportService;
 import io.swagger.annotations.*;
 import lombok.AllArgsConstructor;

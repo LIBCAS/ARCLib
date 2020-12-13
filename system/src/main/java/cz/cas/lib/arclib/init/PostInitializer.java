@@ -4,11 +4,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.util.ISO8601DateFormat;
 import com.fasterxml.jackson.datatype.hibernate5.Hibernate5Module;
-import cz.cas.lib.arclib.domainbase.exception.GeneralException;
 import cz.cas.lib.arclib.index.solr.ReindexService;
 import cz.cas.lib.arclib.mail.ArclibMailCenter;
-import cz.cas.lib.arclib.security.authorization.data.Permissions;
-import cz.cas.lib.arclib.security.authorization.logic.UserRoleService;
+import cz.cas.lib.arclib.security.authorization.permission.Permissions;
+import cz.cas.lib.arclib.security.authorization.role.UserRoleService;
 import cz.cas.lib.arclib.service.BatchService;
 import cz.cas.lib.arclib.service.IngestErrorHandler;
 import cz.cas.lib.arclib.service.incident.CustomIncidentHandler;
@@ -25,18 +24,16 @@ import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.support.TransactionTemplate;
-import org.springframework.util.FileSystemUtils;
 import org.springframework.util.StreamUtils;
 
 import javax.inject.Inject;
 import javax.sql.DataSource;
-import java.io.*;
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.sql.Connection;
-import java.sql.SQLException;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.HashMap;
@@ -50,16 +47,12 @@ public class PostInitializer implements ApplicationListener<ContextRefreshedEven
     private ObjectMapper objectMapper;
     @Inject
     private ReindexService reindexService;
-    @Value("${env}")
+    @Value("${env:production}")
     private String env;
-    @Value("${jmsCommunicationRole}")
-    private String jmsCommunicationRole;
     @Inject
     private IngestErrorHandler ingestErrorHandler;
     @Inject
     private CustomIncidentHandler customIncidentHandler;
-    @Inject
-    private SolrTestRecordsInitializer solrTestRecordsInitializer;
     @Value("${arclib.path.workspace}")
     private String workspace;
     @Inject
@@ -87,21 +80,12 @@ public class PostInitializer implements ApplicationListener<ContextRefreshedEven
 
     @Override
     public void onApplicationEvent(ContextRefreshedEvent event) {
-        if (jmsCommunicationRole.equals("coordinator")) {
-            if (env.equals("staging")) {
-                try {
-                    initializeWithTestData();
-                } catch (Exception e) {
-                    throw new GeneralException("Data init error", e);
-                }
-            }
-            if (!env.equals("test")) {
-                scheduleBatchBpmUndeployment();
-                checkTransferAreasReachable();
-                Collection<Job> jobs = jobService.findAll();
-                log.debug("Starting jobs...");
-                jobs.forEach(jobService::updateJobSchedule);
-            }
+        if (!env.equals("test")) {
+            scheduleBatchBpmUndeployment();
+            checkTransferAreasReachable();
+            Collection<Job> jobs = jobService.findAll();
+            log.debug("Starting jobs...");
+            jobs.forEach(jobService::updateJobSchedule);
         }
 
         objectMapper.registerModule(new Hibernate5Module());
@@ -113,34 +97,6 @@ public class PostInitializer implements ApplicationListener<ContextRefreshedEven
         customIncidentHandler.setBatchService(batchService);
 
         log.debug("Arclib instance started successfully.");
-    }
-
-    public void initializeWithTestData() throws IOException, SQLException {
-        runtimeService.createProcessInstanceQuery().list().forEach(p -> runtimeService.deleteProcessInstance(p.getProcessInstanceId(), "cleanup"));
-        repositoryService.createDeploymentQuery().list().forEach(d -> repositoryService.deleteDeployment(d.getId(), true));
-        cleanWorkspace();
-        log.debug("Workspace clean up successful");
-        sqlTestInit();
-        reindexService.dropReindexAll();
-        solrTestRecordsInitializer.init();
-        log.debug("Data init successful");
-    }
-
-    private void sqlTestInit() throws SQLException, IOException {
-        try (Connection con = ds.getConnection()) {
-            ScriptRunner runner = new ScriptRunner(con, false, true);
-            runner.runScript(new BufferedReader(new InputStreamReader(this.getClass().getClassLoader().getResourceAsStream("sql/arclibDelete.sql"))));
-            runner.runScript(new BufferedReader(new InputStreamReader(this.getClass().getClassLoader().getResourceAsStream("sql/formatLibraryDelete.sql"))));
-            runner.runScript(new BufferedReader(new InputStreamReader(this.getClass().getClassLoader().getResourceAsStream("sql/formatLibraryInit.sql"))));
-            runner.runScript(new BufferedReader(new InputStreamReader(this.getClass().getClassLoader().getResourceAsStream("sql/arclibInit.sql"))));
-        }
-    }
-
-    /**
-     * Deletes the workspace folder (workspace folder is recreated later)
-     */
-    private void cleanWorkspace() {
-        FileSystemUtils.deleteRecursively(new File(workspace));
     }
 
     /**

@@ -26,7 +26,7 @@ import java.util.List;
 import static cz.cas.lib.arclib.bpm.ArclibXmlExtractorDelegate.SIP_PROFILE_CONFIG_ENTRY;
 import static cz.cas.lib.arclib.bpm.BpmConstants.FixityCheck;
 import static cz.cas.lib.arclib.bpm.BpmConstants.ProcessVariables;
-import static cz.cas.lib.core.util.Utils.listFilesMatchingGlobPattern;
+import static cz.cas.lib.core.util.Utils.listFilesMatchingRegex;
 
 @Slf4j
 @Service
@@ -41,7 +41,7 @@ public class FixityCheckerDelegate extends ArclibDelegate {
     private CommonChecksumFilesChecker commonChecksumFilesChecker;
     private SipProfileService sipProfileService;
     @Getter
-    private String toolName = "ARCLib_"+ IngestToolFunction.fixity_check;
+    private String toolName = "ARCLib_" + IngestToolFunction.fixity_check;
 
     /**
      * Checks fixity of files specified in SIP META XML and sets BPM variable `filePathsAndFixities`.
@@ -59,15 +59,14 @@ public class FixityCheckerDelegate extends ArclibDelegate {
         int fixityCheckToolCounter = (int) execution.getVariable(FixityCheck.fixityCheckToolCounter);
         FixityChecker fixityChecker;
 
-        String sipMetadataPathGlobPattern = sipProfile.getSipMetadataPathGlobPattern();
-        List<File> matchingFiles = listFilesMatchingGlobPattern(new File(sipFolderWorkspacePath.toAbsolutePath().toString()), sipMetadataPathGlobPattern);
+        String sipMetadataPathRegex = sipProfile.getSipMetadataPathRegex();
+        List<File> matchingFiles = listFilesMatchingRegex(new File(sipFolderWorkspacePath.toAbsolutePath().toString()), sipMetadataPathRegex);
 
         if (matchingFiles.size() == 0)
-            throw new GeneralException("File with metadata for ingest workflow with external id "
-                    + ingestWorkflowExternalId + " does not exist at path given by glob pattern: " + sipMetadataPathGlobPattern);
+            throw new GeneralException(String.format("File with metadata for ingest workflow with external id %s does not exist at path given by regex: %s", ingestWorkflowExternalId, sipMetadataPathRegex));
 
-        if (matchingFiles.size() > 1) throw new GeneralException("Multiple files found " +
-                "at the path given by glob pattern: " + sipMetadataPathGlobPattern);
+        if (matchingFiles.size() > 1)
+            throw new GeneralException(String.format("Multiple files found at the path given by regex: %s", sipMetadataPathRegex));
 
         File metsFile = matchingFiles.get(0);
 

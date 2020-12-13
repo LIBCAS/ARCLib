@@ -2,9 +2,10 @@ package cz.cas.lib.arclib.service;
 
 import cz.cas.lib.arclib.domain.Producer;
 import cz.cas.lib.arclib.domain.profiles.ValidationProfile;
+import cz.cas.lib.arclib.domainbase.exception.ForbiddenOperation;
 import cz.cas.lib.arclib.dto.ValidationProfileDto;
 import cz.cas.lib.arclib.exception.BadRequestException;
-import cz.cas.lib.arclib.security.authorization.data.Permissions;
+import cz.cas.lib.arclib.security.authorization.permission.Permissions;
 import cz.cas.lib.arclib.security.user.UserDetails;
 import cz.cas.lib.arclib.store.ValidationProfileStore;
 import cz.cas.lib.arclib.utils.XmlUtils;
@@ -29,16 +30,23 @@ public class ValidationProfileService {
     private UserDetails userDetails;
 
     @Transactional
-    public ValidationProfile save(ValidationProfile request) throws IOException {
+    public ValidationProfile save(ValidationProfile entity) throws IOException {
         if (!hasRole(userDetails, Permissions.SUPER_ADMIN_PRIVILEGE)) {
-            request.setProducer(new Producer(userDetails.getProducerId()));
+            entity.setProducer(new Producer(userDetails.getProducerId()));
         } else {
-            notNull(request.getProducer(), () -> new BadRequestException("ValidationProfile has to have producer assigned"));
+            notNull(entity.getProducer(), () -> new BadRequestException("ValidationProfile has to have producer assigned"));
         }
 
-        String validationProfileXml = request.getXml();
+        ValidationProfile validationProfileFound = store.find(entity.getId());
+        if (validationProfileFound != null && !validationProfileFound.isEditable()) {
+            throw new ForbiddenOperation(ValidationProfile.class, entity.getId());
+        }
+
+        String validationProfileXml = entity.getXml();
         XmlUtils.validateWithXMLSchema(validationProfileXml, new InputStream[]{validationProfileSchema.getInputStream()}, "Validation profile XSD");
-        return store.save(request);
+
+        entity.setEditable(true);
+        return store.save(entity);
     }
 
     @Transactional

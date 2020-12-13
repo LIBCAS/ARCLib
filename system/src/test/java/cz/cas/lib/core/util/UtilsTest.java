@@ -4,6 +4,8 @@ import cz.cas.lib.arclib.domainbase.exception.GeneralException;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.io.File;
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.*;
 import java.time.temporal.ChronoUnit;
@@ -303,5 +305,12 @@ public class UtilsTest {
     public void filePresenceCheckNonExistentFileTest() {
         boolean success = Utils.fileExists("/nonExistentPath");
         Assert.assertThat(success, is(false));
+    }
+
+    @Test
+    public void listFilesMatchingRegex() throws IOException {
+        File root = new File("src/test/resources/SIP_package");
+        List<File> files = Utils.listFilesMatchingRegex(root, "BAG/bah*git.txt");
+        assertThat(files, hasSize(1));
     }
 }

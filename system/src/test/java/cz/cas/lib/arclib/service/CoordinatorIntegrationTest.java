@@ -16,6 +16,7 @@ import cz.cas.lib.arclib.store.*;
 import helper.ApiTest;
 import helper.SrDbTest;
 import helper.auth.WithMockCustomUser;
+import org.dom4j.DocumentException;
 import org.junit.*;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -107,20 +108,20 @@ public class CoordinatorIntegrationTest extends SrDbTest implements ApiTest {
     }
 
     @Before
-    public void before() throws IOException {
+    public void before() throws IOException, DocumentException {
         Files.createDirectories(FILE_STORAGE);
 
         sipProfile = new SipProfile();
 
         PathToSipId pathToSipId = new PathToSipId();
-        pathToSipId.setPathToXmlGlobPattern(PATH_TO_XML);
+        pathToSipId.setPathToXmlRegex(PATH_TO_XML);
         pathToSipId.setXPathToId(PATH_TO_AUTHORIAL_ID);
         sipProfile.setPathToSipId(pathToSipId);
 
         sipProfileXslt = Resources.toString(getClass().getResource(SIP_PROFILE_XSLT_PATH), StandardCharsets.UTF_8);
         sipProfile.setXsl(sipProfileXslt);
 
-        sipProfile.setSipMetadataPathGlobPattern(PATH_TO_METADATA);
+        sipProfile.setSipMetadataPathRegex(PATH_TO_METADATA);
         sipProfileService.save(sipProfile);
 
         validationProfile = new ValidationProfile("xml");

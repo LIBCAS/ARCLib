@@ -7,7 +7,7 @@ import cz.cas.lib.arclib.dto.BatchDetailDto;
 import cz.cas.lib.arclib.dto.BatchDto;
 import cz.cas.lib.arclib.dto.JmsDto;
 import cz.cas.lib.arclib.exception.BadRequestException;
-import cz.cas.lib.arclib.security.authorization.data.Permissions;
+import cz.cas.lib.arclib.security.authorization.permission.Permissions;
 import cz.cas.lib.arclib.security.user.UserDetails;
 import cz.cas.lib.arclib.service.BatchService;
 import cz.cas.lib.arclib.service.CoordinatorService;

@@ -4,7 +4,7 @@ import cz.cas.lib.arclib.domain.preservationPlanning.IngestIssueDefinition;
 import cz.cas.lib.arclib.domainbase.exception.BadArgument;
 import cz.cas.lib.arclib.domainbase.exception.MissingObject;
 import cz.cas.lib.arclib.dto.IngestIssueDefinitionUpdateDto;
-import cz.cas.lib.arclib.security.authorization.data.Permissions;
+import cz.cas.lib.arclib.security.authorization.permission.Permissions;
 import cz.cas.lib.arclib.store.IngestIssueDefinitionStore;
 import cz.cas.lib.core.store.Transactional;
 import io.swagger.annotations.*;

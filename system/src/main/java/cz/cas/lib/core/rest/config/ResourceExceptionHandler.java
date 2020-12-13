@@ -4,7 +4,7 @@ import cz.cas.lib.arclib.domainbase.exception.*;
 import cz.cas.lib.arclib.exception.AuthorialPackageLockedException;
 import cz.cas.lib.arclib.exception.BadRequestException;
 import cz.cas.lib.arclib.exception.ForbiddenException;
-import cz.cas.lib.arclib.security.authorization.logic.CustomAccessDeniedHandler;
+import cz.cas.lib.arclib.security.authorization.business.CustomAccessDeniedHandler;
 import cz.cas.lib.arclib.service.archivalStorage.ArchivalStorageException;
 import cz.cas.lib.core.index.UnsupportedSearchParameterException;
 import lombok.extern.slf4j.Slf4j;

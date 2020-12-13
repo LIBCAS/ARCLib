@@ -1,7 +1,7 @@
 package helper.auth;
 
 import cz.cas.lib.arclib.domain.User;
-import cz.cas.lib.arclib.security.authorization.data.UserRole;
+import cz.cas.lib.arclib.security.authorization.role.UserRole;
 import cz.cas.lib.arclib.security.user.UserDetailsImpl;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;

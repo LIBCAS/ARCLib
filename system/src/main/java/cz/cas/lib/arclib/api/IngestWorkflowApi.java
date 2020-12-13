@@ -1,7 +1,7 @@
 package cz.cas.lib.arclib.api;
 
 import cz.cas.lib.arclib.dto.IngestWorkflowDto;
-import cz.cas.lib.arclib.security.authorization.data.Permissions;
+import cz.cas.lib.arclib.security.authorization.permission.Permissions;
 import cz.cas.lib.arclib.service.IngestWorkflowService;
 import io.swagger.annotations.*;
 import org.springframework.security.access.prepost.PreAuthorize;

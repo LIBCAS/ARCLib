@@ -7,7 +7,6 @@ import cz.cas.lib.arclib.domain.ingestWorkflow.IngestWorkflowState;
 import cz.cas.lib.arclib.domainbase.exception.GeneralException;
 import cz.cas.lib.arclib.index.solr.arclibxml.IndexedAipState;
 import cz.cas.lib.arclib.index.solr.arclibxml.IndexedArclibXmlStore;
-import cz.cas.lib.arclib.init.SolrTestRecordsInitializer;
 import cz.cas.lib.arclib.service.IngestWorkflowService;
 import cz.cas.lib.arclib.service.archivalStorage.ArchivalStorageException;
 import cz.cas.lib.arclib.service.archivalStorage.ArchivalStorageService;
@@ -16,7 +15,6 @@ import cz.cas.lib.arclib.service.archivalStorage.ObjectState;
 import cz.cas.lib.arclib.store.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import javax.inject.Inject;
@@ -30,6 +28,9 @@ import static cz.cas.lib.core.util.Utils.notNull;
 @Service
 @Slf4j
 public class ReindexService {
+
+    public static final String DEFAULT_DEBUG_USER = "arc-bob";
+
     private BatchStore batchStore;
     private ProducerProfileStore producerProfileStore;
     private UserStore userStore;
@@ -40,7 +41,6 @@ public class ReindexService {
     private IndexedArclibXmlStore indexedArclibXmlStore;
     private ArchivalStorageService archivalStorageService;
     private ArchivalStorageServiceDebug archivalStorageServiceDebug;
-    private String env;
 
     /**
      * formats are omitted as there are too many records
@@ -70,17 +70,10 @@ public class ReindexService {
                         String xml;
                         String username;
                         Object userInCamunda = ingestWorkflowService.getVariable(iw.getExternalId(), BpmConstants.ProcessVariables.responsiblePerson);
-                        if (userInCamunda == null) {
-                            if (!"production".equals(env)) {
-                                log.warn("no responsible person found for IW: " + iw.getExternalId() + " in camunda db, assigning " + SolrTestRecordsInitializer.USER_NAME);
-                                username = SolrTestRecordsInitializer.USER_NAME;
-                            } else
-                                throw new IllegalStateException("no responsible person found for IW: " + iw.getExternalId() + " in camunda db");
-                        } else {
-                            User user = userStore.findEvenDeleted((String) userInCamunda);
-                            notNull(user, () -> new IllegalStateException("no user responsible for IW: " + iw.getExternalId() + " found in ARCLib db"));
-                            username = user.getUsername();
-                        }
+                        notNull(userInCamunda, () -> new IllegalStateException("no responsible person found for IW: " + iw.getExternalId() + " in camunda db"));
+                        User user = userStore.findEvenDeleted((String) userInCamunda);
+                        notNull(user, () -> new IllegalStateException("no user responsible for IW: " + iw.getExternalId() + " found in ARCLib db"));
+                        username = user.getUsername();
                         IndexedAipState stateAtArchivalStorage;
                         if (iw.wasIngestedInDebugMode()) {
                             xml = IOUtils.toString(archivalStorageServiceDebug.exportSingleXml(iw.getSip().getId(), iw.getXmlVersionNumber()), Charset.defaultCharset());
@@ -186,9 +179,5 @@ public class ReindexService {
     @Inject
     public void setArchivalStorageServiceDebug(ArchivalStorageServiceDebug archivalStorageServiceDebug) {
         this.archivalStorageServiceDebug = archivalStorageServiceDebug;
-    }
-
-    public void setEnv(@Value("${env}") String env) {
-        this.env = env;
     }
 }

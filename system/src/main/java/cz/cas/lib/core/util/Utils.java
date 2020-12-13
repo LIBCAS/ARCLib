@@ -516,25 +516,31 @@ public class Utils {
      *
      * @param root        root directory
      * @param globPattern glob pattern
-     * @throws IOException
      * @return list of files matching glob pattern
      */
     public static List<File> listFilesMatchingGlobPattern(File root, String globPattern) throws IOException {
-        final List<File> result = new ArrayList<>();
-
-        final PathMatcher matcher = FileSystems.getDefault().getPathMatcher("glob:" + globPattern);
-        FileVisitor<Path> visitor = new SimpleFileVisitor<Path>() {
-            @Override
-            public FileVisitResult visitFile(Path file, BasicFileAttributes attribs) {
-                if (matcher.matches(root.toPath().relativize(file))) {
-                    result.add(new File(file.toAbsolutePath().toString()));
-                }
-                return FileVisitResult.CONTINUE;
-            }
-        };
-        Files.walkFileTree(root.toPath(), visitor);
-        return result;
+        return listFilesMatchingPattern(root, globPattern, "glob");
     }
+
+    /**
+     * Lists files matching regex
+     *
+     * @param root  root directory
+     * @param regex regex - relative path from the root to the file, using / (slash) as dir separator, e.g. <em>subfolder/.+/bo*m</em> to find <em>bm</em> or <em>booom</em> somewhere in <em>subfolder</em>
+     * @return list of files matching regex
+     */
+    public static List<File> listFilesMatchingRegex(File root, String regex) throws IOException {
+        if (!root.isDirectory()) {
+            throw new IllegalArgumentException(root + " is no directory.");
+        }
+        return Files.walk(root.toPath()).filter(f -> {
+            String relativePathWithLinuxSeparators = f.toAbsolutePath().toString().replace(root.toPath().toAbsolutePath().toString(), "").replace("\\", "/");
+            if (relativePathWithLinuxSeparators.length() < 1)
+                return false;
+            return relativePathWithLinuxSeparators.substring(1).matches(regex);
+        }).map(Path::toFile).collect(Collectors.toList());
+    }
+
 
     public static List<String> readLinesOfInputStreamToList(InputStream inputStream) throws IOException {
         List<String> lines = new ArrayList<>();
@@ -673,9 +679,9 @@ public class Utils {
      * Converts instant to CRON expression triggering once at the given date time
      *
      * @param instant instant to convert to CRON expression
-     * @return CRON expression of 6 fields in the format `%s %s %s %s %s %s`. From left to right it matches the
-     * seconds, minutes, hours, day of month and month of the respective instant. The last field that represents the day of week
-     * is set to `?`.
+     * @return CRON expression of 6 fields in the format `%s %s %s %s %s %s`. From left to right it matches the seconds,
+     *         minutes, hours, day of month and month of the respective instant. The last field that represents
+     *         the day of week is set to `?`.
      */
     public static String toCron(Instant instant) {
         LocalDateTime localDateTime = LocalDateTime.ofInstant(instant, ZoneId.systemDefault());
@@ -691,5 +697,24 @@ public class Utils {
     public static <T> Predicate<T> distinctByKey(Function<? super T, ?> keyExtractor) {
         Set<Object> seen = ConcurrentHashMap.newKeySet();
         return t -> seen.add(keyExtractor.apply(t));
+    }
+
+
+    private static List<File> listFilesMatchingPattern(File root, String pattern, String patternName) throws IOException {
+        assert patternName.equals("regex") || patternName.equals("glob");
+        final List<File> result = new ArrayList<>();
+
+        final PathMatcher matcher = FileSystems.getDefault().getPathMatcher(String.format("%s:%s", patternName, pattern));
+        FileVisitor<Path> visitor = new SimpleFileVisitor<>() {
+            @Override
+            public FileVisitResult visitFile(Path file, BasicFileAttributes attribs) {
+                if (matcher.matches(root.toPath().relativize(file))) {
+                    result.add(new File(file.toAbsolutePath().toString()));
+                }
+                return FileVisitResult.CONTINUE;
+            }
+        };
+        Files.walkFileTree(root.toPath(), visitor);
+        return result;
     }
 }

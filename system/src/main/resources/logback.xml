@@ -114,12 +114,9 @@
         <appender-ref ref="AUDIT"/>
         <appender-ref ref="AUDITFILE"/>
     </logger>
-    <logger name="cz.cas.lib.arclib" level="DEBUG" additivity="false">
+    <logger name="cz.cas.lib" level="DEBUG" additivity="false">
         <appender-ref ref="ARCLIB"/>
         <appender-ref ref="ERRORFILE"/>
-        <appender-ref ref="DEBUGFILE"/>
-    </logger>
-    <logger name="org.springframework.data.solr.core.SolrTemplate" level="DEBUG">
         <appender-ref ref="DEBUGFILE"/>
     </logger>
 

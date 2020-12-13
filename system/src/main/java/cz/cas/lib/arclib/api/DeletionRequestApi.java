@@ -1,7 +1,7 @@
 package cz.cas.lib.arclib.api;
 
 import cz.cas.lib.arclib.dto.AipDeletionRequestDto;
-import cz.cas.lib.arclib.security.authorization.data.Permissions;
+import cz.cas.lib.arclib.security.authorization.permission.Permissions;
 import cz.cas.lib.arclib.service.DeletionRequestService;
 import cz.cas.lib.core.index.dto.Result;
 import io.swagger.annotations.*;

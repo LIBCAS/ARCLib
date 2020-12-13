@@ -3,7 +3,7 @@ package cz.cas.lib.arclib.api;
 import cz.cas.lib.arclib.domain.preservationPlanning.FormatOccurrence;
 import cz.cas.lib.arclib.formatlibrary.domain.Format;
 import cz.cas.lib.arclib.formatlibrary.domain.FormatDefinition;
-import cz.cas.lib.arclib.security.authorization.data.Permissions;
+import cz.cas.lib.arclib.security.authorization.permission.Permissions;
 import cz.cas.lib.arclib.store.FormatOccurrenceStore;
 import cz.cas.lib.arclib.store.IndexedFormatDefinitionStore;
 import cz.cas.lib.arclib.store.IndexedFormatStore;

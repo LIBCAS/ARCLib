@@ -1,10 +1,10 @@
 package cz.cas.lib.arclib.api;
 
-import cz.cas.lib.arclib.security.authorization.data.CreateRoleDto;
-import cz.cas.lib.arclib.security.authorization.data.Permissions;
-import cz.cas.lib.arclib.security.authorization.data.UpdateRoleDto;
-import cz.cas.lib.arclib.security.authorization.data.UserRole;
-import cz.cas.lib.arclib.security.authorization.logic.UserRoleService;
+import cz.cas.lib.arclib.security.authorization.role.CreateRoleDto;
+import cz.cas.lib.arclib.security.authorization.permission.Permissions;
+import cz.cas.lib.arclib.security.authorization.role.UpdateRoleDto;
+import cz.cas.lib.arclib.security.authorization.role.UserRole;
+import cz.cas.lib.arclib.security.authorization.role.UserRoleService;
 import cz.cas.lib.core.index.dto.Result;
 import io.swagger.annotations.*;
 import org.springframework.security.access.prepost.PreAuthorize;

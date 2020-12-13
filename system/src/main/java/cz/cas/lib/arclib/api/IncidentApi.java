@@ -3,7 +3,7 @@ package cz.cas.lib.arclib.api;
 import cz.cas.lib.arclib.dto.IncidentCancellationDto;
 import cz.cas.lib.arclib.dto.IncidentInfoDto;
 import cz.cas.lib.arclib.dto.IncidentSolutionDto;
-import cz.cas.lib.arclib.security.authorization.data.Permissions;
+import cz.cas.lib.arclib.security.authorization.permission.Permissions;
 import cz.cas.lib.arclib.service.incident.IncidentService;
 import cz.cas.lib.arclib.service.incident.IncidentSortField;
 import cz.cas.lib.core.index.dto.Order;

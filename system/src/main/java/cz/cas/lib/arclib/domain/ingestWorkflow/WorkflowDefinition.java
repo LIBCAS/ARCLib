@@ -37,6 +37,11 @@ public class WorkflowDefinition extends NamedObject {
     @Column(length = 10485760)
     protected String bpmnDefinition;
 
+    /**
+     * Definici je možné editovat
+     */
+    private boolean editable;
+
     public WorkflowDefinition(String bpmnDefinition) {
         this.bpmnDefinition = bpmnDefinition;
     }

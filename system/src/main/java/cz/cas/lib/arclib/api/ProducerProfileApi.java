@@ -5,7 +5,7 @@ import cz.cas.lib.arclib.domainbase.exception.BadArgument;
 import cz.cas.lib.arclib.domainbase.exception.ForbiddenObject;
 import cz.cas.lib.arclib.domainbase.exception.MissingObject;
 import cz.cas.lib.arclib.dto.ProducerProfileDto;
-import cz.cas.lib.arclib.security.authorization.data.Permissions;
+import cz.cas.lib.arclib.security.authorization.permission.Permissions;
 import cz.cas.lib.arclib.security.user.UserDetails;
 import cz.cas.lib.arclib.service.ProducerProfileService;
 import cz.cas.lib.core.index.dto.Filter;
@@ -18,6 +18,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import javax.inject.Inject;
+import javax.validation.Valid;
 
 import static cz.cas.lib.arclib.utils.ArclibUtils.hasRole;
 import static cz.cas.lib.core.util.Utils.*;
@@ -31,7 +32,9 @@ public class ProducerProfileApi {
 
     private UserDetails userDetails;
 
-    @ApiOperation(value = "Saves an instance. [Perm.PRODUCER_PROFILES_WRITE]", notes = "Returns single instance (possibly with computed attributes)",
+    @ApiOperation(value = "Saves an instance. [Perm.PRODUCER_PROFILE_RECORDS_WRITE]",
+            notes = "Returns single instance (possibly with computed attributes). If the calling user is not Roles.SUPER_ADMIN" +
+                    " the producer of the user must match the producer of the producer profile.",
             response = ProducerProfile.class)
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Successful response", response = ProducerProfile.class),
@@ -40,32 +43,9 @@ public class ProducerProfileApi {
     @PreAuthorize("hasAuthority('" + Permissions.PRODUCER_PROFILE_RECORDS_WRITE + "')")
     @RequestMapping(value = "/{id}", method = RequestMethod.PUT)
     public ProducerProfile save(@ApiParam(value = "Id of the instance", required = true)
-                                @PathVariable("id") String id,
-                                @ApiParam(value = "Single instance", required = true)
-                                @RequestBody ProducerProfile request) {
-        eq(id, request.getId(), () -> new BadArgument("id"));
-
-        if (!hasRole(userDetails, Permissions.SUPER_ADMIN_PRIVILEGE) &&
-                !userDetails.getProducerId().equals(request.getProducer().getId())) {
-            throw new ForbiddenObject(ProducerProfile.class, id);
-        }
-        return producerProfileService.save(request);
-    }
-
-    @ApiOperation(value = "Updates an instance. [Perm.PRODUCER_PROFILE_RECORDS_WRITE]",
-            notes = "Returns single instance (possibly with computed attributes). If the calling user is not Roles.SUPER_ADMIN" +
-                    " the producer of the user must match the producer of the updated producer profile.",
-            response = ProducerProfile.class)
-    @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successful response", response = ProducerProfile.class),
-            @ApiResponse(code = 400, message = "Specified id does not correspond to the id of the instance"),
-            @ApiResponse(code = 403, message = "Id of the producer does not match the id of the producer of the logged on user.")})
-    @PreAuthorize("hasAuthority('" + Permissions.PRODUCER_PROFILE_RECORDS_WRITE + "')")
-    @RequestMapping(value = "/update/{id}", method = RequestMethod.PUT)
-    public ProducerProfile update(@ApiParam(value = "Id of the instance", required = true)
                                   @PathVariable("id") String id,
                                   @ApiParam(value = "Single instance", required = true)
-                                  @RequestBody ProducerProfile request) {
+                                  @RequestBody @Valid ProducerProfile request) {
         eq(id, request.getId(), () -> new BadArgument("id"));
 
         if (!hasRole(userDetails, Permissions.SUPER_ADMIN_PRIVILEGE) &&

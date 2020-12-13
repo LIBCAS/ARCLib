@@ -4,7 +4,7 @@ import cz.cas.lib.arclib.domain.profiles.SipProfile;
 import cz.cas.lib.arclib.domainbase.exception.BadArgument;
 import cz.cas.lib.arclib.domainbase.exception.MissingObject;
 import cz.cas.lib.arclib.dto.SipProfileDto;
-import cz.cas.lib.arclib.security.authorization.data.Permissions;
+import cz.cas.lib.arclib.security.authorization.permission.Permissions;
 import cz.cas.lib.arclib.service.SipProfileService;
 import io.swagger.annotations.*;
 import lombok.Getter;
@@ -36,7 +36,7 @@ public class SipProfileApi {
     public SipProfile save(@ApiParam(value = "Id of the instance", required = true) @PathVariable("id") String id,
                            @ApiParam(value = "Single instance", required = true) @RequestBody SipProfile request) throws DocumentException {
         eq(id, request.getId(), () -> new BadArgument("id"));
-        return service.validateAndSave(request);
+        return service.save(request);
     }
 
     @ApiOperation(value = "Deletes an instance. [Perm.SIP_PROFILE_RECORDS_WRITE]")

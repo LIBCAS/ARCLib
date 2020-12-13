@@ -1,7 +1,7 @@
 package cz.cas.lib.arclib.api;
 
 import cz.cas.lib.arclib.domainbase.exception.MissingObject;
-import cz.cas.lib.arclib.security.authorization.data.Permissions;
+import cz.cas.lib.arclib.security.authorization.permission.Permissions;
 import cz.cas.lib.arclib.service.AuthorialPackageService;
 import cz.cas.lib.arclib.service.archivalStorage.ArchivalStorageServiceDebug;
 import cz.cas.lib.core.store.Transactional;

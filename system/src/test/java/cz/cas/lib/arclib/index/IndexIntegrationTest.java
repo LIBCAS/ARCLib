@@ -10,9 +10,8 @@ import cz.cas.lib.arclib.index.solr.IndexQueryUtils;
 import cz.cas.lib.arclib.index.solr.arclibxml.IndexedAipState;
 import cz.cas.lib.arclib.index.solr.arclibxml.IndexedArclibXmlDocument;
 import cz.cas.lib.arclib.index.solr.arclibxml.IndexedArclibXmlStore;
-import cz.cas.lib.arclib.init.SolrTestRecordsInitializer;
-import cz.cas.lib.arclib.security.authorization.data.Permissions;
-import cz.cas.lib.arclib.security.authorization.data.UserRole;
+import cz.cas.lib.arclib.security.authorization.permission.Permissions;
+import cz.cas.lib.arclib.security.authorization.role.UserRole;
 import cz.cas.lib.arclib.security.user.UserDetailsImpl;
 import cz.cas.lib.arclib.store.AipQueryStore;
 import cz.cas.lib.arclib.store.ProducerStore;
@@ -22,6 +21,7 @@ import cz.cas.lib.core.index.dto.FilterOperation;
 import helper.ApiTest;
 import helper.DbTest;
 import helper.TransformerFactoryWorkaroundTest;
+import org.apache.commons.io.IOUtils;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.common.SolrInputDocument;
 import org.junit.*;
@@ -35,6 +35,8 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.annotation.Resource;
 import javax.inject.Inject;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -42,8 +44,6 @@ import java.nio.file.Paths;
 import java.util.*;
 
 import static cz.cas.lib.arclib.index.solr.arclibxml.IndexedArclibXmlDocument.*;
-import static cz.cas.lib.arclib.init.SolrTestRecordsInitializer.PRODUCER_ID;
-import static cz.cas.lib.arclib.init.SolrTestRecordsInitializer.USER_ID;
 import static helper.ThrowableAssertion.assertThrown;
 import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.assertThat;
@@ -55,6 +55,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 public class IndexIntegrationTest extends TransformerFactoryWorkaroundTest implements ApiTest {
 
+    public static final String USER_ID = "8ccec52b-fd85-49a4-bc0b-aaa56822701e";
     private Producer producer = new Producer(PRODUCER_ID);
     private User user = new User(USER_ID, producer, Set.of(new UserRole("ADMIN", "Admin role", Set.of(Permissions.ADMIN_PRIVILEGE))));
     private UserDetailsImpl userDetailsImpl = new UserDetailsImpl(user);
@@ -69,15 +70,13 @@ public class IndexIntegrationTest extends TransformerFactoryWorkaroundTest imple
     @Inject
     private AipApi api;
     @Inject
-    private IndexArclibXmlStore indexArclibXmlStore;
+    private IndexArclibXmlStore<IndexedArclibXmlDocument> indexArclibXmlStore;
     @Inject
     private UserStore userStore;
     @Inject
     private ProducerStore producerStore;
     @Inject
     private AipQueryStore aipQueryStore;
-    @Inject
-    private SolrTestRecordsInitializer solrTestRecordsInitializer;
 
     /**
      * Stops all Solr instances and starts a new one. Path environment variable must contain path to <i>solr</i> binary.
@@ -97,7 +96,13 @@ public class IndexIntegrationTest extends TransformerFactoryWorkaroundTest imple
 
     @Before
     public void beforeTest() throws IOException, SolrServerException, InterruptedException {
-        solrTestRecordsInitializer.init();
+        SimpleQuery query = new SimpleQuery();
+        query.addCriteria(Criteria.where("id"));
+        solrTemplate.delete(coreName, query);
+        solrTemplate.commit(coreName);
+
+        String arclibXml = IOUtils.toString(new FileInputStream(new File("src/test/resources/arclibXmls/arclibXml.xml")));
+
         producerStore.save(producer);
         userStore.save(user);
         api.setUserDetails(userDetailsImpl);
@@ -140,7 +145,7 @@ public class IndexIntegrationTest extends TransformerFactoryWorkaroundTest imple
 
     @Test
     public void testCreateIndex() throws Exception {
-        String arclibXml = new String(Files.readAllBytes(Paths.get("src/main/resources/sampleData/8b/2e/fa/8b2efafd-b637-4b97-a8f7-1b97dd4ee622_xml_2")), StandardCharsets.UTF_8);
+        String arclibXml = new String(Files.readAllBytes(Paths.get("src/test/resources/arclibXmls/arclibXml.xml")), StandardCharsets.UTF_8);
         indexArclibXmlStore.createIndex(arclibXml.getBytes(), "otherproducer", "", "", null, false, true);
         SimpleQuery q = new SimpleQuery();
         q.addCriteria(Criteria.where(IndexedArclibXmlDocument.PRODUCER_ID).in("otherproducer").and("type").in("Periodical"));
@@ -190,7 +195,7 @@ public class IndexIntegrationTest extends TransformerFactoryWorkaroundTest imple
     @Ignore
     @Test
     public void testQueryMultiValues() throws Exception {
-        String arclibXml = new String(Files.readAllBytes(Paths.get("system/src/main/resources/sampleData/8b/2e/fa/8b2efafd-b637-4b97-a8f7-1b97dd4ee622_xml_2")), StandardCharsets.UTF_8);
+        String arclibXml = new String(Files.readAllBytes(Paths.get("system/src/main/resources/arclibXmls/arclibXml.xml")), StandardCharsets.UTF_8);
         indexArclibXmlStore.createIndex(arclibXml.getBytes(), PRODUCER_ID, "", "", null, false, false);
         mvc(api).perform(get("/api/aip/list")
                 .param("filter[0].field", "dublin_core")

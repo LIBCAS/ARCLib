@@ -75,7 +75,7 @@ import static cz.cas.lib.core.util.Utils.asSet;
 @Slf4j
 public class IndexedArclibXmlStore implements IndexArclibXmlStore<IndexedArclibXmlDocument> {
     /**
-     * Configuration parsed from CSV. Name of the parent/child {@link IndexQueryUtils#TYPE_FIELD} and its config as a value.
+     * Configuration parsed from CSV. Name of the parent/child type as key (e.g. arclibXmlMainIndex for main doc or extracted_format for particular nested doc) and its config as a value.
      */
     private Map<String, ArclibXmlIndexTypeConfig> ARCLIB_XML_COLLECTION_CONFIG = new HashMap<>();
 

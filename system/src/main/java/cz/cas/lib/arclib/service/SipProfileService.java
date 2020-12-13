@@ -5,7 +5,7 @@ import cz.cas.lib.arclib.domain.profiles.SipProfile;
 import cz.cas.lib.arclib.domainbase.exception.ForbiddenOperation;
 import cz.cas.lib.arclib.dto.SipProfileDto;
 import cz.cas.lib.arclib.exception.BadRequestException;
-import cz.cas.lib.arclib.security.authorization.data.Permissions;
+import cz.cas.lib.arclib.security.authorization.permission.Permissions;
 import cz.cas.lib.arclib.security.user.UserDetails;
 import cz.cas.lib.arclib.store.SipProfileStore;
 import cz.cas.lib.core.store.Transactional;
@@ -27,15 +27,6 @@ public class SipProfileService {
     private BeanMappingService beanMappingService;
     private UserDetails userDetails;
 
-    @Transactional
-    public SipProfile save(SipProfile sipProfile) {
-        SipProfile sipProfileFound = store.find(sipProfile.getId());
-        if (sipProfileFound != null && !sipProfileFound.isEditable()) {
-            throw new ForbiddenOperation(SipProfile.class, sipProfile.getId());
-        }
-        return store.save(sipProfile);
-    }
-
     /**
      * Validates field {@link SipProfile#xsl} against XSD and in case of success saves sip profile
      *
@@ -43,7 +34,7 @@ public class SipProfileService {
      * @return saved sip profile
      */
     @Transactional
-    public SipProfile validateAndSave(SipProfile sipProfile) throws DocumentException {
+    public SipProfile save(SipProfile sipProfile) throws DocumentException {
         if (!hasRole(userDetails, Permissions.SUPER_ADMIN_PRIVILEGE)) {
             sipProfile.setProducer(new Producer(userDetails.getProducerId()));
         } else {
@@ -52,9 +43,15 @@ public class SipProfileService {
 
         SAXReader reader = new SAXReader();
         reader.read(new ByteArrayInputStream(sipProfile.getXsl().getBytes(StandardCharsets.UTF_8)));
-        return save(sipProfile);
-    }
 
+        SipProfile sipProfileFound = store.find(sipProfile.getId());
+        if (sipProfileFound != null && !sipProfileFound.isEditable()) {
+            throw new ForbiddenOperation(SipProfile.class, sipProfile.getId());
+        }
+
+        sipProfile.setEditable(true);
+        return store.save(sipProfile);
+    }
 
     public Collection<SipProfileDto> listSipProfileDtos() {
         Collection<SipProfile> all = this.findFilteredByProducer();

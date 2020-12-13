@@ -9,7 +9,11 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.BatchSize;
 
-import javax.persistence.*;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.ManyToOne;
+import javax.persistence.Table;
+import javax.validation.constraints.NotNull;
 
 /**
  * Profil dodávateľa
@@ -36,18 +40,21 @@ public class ProducerProfile extends NamedObject {
      * Dodávateľ
      */
     @ManyToOne
+    @NotNull
     private Producer producer;
 
     /**
      * Validačný profil
      */
     @ManyToOne
+    @NotNull
     private ValidationProfile validationProfile;
 
     /**
      * SIP profil
      */
     @ManyToOne
+    @NotNull
     private SipProfile sipProfile;
 
     /**
@@ -59,7 +66,8 @@ public class ProducerProfile extends NamedObject {
     /**
      * Definícia ingest workflow vo formáte BPMN
      */
-    @ManyToOne(cascade = CascadeType.PERSIST)
+    @ManyToOne
+    @NotNull
     private WorkflowDefinition workflowDefinition;
 
     /**

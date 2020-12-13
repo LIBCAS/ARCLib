@@ -1,22 +1,17 @@
 package cz.cas.lib.arclib.api;
 
 import cz.cas.lib.arclib.index.solr.ReindexService;
-import cz.cas.lib.arclib.init.PostInitializer;
-import cz.cas.lib.arclib.service.arclibxml.SampleArclibXmlsGenerator;
+import cz.cas.lib.arclib.security.authorization.permission.Permissions;
 import cz.cas.lib.core.store.Transactional;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
 import lombok.extern.slf4j.Slf4j;
-import org.dom4j.DocumentException;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.inject.Inject;
-import java.io.IOException;
-import java.sql.SQLException;
 
 @RestController
 @Api(value = "administration", description = "Api for administration purposes")
@@ -27,63 +22,33 @@ public class AdministrationApi {
 
     @Inject
     private ReindexService solrReindexService;
-    @Inject
-    private PostInitializer postInitializer;
-    @Inject
-    private SampleArclibXmlsGenerator sampleArclibXmlsGenerator;
 
-    @ApiOperation(value = "deletes all old index records and creates index for all entities in db", notes = "arclibxml and format entities are omitted as there are too many records")
+    @ApiOperation(value = "deletes all old index records and creates index for all entities in db [Perm.REINDEX_ELIGIBILITY]",
+            notes = "arclibxml and format entities are omitted as there are too many records")
+    @PreAuthorize("hasAuthority('" + Permissions.REINDEX_ELIGIBILITY + "')")
     @RequestMapping(value = "/reindex/core", method = RequestMethod.POST)
     public void reindexCore() {
         solrReindexService.dropReindexAll();
     }
 
-    @ApiOperation(value = "creates index for all arclibxmls")
+    @ApiOperation(value = "creates index for all arclibxmls [Perm.REINDEX_ELIGIBILITY]")
+    @PreAuthorize("hasAuthority('" + Permissions.REINDEX_ELIGIBILITY + "')")
     @RequestMapping(value = "/reindex/arclib_xml", method = RequestMethod.POST)
     public void reindexArclibXml() {
         solrReindexService.reindexArclibXml();
     }
 
-    @ApiOperation(value = "deletes all old Format index records and creates index for all Format entities in db")
+    @ApiOperation(value = "deletes all old Format index records and creates index for all Format entities in db [Perm.REINDEX_ELIGIBILITY]")
+    @PreAuthorize("hasAuthority('" + Permissions.REINDEX_ELIGIBILITY + "')")
     @RequestMapping(value = "/reindex/format", method = RequestMethod.POST)
     public void reindexFormat() {
         solrReindexService.dropReindexFormat();
     }
 
-    @ApiOperation(value = "deletes all old Format definition index records and creates index for all Format definition entities in db")
+    @ApiOperation(value = "deletes all old Format definition index records and creates index for all Format definition entities in db [Perm.REINDEX_ELIGIBILITY]")
+    @PreAuthorize("hasAuthority('" + Permissions.REINDEX_ELIGIBILITY + "')")
     @RequestMapping(value = "/reindex/format_definition", method = RequestMethod.POST)
     public void reindexFormatDefinition() {
         solrReindexService.dropReindexFormatDefinition();
-    }
-
-    @ApiOperation(value = "WARNING: deletes current data and fills test data", notes = "cleans workspace, bpm engine, database and index and fills db&index with testing data ...does not affect archival storage")
-    @RequestMapping(value = "/initialize_with_test_data", method = RequestMethod.POST)
-    public void initializeWithTestData() throws IOException, SQLException {
-        postInitializer.initializeWithTestData();
-    }
-
-    @ApiOperation(value = "WARNING: generates new arclib xml sample data and rewrites DB initialization script",
-            notes = "generates arclib xml sample data according to the provided arclib xml")
-    @RequestMapping(value = "/generate_sample_arclib_xmls", method = RequestMethod.POST)
-    public void generateSampleArclibXmls(@ApiParam(value = "Path to sample ArclibXml", required = true)
-                                         @RequestParam("path_to_sample_arclib_xml") String pathToSampleArclibXml)
-            throws IOException, DocumentException {
-        sampleArclibXmlsGenerator.generateSampleXmls(pathToSampleArclibXml);
-    }
-
-    @ApiOperation(value = "WARNING: updates sample arclib xml data at archival storage")
-    @RequestMapping(value = "/update_sample_archival_storage_data", method = RequestMethod.POST)
-    public void updateSampleDataAtArchivalStorage(@ApiParam(value = "Path to sample data folder", required = true)
-                                                  @RequestParam("path_to_sample_data") String pathToSampleData,
-                                                  @ApiParam(value = "Path to archival storage data folder", required = true)
-                                                  @RequestParam("path_to_archival_storage_data") String pathToArchivalStorageData) {
-        SampleArclibXmlsGenerator.updateSampleDataAtArchivalStorage(pathToSampleData, pathToArchivalStorageData);
-    }
-
-    @ApiOperation(value = "WARNING: deletes all data at archival storage")
-    @RequestMapping(value = "/clean_up_archival_storage_data", method = RequestMethod.POST)
-    public void cleanUpDataAtArchivalStorage(@ApiParam(value = "Path to archival storage data folder", required = true)
-                                             @RequestParam("path_to_archival_storage_data") String pathToArchivalStorageData) {
-        SampleArclibXmlsGenerator.cleanUpDataAtArchivalStorage(pathToArchivalStorageData);
     }
 }

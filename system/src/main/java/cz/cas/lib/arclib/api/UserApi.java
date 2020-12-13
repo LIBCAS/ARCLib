@@ -5,7 +5,7 @@ import cz.cas.lib.arclib.domainbase.exception.ConflictException;
 import cz.cas.lib.arclib.domainbase.exception.MissingObject;
 import cz.cas.lib.arclib.dto.UserCreateOrUpdateDto;
 import cz.cas.lib.arclib.dto.UserFullnameDto;
-import cz.cas.lib.arclib.security.authorization.data.Permissions;
+import cz.cas.lib.arclib.security.authorization.permission.Permissions;
 import cz.cas.lib.arclib.security.user.UserDetails;
 import cz.cas.lib.arclib.service.UserService;
 import cz.cas.lib.core.index.dto.Filter;

@@ -2,10 +2,11 @@ package cz.cas.lib.arclib.service;
 
 import cz.cas.lib.arclib.domain.Producer;
 import cz.cas.lib.arclib.domain.ingestWorkflow.WorkflowDefinition;
+import cz.cas.lib.arclib.domainbase.exception.ForbiddenOperation;
 import cz.cas.lib.arclib.dto.WorkflowDefinitionDto;
 import cz.cas.lib.arclib.exception.BadRequestException;
 import cz.cas.lib.arclib.exception.ForbiddenException;
-import cz.cas.lib.arclib.security.authorization.data.Permissions;
+import cz.cas.lib.arclib.security.authorization.permission.Permissions;
 import cz.cas.lib.arclib.security.user.UserDetails;
 import cz.cas.lib.arclib.store.WorkflowDefinitionStore;
 import cz.cas.lib.core.store.Transactional;
@@ -37,6 +38,13 @@ public class WorkflowDefinitionService {
 
         if (entity.getBpmnDefinition() != null && entity.getBpmnDefinition().contains("camunda:jobPriority"))
             throw new ForbiddenException("BPMN definition can't contain job prioritization (camunda:jobPriority)");
+
+        WorkflowDefinition workflowDefinitionFound = store.find(entity.getId());
+        if (workflowDefinitionFound != null && !workflowDefinitionFound.isEditable()) {
+            throw new ForbiddenOperation(WorkflowDefinition.class, entity.getId());
+        }
+
+        entity.setEditable(true);
         return store.save(entity);
     }
 

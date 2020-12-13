@@ -134,7 +134,7 @@ public class FixityCheckerDelegateTest {
         Files.createDirectories(WS);
 
         bagProfile.setPackageType(PackageType.BAGIT);
-        bagProfile.setSipMetadataPathGlobPattern("bag-info.txt");
+        bagProfile.setSipMetadataPathRegex("bag-info.txt");
         bagProfile.setExternalId("BAG");
         when(sipProfileStore.findByExternalId(eq(bagProfile.getExternalId()))).thenReturn(bagProfile);
 
@@ -144,7 +144,7 @@ public class FixityCheckerDelegateTest {
         when(ingestWorkflowStore.findByExternalId(EXTERNAL_ID)).thenReturn(ingestWorkflow);
 
         metsProfile.setPackageType(PackageType.METS);
-        metsProfile.setSipMetadataPathGlobPattern("METS_KPW01169310.xml");
+        metsProfile.setSipMetadataPathRegex("METS_KPW01169310.xml");
         metsProfile.setExternalId("METS");
         when(sipProfileStore.findByExternalId(eq(metsProfile.getExternalId()))).thenReturn(metsProfile);
 

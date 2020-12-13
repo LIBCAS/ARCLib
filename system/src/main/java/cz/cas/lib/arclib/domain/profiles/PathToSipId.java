@@ -20,8 +20,8 @@ public class PathToSipId {
     /**
      * Cesta k XML súboru obsahujúcemu autorské ID vo forme glob vzoru
      */
-    @Column(name = "authorial_id_file_path_glob_pattern")
-    private String pathToXmlGlobPattern;
+    @Column(name = "authorial_id_file_path_regex")
+    private String pathToXmlRegex;
 
     /**
      * XPath k uzlu s autorským ID v rámci XML suboru

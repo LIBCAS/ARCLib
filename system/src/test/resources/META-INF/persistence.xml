@@ -23,11 +23,9 @@
         <class>cz.cas.lib.arclib.domain.HashType</class>
         <class>cz.cas.lib.arclib.domain.Hash</class>
         <class>cz.cas.lib.core.scheduling.job.Job</class>
-        <class>cz.cas.lib.arclib.security.authorization.deprecated.assign.AssignedRole</class>
-        <class>cz.cas.lib.arclib.security.authorization.deprecated.Role</class>
         <class>cz.cas.lib.arclib.domain.AipQuery</class>
         <class>cz.cas.lib.arclib.domain.User</class>
-        <class>cz.cas.lib.arclib.security.authorization.data.UserRole</class>
+        <class>cz.cas.lib.arclib.security.authorization.role.UserRole</class>
         <class>cz.cas.lib.arclib.domain.packages.Sip</class>
         <class>cz.cas.lib.arclib.domain.packages.AuthorialPackage</class>
         <class>cz.cas.lib.arclib.domain.packages.AuthorialPackageUpdateLock</class>

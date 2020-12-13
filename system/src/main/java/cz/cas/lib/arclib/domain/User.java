@@ -1,8 +1,8 @@
 package cz.cas.lib.arclib.domain;
 
 import cz.cas.lib.arclib.domainbase.domain.DatedObject;
-import cz.cas.lib.arclib.security.authorization.data.Permissions;
-import cz.cas.lib.arclib.security.authorization.data.UserRole;
+import cz.cas.lib.arclib.security.authorization.permission.Permissions;
+import cz.cas.lib.arclib.security.authorization.role.UserRole;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;

@@ -24,6 +24,7 @@ spring:
     serialization:
       write-dates-as-timestamps: false
   liquibase:
+    enabled: true
     changeLog: classpath:/dbchangelog.arclib.xml
     url: jdbc:postgresql://localhost:5432/arclib
   mail:
@@ -127,8 +128,6 @@ solr:
   endpoint: http://localhost:8983/solr
   arclibxml:
     corename: arclibXmlC
-env: production
-jmsCommunicationRole: coordinator
 archivalStorage:
   debugLocation: arcStorageData
 formatLibrary:

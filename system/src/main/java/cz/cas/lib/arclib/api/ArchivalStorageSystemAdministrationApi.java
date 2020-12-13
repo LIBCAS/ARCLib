@@ -1,6 +1,6 @@
 package cz.cas.lib.arclib.api;
 
-import cz.cas.lib.arclib.security.authorization.data.Permissions;
+import cz.cas.lib.arclib.security.authorization.permission.Permissions;
 import cz.cas.lib.arclib.service.archivalStorage.ArchivalStoragePipe;
 import io.swagger.annotations.*;
 import lombok.extern.slf4j.Slf4j;

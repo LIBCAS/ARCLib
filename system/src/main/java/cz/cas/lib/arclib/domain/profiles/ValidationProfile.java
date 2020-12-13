@@ -40,7 +40,14 @@ public class ValidationProfile extends NamedObject {
     @Column(length = 10485760)
     private String xml;
 
+    /**
+     * Validačný profil je možné editovať
+     */
+    private boolean editable;
+
+
     public ValidationProfile(String xml) {
         this.xml = xml;
     }
+
 }

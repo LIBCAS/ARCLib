@@ -1,6 +1,6 @@
 package cz.cas.lib.core.security;
 
-import cz.cas.lib.arclib.security.authorization.logic.CustomAccessDeniedHandler;
+import cz.cas.lib.arclib.security.authorization.business.CustomAccessDeniedHandler;
 import cz.cas.lib.core.security.basic.BasicAuthenticationFilter;
 import cz.cas.lib.core.security.jwt.JwtFilter;
 import cz.cas.lib.core.security.jwt.JwtPostFilter;

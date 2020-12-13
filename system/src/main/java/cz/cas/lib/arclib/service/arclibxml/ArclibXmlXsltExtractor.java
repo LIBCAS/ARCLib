@@ -21,7 +21,7 @@ import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
 
-import static cz.cas.lib.core.util.Utils.listFilesMatchingGlobPattern;
+import static cz.cas.lib.core.util.Utils.listFilesMatchingRegex;
 
 @Slf4j
 @Service
@@ -46,16 +46,15 @@ public class ArclibXmlXsltExtractor {
         String externalId = (String) bpmVariables.get(BpmConstants.ProcessVariables.ingestWorkflowExternalId);
         Path sipFolderWorkspacePath = Paths.get((String) bpmVariables.get(BpmConstants.ProcessVariables.sipFolderWorkspacePath));
 
-        String sipMetadataPathGlobPattern = sipProfile.getSipMetadataPathGlobPattern();
+        String sipMetadataPathRegex = sipProfile.getSipMetadataPathRegex();
         Path pathToSipAbsolute = sipFolderWorkspacePath.toAbsolutePath();
 
-        List<File> matchingFiles = listFilesMatchingGlobPattern(new File(pathToSipAbsolute.toString()), sipMetadataPathGlobPattern);
+        List<File> matchingFiles = listFilesMatchingRegex(new File(pathToSipAbsolute.toString()), sipMetadataPathRegex);
         if (matchingFiles.size() == 0)
-            throw new GeneralException("File with metadata for ingest workflow with external id "
-                    + externalId + " does not exist at path given by glob pattern: " + sipMetadataPathGlobPattern);
+            throw new GeneralException(String.format("File with metadata for ingest workflow with external id %s does not exist at path given by regex: %s", externalId, sipMetadataPathRegex));
 
-        if (matchingFiles.size() > 1) throw new GeneralException("Multiple files found " +
-                "at the path given by regex: " + sipMetadataPathGlobPattern);
+        if (matchingFiles.size() > 1)
+            throw new GeneralException(String.format("Multiple files found at the path given by regex: %s", sipMetadataPathRegex));
 
         File metadataFile = matchingFiles.get(0);
         String sipProfileXsd = sipProfile.getXsl();

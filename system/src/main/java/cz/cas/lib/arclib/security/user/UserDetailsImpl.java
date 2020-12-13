@@ -2,7 +2,7 @@ package cz.cas.lib.arclib.security.user;
 
 import cz.cas.lib.arclib.domain.Producer;
 import cz.cas.lib.arclib.domain.User;
-import cz.cas.lib.arclib.security.authorization.data.UserRole;
+import cz.cas.lib.arclib.security.authorization.role.UserRole;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
@@ -20,14 +20,6 @@ public class UserDetailsImpl implements UserDetails {
 
     @NotNull
     private User user;
-
-    // Basic YXJjLWJvYjphdXJhMjRncm9ncw==
-    // TODO: vytvorit permissions pre vsetky moduly, priradit permissions nad API, upravit testy
-    // TODO: odstranit stare Roles, assignedrole, servicy, endpointy atd
-    // TODO zmenit tu metodu ktora sa odkazuje na Roles.SUPER_ADMIN atd na Permissions
-    public UserDetailsImpl(@NonNull User user, Collection<? extends GrantedAuthority> ignored) {
-        this.user = user;
-    }
 
     public UserDetailsImpl(@NonNull User user) {
         this.user = user;

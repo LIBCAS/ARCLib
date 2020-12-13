@@ -23,7 +23,7 @@ public class ArclibXmlValidatorTest {
 
     private static String ARCLIB_XML_DEFINITION = "index/arclibXmlDefinition.csv";
 
-    private static String ARCLIB_XML = "sampleData/8b/2e/fa/8b2efafd-b637-4b97-a8f7-1b97dd4ee622_xml_2";
+    private static String ARCLIB_XML = "arclibXmls/arclibXml.xml";
 
     private static String INVALID_ARCLIB_XML_MISSING_METS_HDR =
             "arclibXmls/invalidArclibXmlMissingMetsHdr.xml";
