@@ -86,7 +86,7 @@ public class FormatIdentificationDelegate extends ArclibDelegate {
     public FormatIdentificationTool initialize(JsonNode root, IngestWorkflow iw, int formatIdentificationToolCounter) throws ConfigParserException {
         FormatIdentificationToolType formatIdentificationToolType = parseEnumFromConfig(root,
                 FORMAT_IDENTIFICATON_TOOL_EXPR + "/" + formatIdentificationToolCounter + IDENTIFIER_TYPE_EXPR,
-                FormatIdentificationToolType.class);
+                FormatIdentificationToolType.class,true);
         FormatIdentificationTool tool;
         switch (formatIdentificationToolType) {
             case DROID:

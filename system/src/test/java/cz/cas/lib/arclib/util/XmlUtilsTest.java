@@ -3,7 +3,6 @@ package cz.cas.lib.arclib.util;
 import cz.cas.lib.arclib.domainbase.exception.GeneralException;
 import cz.cas.lib.arclib.exception.validation.SchemaValidationError;
 import cz.cas.lib.arclib.utils.XmlUtils;
-import helper.ThrowableAssertion;
 import org.apache.commons.io.IOUtils;
 import org.dom4j.InvalidXPathException;
 import org.junit.Test;
@@ -40,20 +39,20 @@ public class XmlUtilsTest {
     @Test
     public void findWithXPathTest() throws SAXException, ParserConfigurationException, IOException {
         NodeList withXPath = XmlUtils.findWithXPath(new FileInputStream(SIP_PATH + "/info.xml"),
-                "/info/created");
+                "/info/created", null);
         assertThat(withXPath.item(0).getTextContent(), is("2013-01-22T10:55:22"));
     }
 
     @Test
     public void findWithXPathInvalidXPathTest() {
         assertThrown(() -> XmlUtils.findWithXPath(new FileInputStream(SIP_PATH + "/info.xml"),
-                "///")).isInstanceOf(InvalidXPathException.class);
+                "///", null)).isInstanceOf(InvalidXPathException.class);
     }
 
     @Test
     public void xPathCheckExistentNode() throws SAXException, ParserConfigurationException, IOException {
         String pathToValidationProfile = getClass().getResource("/validation/validationProfileMixedChecks.xml").getPath();
-        NodeList nodeList = XmlUtils.findWithXPath(new FileInputStream(pathToValidationProfile), "/profile/rule");
+        NodeList nodeList = XmlUtils.findWithXPath(new FileInputStream(pathToValidationProfile), "/profile/rule", null);
 
         assertThat(nodeList.getLength(), is(4));
 
@@ -68,7 +67,7 @@ public class XmlUtilsTest {
             IOException {
         String pathToValidationProfile = getClass().getResource("/validation/validationProfileMixedChecks.xml").getPath();
         NodeList nodeList = XmlUtils.findWithXPath(new FileInputStream(pathToValidationProfile),
-                "/profile/nonExistentTag");
+                "/profile/nonExistentTag", null);
 
         assertThat(nodeList.getLength(), is(0));
     }
@@ -89,7 +88,7 @@ public class XmlUtilsTest {
 
         String validationProfilePath = getClass().getResource("/validation/validationProfileInvalidProfile.xml").getPath();
 
-        ThrowableAssertion.assertThrown(() -> XmlUtils.validateWithXMLSchema(IOUtils.toString(new FileInputStream(validationProfilePath)),
+        assertThrown(() -> XmlUtils.validateWithXMLSchema(IOUtils.toString(new FileInputStream(validationProfilePath)),
                 new InputStream[]{new FileInputStream(xsdPath)}, "")).isInstanceOf(GeneralException.class);
     }
 
@@ -99,7 +98,7 @@ public class XmlUtilsTest {
 
         String validationProfilePath = getClass().getResource("/validation/validationProfileMixedChecks.xml").getPath();
 
-        ThrowableAssertion.assertThrown(() -> XmlUtils.validateWithXMLSchema(IOUtils.toString(new FileInputStream(validationProfilePath)),
+        assertThrown(() -> XmlUtils.validateWithXMLSchema(IOUtils.toString(new FileInputStream(validationProfilePath)),
                 new InputStream[]{new FileInputStream(xsdPath)}, "")).isInstanceOf(SchemaValidationError.class);
     }
 }

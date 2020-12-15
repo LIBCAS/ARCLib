@@ -3,6 +3,7 @@ package cz.cas.lib.arclib.service.archivalStorage;
 import cz.cas.lib.arclib.domainbase.exception.GeneralException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -151,50 +152,16 @@ public class ArchivalStorageServiceDebug {
         log.debug("AIP: " + sipId + " successfully updated at archival storage.");
     }
 
-//    /**
-//     * Physicaly removes SIP from archival storage.
-//     *
-//     * @param aipId id of the AIP
-//     */
-//    public void delete(String aipId) {
-//        log.debug("Deleting AIP: " + aipId + " at archival storage.");
-//        try {
-//            Files.delete(arcStorageData.resolve(aipId));
-//        } catch (IOException e) {
-//            throw new GeneralException("Deleting of SIP " + aipId + " at archival storage failed. Reason: " + e.getMessage());
-//        }
-//        log.debug("SIP " + aipId + " has been deleted from archival storage.");
-//    }
-//
-//    /**
-//     * Logically removes SIP from archival storage.
-//     *
-//     * @param aipId id of the SIP
-//     */
-//    public void remove(String aipId) {
-//        log.debug("Removing AIP: " + aipId + " at archival storage.");
-//
-//        if (arcStorageData.resolve(aipId).toFile().renameTo(arcStorageData.resolve(aipId + ".REMOVED").toFile())) {
-//            log.info("SIP " + aipId + " has been removed from archival storage.");
-//        } else {
-//            throw new GeneralException("SIP " + aipId + " has failed to be removed from archival storage.");
-//        }
-//    }
-//
-//    /**
-//     * Renews logically removed AIP.
-//     *
-//     * @param aipId id of the AIP
-//     */
-//    public void renew(String aipId) {
-//        log.debug("Renewing AIP: " + aipId + " at archival storage.");
-//
-//        if (arcStorageData.resolve(aipId + ".REMOVED").toFile().renameTo(arcStorageData.resolve(aipId).toFile())) {
-//            log.debug("AIP " + aipId + " has been renewed at archival storage.");
-//        } else {
-//            throw new GeneralException("SIP " + aipId + " has failed to be renewed at archival storage.");
-//        }
-//    }
+    public void deleteSipAndItsXmlsFromWorkspace(String sipId) throws IOException {
+        Files.list(arcStorageData).filter(f -> FilenameUtils.getName(f.toString()).startsWith(sipId)).forEach(f ->
+        {
+            try {
+                Files.deleteIfExists(f);
+            } catch (IOException e) {
+                throw new UncheckedIOException("workspace cleanup failed during deletion of file: " + f.toString(), e);
+            }
+        });
+    }
 
     /**
      * Returns the AIP state at the archival storage.

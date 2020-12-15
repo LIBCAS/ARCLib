@@ -1,7 +1,6 @@
 package cz.cas.lib.arclib.domain.profiles;
 
 import cz.cas.lib.arclib.domain.Producer;
-import cz.cas.lib.arclib.domain.packages.PackageType;
 import cz.cas.lib.arclib.domainbase.domain.NamedObject;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -10,7 +9,6 @@ import lombok.Setter;
 import org.hibernate.annotations.BatchSize;
 
 import javax.persistence.*;
-import javax.validation.constraints.NotNull;
 
 /**
  * Sip profil
@@ -52,13 +50,6 @@ public class SipProfile extends NamedObject {
      */
     @Column(length = 10485760)
     private String sipMetadataPathRegex;
-
-    /**
-     * Typ SIP balíku
-     */
-    @Enumerated(EnumType.STRING)
-    @NotNull
-    private PackageType packageType;
 
     /**
      * Profil je možné editovať

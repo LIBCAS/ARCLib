@@ -81,7 +81,8 @@ public class DebugApi {
     }
 
     @ApiOperation(value = "Deletes authorial package." +
-            "Also deletes all child entities (SIPs, IWs) and for each IW, if it was the only one in the batch deletes also the batch. [Perm.BATCH_PROCESSING_WRITE]",
+            "Also deletes all child entities (SIPs, IWs) and for each IW, if it was the only one in the batch deletes also the batch. " +
+            "Also deletes debug files from workspace. [Perm.BATCH_PROCESSING_WRITE]",
             notes = "Applicable only for authorial packages processed using a producer profile in the debugging mode.")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Successful response"),
@@ -89,7 +90,7 @@ public class DebugApi {
     @PreAuthorize("hasAuthority('" + Permissions.BATCH_PROCESSING_WRITE + "')")
     @RequestMapping(value = "/authorial_package/{authorialPackageId}/forget", method = RequestMethod.PUT)
     public void forgetAuthorialPackage(@ApiParam(value = "Id of the authorial package to forget", required = true)
-                                       @PathVariable("authorialPackageId") String authorialPackageId) {
+                                       @PathVariable("authorialPackageId") String authorialPackageId) throws IOException {
         authorialPackageService.forgetAuthorialPackage(authorialPackageId);
     }
 

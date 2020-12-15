@@ -29,10 +29,11 @@ import static java.nio.file.Files.*;
  */
 @Slf4j
 @Service
-public class FileRepository {
-    private FileRefStore store;
+public class FileRefService {
 
+    private FileRefStore store;
     private String basePath;
+
 
     /**
      * Gets a single file for specified id.
@@ -114,7 +115,7 @@ public class FileRepository {
      * Gets the {@link FileRef} without opening the content stream.
      *
      * <p>
-     * Developer can later open the {@link FileRef#stream} with {@link FileRepository#reset(FileRef)}.
+     * Developer can later open the {@link FileRef#stream} with {@link #reset}.
      * </p>
      *
      * @param id Id of the file
@@ -155,7 +156,7 @@ public class FileRepository {
         FileRef ref = new FileRef();
         ref.setName(name);
         ref.setContentType(contentType);
-        ref.setIndexedContent(false);
+        ref.setIndexedContent(indexContent);
 
         checked(() -> {
             Path folder = Paths.get(basePath);
@@ -200,6 +201,8 @@ public class FileRepository {
 
     /**
      * Specifies the path on file system, where the files should be saved.
+     *
+     * Destination folder is shared with files from PreservationPlanFileRefService.
      *
      * @param basePath Path on file system
      */

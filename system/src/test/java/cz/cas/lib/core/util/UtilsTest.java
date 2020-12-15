@@ -310,7 +310,11 @@ public class UtilsTest {
     @Test
     public void listFilesMatchingRegex() throws IOException {
         File root = new File("src/test/resources/SIP_package");
-        List<File> files = Utils.listFilesMatchingRegex(root, "BAG/bah*git.txt");
+        List<File> files = Utils.listFilesMatchingRegex(root, "BAG/bah*git.txt", false);
+        assertThat(files, hasSize(1));
+
+        root = new File("src/test/resources/SIP_package");
+        files = Utils.listFilesMatchingRegex(root, "SIP_package/BAG/bah*git.txt", true);
         assertThat(files, hasSize(1));
     }
 }

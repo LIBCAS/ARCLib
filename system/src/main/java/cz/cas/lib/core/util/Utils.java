@@ -525,16 +525,22 @@ public class Utils {
     /**
      * Lists files matching regex
      *
-     * @param root  root directory
-     * @param regex regex - relative path from the root to the file, using / (slash) as dir separator, e.g. <em>subfolder/.+/bo*m</em> to find <em>bm</em> or <em>booom</em> somewhere in <em>subfolder</em>
+     * @param root                      root directory
+     * @param regex                     regex - relative path from the root to the file, using / (slash) as dir separator, e.g. <em>subfolder/.+/bo*m</em> to find <em>bm</em> or <em>booom</em> somewhere in <em>subfolder</em>
+     * @param startRegexWithRootDirName if true, then the regex must match the root dir name first..example: to find file at path fox/file.xml (fox = root dir)
+     *                                  <ul>
+     *                                      <li>if startRegexWithRootDirName=true, regex could be: <em>fox\/\w+.xml</em></li>
+     *                                      <li>if startRegexWithRootDirName=true, regex could be: <em>\w+.xml</em></li>
+     *                                  </ul>
      * @return list of files matching regex
      */
-    public static List<File> listFilesMatchingRegex(File root, String regex) throws IOException {
+    public static List<File> listFilesMatchingRegex(File root, String regex, boolean startRegexWithRootDirName) throws IOException {
         if (!root.isDirectory()) {
             throw new IllegalArgumentException(root + " is no directory.");
         }
+        String prefix = startRegexWithRootDirName ? "/"+root.getName() : "";
         return Files.walk(root.toPath()).filter(f -> {
-            String relativePathWithLinuxSeparators = f.toAbsolutePath().toString().replace(root.toPath().toAbsolutePath().toString(), "").replace("\\", "/");
+            String relativePathWithLinuxSeparators = prefix + f.toAbsolutePath().toString().replace(root.toPath().toAbsolutePath().toString(), "").replace("\\", "/");
             if (relativePathWithLinuxSeparators.length() < 1)
                 return false;
             return relativePathWithLinuxSeparators.substring(1).matches(regex);

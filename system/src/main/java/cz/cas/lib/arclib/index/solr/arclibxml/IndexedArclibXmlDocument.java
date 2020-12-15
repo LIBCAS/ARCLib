@@ -26,20 +26,15 @@ import static cz.cas.lib.core.index.solr.IndexField.STRING_SUFFIX;
 @SolrDocument
 public class IndexedArclibXmlDocument implements Serializable {
 
-    /**
-     * names of fields in SOLR required for application logic
-     */
+    //names of fields in SOLR required for application logic
     public static final String PRODUCER_ID = "producer_id";
     public static final String PRODUCER_NAME = "producer_name";
     public static final String USER_NAME = "user_name";
-    public static final String CONTENT = "document";
     public static final String DEBUG_MODE = "debug_mode";
     public static final String AIP_STATE = "aip_state";
     public static final String MAIN_INDEX_TYPE_VALUE = "arclibXmlMainIndex";
 
-    /**
-     * these are also stored in ARCLib XML
-     */
+    //these are also stored in ARCLib XML
     public static final String ID = "id";
     public static final String SIP_ID = "sip_id";
     public static final String SIP_VERSION_NUMBER = "sip_version_number";
@@ -49,6 +44,13 @@ public class IndexedArclibXmlDocument implements Serializable {
     public static final String CREATED = "created";
     public static final String AUTHORIAL_ID = "authorial_id";
     public static final String LATEST = "latest";
+
+    //special fields of the element nested collection
+    public static final String ELEMENT_INDEX_TYPE_VALUE = "element";
+    public static final String ELEMENT_NAME = "element_name";
+    public static final String ELEMENT_CONTENT = "element_content";
+    public static final String ELEMENT_ATTRIBUTE_NAMES = "element_attribute_names";
+    public static final String ELEMENT_ATTRIBUTE_VALUES = "element_attribute_values";
 
     /**
      * ID of the document, equal to id {@link IngestWorkflow#externalId}.
@@ -136,13 +138,6 @@ public class IndexedArclibXmlDocument implements Serializable {
     @Field(value = XML_VERSION_OF)
     @Indexed(type = IndexFieldType.STRING)
     private String xmlVersionOf;
-
-    /**
-     * concatenation of all text content of elements
-     */
-    @Field(value = CONTENT)
-    @Indexed(type = IndexFieldType.TEXT)
-    private String content;
 
     /**
      * State of the AIP at archival storage.

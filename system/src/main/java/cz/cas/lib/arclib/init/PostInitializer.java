@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.util.ISO8601DateFormat;
 import com.fasterxml.jackson.datatype.hibernate5.Hibernate5Module;
+import cz.cas.lib.arclib.domainbase.exception.ForbiddenObject;
 import cz.cas.lib.arclib.index.solr.ReindexService;
 import cz.cas.lib.arclib.mail.ArclibMailCenter;
 import cz.cas.lib.arclib.security.authorization.permission.Permissions;
@@ -37,6 +38,8 @@ import java.nio.file.Paths;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.HashMap;
+
+import static java.nio.file.Files.*;
 
 @Component
 @Slf4j
@@ -77,6 +80,8 @@ public class PostInitializer implements ApplicationListener<ContextRefreshedEven
     private JobService jobService;
     @Inject
     private TransactionTemplate transactionTemplate;
+    @Value("${spring.servlet.multipart.location}")
+    private String temporaryMultipartFilesLocation;
 
     @Override
     public void onApplicationEvent(ContextRefreshedEvent event) {
@@ -95,6 +100,8 @@ public class PostInitializer implements ApplicationListener<ContextRefreshedEven
         //set manually, not injected because of circular dependency
         customIncidentHandler.setIngestErrorHandler(ingestErrorHandler);
         customIncidentHandler.setBatchService(batchService);
+
+        createTemporaryMultipartFilesDirectory();
 
         log.debug("Arclib instance started successfully.");
     }
@@ -142,5 +149,23 @@ public class PostInitializer implements ApplicationListener<ContextRefreshedEven
         }
         job.setActive(true);
         transactionTemplate.execute(status -> jobService.save(job));
+    }
+
+    /**
+     * Create folder for temporary multipart files obtained from requests.
+     * Path is declared in application.yml
+     */
+    private void createTemporaryMultipartFilesDirectory() {
+        try {
+            Path folder = Paths.get(temporaryMultipartFilesLocation);
+            if (!isDirectory(folder) && exists(folder)) {
+                throw new ForbiddenObject(Path.class, temporaryMultipartFilesLocation);
+            } else if (!isDirectory(folder)) {
+                createDirectories(folder);
+                log.debug("Created folder for temporary multipart files.");
+            }
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
     }
 }

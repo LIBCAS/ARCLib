@@ -7,24 +7,28 @@ import cz.cas.lib.arclib.exception.bpm.IncidentException;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
-import javax.xml.XMLConstants;
-import javax.xml.namespace.NamespaceContext;
-import javax.xml.parsers.DocumentBuilderFactory;
+import javax.inject.Inject;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpressionException;
-import javax.xml.xpath.XPathFactory;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
+import static cz.cas.lib.arclib.utils.ArclibUtils.*;
+import static cz.cas.lib.arclib.utils.XmlUtils.createDomAndXpath;
 import static cz.cas.lib.core.util.Utils.notNull;
 
 @Slf4j
@@ -35,6 +39,7 @@ public class MetsFixityChecker extends FixityChecker {
     private String toolName = "ARCLib_mets_" + IngestToolFunction.fixity_check;
     @Getter
     private String toolVersion = null;
+    private Map<String, String> uris;
 
     /**
      * Verifies fixity of every file specified in METS filesec.
@@ -53,19 +58,19 @@ public class MetsFixityChecker extends FixityChecker {
         List<Path> invalidFixities = new ArrayList<>();
         List<Path> missingFiles = new ArrayList<>();
         Map<String, List<Path>> unsupportedChecksumTypes = new HashMap<>();
-        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-        factory.setNamespaceAware(true);
-        Document xml;
-        try {
-            xml = factory.newDocumentBuilder().parse(pathToMets.toString());
-        } catch (ParserConfigurationException | SAXException e) {
+
+        Pair<Document, XPath> domAndXpath;
+        try (FileInputStream fis = new FileInputStream(pathToMets.toFile())) {
+            domAndXpath = createDomAndXpath(fis, uris);
+        } catch (SAXException | ParserConfigurationException e) {
             throw new GeneralException(e);
         }
-        XPath xpath = getMetsXpath();
+        Document xmlDom = domAndXpath.getKey();
+        XPath xpath = domAndXpath.getValue();
 
         NodeList elems;
         try {
-            elems = (NodeList) xpath.evaluate("//METS:file", xml, XPathConstants.NODESET);
+            elems = (NodeList) xpath.evaluate("//METS:file", xmlDom, XPathConstants.NODESET);
         } catch (XPathExpressionException e) {
             throw new GeneralException(e);
         }
@@ -78,7 +83,7 @@ public class MetsFixityChecker extends FixityChecker {
                 Node fileLocItem = fileLocations.item(j);
                 if (!"METS:FLocat".equalsIgnoreCase(fileLocItem.getNodeName()))
                     continue;
-                String filePathStrFromMets = fileLocItem.getAttributes().getNamedItem("xlink:href").getNodeValue();
+                String filePathStrFromMets = fileLocItem.getAttributes().getNamedItem(XLINK + ":href").getNodeValue();
                 Path filePathInWs = filePathStrFromMets.startsWith("/")
                         ? sipWsPath.resolve(filePathStrFromMets).normalize().toAbsolutePath()
                         : pathToMets.getParent().resolve(filePathStrFromMets).normalize().toAbsolutePath();
@@ -126,33 +131,21 @@ public class MetsFixityChecker extends FixityChecker {
             invokeInvalidChecksumsIssue(sipWsPath, invalidFixities, externalId, configRoot, formatIdentificationResult);
     }
 
-    private XPath getMetsXpath() {
-        XPath xpath = XPathFactory.newInstance().newXPath();
+    /**
+     * Namespace URIs must match URIs in ARCLib XML file.
+     */
+    @Inject
+    public void setUris(@Value("${namespaces.mets}") String mets, @Value("${namespaces.xsi}") String xsi, @Value("${namespaces.arclib}") String arclib, @Value("${namespaces" +
+            ".premis}") String premis, @Value("${namespaces.oai_dc}") String oai_dc, @Value("${namespaces.dc}") String dc, @Value("${namespaces.xlink}") String xlink) {
+        Map<String, String> uris = new HashMap<>();
+        uris.put(METS, mets);
+        uris.put(ARCLIB, arclib);
+        uris.put(PREMIS, premis);
+        uris.put(XSI, xsi);
+        uris.put(OAIS_DC, oai_dc);
+        uris.put(DC, dc);
+        uris.put(XLINK, xlink);
 
-        xpath.setNamespaceContext(new NamespaceContext() {
-            public String getNamespaceURI(String prefix) {
-                if (prefix == null) {
-                    throw new IllegalArgumentException("No prefix provided!");
-                } else if (prefix.equals("METS")) {
-                    return "http://www.loc.gov/METS/";
-                } else if (prefix.equals("xlink")) {
-                    return "http://www.w3.org/1999/xlink";
-
-                } else {
-                    return XMLConstants.NULL_NS_URI;
-                }
-            }
-
-            public String getPrefix(String namespaceURI) {
-                // Not needed in this context.
-                return null;
-            }
-
-            public Iterator getPrefixes(String namespaceURI) {
-                // Not needed in this context.
-                return null;
-            }
-        });
-        return xpath;
+        this.uris = uris;
     }
 }

@@ -6,6 +6,7 @@ import cz.cas.lib.arclib.domain.packages.AuthorialPackage;
 import cz.cas.lib.arclib.domain.packages.Sip;
 import cz.cas.lib.arclib.domainbase.domain.DatedObject;
 import cz.cas.lib.arclib.index.IndexArclibXmlStore;
+import cz.cas.lib.arclib.service.archivalStorage.ArchivalStorageServiceDebug;
 import cz.cas.lib.arclib.store.AuthorialPackageStore;
 import cz.cas.lib.arclib.store.SipStore;
 import cz.cas.lib.core.store.Transactional;
@@ -13,6 +14,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import javax.inject.Inject;
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.util.*;
 
 @Service
@@ -24,6 +27,7 @@ public class AuthorialPackageService {
     private IndexArclibXmlStore indexArclibXmlStore;
     private SipStore sipStore;
     private AuthorialPackageStore authorialPackageStore;
+    private ArchivalStorageServiceDebug archivalStorageServiceDebug;
 
     @Transactional
     public void forgetAuthorialPackage(String authorialPackageId) {
@@ -55,6 +59,13 @@ public class AuthorialPackageService {
         AuthorialPackage authorialPackageToBeDeleted = new AuthorialPackage();
         authorialPackageToBeDeleted.setId(authorialPackageId);
         authorialPackageStore.hardDelete(authorialPackageToBeDeleted);
+        try {
+            for (Sip sip : sips) {
+                archivalStorageServiceDebug.deleteSipAndItsXmlsFromWorkspace(sip.getId());
+            }
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
         log.info("authorial package with database id: " + authorialPackageId + " successfully forgot");
     }
 
@@ -81,5 +92,10 @@ public class AuthorialPackageService {
     @Inject
     public void setAuthorialPackageStore(AuthorialPackageStore authorialPackageStore) {
         this.authorialPackageStore = authorialPackageStore;
+    }
+
+    @Inject
+    public void setArchivalStorageServiceDebug(ArchivalStorageServiceDebug archivalStorageServiceDebug) {
+        this.archivalStorageServiceDebug = archivalStorageServiceDebug;
     }
 }

@@ -7,7 +7,6 @@ import cz.cas.lib.arclib.bpm.BpmTestConfig;
 import cz.cas.lib.arclib.bpm.FixityCheckerDelegate;
 import cz.cas.lib.arclib.domain.ingestWorkflow.IngestIssue;
 import cz.cas.lib.arclib.domain.ingestWorkflow.IngestWorkflow;
-import cz.cas.lib.arclib.domain.packages.PackageType;
 import cz.cas.lib.arclib.domain.profiles.SipProfile;
 import cz.cas.lib.arclib.exception.bpm.IncidentException;
 import cz.cas.lib.arclib.formatlibrary.service.FormatDefinitionService;
@@ -133,7 +132,6 @@ public class FixityCheckerDelegateTest {
     public void before() throws IOException {
         Files.createDirectories(WS);
 
-        bagProfile.setPackageType(PackageType.BAGIT);
         bagProfile.setSipMetadataPathRegex("bag-info.txt");
         bagProfile.setExternalId("BAG");
         when(sipProfileStore.findByExternalId(eq(bagProfile.getExternalId()))).thenReturn(bagProfile);
@@ -143,7 +141,6 @@ public class FixityCheckerDelegateTest {
         ingestWorkflow.setExternalId(EXTERNAL_ID);
         when(ingestWorkflowStore.findByExternalId(EXTERNAL_ID)).thenReturn(ingestWorkflow);
 
-        metsProfile.setPackageType(PackageType.METS);
         metsProfile.setSipMetadataPathRegex("METS_KPW01169310.xml");
         metsProfile.setExternalId("METS");
         when(sipProfileStore.findByExternalId(eq(metsProfile.getExternalId()))).thenReturn(metsProfile);

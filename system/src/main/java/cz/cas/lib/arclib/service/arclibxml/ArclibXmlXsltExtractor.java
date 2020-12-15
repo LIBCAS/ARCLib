@@ -49,7 +49,7 @@ public class ArclibXmlXsltExtractor {
         String sipMetadataPathRegex = sipProfile.getSipMetadataPathRegex();
         Path pathToSipAbsolute = sipFolderWorkspacePath.toAbsolutePath();
 
-        List<File> matchingFiles = listFilesMatchingRegex(new File(pathToSipAbsolute.toString()), sipMetadataPathRegex);
+        List<File> matchingFiles = listFilesMatchingRegex(new File(pathToSipAbsolute.toString()), sipMetadataPathRegex,true);
         if (matchingFiles.size() == 0)
             throw new GeneralException(String.format("File with metadata for ingest workflow with external id %s does not exist at path given by regex: %s", externalId, sipMetadataPathRegex));
 

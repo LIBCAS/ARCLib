@@ -24,8 +24,7 @@ public class FormatApi {
     private FormatStore store;
 
     @ApiOperation(value = "Saves or updates an instance. [Perm.FORMAT_RECORDS_WRITE]",
-            notes = "Returns single instance (possibly with computed attributes).",
-            response = Format.class)
+            notes = "Returns single instance (possibly with computed attributes).", response = Format.class)
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Successful response", response = Format.class),
             @ApiResponse(code = 400, message = "Specified id does not correspond to the id of the instance")})

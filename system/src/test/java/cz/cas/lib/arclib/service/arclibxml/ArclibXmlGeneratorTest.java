@@ -32,7 +32,8 @@ public class ArclibXmlGeneratorTest {
                 "http://arclib.lib.cas.cz/ARCLIB_XSD",
                 "info:lc/xmlns/premis-v2",
                 "http://www.openarchives.org/OAI/2.0/oai_dc/",
-                "http://purl.org/dc/elements/1.1/");
+                "http://purl.org/dc/elements/1.1/",
+                "http://www.w3.org/1999/xlink");
         String originalXml = new String(Files.readAllBytes(Paths.get("src/test/resources/arclibXmls/simplifiedArclibXml.xml")), StandardCharsets.UTF_8);
         IngestWorkflow originalIw = new IngestWorkflow();
         originalIw.setExternalId("fst");

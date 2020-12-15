@@ -81,6 +81,9 @@ public class ArclibXmlGenerator {
         SAXReader reader = new SAXReader();
         Document doc = reader.read(new ByteArrayInputStream(xml.getBytes(StandardCharsets.UTF_8)));
 
+        if (doc.getRootElement().getNamespaceForPrefix(XLINK) == null)
+            doc.getRootElement().addNamespace(XLINK, uris.get(XLINK));
+
         XPath metsXPath = doc.createXPath("/METS:mets");
         Element metsElement = (Element) metsXPath.selectSingleNode(doc);
         if (metsElement == null) throw new MissingNode(metsXPath.getText());
@@ -373,7 +376,7 @@ public class ArclibXmlGenerator {
                 fileElement.addAttribute("ID", filePathsAndObjIdentifier.getRight());
                 Element fLocatElement = fileElement.addElement("METS:FLocat");
                 fLocatElement.addAttribute("LOCTYPE", "OTHER");
-                fLocatElement.addAttribute("xlink:href", filePathsAndObjIdentifier.getLeft());
+                fLocatElement.addAttribute(XLINK+":href", filePathsAndObjIdentifier.getLeft());
             }
             return;
         }
@@ -385,7 +388,7 @@ public class ArclibXmlGenerator {
             fileElement.addAttribute("ID", filePathsAndObjIdentifier.getRight());
             Element fLocatElement = fileElement.addElement("METS:FLocat");
             fLocatElement.addAttribute("LOCTYPE", "OTHER");
-            fLocatElement.addAttribute("xlink:href", filePathsAndObjIdentifier.getLeft());
+            fLocatElement.addAttribute(XLINK+":href", filePathsAndObjIdentifier.getLeft());
             Triple<Long, String, String> fileFixityData = sipContentFixityData.get(filePathsAndObjIdentifier.getLeft());
             if (fileFixityData != null) {
                 if (fileFixityData.getLeft() != null)
@@ -641,7 +644,7 @@ public class ArclibXmlGenerator {
 
     @Inject
     public void setUris(@Value("${namespaces.mets}") String mets, @Value("${namespaces.xsi}") String xsi, @Value("${namespaces.arclib}") String arclib, @Value("${namespaces" +
-            ".premis}") String premis, @Value("${namespaces.oai_dc}") String oai_dc, @Value("${namespaces.dc}") String dc) {
+            ".premis}") String premis, @Value("${namespaces.oai_dc}") String oai_dc, @Value("${namespaces.dc}") String dc, @Value("${namespaces.xlink}") String xlink) {
         Map<String, String> uris = new HashMap<>();
         uris.put(METS, mets);
         uris.put(ARCLIB, arclib);
@@ -649,6 +652,7 @@ public class ArclibXmlGenerator {
         uris.put(XSI, xsi);
         uris.put(OAIS_DC, oai_dc);
         uris.put(DC, dc);
+        uris.put(XLINK, xlink);
 
         this.uris = uris;
     }

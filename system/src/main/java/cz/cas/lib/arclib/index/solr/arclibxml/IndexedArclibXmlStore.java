@@ -4,6 +4,7 @@ import cz.cas.lib.arclib.domain.AipQuery;
 import cz.cas.lib.arclib.domain.User;
 import cz.cas.lib.arclib.domainbase.exception.BadArgument;
 import cz.cas.lib.arclib.domainbase.exception.GeneralException;
+import cz.cas.lib.arclib.index.AipXmlNodeValueType;
 import cz.cas.lib.arclib.index.ArclibXmlField;
 import cz.cas.lib.arclib.index.ArclibXmlIndexTypeConfig;
 import cz.cas.lib.arclib.index.IndexArclibXmlStore;
@@ -16,10 +17,12 @@ import cz.cas.lib.core.index.dto.Result;
 import cz.cas.lib.core.index.solr.IndexField;
 import cz.cas.lib.core.index.solr.IndexFieldType;
 import cz.cas.lib.core.store.Transactional;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.reflect.FieldUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.solr.common.SolrInputDocument;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -36,24 +39,15 @@ import org.springframework.data.solr.core.query.SimpleFilterQuery;
 import org.springframework.data.solr.core.query.SimpleQuery;
 import org.springframework.data.solr.core.query.SolrDataQuery;
 import org.springframework.stereotype.Service;
-import org.w3c.dom.Document;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
-import org.xml.sax.SAXException;
+import org.w3c.dom.*;
 
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
-import javax.xml.XMLConstants;
 import javax.xml.bind.DatatypeConverter;
-import javax.xml.namespace.NamespaceContext;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpressionException;
-import javax.xml.xpath.XPathFactory;
 import java.io.ByteArrayInputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
@@ -64,20 +58,20 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import static cz.cas.lib.arclib.index.solr.IndexQueryUtils.buildFilters;
-import static cz.cas.lib.arclib.index.solr.IndexQueryUtils.initializeQuery;
+import static cz.cas.lib.arclib.index.solr.IndexQueryUtils.*;
 import static cz.cas.lib.arclib.utils.ArclibUtils.*;
-import static cz.cas.lib.arclib.utils.XmlUtils.nsUnawareDom;
-import static cz.cas.lib.arclib.utils.XmlUtils.nsUnawareXPath;
+import static cz.cas.lib.arclib.utils.XmlUtils.createDomAndXpath;
 import static cz.cas.lib.core.util.Utils.asSet;
+import static org.w3c.dom.Node.TEXT_NODE;
 
 @Service
 @Slf4j
 public class IndexedArclibXmlStore implements IndexArclibXmlStore<IndexedArclibXmlDocument> {
     /**
-     * Configuration parsed from CSV. Name of the parent/child type as key (e.g. arclibXmlMainIndex for main doc or extracted_format for particular nested doc) and its config as a value.
+     * Configuration of those index fields which are indexed according to arclibXmlDefinition.csv
+     * Map contains collection names (main and nested) as keys and their Xpath configurations as values.
      */
-    private Map<String, ArclibXmlIndexTypeConfig> ARCLIB_XML_COLLECTION_CONFIG = new HashMap<>();
+    private Map<String, ArclibXmlIndexTypeConfig> arclibXmlXpathIndexConfig = new HashMap<>();
 
     private SolrTemplate solrTemplate;
     private AipQueryStore aipQueryStore;
@@ -90,17 +84,11 @@ public class IndexedArclibXmlStore implements IndexArclibXmlStore<IndexedArclibX
     @SneakyThrows
     @Override
     public void createIndex(byte[] arclibXml, String producerId, String producerName, String userName, IndexedAipState aipState, boolean debuggingModeActive, boolean latestVersion) {
-        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-        factory.setNamespaceAware(true);
-        Document xml;
-        try {
-            xml = factory.newDocumentBuilder().parse(new ByteArrayInputStream(arclibXml));
-        } catch (ParserConfigurationException | SAXException | IOException e) {
-            log.error("Error during parsing of XML document");
-            throw e;
-        }
-        XPath xpath = getXpathWithNamespaceContext();
-        HashMap<String, ArclibXmlIndexTypeConfig> collectionsConfig = new HashMap<>(ARCLIB_XML_COLLECTION_CONFIG);
+        Pair<Document, XPath> domAndXpath = createDomAndXpath(new ByteArrayInputStream(arclibXml), uris);
+        Document arclibXmlDom = domAndXpath.getKey();
+        XPath xpath = domAndXpath.getValue();
+
+        HashMap<String, ArclibXmlIndexTypeConfig> collectionsConfig = new HashMap<>(arclibXmlXpathIndexConfig);
 
         //add main doc
         ArclibXmlIndexTypeConfig mainDocConfig = collectionsConfig.get(getMainDocumentIndexType());
@@ -112,10 +100,9 @@ public class IndexedArclibXmlStore implements IndexArclibXmlStore<IndexedArclibX
         if (aipState != null)
             mainDoc.addField(IndexedArclibXmlDocument.AIP_STATE, aipState.toString());
         mainDoc.addField(IndexedArclibXmlDocument.USER_NAME, userName);
-        mainDoc.addField(IndexedArclibXmlDocument.CONTENT, XmlUtils.extractTextFromAllElements(new StringBuilder(), xml).toString());
         mainDoc.addField(IndexedArclibXmlDocument.DEBUG_MODE, debuggingModeActive);
         for (ArclibXmlField conf : mainDocConfig.getIndexedFieldConfig()) {
-            NodeList nodes = (NodeList) xpath.evaluate(conf.getXpath(), xml, XPathConstants.NODESET);
+            NodeList nodes = (NodeList) xpath.evaluate(conf.getXpath(), arclibXmlDom, XPathConstants.NODESET);
             addFieldToDocument(mainDoc, conf, nodes);
         }
         Object mainDocId = mainDoc.getFieldValue(IndexedArclibXmlDocument.ID);
@@ -127,7 +114,7 @@ public class IndexedArclibXmlStore implements IndexArclibXmlStore<IndexedArclibX
         //add child docs
         for (String indexType : collectionsConfig.keySet()) {
             ArclibXmlIndexTypeConfig collectionConfig = collectionsConfig.get(indexType);
-            NodeList rootNodes = (NodeList) xpath.evaluate(collectionConfig.getRootXpath(), xml, XPathConstants.NODESET);
+            NodeList rootNodes = (NodeList) xpath.evaluate(collectionConfig.getRootXpath(), arclibXmlDom, XPathConstants.NODESET);
             if (rootNodes == null || rootNodes.getLength() == 0)
                 continue;
             for (int i = 0; i < rootNodes.getLength(); i++) {
@@ -144,6 +131,23 @@ public class IndexedArclibXmlStore implements IndexArclibXmlStore<IndexedArclibX
             }
         }
 
+        List<ElementsToIndex> elementsToIndex = parseElementsToIndex(arclibXmlDom);
+        for (int i = 0; i < elementsToIndex.size(); i++) {
+            ElementsToIndex e = elementsToIndex.get(i);
+            SolrInputDocument doc = new SolrInputDocument();
+            doc.addField(IndexQueryUtils.TYPE_FIELD, IndexedArclibXmlDocument.ELEMENT_INDEX_TYPE_VALUE);
+            doc.addField(IndexedArclibXmlDocument.ELEMENT_NAME, e.getElementName());
+            doc.addField(IndexedArclibXmlDocument.ELEMENT_CONTENT, e.getTextContent());
+            for (Pair<String, String> attribute : e.getAttributes()) {
+                doc.addField(IndexedArclibXmlDocument.ELEMENT_ATTRIBUTE_NAMES, attribute.getKey());
+                String value = attribute.getValue();
+                if (value != null && !value.isBlank())
+                    doc.addField(IndexedArclibXmlDocument.ELEMENT_ATTRIBUTE_VALUES, value.trim());
+            }
+            doc.addField(IndexedArclibXmlDocument.ID, mainDocIdString + "_" + IndexedArclibXmlDocument.ELEMENT_INDEX_TYPE_VALUE + "_" + i);
+            mainDoc.addChildDocument(doc);
+        }
+
         try {
             removeIndex(mainDocIdString);
             solrTemplate.saveDocument(coreName, mainDoc);
@@ -158,7 +162,7 @@ public class IndexedArclibXmlStore implements IndexArclibXmlStore<IndexedArclibX
     @Transactional
     public Result<IndexedArclibXmlDocument> findAll(Params params, String queryName) {
         SimpleQuery query = new SimpleQuery();
-        Map<String, IndexField> indexedFields = IndexQueryUtils.INDEXED_FIELDS_MAP.get(getMainDocumentIndexType());
+        Map<String, IndexField> indexedFields = INDEXED_FIELDS_MAP.get(getMainDocumentIndexType());
         initializeQuery(query, params, indexedFields);
 
         query.addCriteria(Criteria.where(IndexQueryUtils.TYPE_FIELD).in(getMainDocumentIndexType()));
@@ -249,74 +253,6 @@ public class IndexedArclibXmlStore implements IndexArclibXmlStore<IndexedArclibX
     }
 
     /**
-     * Loads {@link #ARCLIB_XML_COLLECTION_CONFIG} from CSV first and then for every configured parent/child element/attribute
-     * find related fields in schema.xml and adds them to {@link IndexQueryUtils#INDEXED_FIELDS_MAP}.
-     * <p>
-     * Note that not all fields of the parent index ({@link IndexedArclibXmlDocument#MAIN_INDEX_TYPE_VALUE})
-     * are present in CSV file as the CSV file contains only config for fields which are part of the AIP XML.
-     * Rest of the fields configs are parsed from annotations of {@link IndexedArclibXmlDocument}. If the field (e.g. {@link IndexedArclibXmlDocument#AUTHORIAL_ID})
-     * is defined in both, CSV and Java class, the definition from CSV is taken.
-     * </p>
-     *
-     * @throws IOException
-     */
-    @PostConstruct
-    public void init() throws IOException {
-        ARCLIB_XML_COLLECTION_CONFIG = getArclibXmlCollectionsConfig();
-
-        Document schemaXml;
-        try (InputStream is = getClass().getResourceAsStream("/index/config/schema.xml")) {
-            schemaXml = nsUnawareDom(is);
-        }
-        XPath xPath = nsUnawareXPath();
-        Set<String> supportedFieldTypes = Arrays.stream(IndexFieldType.class.getDeclaredFields()).map(f -> {
-            try {
-                return (String) FieldUtils.readStaticField(f);
-            } catch (IllegalAccessException e) {
-                throw new GeneralException("could not read constant value of field: " + f);
-            }
-        }).collect(Collectors.toSet());
-        for (ArclibXmlIndexTypeConfig value : ARCLIB_XML_COLLECTION_CONFIG.values()) {
-            Map<String, IndexField> collectionConfig = new HashMap<>();
-            IndexQueryUtils.INDEXED_FIELDS_MAP.put(value.getIndexType(), collectionConfig);
-            for (ArclibXmlField field : value.getIndexedFieldConfig()) {
-                String fieldName = field.getFieldName();
-                String fieldType;
-                String sortField = null;
-                String eqField = null;
-                try {
-                    Node fieldTypeNode = (Node) xPath.evaluate("//field[@name='" + fieldName + "']/@type", schemaXml, XPathConstants.NODE);
-                    fieldType = fieldTypeNode.getTextContent();
-                    NodeList copyFields = (NodeList) xPath.evaluate("//copyField[@source='" + fieldName + "']/@dest", schemaXml, XPathConstants.NODESET);
-                    for (int i = 0; i < copyFields.getLength(); i++) {
-                        String cpyFieldDest = copyFields.item(i).getTextContent();
-                        if (cpyFieldDest.endsWith(IndexField.STRING_SUFFIX))
-                            eqField = cpyFieldDest;
-                        if (cpyFieldDest.endsWith(IndexField.SORT_SUFFIX))
-                            sortField = cpyFieldDest;
-                    }
-                } catch (XPathExpressionException e) {
-                    throw new RuntimeException(e);
-                }
-                if (!supportedFieldTypes.contains(fieldType))
-                    throw new GeneralException("unsupported field type: " + fieldType + " of field: " + fieldName + " found in Arclib XML Solr schema");
-                IndexField indexField = new IndexField(fieldName, fieldType, sortField, eqField);
-                collectionConfig.put(fieldName, indexField);
-            }
-        }
-
-        Map<String, IndexField> parentIndexFields = IndexQueryUtils.INDEXED_FIELDS_MAP.get(IndexedArclibXmlDocument.MAIN_INDEX_TYPE_VALUE);
-        for (java.lang.reflect.Field field : FieldUtils.getFieldsWithAnnotation(IndexedArclibXmlDocument.class, Indexed.class)) {
-            if (field.isAnnotationPresent(Dynamic.class))
-                continue;
-            IndexField solrField = new IndexField(field);
-            if (parentIndexFields.containsKey(solrField.getFieldName()))
-                continue;
-            parentIndexFields.put(solrField.getFieldName(), solrField);
-        }
-    }
-
-    /**
      * Finds ArclibXml index document by the external id and returns all the indexed attributes of the main document, OMMITING CHILDREN
      *
      * @param externalId external id of the ArclibXml index document
@@ -332,58 +268,63 @@ public class IndexedArclibXmlStore implements IndexArclibXmlStore<IndexedArclibX
     }
 
     /**
-     * Creates namespace aware Xpath. Namespace URI must match URIs in ARCLib XML file.
+     * Fills {@link #arclibXmlXpathIndexConfig} (used during indexing) with field definitions from CSV config and
+     * {@link IndexQueryUtils#INDEXED_FIELDS_MAP} (used during every ARCLib XML query) with field definitions from
+     * CSV config, annotations from {@link IndexedArclibXmlDocument} and with few other special fields.
+     * <p>
+     * If the field (e.g. {@link IndexedArclibXmlDocument#AUTHORIAL_ID})
+     * is defined in both, CSV and Java class, the definition from CSV is taken
+     * </p>
      *
-     * @return namespace aware XPath
      */
-    private XPath getXpathWithNamespaceContext() {
-        XPath xpath = XPathFactory.newInstance().newXPath();
-        xpath.setNamespaceContext(new NamespaceContext() {
-            public String getNamespaceURI(String prefix) {
-                if (prefix == null) {
-                    throw new IllegalArgumentException("No prefix provided!");
-                } else if (prefix.equalsIgnoreCase("METS")) {
-                    return uris.get(METS);
-                } else if (prefix.equalsIgnoreCase("xsi")) {
-                    return uris.get(XSI);
-                } else if (prefix.equalsIgnoreCase("oai_dc")) {
-                    return uris.get(OAIS_DC);
-                } else if (prefix.equalsIgnoreCase("premis")) {
-                    return uris.get(PREMIS);
-                } else if (prefix.equalsIgnoreCase("ARCLib")) {
-                    return uris.get(ARCLIB);
-                } else if (prefix.equalsIgnoreCase("dc")) {
-                    return uris.get(DC);
-                } else {
-                    return XMLConstants.NULL_NS_URI;
-                }
+    @PostConstruct
+    @SneakyThrows
+    public void init() {
+        //prepare
+        Pair<Document, XPath> domAndXpath;
+        try (InputStream is = getClass().getResourceAsStream("/index/config/schema.xml")) {
+            domAndXpath = createDomAndXpath(is, null);
+        }
+        Document schemaXmlDom = domAndXpath.getKey();
+        XPath xPath = domAndXpath.getValue();
+
+        Set<String> supportedFieldTypes = Arrays.stream(IndexFieldType.class.getDeclaredFields()).map(f -> {
+            try {
+                return (String) FieldUtils.readStaticField(f);
+            } catch (IllegalAccessException e) {
+                throw new GeneralException("could not read constant value of field: " + f);
             }
+        }).collect(Collectors.toSet());
 
-            public String getPrefix(String namespaceURI) {
-                // Not needed in this context.
-                return null;
-            }
+        //declare main collection
+        ArclibXmlIndexTypeConfig mainCollection = new ArclibXmlIndexTypeConfig(null, getMainDocumentIndexType());
+        arclibXmlXpathIndexConfig = new HashMap<>();
+        arclibXmlXpathIndexConfig.put(mainCollection.getIndexType(), mainCollection);
 
-            public Iterator getPrefixes(String namespaceURI) {
-                // Not needed in this context.
-                return null;
-            }
-        });
-        return xpath;
-    }
+        //fill INDEXED_FIELDS_MAP with all fields defined in CSV
+        parseCsvConfig(mainCollection, arclibXmlXpathIndexConfig);
+        arclibXmlXpathIndexConfig.values().forEach(c -> addTypeConfigToIndexedFieldsMap(schemaXmlDom, xPath, supportedFieldTypes, c));
 
-    @Inject
-    public void setUris(@Value("${namespaces.mets}") String mets, @Value("${namespaces.xsi}") String xsi, @Value("${namespaces.arclib}") String arclib, @Value("${namespaces" +
-            ".premis}") String premis, @Value("${namespaces.oai_dc}") String oai_dc, @Value("${namespaces.dc}") String dc) {
-        Map<String, String> uris = new HashMap<>();
-        uris.put(METS, mets);
-        uris.put(ARCLIB, arclib);
-        uris.put(PREMIS, premis);
-        uris.put(XSI, xsi);
-        uris.put(OAIS_DC, oai_dc);
-        uris.put(DC, dc);
+        //fill INDEXED_FIELDS_MAP with those fields which are not configured in CSV but are declared via annotations
+        Map<String, IndexField> parentIndexFields = INDEXED_FIELDS_MAP.get(IndexedArclibXmlDocument.MAIN_INDEX_TYPE_VALUE);
+        for (java.lang.reflect.Field field : FieldUtils.getFieldsWithAnnotation(IndexedArclibXmlDocument.class, Indexed.class)) {
+            if (field.isAnnotationPresent(Dynamic.class))
+                continue;
+            IndexField solrField = new IndexField(field);
+            if (parentIndexFields.containsKey(solrField.getFieldName()))
+                continue;
+            parentIndexFields.put(solrField.getFieldName(), solrField);
+        }
 
-        this.uris = uris;
+        //fill INDEXED_FIELDS_MAP with special nested "element" collection
+        ArclibXmlIndexTypeConfig elementCollectionConfig = new ArclibXmlIndexTypeConfig(null, IndexedArclibXmlDocument.ELEMENT_INDEX_TYPE_VALUE);
+        elementCollectionConfig.setIndexedFieldConfig(Set.of(
+                new ArclibXmlField(IndexedArclibXmlDocument.ELEMENT_NAME, AipXmlNodeValueType.OTHER, null, true),
+                new ArclibXmlField(IndexedArclibXmlDocument.ELEMENT_CONTENT, AipXmlNodeValueType.OTHER, null, true),
+                new ArclibXmlField(IndexedArclibXmlDocument.ELEMENT_ATTRIBUTE_NAMES, AipXmlNodeValueType.OTHER, null, true),
+                new ArclibXmlField(IndexedArclibXmlDocument.ELEMENT_ATTRIBUTE_VALUES, AipXmlNodeValueType.OTHER, null, true)
+        ));
+        addTypeConfigToIndexedFieldsMap(schemaXmlDom, xPath, supportedFieldTypes, elementCollectionConfig);
     }
 
     private void addFieldToDocument(SolrInputDocument doc, ArclibXmlField conf, NodeList nodes) {
@@ -422,6 +363,99 @@ public class IndexedArclibXmlStore implements IndexArclibXmlStore<IndexedArclibX
         }
     }
 
+    /**
+     * Parses all fields of the passed indexTypeConfig and fills them within the global variable {@link IndexQueryUtils#INDEXED_FIELDS_MAP}
+     *
+     * @param schemaXml           schema.xml
+     * @param supportedFieldTypes all field types supported by the system
+     * @param indexTypeConfig     index type config
+     */
+    private void addTypeConfigToIndexedFieldsMap(Document schemaXml, XPath xPath, Set<String> supportedFieldTypes, ArclibXmlIndexTypeConfig indexTypeConfig) {
+        Map<String, IndexField> collectionConfig = new HashMap<>();
+        for (ArclibXmlField field : indexTypeConfig.getIndexedFieldConfig()) {
+            IndexField indexField = transformConfig(schemaXml, xPath, field);
+            if (!supportedFieldTypes.contains(indexField.getFieldType()))
+                throw new GeneralException("unsupported field type: " + indexField.getFieldType() + " of field: " + indexField.getFieldName() + " found in Arclib XML Solr schema");
+            collectionConfig.put(indexField.getFieldName(), indexField);
+        }
+        INDEXED_FIELDS_MAP.put(indexTypeConfig.getIndexType(), collectionConfig);
+    }
+
+    /**
+     * Searches schema.xml for particular field and transforms the passed config object into {@link IndexField} object
+     *
+     * @param schemaXml   SOLR schema
+     * @param fieldConfig config of single field
+     */
+    private IndexField transformConfig(Document schemaXml, XPath xPath, ArclibXmlField fieldConfig) {
+        String fieldName = fieldConfig.getFieldName();
+        String fieldType;
+        String sortField = null;
+        String eqField = null;
+        try {
+            Node fieldTypeNode = (Node) xPath.evaluate("//field[@name='" + fieldName + "']/@type", schemaXml, XPathConstants.NODE);
+            fieldType = fieldTypeNode.getTextContent();
+            NodeList copyFields = (NodeList) xPath.evaluate("//copyField[@source='" + fieldName + "']/@dest", schemaXml, XPathConstants.NODESET);
+            for (int i = 0; i < copyFields.getLength(); i++) {
+                String cpyFieldDest = copyFields.item(i).getTextContent();
+                if (cpyFieldDest.endsWith(IndexField.STRING_SUFFIX))
+                    eqField = cpyFieldDest;
+                if (cpyFieldDest.endsWith(IndexField.SORT_SUFFIX))
+                    sortField = cpyFieldDest;
+            }
+        } catch (XPathExpressionException e) {
+            throw new RuntimeException(e);
+        }
+        return new IndexField(fieldName, fieldType, sortField, eqField);
+    }
+
+    private List<ElementsToIndex> parseElementsToIndex(Document dom) {
+        List<ElementsToIndex> result = new ArrayList<>();
+        NodeList elements = dom.getElementsByTagName("*");
+        for (int i = 0; i < elements.getLength(); i++) {
+            Element e = (Element) elements.item(i);
+
+            List<Pair<String, String>> parsedAttributes = new ArrayList<>();
+            NamedNodeMap attributes = e.getAttributes();
+            for (int j = 0; j < attributes.getLength(); j++) {
+                Attr attr = (Attr) attributes.item(j);
+                parsedAttributes.add(Pair.of(attr.getLocalName(), attr.getValue()));
+            }
+
+            StringBuilder textContentBuilder = new StringBuilder();
+            NodeList childNodes = e.getChildNodes();
+            for (int j = 0; j < childNodes.getLength(); j++) {
+                Node c = childNodes.item(j);
+                if (c.getNodeType() == TEXT_NODE)
+                    textContentBuilder.append(c.getTextContent().trim()).append(" ");
+            }
+            String textContentString = textContentBuilder.toString().trim();
+
+            if (parsedAttributes.isEmpty() && textContentString.isEmpty())
+                continue;
+
+            result.add(new ElementsToIndex(e.getLocalName(), textContentString.isEmpty() ? null : textContentString, parsedAttributes));
+        }
+        return result;
+    }
+
+    @Getter
+    @AllArgsConstructor
+    private static final class ElementsToIndex {
+        /**
+         * unqualified element name
+         */
+        private String elementName;
+        /**
+         * text content of the attribute, or null if empty
+         */
+        private String textContent;
+        /**
+         * list of pairs of unqualified attribute name and its value.. list may be empty
+         */
+        private List<Pair<String, String>> attributes;
+    }
+
     @Inject
     public void setAipQueryStore(AipQueryStore aipQueryStore) {
         this.aipQueryStore = aipQueryStore;
@@ -447,5 +481,22 @@ public class IndexedArclibXmlStore implements IndexArclibXmlStore<IndexedArclibX
     public void setArclibXmlDefinition(@Value("${arclib.arclibXmlDefinition}")
                                                Resource arclibXmlDefinition) {
         this.arclibXmlDefinition = arclibXmlDefinition;
+    }
+
+    @Inject
+    public void setUris(@Value("${namespaces.mets}") String mets, @Value("${namespaces.xsi}") String
+            xsi, @Value("${namespaces.arclib}") String arclib, @Value("${namespaces" +
+            ".premis}") String premis, @Value("${namespaces.oai_dc}") String
+                                oai_dc, @Value("${namespaces.dc}") String dc, @Value("${namespaces.xlink}") String xlink) {
+        Map<String, String> uris = new HashMap<>();
+        uris.put(METS, mets);
+        uris.put(ARCLIB, arclib);
+        uris.put(PREMIS, premis);
+        uris.put(XSI, xsi);
+        uris.put(OAIS_DC, oai_dc);
+        uris.put(DC, dc);
+        uris.put(XLINK,xlink);
+
+        this.uris = uris;
     }
 }

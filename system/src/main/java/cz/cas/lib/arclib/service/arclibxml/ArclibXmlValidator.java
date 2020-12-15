@@ -1,6 +1,7 @@
 package cz.cas.lib.arclib.service.arclibxml;
 
 import cz.cas.lib.arclib.exception.validation.InvalidXmlNodeValue;
+import cz.cas.lib.arclib.exception.validation.MissingNode;
 import cz.cas.lib.arclib.utils.XmlUtils;
 import cz.cas.lib.core.util.Utils;
 import lombok.extern.slf4j.Slf4j;
@@ -10,12 +11,17 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
 import javax.inject.Inject;
 import javax.xml.parsers.ParserConfigurationException;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
+import java.util.Map;
+
+import static cz.cas.lib.arclib.utils.ArclibUtils.*;
 
 @Slf4j
 @Service
@@ -30,6 +36,7 @@ public class ArclibXmlValidator {
     private String pathToAuthorialId;
     private String pathToSipVersionNumber;
     private String pathToPhysicalVersionOf;
+    private Map<String, String> uris;
 
     /**
      * Validates the structure of ARCLib XML.
@@ -75,25 +82,25 @@ public class ArclibXmlValidator {
         ByteArrayInputStream xmlBais = new ByteArrayInputStream(xml.getBytes());
         log.debug("Checking content of node with AIP id at XPath " + pathToAipId + ".");
         xmlBais.reset();
-        Node aipIdNode = XmlUtils.findSingleNodeWithXPath(xmlBais, pathToAipId);
+        Node aipIdNode = XmlUtils.findSingleNodeWithXPath(xmlBais, pathToAipId, null);
         Utils.eq(aipIdNode.getTextContent(), aipId, () -> new InvalidXmlNodeValue(aipId,
                 aipIdNode.getTextContent(), pathToAipId));
 
         log.debug("Checking content of node with authorial id at XPath " + pathToAuthorialId + ".");
         xmlBais.reset();
-        Node authorialIdNode = XmlUtils.findSingleNodeWithXPath(xmlBais, pathToAuthorialId);
+        Node authorialIdNode = XmlUtils.findSingleNodeWithXPath(xmlBais, pathToAuthorialId, null);
         Utils.eq(authorialIdNode.getTextContent(), authorialId, () -> new InvalidXmlNodeValue(authorialId,
                 authorialIdNode.getTextContent(), pathToAuthorialId));
 
         log.debug("Checking content of node with sipVersionNumber id at XPath " + pathToSipVersionNumber + ".");
         xmlBais.reset();
-        Node sipVersionNode = XmlUtils.findSingleNodeWithXPath(xmlBais, pathToSipVersionNumber);
+        Node sipVersionNode = XmlUtils.findSingleNodeWithXPath(xmlBais, pathToSipVersionNumber, null);
         Utils.eq(Integer.valueOf(sipVersionNode.getTextContent()), sipVersionNumber, () -> new InvalidXmlNodeValue(
                 String.valueOf(sipVersionNumber), sipVersionNode.getTextContent(), pathToSipVersionNumber));
 
         log.debug("Checking content of node with sipVersionOf id at XPath " + pathToPhysicalVersionOf + ".");
         xmlBais.reset();
-        Node sipVersionOfNode = XmlUtils.findSingleNodeWithXPath(xmlBais, pathToPhysicalVersionOf);
+        Node sipVersionOfNode = XmlUtils.findSingleNodeWithXPath(xmlBais, pathToPhysicalVersionOf, null);
         Utils.eq(sipVersionOfNode.getTextContent(), sipVersionOf, () -> new InvalidXmlNodeValue(sipVersionOf,
                 sipVersionOfNode.getTextContent(), pathToPhysicalVersionOf));
         log.debug("Final validation of ArclibXml succeeded.");
@@ -109,7 +116,8 @@ public class ArclibXmlValidator {
             xmlBais.reset();
             if (record.get(4).equalsIgnoreCase("true") && (!onlyXsltRelatedNodes || record.get(3).startsWith("SIP profile XSLT"))) {
                 String xPath = record.get(1);
-                XmlUtils.checkNodeExists(xmlBais, XmlUtils.removeNamespacesFromXPathExpr(xPath));
+                NodeList withXPath = XmlUtils.findWithXPath(new ByteArrayInputStream(xml.getBytes()), xPath, uris);
+                Utils.ne(withXPath.getLength(), 0, () -> new MissingNode(xPath));
             }
         }
     }
@@ -165,5 +173,20 @@ public class ArclibXmlValidator {
     public void setPathToPhysicalVersionOf(@Value("${arclib.arclibXmlValidator.pathToPhysicalVersionOf}")
                                                    String pathToPhysicalVersionOf) {
         this.pathToPhysicalVersionOf = pathToPhysicalVersionOf;
+    }
+
+    @Inject
+    public void setUris(@Value("${namespaces.mets}") String mets, @Value("${namespaces.xsi}") String xsi, @Value("${namespaces.arclib}") String arclib, @Value("${namespaces" +
+            ".premis}") String premis, @Value("${namespaces.oai_dc}") String oai_dc, @Value("${namespaces.dc}") String dc, @Value("${namespaces.xlink}") String xlink) {
+        Map<String, String> uris = new HashMap<>();
+        uris.put(METS, mets);
+        uris.put(ARCLIB, arclib);
+        uris.put(PREMIS, premis);
+        uris.put(XSI, xsi);
+        uris.put(OAIS_DC, oai_dc);
+        uris.put(DC, dc);
+        uris.put(XLINK, xlink);
+
+        this.uris = uris;
     }
 }

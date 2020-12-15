@@ -1265,4 +1265,17 @@
             insert into public.arclib_tool_ingest_issue_definition(tool_id,ingest_issue_definition_id) values('2f2aa04b-c275-4c94-8b82-60a07bc5b577','d36b245a-0407-44d5-882e-5afb0f6321cb');
         </sql>
     </changeSet>
+    <changeSet id="22" author="tomasek">
+        <dropColumn tableName="arclib_sip_profile" columnName="package_type"/>
+    </changeSet>
+    <changeSet id="23" author="radvan">
+        <sql>
+            -- SUPER_ADMIN
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('b7a43ad5-883f-4741-948b-08678fa38604', 'USER_ROLE_RECORDS_READ');
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('b7a43ad5-883f-4741-948b-08678fa38604', 'USER_ROLE_RECORDS_WRITE');
+
+            -- ADMIN
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('7354de69-e7b6-4276-96e1-6be55aa096d0', 'USER_ROLE_RECORDS_READ');
+        </sql>
+    </changeSet>
 </databaseChangeLog>

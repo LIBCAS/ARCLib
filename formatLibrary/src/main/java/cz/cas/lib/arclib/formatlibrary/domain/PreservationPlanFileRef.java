@@ -11,6 +11,8 @@ import javax.persistence.Transient;
 import java.io.InputStream;
 
 /**
+ * Somewhat mirrored version of <b>FileRef</b> from module <b>system</b>.
+ *
  * Reference to a file.
  */
 @Getter

@@ -20,7 +20,6 @@ import static cz.cas.lib.core.util.Utils.eq;
 @RequestMapping("/api/formats_revision_notification")
 public class FormatsRevisionNotificationApi {
 
-    @Getter
     private FormatsRevisionNotificationService formatsRevisionNotificationService;
 
     @ApiOperation(value = "Saves an instance [Perm.NOTIFICATION_RECORDS_WRITE]", notes = "Returns single instance (possibly with computed attributes).",

@@ -348,17 +348,21 @@ public class IndexIntegrationTest extends TransformerFactoryWorkaroundTest imple
     @Test
     public void testUuidSearch() throws Exception {
         mvc(api).perform(get("/api/aip/list")
-                .param("filter[0].field", IndexedArclibXmlDocument.CONTENT)
-                .param("filter[0].operation", "CONTAINS")
-                .param("filter[0].value", "7033d800-0935-11e4-beed-5ef3fc9ae860")
+                .param("filter[0].field", ELEMENT_INDEX_TYPE_VALUE)
+                .param("filter[0].operation", FilterOperation.NESTED.toString())
+                .param("filter[0].filter[0].field", ELEMENT_CONTENT)
+                .param("filter[0].filter[0].operation", FilterOperation.CONTAINS.toString())
+                .param("filter[0].filter[0].value", "7033d800-0935-11e4-beed-5ef3fc9ae860")
         )
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.items", empty()));
 
         mvc(api).perform(get("/api/aip/list")
-                .param("filter[0].field", IndexedArclibXmlDocument.CONTENT)
-                .param("filter[0].operation", "CONTAINS")
-                .param("filter[0].value", "7033d800-0935-11e4-beed-5ef3fc9ae867")
+                .param("filter[0].field", ELEMENT_INDEX_TYPE_VALUE)
+                .param("filter[0].operation", FilterOperation.NESTED.toString())
+                .param("filter[0].filter[0].field", ELEMENT_CONTENT)
+                .param("filter[0].filter[0].operation", FilterOperation.CONTAINS.toString())
+                .param("filter[0].filter[0].value", "7033d800-0935-11e4-beed-5ef3fc9ae867")
         )
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.items", not(empty())));
@@ -367,17 +371,21 @@ public class IndexIntegrationTest extends TransformerFactoryWorkaroundTest imple
     @Test
     public void testUrnSearch() throws Exception {
         mvc(api).perform(get("/api/aip/list")
-                .param("filter[0].field", IndexedArclibXmlDocument.CONTENT)
-                .param("filter[0].operation", "CONTAINS")
-                .param("filter[0].value", "urn:nbn:cz:nk-nonono")
+                .param("filter[0].field", ELEMENT_INDEX_TYPE_VALUE)
+                .param("filter[0].operation", FilterOperation.NESTED.toString())
+                .param("filter[0].filter[0].field", ELEMENT_CONTENT)
+                .param("filter[0].filter[0].operation", FilterOperation.CONTAINS.toString())
+                .param("filter[0].filter[0].value", "urn:nbn:cz:nk-nonono")
         )
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.items", empty()));
 
         mvc(api).perform(get("/api/aip/list")
-                .param("filter[0].field", IndexedArclibXmlDocument.CONTENT)
-                .param("filter[0].operation", "CONTAINS")
-                .param("filter[0].value", "urn:nbn:cz:nk-0016ke")
+                .param("filter[0].field", ELEMENT_INDEX_TYPE_VALUE)
+                .param("filter[0].operation", FilterOperation.NESTED.toString())
+                .param("filter[0].filter[0].field", ELEMENT_CONTENT)
+                .param("filter[0].filter[0].operation", FilterOperation.CONTAINS.toString())
+                .param("filter[0].filter[0].value", "urn:nbn:cz:nk-0016ke")
         )
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.items", not(empty())));
@@ -386,17 +394,21 @@ public class IndexIntegrationTest extends TransformerFactoryWorkaroundTest imple
     @Test
     public void testTrailingCommaSearch() throws Exception {
         mvc(api).perform(get("/api/aip/list")
-                .param("filter[0].field", IndexedArclibXmlDocument.CONTENT)
-                .param("filter[0].operation", "CONTAINS")
-                .param("filter[0].value", "richard novak,")
+                .param("filter[0].field", ELEMENT_INDEX_TYPE_VALUE)
+                .param("filter[0].operation", FilterOperation.NESTED.toString())
+                .param("filter[0].filter[0].field", ELEMENT_CONTENT)
+                .param("filter[0].filter[0].operation", FilterOperation.CONTAINS.toString())
+                .param("filter[0].filter[0].value", "richard novak,")
         )
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.items", not(empty())));
 
         mvc(api).perform(get("/api/aip/list")
-                .param("filter[0].field", IndexedArclibXmlDocument.CONTENT)
-                .param("filter[0].operation", "CONTAINS")
-                .param("filter[0].value", "richard novak")
+                .param("filter[0].field", ELEMENT_INDEX_TYPE_VALUE)
+                .param("filter[0].operation", FilterOperation.NESTED.toString())
+                .param("filter[0].filter[0].field", ELEMENT_CONTENT)
+                .param("filter[0].filter[0].operation", FilterOperation.CONTAINS.toString())
+                .param("filter[0].filter[0].value", "richard novak")
         )
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.items", not(empty())));
@@ -415,7 +427,7 @@ public class IndexIntegrationTest extends TransformerFactoryWorkaroundTest imple
         doc.addField(XML_VERSION_NUMBER, xmlVersionNumber);
         doc.addField(SIP_VERSION_OF, sipVersionOf);
         doc.addField(XML_VERSION_OF, xmlVersionOf);
-        doc.addField(CONTENT, document);
+        //todo - fix, add nested elements fields instead doc.addField(CONTENT, document);
         if (aipState != null)
             doc.addField(AIP_STATE, aipState.toString());
         doc.addField(DEBUG_MODE, debugMode);

@@ -96,6 +96,7 @@ namespaces:
   oai_dc: http://www.openarchives.org/OAI/2.0/oai_dc/
   dc: http://purl.org/dc/elements/1.1/
   xsi: http://www.w3.org/2001/XMLSchema-instance
+  xlink: http://www.w3.org/1999/xlink
 mail:
   sender:
     email: noreply@arclib.lib.cas.cz

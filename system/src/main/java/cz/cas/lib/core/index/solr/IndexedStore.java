@@ -101,23 +101,24 @@ public interface IndexedStore<T extends DomainObject, U extends IndexedDomainObj
      * </p>
      */
     default void reindex() {
+        String coreLogId = "type: " + this.getIndexType() + ", core: " + getIndexCollection();
         if (isChildStore())
             return;
         Collection<T> instances = findAll();
         if (instances.isEmpty()) {
-            indexedStoreLogger.trace("this store has no records to index");
+            indexedStoreLogger.trace(coreLogId + " - this store has no records to index");
             return;
         }
-        indexedStoreLogger.debug("reindexing " + instances.size() + " records of core: " + getIndexCollection());
+        indexedStoreLogger.debug(coreLogId + " - reindexing " + instances.size() + " records");
         int counter = 0;
         for (T instance : instances) {
             index(instance);
             counter++;
             if (counter % 20 == 0 || counter == instances.size()) {
-                indexedStoreLogger.debug("reindexed " + counter + " records of core: " + getIndexCollection());
+                indexedStoreLogger.debug(coreLogId + " - reindexed " + counter + " records");
             }
         }
-        indexedStoreLogger.trace("reindexed all " + instances.size() + " records of core: " + getIndexCollection());
+        indexedStoreLogger.trace(coreLogId + " - reindexed all " + instances.size() + " records");
         instances.forEach(this::index);
     }
 
@@ -125,7 +126,7 @@ public interface IndexedStore<T extends DomainObject, U extends IndexedDomainObj
      * Deletes all documents from SOLR and reindexes all records from DB
      */
     default void dropReindex() {
-        indexedStoreLogger.debug("drop-reindexing core: " + getIndexCollection());
+        indexedStoreLogger.debug("drop-reindexing records of type: {} from core: {}", this.getIndexType(), getIndexCollection());
         removeAllIndexes();
         reindex();
     }
@@ -229,7 +230,7 @@ public interface IndexedStore<T extends DomainObject, U extends IndexedDomainObj
     }
 
     default void removeAllIndexes() {
-        indexedStoreLogger.trace("removing all records from core: " + getIndexCollection());
+        indexedStoreLogger.trace("removing all records of type: {} from core: {} ", this.getIndexType(), getIndexCollection());
         SolrClient client = getTemplate().getSolrClient();
         try {
             client.deleteByQuery(getIndexCollection(), IndexQueryUtils.TYPE_FIELD + ":" + this.getIndexType());
@@ -237,7 +238,7 @@ public interface IndexedStore<T extends DomainObject, U extends IndexedDomainObj
         } catch (SolrServerException | IOException e) {
             throw new RuntimeException(e);
         }
-        indexedStoreLogger.trace("successfully removed all records of core: " + getIndexCollection());
+        indexedStoreLogger.trace("successfully removed all records of type: {} from core: {}", this.getIndexType(), getIndexCollection());
     }
 
     default T index(T obj) {

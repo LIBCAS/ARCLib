@@ -150,7 +150,8 @@ public class ArclibXmlGeneratorDelegateTest extends DelegateTest {
                 "http://arclib.lib.cas.cz/ARCLIB_XSD",
                 "info:lc/xmlns/premis-v2",
                 "http://www.openarchives.org/OAI/2.0/oai_dc/",
-                "http://purl.org/dc/elements/1.1/");
+                "http://purl.org/dc/elements/1.1/",
+                "http://www.w3.org/1999/xlink");
         indexedArclibXmlStore.setArclibXmlDefinition(new ClassPathResource(ARCLIB_XML_DEFINITION));
         indexedArclibXmlStore.init();
 
@@ -219,7 +220,8 @@ public class ArclibXmlGeneratorDelegateTest extends DelegateTest {
                 "http://arclib.lib.cas.cz/ARCLIB_XSD",
                 "info:lc/xmlns/premis-v2",
                 "http://www.openarchives.org/OAI/2.0/oai_dc/",
-                "http://purl.org/dc/elements/1.1/"
+                "http://purl.org/dc/elements/1.1/",
+                "http://www.w3.org/1999/xlink"
         );
         arclibXmlGenerator.setArclibVersion("1.0");
         arclibXmlGenerator.setIngestWorkflowStore(ingestWorkflowStore);

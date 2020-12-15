@@ -11,10 +11,10 @@ import javax.persistence.Transient;
 import java.io.InputStream;
 
 /**
- * Reference to a file stored in {@link FileRepository}.
+ * Reference to a file stored in {@link FileRefService}.
  *
  * <p>
- *     Should be created only through {@link FileRepository} and not cascaded from another entity.
+ *     Should be created only through {@link FileRefService} and not cascaded from another entity.
  * </p>
  */
 @Getter
@@ -42,7 +42,7 @@ public class FileRef extends DatedObject {
      * Opened stream to read file content
      *
      * <p>
-     *     Initialized only if retrieved from {@link FileRepository}.
+     *     Initialized only if retrieved from {@link FileRefService}.
      * </p>
      */
     @Transient
@@ -52,7 +52,7 @@ public class FileRef extends DatedObject {
      * Text representation of file content
      *
      * <p>
-     *     Initialized only if saved through {@link FileRepository}.
+     *     Initialized only if saved through {@link FileRefService}.
      * </p>
      */
     @Transient
@@ -62,7 +62,7 @@ public class FileRef extends DatedObject {
      * Size of the file content
      *
      * <p>
-     *     Initialized only if retrieved from {@link FileRepository}.
+     *     Initialized only if retrieved from {@link FileRefService}.
      * </p>
      */
     @Transient

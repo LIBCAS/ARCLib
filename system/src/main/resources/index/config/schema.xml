@@ -73,7 +73,6 @@
   <copyField source="user_name" dest="user_name_s"/>
   <copyField source="user_name" dest="user_name_sort"/>
 
-  <field name="document" type="standard_folding"/>
   <field name="aip_state" type="string"/>
   <field name="debug_mode" type="boolean"/>
 
@@ -93,6 +92,11 @@
   <field name="xml_version_number" type="pint"/>
   <field name="xml_version_of" type="string"/>
   <field name="latest" type="boolean"/>
+
+  <field name="element_name" type="string"/>
+  <field name="element_content" type="standard_folding"/>
+  <field name="element_attribute_names" type="string" multiValued="true"/>
+  <field name="element_attribute_values" type="keyword_folding" multiValued="true"/>
 
   <field name="extracted_format_file_format" type="keyword_folding"/>
   <copyField source="extracted_format_file_format" dest="extracted_format_file_format_s"/>

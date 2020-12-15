@@ -10,7 +10,6 @@ import cz.cas.lib.arclib.domain.packages.AuthorialPackage;
 import cz.cas.lib.arclib.domain.packages.Sip;
 import cz.cas.lib.arclib.domain.profiles.ProducerProfile;
 import cz.cas.lib.arclib.domain.profiles.SipProfile;
-import cz.cas.lib.arclib.index.solr.arclibxml.IndexedArclibXmlDocument;
 import cz.cas.lib.arclib.index.solr.arclibxml.IndexedArclibXmlStore;
 import cz.cas.lib.arclib.security.user.UserDetailsImpl;
 import cz.cas.lib.arclib.service.BatchService;
@@ -215,7 +214,6 @@ public class ArchivalStorageDelegateTest extends DelegateTest {
         ArrayList<Object> documents = new ArrayList<>();
         documents.add("<xml/>");
         Map<String, Object> indexedFields = new HashMap<>();
-        indexedFields.put(IndexedArclibXmlDocument.CONTENT, documents);
         when(indexedArclibXmlStore.findArclibXmlIndexDocument(anyString())).thenReturn(indexedFields);
 
         Mocks.register("archivalStorageDelegate", archivalStorageDelegate);

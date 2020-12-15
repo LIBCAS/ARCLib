@@ -7,8 +7,7 @@ import org.springframework.stereotype.Repository;
  * Implementation of {@link DatedStore} for storing {@link FileRef}.
  */
 @Repository
-public class FileRefStore
-        extends DatedStore<FileRef, QFileRef> {
+public class FileRefStore extends DatedStore<FileRef, QFileRef> {
     public FileRefStore() {
         super(FileRef.class, QFileRef.class);
     }

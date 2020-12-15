@@ -13,7 +13,6 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
 import java.util.Map;
 
 public interface IndexArclibXmlStore<T> {
@@ -60,17 +59,13 @@ public interface IndexArclibXmlStore<T> {
     Resource getArclibXmlDefinition();
 
     /**
-     * parses CSV file into configuration used by indexer
+     * Fills passed attributes with config parsed from arclibXmlDefinition.csv
      *
-     * @return map containing collection name and its configuration filled with data of main collection and also data of all nested collections
+     * @param mainCollection       config of the main collection
+     * @param indexTypeToConfigMap map containing collection names (main and nested) as keys and their configurations as values
      * @throws IOException
      */
-    default Map<String, ArclibXmlIndexTypeConfig> getArclibXmlCollectionsConfig() throws IOException {
-        //declaration of main collection
-        ArclibXmlIndexTypeConfig mainCollection = new ArclibXmlIndexTypeConfig(null, getMainDocumentIndexType());
-        Map<String, ArclibXmlIndexTypeConfig> indexTypeToConfigMap = new HashMap<>();
-        indexTypeToConfigMap.put(mainCollection.getIndexType(), mainCollection);
-
+    default void parseCsvConfig(ArclibXmlIndexTypeConfig mainCollection, Map<String, ArclibXmlIndexTypeConfig> indexTypeToConfigMap) throws IOException {
         BufferedReader br = new BufferedReader(new InputStreamReader(getArclibXmlDefinition().getInputStream(), StandardCharsets.UTF_8));
         Iterable<CSVRecord> records = CSVFormat.EXCEL.withDelimiter(',').withHeader().withSkipHeaderRecord(true).parse(br);
 
@@ -99,6 +94,5 @@ public interface IndexArclibXmlStore<T> {
                 childConfig.getIndexedFieldConfig().add(new ArclibXmlField(record.get(6), record.get(7), childRelativeXpath, !"N".equals(record.get(5))));
             }
         }
-        return indexTypeToConfigMap;
     }
 }

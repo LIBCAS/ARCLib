@@ -3,9 +3,10 @@ package cz.cas.lib.arclib.utils;
 import cz.cas.lib.arclib.exception.validation.MissingNode;
 import cz.cas.lib.arclib.exception.validation.MultipleNodesFound;
 import cz.cas.lib.arclib.exception.validation.SchemaValidationError;
-import cz.cas.lib.core.util.Utils;
-import lombok.SneakyThrows;
 import net.sf.saxon.jaxp.SaxonTransformerFactory;
+import net.sf.saxon.s9api.UnprefixedElementMatchingPolicy;
+import net.sf.saxon.xpath.XPathEvaluator;
+import org.apache.commons.lang3.tuple.Pair;
 import org.dom4j.InvalidXPathException;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
@@ -14,7 +15,7 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
 import javax.xml.XMLConstants;
-import javax.xml.parsers.DocumentBuilder;
+import javax.xml.namespace.NamespaceContext;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.OutputKeys;
@@ -30,34 +31,34 @@ import javax.xml.validation.Validator;
 import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpressionException;
-import javax.xml.xpath.XPathFactory;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringWriter;
+import java.util.Iterator;
+import java.util.Map;
+
+import static cz.cas.lib.core.util.Utils.notNull;
 
 public class XmlUtils {
 
     /**
-     * Searches XML element with XPath and returns list of nodes found
+     * Searches XML element with XPath 3.1 and returns list of nodes found.
      *
      * @param xml        input stream with the XML in which the element is being searched
      * @param expression XPath expression used in search
+     * @param uriMap     map of prefix->URI if the document and xpath should be in namespace-aware context, null otherwise
      * @return {@link NodeList} of elements matching the XPath in the XML
-     * @throws IOException                  if the XML at the specified path is missing
-     * @throws SAXException                 if the XML cannot be parsed
+     * @throws IOException  if the XML at the specified path is missing
+     * @throws SAXException if the XML cannot be parsed
      */
-    public static NodeList findWithXPath(InputStream xml, String expression)
+    public static NodeList findWithXPath(InputStream xml, String expression, Map<String, String> uriMap)
             throws IOException, SAXException, ParserConfigurationException {
-        DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
-        DocumentBuilder dBuilder;
+        Pair<Document, XPath> domAndXpath = createDomAndXpath(xml, uriMap);
+        Document doc = domAndXpath.getKey();
+        XPath xPath = domAndXpath.getValue();
 
-        dBuilder = dbFactory.newDocumentBuilder();
-
-        Document doc = dBuilder.parse(xml);
         doc.getDocumentElement().normalize();
-
-        XPath xPath = XPathFactory.newInstance().newXPath();
 
         try {
             return (NodeList) xPath.compile(expression).evaluate(doc, XPathConstants.NODESET);
@@ -67,27 +68,24 @@ public class XmlUtils {
     }
 
     /**
-     * Searches XML element with XPath and returns single node found or throws exception if there is no or multiple nodes
+     * Searches XML element with XPath 3.1 and returns single node found or throws exception if there is no or multiple nodes.
      *
      * @param xml        input stream with the XML in which the element is being searched
      * @param expression XPath expression used in search
+     * @param uriMap     map of prefix->URI if the document and xpath should be in namespace-aware context, null otherwise
      * @return {@link Node} singe node found
      * @throws IOException        if the XML at the specified path is missing
      * @throws SAXException       if the XML cannot be parsed
      * @throws MissingNode        if the node is not found
      * @throws MultipleNodesFound if multiple nodes were found
      */
-    public static Node findSingleNodeWithXPath(InputStream xml, String expression)
+    public static Node findSingleNodeWithXPath(InputStream xml, String expression, Map<String, String> uriMap)
             throws IOException, SAXException, ParserConfigurationException {
-        DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
-        DocumentBuilder dBuilder;
+        Pair<Document, XPath> domAndXpath = createDomAndXpath(xml, uriMap);
+        Document doc = domAndXpath.getKey();
+        XPath xPath = domAndXpath.getValue();
 
-        dBuilder = dbFactory.newDocumentBuilder();
-
-        Document doc = dBuilder.parse(xml);
         doc.getDocumentElement().normalize();
-
-        XPath xPath = XPathFactory.newInstance().newXPath();
 
         try {
             NodeList elementsFound = (NodeList) xPath.compile(expression).evaluate(doc, XPathConstants.NODESET);
@@ -106,13 +104,11 @@ public class XmlUtils {
 
     public static StringBuilder extractTextFromAllElements(StringBuilder stringBuilder, Node node) {
         NodeList childNodes = node.getChildNodes();
-        switch (node.getNodeType()) {
-            case Node.TEXT_NODE:
-            case Node.CDATA_SECTION_NODE:
-                String textContent = node.getTextContent().trim();
-                if (textContent.isEmpty())
-                    return stringBuilder;
-                return stringBuilder.append(textContent).append(" ");
+        if (node.getNodeType() == Node.TEXT_NODE) {
+            String textContent = node.getTextContent().trim();
+            if (textContent.isEmpty())
+                return stringBuilder;
+            return stringBuilder.append(textContent).append(" ");
         }
         if (childNodes != null) {
             for (int i = 0; i < childNodes.getLength(); i++) {
@@ -167,30 +163,43 @@ public class XmlUtils {
     }
 
     /**
-     * Checks if the node at the xPath exists in the XML. If the node does not exist, {@link MissingNode} exception is thrown.
+     * Returns XML parsed as DOM together with configured {@link XPath} 3.1 evaluator to be used with the DOM.
+     * Saxon library is used for xPath evaluation.
+     * <p>
+     * If no namespace map is provided, then both, the DOM and xPath are set to ignore namespace. Otherwise the parsed DOM
+     * is namespace aware and the xPath is aware of the namespaces passed in the map.
+     * </p>
      *
-     * @param xml   xml
-     * @param xPath xPath
-     * @throws IOException
-     * @throws SAXException
-     * @throws ParserConfigurationException
+     * @param xmlInput                      XML input
+     * @param namespacePrefixToNamespaceUri map of prefix->URI if the document and xpath should be in namespace-aware context, null otherwise
+     * @return
      */
-    public static void checkNodeExists(InputStream xml, String xPath) throws IOException, SAXException, ParserConfigurationException {
-        NodeList withXPath = XmlUtils.findWithXPath(xml, xPath);
+    public static Pair<Document, XPath> createDomAndXpath(InputStream xmlInput, Map<String, String> namespacePrefixToNamespaceUri) throws ParserConfigurationException, IOException, SAXException {
+        DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
+        documentBuilderFactory.setNamespaceAware(namespacePrefixToNamespaceUri != null);
+        Document dom = documentBuilderFactory.newDocumentBuilder().parse(xmlInput);
 
-        Utils.ne(withXPath.getLength(), 0, () -> new MissingNode(xPath));
-    }
+        XPath xPath = new net.sf.saxon.xpath.XPathFactoryImpl().newXPath();
+        if (namespacePrefixToNamespaceUri == null)
+            ((XPathEvaluator) xPath).getStaticContext().setUnprefixedElementMatchingPolicy(UnprefixedElementMatchingPolicy.ANY_NAMESPACE);
+        else
+            xPath.setNamespaceContext(new NamespaceContext() {
+                public String getNamespaceURI(String prefix) {
+                    notNull(prefix, () -> new IllegalArgumentException("No prefix provided!"));
+                    String uri = namespacePrefixToNamespaceUri.get(prefix.toLowerCase());
+                    return uri == null ? XMLConstants.NULL_NS_URI : uri;
+                }
 
-    public static String removeNamespacesFromXPathExpr(String xPathWithNamespaces) {
-        return xPathWithNamespaces.replaceAll("[\\w]+:", "");
-    }
+                public String getPrefix(String namespaceURI) {
+                    // Not needed in this context.
+                    return null;
+                }
 
-    public static XPath nsUnawareXPath() {
-        return XPathFactory.newInstance().newXPath();
-    }
-
-    @SneakyThrows
-    public static Document nsUnawareDom(InputStream inputStream) {
-        return DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(inputStream);
+                public Iterator getPrefixes(String namespaceURI) {
+                    // Not needed in this context.
+                    return null;
+                }
+            });
+        return Pair.of(dom, xPath);
     }
 }

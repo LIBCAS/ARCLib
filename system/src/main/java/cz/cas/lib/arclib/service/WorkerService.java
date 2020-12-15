@@ -42,7 +42,6 @@ import org.springframework.jms.core.JmsTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionCallback;
 import org.springframework.transaction.support.TransactionTemplate;
-import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
 import javax.inject.Inject;
@@ -475,8 +474,7 @@ public class WorkerService {
         String xPathToId = pathToSipId.getXPathToId();
         notNull(xPathToId, () -> new IllegalArgumentException("null path to id in path to authorial id"));
 
-        NodeList elems;
-        List<File> matchingFiles = listFilesMatchingRegex(new File(sipFolderWorkspacePath.toAbsolutePath().toString()), pathToXmlRegex);
+        List<File> matchingFiles = listFilesMatchingRegex(new File(sipFolderWorkspacePath.toAbsolutePath().toString()), pathToXmlRegex, true);
         if (matchingFiles.size() == 0)
             throw new GeneralException(String.format("File with metadata for ingest workflow with external id %s does not exist at path given by regex: %s", ingestWorkflow.getExternalId(), pathToXmlRegex));
 
@@ -486,7 +484,7 @@ public class WorkerService {
         File metadataFile = matchingFiles.get(0);
         String authorialId;
         try (FileInputStream fis = new FileInputStream(metadataFile)) {
-            authorialId = XmlUtils.findSingleNodeWithXPath(fis, xPathToId).getTextContent();
+            authorialId = XmlUtils.findSingleNodeWithXPath(fis, xPathToId, null).getTextContent();
         } catch (SAXException | ParserConfigurationException e) {
             throw new GeneralException(String.format("Error in XPath expression to authorial id: %s", xPathToId), e);
         } catch (IOException e) {

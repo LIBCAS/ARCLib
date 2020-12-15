@@ -16,30 +16,29 @@ import org.dom4j.io.OutputFormat;
 import org.dom4j.io.XMLWriter;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.w3c.dom.Element;
-import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
-import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.TransformerException;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
+import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpressionException;
-import javax.xml.xpath.XPathFactory;
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.StringWriter;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import static cz.cas.lib.arclib.utils.XmlUtils.nsUnawareDom;
-import static cz.cas.lib.arclib.utils.XmlUtils.nsUnawareXPath;
+import static cz.cas.lib.arclib.utils.XmlUtils.createDomAndXpath;
 import static java.util.stream.Collectors.groupingBy;
 
 public class ArclibUtils {
@@ -48,12 +47,14 @@ public class ArclibUtils {
     public static final String XML_EXTENSION = ".xml";
     public static final String SUMS_EXTENSION = ".sums";
 
+    //all lowercase
     public static final String METS = "mets";
     public static final String OAIS_DC = "oai_dc";
     public static final String PREMIS = "premis";
     public static final String XSI = "xsi";
     public static final String ARCLIB = "arclib";
     public static final String DC = "dc";
+    public static final String XLINK = "xlink";
 
     /**
      * Looks for a specified text node and returns its value as an enum equivalent.
@@ -64,18 +65,22 @@ public class ArclibUtils {
      * @param root             root node from which to search
      * @param jsonPtrExpr      expression for node lookup
      * @param enumerationClass enum class used as equivalent to a node value
-     * @return enum equivalent of a specified node
-     * @throws ConfigParserException if there is no enum equivalent found
+     * @param valueRequired    whether some value must be present on provided JSON path
+     * @return enum equivalent of a specified node OR <em>null</em> if there is no config at provided path and <em>valueRequired</em> was set to false
+     * @throws ConfigParserException if valueRequired was set to false and there is no value OR if the value can't be parsed
      */
-    public static <T extends Enum<T>> T parseEnumFromConfig(JsonNode root, String jsonPtrExpr, Class<T> enumerationClass)
+    public static <T extends Enum<T>> T parseEnumFromConfig(JsonNode root, String jsonPtrExpr, Class<T> enumerationClass, boolean valueRequired)
             throws ConfigParserException {
         JsonNode node = root.at(jsonPtrExpr);
         if (!node.isMissingNode()) {
             String value = node.textValue();
             for (Enum enumeration : enumerationClass.getEnumConstants()) {
                 if (enumeration.toString().equals(value.toUpperCase()))
-                    return enumeration.valueOf(enumerationClass, value.toUpperCase());
+                    return Enum.valueOf(enumerationClass, value.toUpperCase());
             }
+        } else {
+            if (!valueRequired)
+                return null;
         }
         throw new ConfigParserException(jsonPtrExpr, node.toString(), enumerationClass);
     }
@@ -306,15 +311,17 @@ public class ArclibUtils {
     }
 
     public static final String prepareBpmnDefinitionForDeployment(String bpmnDefinition, String ingestBatchId) throws ParserConfigurationException, IOException, SAXException, TransformerException, XPathExpressionException {
-        org.w3c.dom.Document doc = nsUnawareDom(new ByteArrayInputStream(bpmnDefinition.getBytes()));
+        Pair<org.w3c.dom.Document, XPath> domAndXpath = createDomAndXpath(new ByteArrayInputStream(bpmnDefinition.getBytes()), null);
+        org.w3c.dom.Document bpmDefDom = domAndXpath.getKey();
+        XPath xpath = domAndXpath.getValue();
         StringWriter stringWriter = new StringWriter();
-        Element processEl = (Element) nsUnawareXPath().compile("/definitions//process").evaluate(doc, XPathConstants.NODE);
+        Element processEl = (Element) xpath.compile("/definitions//process").evaluate(bpmDefDom, XPathConstants.NODE);
         String batchDeploymentName = toBatchDeploymentName(ingestBatchId);
         processEl.setAttribute("id", batchDeploymentName);
         processEl.setAttribute("camunda:jobPriority", "${randomPriority}");
-        Element bpmnPlaneEl = (Element) XPathFactory.newInstance().newXPath().compile("/definitions//BPMNPlane").evaluate(doc, XPathConstants.NODE);
+        Element bpmnPlaneEl = (Element) xpath.compile("/definitions//BPMNPlane").evaluate(bpmDefDom, XPathConstants.NODE);
         bpmnPlaneEl.setAttribute("bpmnElement", batchDeploymentName);
-        SaxonTransformerFactory.newInstance().newTransformer().transform(new DOMSource(doc), new StreamResult(stringWriter));
+        SaxonTransformerFactory.newInstance().newTransformer().transform(new DOMSource(bpmDefDom), new StreamResult(stringWriter));
         return stringWriter.toString();
     }
 }

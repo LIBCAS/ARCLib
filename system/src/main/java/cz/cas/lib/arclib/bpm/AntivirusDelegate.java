@@ -66,8 +66,8 @@ public class AntivirusDelegate extends ArclibDelegate {
 
     public Antivirus initialize(JsonNode root, IngestWorkflow iw, DelegateExecution ex, int antivirusToolCounter) throws ConfigParserException {
         InfectedSipAction infectedSipAction = parseEnumFromConfig(root,
-                ANTIVIRUS_TOOL_EXPR + "/" + antivirusToolCounter + AntivirusDelegate.INFECTED_SIP_ACTION, InfectedSipAction.class);
-        AntivirusType avType = parseEnumFromConfig(root, ANTIVIRUS_TOOL_EXPR + "/" + antivirusToolCounter + AntivirusDelegate.ANTIVIRUS_TYPE, AntivirusType.class);
+                ANTIVIRUS_TOOL_EXPR + "/" + antivirusToolCounter + AntivirusDelegate.INFECTED_SIP_ACTION, InfectedSipAction.class,true);
+        AntivirusType avType = parseEnumFromConfig(root, ANTIVIRUS_TOOL_EXPR + "/" + antivirusToolCounter + AntivirusDelegate.ANTIVIRUS_TYPE, AntivirusType.class,true);
         Antivirus antivirusToBeUsed;
         switch (avType) {
             case CLAMAV:

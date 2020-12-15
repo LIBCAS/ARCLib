@@ -24,8 +24,9 @@ import static cz.cas.lib.core.util.Utils.notNull;
 @RestController
 @Api(value = "file", description = "Api for accessing and storing files")
 @RequestMapping("/api/files")
-public class FileApi {
-    private FileRepository repository;
+public class FileRefApi {
+
+    private FileRefService service;
 
     /**
      * Gets the content of a file with specified id.
@@ -33,9 +34,10 @@ public class FileApi {
      * <p>
      *     Also sets Content-Length and Content-Disposition http headers to values previously saved during upload.
      * </p>
+     *
      * @param id Id of file to retrieve
-     * @throws MissingObject if the file was not found
      * @return Content of a file in input stream
+     * @throws MissingObject if the file was not found
      */
     @ApiOperation(value = "Gets the content of a file with specified id.",
             notes = "Returns content of a file in input stream.",
@@ -44,10 +46,9 @@ public class FileApi {
             @ApiResponse(code = 200, message = "Successful response", response = ResponseEntity.class),
             @ApiResponse(code = 404, message = "The file was not found")})
     @RequestMapping(value = "/{id}", method = RequestMethod.GET)
-    public ResponseEntity<InputStreamResource> download(@ApiParam(value = "Id of file to retrieve", required = true)
-                                                            @PathVariable("id") String id) {
+    public ResponseEntity<InputStreamResource> download(@ApiParam(value = "Id of file to retrieve", required = true) @PathVariable("id") String id) {
 
-        FileRef file = repository.get(id);
+        FileRef file = service.get(id);
         notNull(file, () -> new MissingObject(FileRef.class, id));
 
         return ResponseEntity
@@ -64,8 +65,9 @@ public class FileApi {
      * <p>
      *     File should be uploaded as multipart/form-data.
      * </p>
+     *
      * @param uploadFile Provided file with metadata
-     * @param index Should be the content of file indexed
+     * @param index      Should be the content of file indexed
      * @return Reference to a stored file
      */
     @ApiOperation(value = "Uploads a file and returns the reference to the stored file.",
@@ -74,10 +76,8 @@ public class FileApi {
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Successful response", response = FileRef.class)})
     @RequestMapping(value = "/", method = RequestMethod.POST)
-    public FileRef upload(@ApiParam(value = "Provided file with metadata", required = true)
-                              @RequestParam("file") MultipartFile uploadFile,
-                          @ApiParam(value = "Should be the content of file indexed")
-                              @RequestParam(name = "index", defaultValue = "false") Boolean index) {
+    public FileRef upload(@ApiParam(value = "Provided file with metadata", required = true) @RequestParam("file") MultipartFile uploadFile,
+                          @ApiParam(value = "Should be the content of file indexed") @RequestParam(name = "index", defaultValue = "false") Boolean index) {
 
         try (InputStream stream = uploadFile.getInputStream()) {
             String filename = uploadFile.getOriginalFilename();
@@ -88,7 +88,7 @@ public class FileApi {
 
             String contentType = uploadFile.getContentType();
 
-            return repository.create(stream, filename, contentType, index);
+            return service.create(stream, filename, contentType, index);
 
         } catch (IOException e) {
             throw new BadArgument("file");
@@ -96,7 +96,7 @@ public class FileApi {
     }
 
     @Inject
-    public void setRepository(FileRepository repository) {
-        this.repository = repository;
+    public void setService(FileRefService service) {
+        this.service = service;
     }
 }
