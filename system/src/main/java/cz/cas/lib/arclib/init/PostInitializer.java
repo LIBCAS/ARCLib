@@ -5,7 +5,7 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.util.ISO8601DateFormat;
 import com.fasterxml.jackson.datatype.hibernate5.Hibernate5Module;
 import cz.cas.lib.arclib.domainbase.exception.ForbiddenObject;
-import cz.cas.lib.arclib.index.solr.ReindexService;
+import cz.cas.lib.arclib.index.solr.IndexQueryUtils;
 import cz.cas.lib.arclib.mail.ArclibMailCenter;
 import cz.cas.lib.arclib.security.authorization.permission.Permissions;
 import cz.cas.lib.arclib.security.authorization.role.UserRoleService;
@@ -17,8 +17,6 @@ import cz.cas.lib.core.scheduling.job.Job;
 import cz.cas.lib.core.scheduling.job.JobService;
 import cz.cas.lib.core.script.ScriptType;
 import lombok.extern.slf4j.Slf4j;
-import org.camunda.bpm.engine.RepositoryService;
-import org.camunda.bpm.engine.RuntimeService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.event.ContextRefreshedEvent;
@@ -28,7 +26,6 @@ import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.util.StreamUtils;
 
 import javax.inject.Inject;
-import javax.sql.DataSource;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.charset.Charset;
@@ -45,11 +42,7 @@ import static java.nio.file.Files.*;
 @Slf4j
 public class PostInitializer implements ApplicationListener<ContextRefreshedEvent> {
     @Inject
-    private DataSource ds;
-    @Inject
     private ObjectMapper objectMapper;
-    @Inject
-    private ReindexService reindexService;
     @Value("${env:production}")
     private String env;
     @Inject
@@ -58,10 +51,6 @@ public class PostInitializer implements ApplicationListener<ContextRefreshedEven
     private CustomIncidentHandler customIncidentHandler;
     @Value("${arclib.path.workspace}")
     private String workspace;
-    @Inject
-    private RepositoryService repositoryService;
-    @Inject
-    private RuntimeService runtimeService;
     @Inject
     private ProducerStore producerStore;
     @Inject
@@ -82,6 +71,8 @@ public class PostInitializer implements ApplicationListener<ContextRefreshedEven
     private TransactionTemplate transactionTemplate;
     @Value("${spring.servlet.multipart.location}")
     private String temporaryMultipartFilesLocation;
+    @Value("${solr.maxRows}")
+    private Integer solrMaxRows;
 
     @Override
     public void onApplicationEvent(ContextRefreshedEvent event) {
@@ -102,7 +93,8 @@ public class PostInitializer implements ApplicationListener<ContextRefreshedEven
         customIncidentHandler.setBatchService(batchService);
 
         createTemporaryMultipartFilesDirectory();
-
+        if (solrMaxRows != null)
+            IndexQueryUtils.solrMaxRows = solrMaxRows;
         log.debug("Arclib instance started successfully.");
     }
 

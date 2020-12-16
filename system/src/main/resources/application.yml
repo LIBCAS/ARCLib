@@ -129,6 +129,7 @@ solr:
   endpoint: http://localhost:8983/solr
   arclibxml:
     corename: arclibXmlC
+  maxRows: 2100000000 # was Integer max but some Solr instances were not able to handle it
 archivalStorage:
   debugLocation: arcStorageData
 formatLibrary:
