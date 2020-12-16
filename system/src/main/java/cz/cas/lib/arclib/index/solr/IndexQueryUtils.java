@@ -34,6 +34,7 @@ public class IndexQueryUtils {
      * store and its index types, e.g. {@link ArclibXmlIndexTypeConfig#indexType}</p>
      */
     public static Map<String, Map<String, IndexField>> INDEXED_FIELDS_MAP = new HashMap<>();
+    public static int solrMaxRows = Integer.MAX_VALUE;
 
     public static String sanitizeFilterValue(String value) {
         if (value != null && value.trim().length() > 0) {
@@ -322,7 +323,7 @@ public class IndexQueryUtils {
             gte(params.getPage(), 0, () -> new BadArgument("page"));
             query.setPageRequest(PageRequest.of(params.getPage(), params.getPageSize()));
         } else
-            query.setPageRequest(PageRequest.of(0, Integer.MAX_VALUE));
+            query.setPageRequest(PageRequest.of(0, solrMaxRows));
     }
 
     public static Criteria buildFilters(Params params, String indexType, Map<String, IndexField> indexedFields) {
