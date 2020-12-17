@@ -3,11 +3,15 @@ package cz.cas.lib.arclib.bpm;
 import com.fasterxml.jackson.databind.JsonNode;
 import cz.cas.lib.arclib.domain.IngestToolFunction;
 import cz.cas.lib.arclib.domain.ingestWorkflow.IngestEvent;
+import cz.cas.lib.arclib.domain.profiles.ProducerProfile;
 import cz.cas.lib.arclib.service.arclibxml.ArclibXmlValidator;
 import cz.cas.lib.arclib.service.arclibxml.ArclibXmlXsltExtractor;
+import cz.cas.lib.arclib.store.ProducerProfileStore;
+import cz.cas.lib.arclib.utils.ArclibUtils;
 import cz.cas.lib.arclib.utils.NamespaceChangingVisitor;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.camunda.bpm.engine.delegate.BpmnError;
 import org.camunda.bpm.engine.delegate.DelegateExecution;
 import org.dom4j.Document;
 import org.dom4j.DocumentException;
@@ -28,6 +32,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static cz.cas.lib.arclib.utils.ArclibUtils.*;
+import static cz.cas.lib.core.util.Utils.isNull;
 
 @Slf4j
 @Service
@@ -38,14 +43,24 @@ public class ArclibXmlExtractorDelegate extends ArclibDelegate {
     public static final String SIP_PROFILE_CONFIG_ENTRY = "sipProfile";
 
     private ArclibXmlXsltExtractor arclibXmlXsltExtractor;
+    private ProducerProfileStore producerProfileStore;
     private ArclibXmlValidator validator;
     private Map<String, String> uris;
 
     @Override
     public void executeArclibDelegate(DelegateExecution execution) throws TransformerException, IOException, ParserConfigurationException, SAXException, DocumentException {
+        String usedSipProfile = getStringVariable(execution, BpmConstants.MetadataExtraction.usedSipProfile);
+        isNull(usedSipProfile, () -> new BpmnError(BpmConstants.ErrorCodes.ProcessFailure, ArclibUtils.trimBpmnErrorMsg(
+                "Attempting to start ArclibXmlExtractor but the usedSipProfile variable is already filled. Workflow definition can contain only one instance of the extractor.")));
+
         //extract metadata from original SIP using XSLT
         JsonNode configRoot = getConfigRoot(execution);
         String sipProfileExternalId = configRoot.get(SIP_PROFILE_CONFIG_ENTRY).textValue();
+        if (sipProfileExternalId == null) {
+            String producerProfileExternalId = getProducerProfileExternalId(execution);
+            ProducerProfile producerProfile = producerProfileStore.findByExternalId(producerProfileExternalId);
+            sipProfileExternalId = producerProfile.getSipProfile().getExternalId();
+        }
 
         String uglyPrintedExtractedMetadata = arclibXmlXsltExtractor.extractMetadata(sipProfileExternalId, execution.getVariables());
 
@@ -60,8 +75,14 @@ public class ArclibXmlExtractorDelegate extends ArclibDelegate {
 
         validator.validateXsltResult(prettyPrintedExtractedMetadata);
 
-        execution.setVariable(BpmConstants.MetadataExtraction.result, prettyPrintedExtractedMetadata.getBytes());
         ingestEventStore.save(new IngestEvent(ingestWorkflowService.findByExternalId(ingestWorkflowExternalId), toolService.getByNameAndVersion(getToolName(), getToolVersion()), true, null));
+        execution.setVariable(BpmConstants.MetadataExtraction.result, prettyPrintedExtractedMetadata.getBytes());
+        execution.setVariable(BpmConstants.MetadataExtraction.usedSipProfile, sipProfileExternalId);
+    }
+
+    @Inject
+    public void setProducerProfileStore(ProducerProfileStore producerProfileStore) {
+        this.producerProfileStore = producerProfileStore;
     }
 
     @Inject

@@ -1271,11 +1271,46 @@
     <changeSet id="23" author="radvan">
         <sql>
             -- SUPER_ADMIN
-            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('b7a43ad5-883f-4741-948b-08678fa38604', 'USER_ROLE_RECORDS_READ');
-            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('b7a43ad5-883f-4741-948b-08678fa38604', 'USER_ROLE_RECORDS_WRITE');
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('b7a43ad5-883f-4741-948b-08678fa38604',
+            'USER_ROLE_RECORDS_READ');
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('b7a43ad5-883f-4741-948b-08678fa38604',
+            'USER_ROLE_RECORDS_WRITE');
 
             -- ADMIN
-            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('7354de69-e7b6-4276-96e1-6be55aa096d0', 'USER_ROLE_RECORDS_READ');
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('7354de69-e7b6-4276-96e1-6be55aa096d0',
+            'USER_ROLE_RECORDS_READ');
         </sql>
+    </changeSet>
+    <changeSet id="24" author="tomasek">
+        <insert tableName="uas_sequence">
+            <column name="id" value="71b31bd6-01ce-47a0-ae1d-5fe2277d4ebb"/>
+            <column name="created" valueComputed="${now}"/>
+            <column name="name" value="workflow_definition"/>
+            <column name="list_order" valueNumeric="0"/>
+            <column name="deletable" valueBoolean="false"/>
+            <column name="active" valueBoolean="true"/>
+            <column name="format" value="0"/>
+            <column name="counter" valueNumeric="1"/>
+        </insert>
+        <addColumn tableName="arclib_workflow_definition">
+            <column name="external_id" type="varchar(255)"/>
+        </addColumn>
+    </changeSet>
+    <changeSet id="25" author="tomasek">
+        <addColumn tableName="arclib_batch">
+            <column name="computed_workflow_config" type="nclob"/>
+            <column name="initial_workflow_definition_id" type="varchar(255)">
+                <constraints foreignKeyName="arclib_batch_workflow_definition_fk"
+                             referencedTableName="arclib_workflow_definition" referencedColumnNames="id"/>
+            </column>
+            <column name="initial_validation_profile_id" type="varchar(255)">
+                <constraints foreignKeyName="arclib_batch_validation_profile_fk"
+                             referencedTableName="arclib_validation_profile" referencedColumnNames="id"/>
+            </column>
+            <column name="initial_sip_profile_id" type="varchar(255)">
+                <constraints foreignKeyName="arclib_batch_sip_profile_fk"
+                             referencedTableName="arclib_sip_profile" referencedColumnNames="id"/>
+            </column>
+        </addColumn>
     </changeSet>
 </databaseChangeLog>

@@ -91,6 +91,10 @@
   <field name="sip_version_of" type="string"/>
   <field name="xml_version_number" type="pint"/>
   <field name="xml_version_of" type="string"/>
+  <field name="producer_profile" type="string"/>
+  <field name="sip_profile" type="string"/>
+  <field name="validation_profile" type="string"/>
+  <field name="workflow_definition" type="string"/>
   <field name="latest" type="boolean"/>
 
   <field name="element_name" type="string"/>

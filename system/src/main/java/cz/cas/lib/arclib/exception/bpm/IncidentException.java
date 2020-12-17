@@ -14,7 +14,7 @@ import java.util.List;
  * the issues themselves.
  */
 public class IncidentException extends Exception {
-    public static String INCIDENT_MSG_PREFIX = "ARCLib incident: ";
+    public static final String INCIDENT_MSG_PREFIX = "ARCLib incident: ";
     /**
      * throwing method may provide pre-constructed issue objects to be persisted by {@link ArclibDelegate}
      */

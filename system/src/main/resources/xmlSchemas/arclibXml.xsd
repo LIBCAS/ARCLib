@@ -4,6 +4,27 @@
             xmlns:xsd="http://www.w3.org/2001/XMLSchema"
             elementFormDefault="qualified">
 
+    <xsd:element name="sipInfo">
+        <xsd:complexType>
+            <xsd:all>
+                <xsd:element name="sipVersionNumber" type="xsd:int"/>
+                <xsd:element name="sipVersionOf" type="xsd:string"/>
+                <xsd:element name="xmlVersionNumber" type="xsd:int"/>
+                <xsd:element name="xmlVersionOf" type="xsd:string"/>
+                <xsd:element name="ingestProfiles">
+                    <xsd:complexType>
+                    <xsd:all>
+                        <xsd:element name="producerProfile" type="xsd:string"/>
+                        <xsd:element name="sipProfile" type="xsd:string"/>
+                        <xsd:element name="validationProfile" type="xsd:string"/>
+                        <xsd:element name="workflowDefinition" type="xsd:string"/>
+                    </xsd:all>
+                    </xsd:complexType>
+                </xsd:element>
+            </xsd:all>
+        </xsd:complexType>
+    </xsd:element>
+
     <xsd:element name="formats">
         <xsd:complexType>
             <xsd:sequence>

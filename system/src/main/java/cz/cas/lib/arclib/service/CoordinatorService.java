@@ -79,20 +79,20 @@ public class CoordinatorService {
      * 2. creates new ingest workflow package from the provided SIP content and hash
      * 2. triggers processing of ingest workflow
      *
-     * @param sipContent       content of the SIP package
-     * @param hash             hash of the SIP package
-     * @param externalId       external id of producer profile to use
-     * @param workflowConfig   JSON config configuring the BPMN ingest workflow process
-     * @param originalFileName original file name of the SIP
-     * @param transferAreaPath custom path to the transfer area to which the SIP content is copied from <code>sipContent</code>
+     * @param sipContent          content of the SIP package
+     * @param hash                hash of the SIP package
+     * @param externalId          external id of producer profile to use
+     * @param batchWorkflowConfig JSON config configuring the BPMN ingest workflow process
+     * @param originalFileName    original file name of the SIP
+     * @param transferAreaPath    custom path to the transfer area to which the SIP content is copied from <code>sipContent</code>
      * @return id of the created batch
      * @throws IOException
      */
-    public String processSip(InputStream sipContent, Hash hash, String externalId, String workflowConfig,
+    public String processSip(InputStream sipContent, Hash hash, String externalId, String batchWorkflowConfig,
                              String originalFileName, String transferAreaPath) throws IOException {
         log.info("Processing of one SIP package from the provided SIP content has been triggered.");
 
-        if (workflowConfig.isEmpty()) throw new BadArgument("Workflow config is empty.");
+        if (batchWorkflowConfig.isEmpty()) throw new BadArgument("Workflow config is empty.");
         if (hash.getHashType() == null) throw new BadArgument("Hash type empty.");
         if (hash.getHashValue() == null) throw new BadArgument("Hash value is empty.");
 
@@ -131,11 +131,12 @@ public class CoordinatorService {
         ingestWorkflow.setProcessingState(IngestWorkflowState.NEW);
         ingestWorkflow.setHash(hash);
         ingestWorkflow.setFileName(fileName);
-        ingestWorkflow.setInitialConfig(computeIngestWorkflowConfig(workflowConfig, producerProfile));
+        String computedWorkflowConfig = computeIngestWorkflowConfig(batchWorkflowConfig, producerProfile);
+        ingestWorkflow.setInitialConfig(computedWorkflowConfig);
         String batchId = transactionTemplate.execute(s -> {
             hashStore.save(hash);
             ingestWorkflowService.save(ingestWorkflow);
-            return prepareBatch(asList(ingestWorkflow), producerProfile, workflowConfig, fullTransferAreaPath, userDetails.getId()).getId();
+            return prepareBatch(asList(ingestWorkflow), producerProfile, batchWorkflowConfig, computedWorkflowConfig, fullTransferAreaPath, userDetails.getId()).getId();
         });
         log.debug("Sending a message to Worker to process ingest workflow with external id " + ingestWorkflow.getExternalId() + ".");
         template.convertAndSend("worker", new JmsDto(ingestWorkflow.getExternalId(), userDetails.getId()));
@@ -146,14 +147,14 @@ public class CoordinatorService {
      * Creates and runs a batch of ingest workflow processes. A single instance of ingest workflow is created
      * for each SIP located in the respective transfer area.
      *
-     * @param externalId       external id of producer profile
-     * @param workflowConfig   JSON configuration of ingest workflow on the batch level
-     * @param transferAreaPath custom transfer area path for the given batch (overrides the transfer area path of producer)
-     * @param userId           id of the user
-     * @param routineId         id of the ingest routine
+     * @param externalId          external id of producer profile
+     * @param batchWorkflowConfig JSON configuration of ingest workflow on the batch level
+     * @param transferAreaPath    custom transfer area path for the given batch (overrides the transfer area path of producer)
+     * @param userId              id of the user
+     * @param routineId           id of the ingest routine
      * @return id of the created batch or 'null' if no batch has been created
      */
-    public String processBatchOfSips(String externalId, String workflowConfig, String transferAreaPath, String userId, String routineId) throws IOException {
+    public String processBatchOfSips(String externalId, String batchWorkflowConfig, String transferAreaPath, String userId, String routineId) throws IOException {
         IngestRoutine ingestRoutine = ingestRoutineStore.find(routineId);
         if (skipRoutineIfPreviousBatchProcessing && ingestRoutine.getCurrentlyProcessingBatch() != null) {
             log.debug("Skipping job of ingest routine: {} because there is still batch with id: {} processing", routineId, ingestRoutine.getCurrentlyProcessingBatch().getId());
@@ -162,7 +163,7 @@ public class CoordinatorService {
 
         log.info("Processing of a batch of SIP packages has been triggered, routine id: {}", routineId);
 
-        if (workflowConfig.isEmpty()) throw new BadArgument("Workflow config is empty.");
+        if (batchWorkflowConfig.isEmpty()) throw new BadArgument("Workflow config is empty.");
 
         ProducerProfile producerProfile = producerProfileService.findByExternalId(externalId);
         notNull(producerProfile, () -> new MissingObject(ProducerProfile.class, externalId));
@@ -172,7 +173,7 @@ public class CoordinatorService {
                 new IllegalArgumentException("null producer in the producer profile with external id " + producerProfile.getExternalId())
         );
 
-        String mergedWorkflowConfig = computeIngestWorkflowConfig(workflowConfig, producerProfile);
+        String mergedWorkflowConfig = computeIngestWorkflowConfig(batchWorkflowConfig, producerProfile);
 
         Path fullTransferAreaPath = computeTransferAreaPath(transferAreaPath, producer);
         File transferArea = new File(fullTransferAreaPath.toString());
@@ -188,7 +189,7 @@ public class CoordinatorService {
                 return null;
             }
             log.debug("Merged workflow config to be used: {}", mergedWorkflowConfig);
-            Batch batch = prepareBatch(ingestWorkflows, producerProfile, workflowConfig, fullTransferAreaPath, assignedUserId);
+            Batch batch = prepareBatch(ingestWorkflows, producerProfile, batchWorkflowConfig, mergedWorkflowConfig, fullTransferAreaPath, assignedUserId);
             if (ingestRoutine.getCurrentlyProcessingBatch() == null) {
                 ingestRoutine.setCurrentlyProcessingBatch(batch);
                 ingestRoutineStore.save(ingestRoutine);
@@ -395,19 +396,20 @@ public class CoordinatorService {
     /**
      * Configure batch and ingest workflows
      * 1. creates a batch from the ingest workflows
-     * 2. assigns it with the <code>producerProfile</code>, <code>workflowConfig</code> and sets its state to PROCESSING
+     * 2. assigns it with the <code>producerProfile</code>, <code>batchWorkflowConfig</code> and sets its state to PROCESSING
      * 3. deploys the <code>workflowDefinition</code> from <code>producerProfile</code> to the repository of process definitions
      * and sets its id with the id of the batch
      *
-     * @param ingestWorkflows  ingest workflows to be processed
-     * @param producerProfile  profile of the producer
-     * @param workflowConfig   JSON configuration of the ingest workflow
-     * @param transferAreaPath path to the transfer area
-     * @param userId           id of the user
+     * @param ingestWorkflows        ingest workflows to be processed
+     * @param producerProfile        profile of the producer
+     * @param batchWorkflowConfig    init JSON configuration of the batch
+     * @param computedWorkflowConfig result of batch config with producer profile config merge
+     * @param transferAreaPath       path to the transfer area
+     * @param userId                 id of the user
      * @return created batch
      */
     private Batch prepareBatch(List<IngestWorkflow> ingestWorkflows, ProducerProfile producerProfile,
-                               String workflowConfig, Path transferAreaPath, String userId) {
+                               String batchWorkflowConfig, String computedWorkflowConfig, Path transferAreaPath, String userId) {
         WorkflowDefinition workflowDefinition = producerProfile.getWorkflowDefinition();
         notNull(workflowDefinition, () -> new IllegalArgumentException(
                 "null workflowDefinition of producer profile with id " + producerProfile.getId()));
@@ -416,8 +418,8 @@ public class CoordinatorService {
         notNull(bpmnDefinition, () -> new IllegalArgumentException(
                 "null bpmnDefinition of producer profile with id " + producerProfile.getId()));
 
-        Batch batch = new Batch(ingestWorkflows, BatchState.PROCESSING, producerProfile, workflowConfig,
-                transferAreaPath.toString(), producerProfile.isDebuggingModeActive(), true, false);
+        Batch batch = new Batch(ingestWorkflows, BatchState.PROCESSING, producerProfile, batchWorkflowConfig, computedWorkflowConfig,
+                transferAreaPath.toString(), producerProfile.isDebuggingModeActive(), true, false, producerProfile.getValidationProfile(), producerProfile.getSipProfile(), producerProfile.getWorkflowDefinition());
         try {
             String bpmnString = ArclibUtils.prepareBpmnDefinitionForDeployment(bpmnDefinition, batch.getId());
             repositoryService.createDeployment().addInputStream(batch.getId() + ".bpmn",

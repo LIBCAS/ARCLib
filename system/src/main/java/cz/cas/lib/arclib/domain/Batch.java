@@ -1,7 +1,10 @@
 package cz.cas.lib.arclib.domain;
 
 import cz.cas.lib.arclib.domain.ingestWorkflow.IngestWorkflow;
+import cz.cas.lib.arclib.domain.ingestWorkflow.WorkflowDefinition;
 import cz.cas.lib.arclib.domain.profiles.ProducerProfile;
+import cz.cas.lib.arclib.domain.profiles.SipProfile;
+import cz.cas.lib.arclib.domain.profiles.ValidationProfile;
 import cz.cas.lib.arclib.domainbase.domain.DatedObject;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -12,6 +15,7 @@ import org.hibernate.annotations.Fetch;
 import org.hibernate.annotations.FetchMode;
 
 import javax.persistence.*;
+import javax.validation.constraints.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -49,9 +53,18 @@ public class Batch extends DatedObject {
 
     /**
      * Konfigurácia ingest workflow vo formáte JSON
+     * <p>
+     * This config is merged {@link ProducerProfile#workflowConfig} and the result is used as a default for ingests and
+     * stored to {@link #computedWorkflowConfig}
      */
     @Column(length = 10485760)
     private String workflowConfig;
+
+    /**
+     * Vypočtená konfigurace
+     */
+    @Column(length = 10485760)
+    private String computedWorkflowConfig;
 
     /**
      * Cesta do prekladiska
@@ -73,4 +86,22 @@ public class Batch extends DatedObject {
      * some ingest workflows resulted in incident which resolution is pending
      */
     private boolean pendingIncidents;
+
+    /**
+     * Validačný profil
+     */
+    @ManyToOne
+    private ValidationProfile initialValidationProfile;
+
+    /**
+     * SIP profil
+     */
+    @ManyToOne
+    private SipProfile initialSipProfile;
+
+    /**
+     * Definícia ingest workflow vo formáte BPMN
+     */
+    @ManyToOne
+    private WorkflowDefinition initialWorkflowDefinition;
 }

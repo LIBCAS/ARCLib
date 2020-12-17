@@ -43,6 +43,11 @@ public class BpmConstants {
 
     public static class MetadataExtraction {
         public static final String result = "metadataExtractionResult";
+        public static final String usedSipProfile = "usedSipProfile";
+    }
+
+    public static class Validation {
+        public static final String usedValidationProfile = "usedValidationProfile";
     }
 
     public static class FixityGeneration {

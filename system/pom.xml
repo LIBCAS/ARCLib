@@ -11,6 +11,14 @@
 
     <artifactId>system</artifactId>
 
+    <repositories>
+        <repository>
+            <id>jasper-3rd-party</id>
+            <name>Jasper3rdParty</name>
+            <url>http://jaspersoft.jfrog.io/jaspersoft/third-party-ce-artifacts/</url>
+        </repository>
+    </repositories>
+
     <dependencies>
         <dependency>
             <groupId>cz.cas.lib.arclib</groupId>
@@ -369,7 +377,14 @@
                     <artifactId>jakarta-regexp</artifactId>
                     <groupId>jakarta-regexp</groupId>
                 </exclusion>
+
             </exclusions>
+        </dependency>
+
+        <dependency>
+            <groupId>com.lowagie</groupId>
+            <artifactId>itext</artifactId>
+            <version>2.1.7.js6</version>
         </dependency>
 
         <!-- https://mvnrepository.com/artifact/net.sf.saxon/Saxon-HE -->

@@ -2,6 +2,7 @@ package cz.cas.lib.arclib.formatlibrary.api;
 
 import cz.cas.lib.arclib.domainbase.exception.BadArgument;
 import cz.cas.lib.arclib.domainbase.exception.MissingObject;
+import cz.cas.lib.arclib.formatlibrary.Permissions;
 import cz.cas.lib.arclib.formatlibrary.domain.PreservationPlanFileRef;
 import cz.cas.lib.arclib.formatlibrary.service.PreservationPlanFileRefService;
 import io.swagger.annotations.*;
@@ -10,6 +11,7 @@ import org.apache.commons.io.FilenameUtils;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -49,6 +51,7 @@ public class PreservationPlanFileRefApi {
             @ApiResponse(code = 404, message = "The file was not found")
     })
     @GetMapping(value = "/{id}")
+    @PreAuthorize("hasAuthority('" + Permissions.FORMAT_RECORDS_READ + "')")
     public ResponseEntity<InputStreamResource> download(@ApiParam(value = "File ID", required = true) @PathVariable("id") String id) {
 
         PreservationPlanFileRef file = service.get(id);
@@ -76,6 +79,7 @@ public class PreservationPlanFileRefApi {
             @ApiResponse(code = 200, message = "Successful response", response = PreservationPlanFileRef.class)
     })
     @PostMapping(value = "/")
+    @PreAuthorize("hasAuthority('" + Permissions.FORMAT_RECORDS_WRITE + "')")
     public PreservationPlanFileRef upload(@ApiParam(value = "Provided file with metadata", required = true) @RequestParam("file") MultipartFile uploadFile) {
 
         try (InputStream stream = uploadFile.getInputStream()) {

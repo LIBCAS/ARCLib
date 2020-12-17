@@ -25,5 +25,6 @@ public class BatchDetailDto {
     @Enumerated(EnumType.STRING)
     private BatchState state;
     private String workflowConfig;
+    private String computedWorkflowConfig;
     private List<BatchDetailIngestWorkflowDto> ingestWorkflows;
 }

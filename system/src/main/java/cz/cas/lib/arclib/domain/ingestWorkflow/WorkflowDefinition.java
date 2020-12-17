@@ -32,6 +32,11 @@ public class WorkflowDefinition extends NamedObject {
     private Producer producer;
 
     /**
+     * Externé id
+     */
+    private String externalId;
+
+    /**
      * Definícia ingest workflow vo formáte BPMN
      */
     @Column(length = 10485760)

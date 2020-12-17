@@ -31,21 +31,23 @@ public class ArclibXmlValidatorTest {
     private static String INVALID_ARCLIB_XML_NOT_METS =
             "arclibXmls/invalidArclibXmlNotMets.xml";
     private static String ARCLIB_SCHEMA = "xmlSchemas/arclibXml.xsd";
-    private static Integer SIP_VERSION_NUMBER = 2;
-    private static String SIP_VERSION_OF = "4b66655a-819a-474f-8203-6c432815df1f";
+    private static Integer SIP_VERSION_NUMBER = 1;
+    private static String SIP_VERSION_OF = ArclibXmlGenerator.INITIAL_VERSION;
     private static String AUTHORIAL_ID = "Hlasy ze Siona, 1861-1916";
-    private static String SIP_ID = "8b2efafd-b637-4b97-a8f7-1b97dd4ee622";
-
-    private static String PATH_TO_AIP_ID = "/mets/@OBJID";
-    private static String PATH_TO_AUTHORIAL_ID = "/mets/metsHdr/altRecordID[@TYPE='original SIP identifier']";
-    private static String PATH_TO_SIP_VERSION_NUMBER = "/mets/amdSec/digiprovMD[@ID='ARCLIB_SIP_INFO']/mdWrap/xmlData/sipInfo/sipVersionNumber";
-    private static String PATH_TO_SIP_VERSION_OF = "/mets/amdSec/digiprovMD[@ID='ARCLIB_SIP_INFO']/mdWrap/xmlData/sipInfo/sipVersionOf";
+    private static String SIP_ID = "b8959a84-3625-4ced-9f7f-c26fe46cbdb4";
 
     private ArclibXmlValidator validator;
 
     @Before
     public void setUp() throws IOException {
         validator = new ArclibXmlValidator();
+        validator.setUris("http://www.loc.gov/METS/",
+                "http://www.w3.org/2001/XMLSchema-instance",
+                "http://arclib.lib.cas.cz/ARCLIB_XSD",
+                "info:lc/xmlns/premis-v2",
+                "http://www.openarchives.org/OAI/2.0/oai_dc/",
+                "http://purl.org/dc/elements/1.1/",
+                "http://www.w3.org/1999/xlink");
 
         validator.setArclibXmlDefinition(new ClassPathResource(ARCLIB_XML_DEFINITION));
 
@@ -55,11 +57,6 @@ public class ArclibXmlValidatorTest {
 
         validator.setMetsSchema(new ByteArrayResource(metsSchema.getBytes()));
         validator.setPremisSchema(new ByteArrayResource(premisSchema.getBytes()));
-
-        validator.setPathToAipId(PATH_TO_AIP_ID);
-        validator.setPathToAuthorialId(PATH_TO_AUTHORIAL_ID);
-        validator.setPathToSipVersionNumber(PATH_TO_SIP_VERSION_NUMBER);
-        validator.setPathToPhysicalVersionOf(PATH_TO_SIP_VERSION_OF);
     }
 
     @Test

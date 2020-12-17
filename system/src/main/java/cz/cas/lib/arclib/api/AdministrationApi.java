@@ -2,7 +2,6 @@ package cz.cas.lib.arclib.api;
 
 import cz.cas.lib.arclib.index.solr.ReindexService;
 import cz.cas.lib.arclib.security.authorization.permission.Permissions;
-import cz.cas.lib.core.store.Transactional;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
@@ -17,7 +16,6 @@ import javax.inject.Inject;
 @Api(value = "administration", description = "Api for administration purposes")
 @RequestMapping("/api/administration")
 @Slf4j
-@Transactional
 public class AdministrationApi {
 
     @Inject

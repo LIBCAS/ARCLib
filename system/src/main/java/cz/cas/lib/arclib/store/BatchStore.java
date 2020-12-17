@@ -112,8 +112,7 @@ public class BatchStore extends IndexedDatedStore<Batch, QBatch, IndexedBatch> {
 
         ProducerProfile producerProfile = obj.getProducerProfile();
         if (producerProfile != null) {
-            indexObject.setProducerProfileId(obj.getProducerProfile().getId());
-            indexObject.setProducerProfileName(obj.getProducerProfile().getName());
+            indexObject.setProducerProfile(obj.getProducerProfile().getName());
 
             Producer producer = producerProfile.getProducer();
             if (producer != null) {
@@ -122,6 +121,12 @@ public class BatchStore extends IndexedDatedStore<Batch, QBatch, IndexedBatch> {
             }
         }
         indexObject.setPendingIncidents(obj.isPendingIncidents());
+        if (obj.getInitialSipProfile() != null)
+            indexObject.setInitialSipProfile(obj.getInitialSipProfile().getName());
+        if (obj.getInitialValidationProfile() != null)
+            indexObject.setInitialValidationProfile(obj.getInitialValidationProfile().getName());
+        if (obj.getInitialWorkflowDefinition() != null)
+            indexObject.setInitialWorkflowDefinition(obj.getInitialWorkflowDefinition().getName());
         return indexObject;
     }
 }

@@ -27,15 +27,19 @@ import static cz.cas.lib.arclib.utils.ArclibUtils.*;
 @Service
 public class ArclibXmlValidator {
 
+    /**
+     * @see ArclibXmlGenerator
+     */
+    public static final String PATH_TO_AIP_ID = "/mets/@OBJID";
+    public static final String PATH_TO_AUTHORIAL_ID = "/mets/metsHdr/altRecordID[@TYPE='original SIP identifier']";
+    public static final String PATH_TO_SIP_VERSION_NUMBER = "/mets/amdSec/digiprovMD[@ID='ARCLIB_SIP_INFO']/mdWrap/xmlData/sipInfo/sipVersionNumber";
+    public static final String PATH_TO_PHYSICAL_VERSION_OF = "/mets/amdSec/digiprovMD[@ID='ARCLIB_SIP_INFO']/mdWrap/xmlData/sipInfo/sipVersionOf";
+
     private Resource arclibXmlDefinition;
     private Resource arclibXmlSchema;
     private Resource metsSchema;
     private Resource premisSchema;
 
-    private String pathToAipId;
-    private String pathToAuthorialId;
-    private String pathToSipVersionNumber;
-    private String pathToPhysicalVersionOf;
     private Map<String, String> uris;
 
     /**
@@ -80,29 +84,29 @@ public class ArclibXmlValidator {
         validateNodesRequiredByCsv(xml, false);
 
         ByteArrayInputStream xmlBais = new ByteArrayInputStream(xml.getBytes());
-        log.debug("Checking content of node with AIP id at XPath " + pathToAipId + ".");
+        log.debug("Checking content of node with AIP id at XPath " + PATH_TO_AIP_ID + ".");
         xmlBais.reset();
-        Node aipIdNode = XmlUtils.findSingleNodeWithXPath(xmlBais, pathToAipId, null);
+        Node aipIdNode = XmlUtils.findSingleNodeWithXPath(xmlBais, PATH_TO_AIP_ID, null);
         Utils.eq(aipIdNode.getTextContent(), aipId, () -> new InvalidXmlNodeValue(aipId,
-                aipIdNode.getTextContent(), pathToAipId));
+                aipIdNode.getTextContent(), PATH_TO_AIP_ID));
 
-        log.debug("Checking content of node with authorial id at XPath " + pathToAuthorialId + ".");
+        log.debug("Checking content of node with authorial id at XPath " + PATH_TO_AUTHORIAL_ID + ".");
         xmlBais.reset();
-        Node authorialIdNode = XmlUtils.findSingleNodeWithXPath(xmlBais, pathToAuthorialId, null);
+        Node authorialIdNode = XmlUtils.findSingleNodeWithXPath(xmlBais, PATH_TO_AUTHORIAL_ID, null);
         Utils.eq(authorialIdNode.getTextContent(), authorialId, () -> new InvalidXmlNodeValue(authorialId,
-                authorialIdNode.getTextContent(), pathToAuthorialId));
+                authorialIdNode.getTextContent(), PATH_TO_AUTHORIAL_ID));
 
-        log.debug("Checking content of node with sipVersionNumber id at XPath " + pathToSipVersionNumber + ".");
+        log.debug("Checking content of node with sipVersionNumber id at XPath " + PATH_TO_SIP_VERSION_NUMBER + ".");
         xmlBais.reset();
-        Node sipVersionNode = XmlUtils.findSingleNodeWithXPath(xmlBais, pathToSipVersionNumber, null);
+        Node sipVersionNode = XmlUtils.findSingleNodeWithXPath(xmlBais, PATH_TO_SIP_VERSION_NUMBER, null);
         Utils.eq(Integer.valueOf(sipVersionNode.getTextContent()), sipVersionNumber, () -> new InvalidXmlNodeValue(
-                String.valueOf(sipVersionNumber), sipVersionNode.getTextContent(), pathToSipVersionNumber));
+                String.valueOf(sipVersionNumber), sipVersionNode.getTextContent(), PATH_TO_SIP_VERSION_NUMBER));
 
-        log.debug("Checking content of node with sipVersionOf id at XPath " + pathToPhysicalVersionOf + ".");
+        log.debug("Checking content of node with sipVersionOf id at XPath " + PATH_TO_PHYSICAL_VERSION_OF + ".");
         xmlBais.reset();
-        Node sipVersionOfNode = XmlUtils.findSingleNodeWithXPath(xmlBais, pathToPhysicalVersionOf, null);
+        Node sipVersionOfNode = XmlUtils.findSingleNodeWithXPath(xmlBais, PATH_TO_PHYSICAL_VERSION_OF, null);
         Utils.eq(sipVersionOfNode.getTextContent(), sipVersionOf, () -> new InvalidXmlNodeValue(sipVersionOf,
-                sipVersionOfNode.getTextContent(), pathToPhysicalVersionOf));
+                sipVersionOfNode.getTextContent(), PATH_TO_PHYSICAL_VERSION_OF));
         log.debug("Final validation of ArclibXml succeeded.");
     }
 
@@ -127,7 +131,8 @@ public class ArclibXmlValidator {
         InputStream[] xsdSchemas = new InputStream[]{
                 arclibXmlSchema.getInputStream(),
                 metsSchema.getInputStream(),
-                premisSchema.getInputStream()};
+                premisSchema.getInputStream()
+        };
         XmlUtils.validateWithXMLSchema(xml, xsdSchemas, "Validation of resulting AIP XML");
     }
 
@@ -150,29 +155,6 @@ public class ArclibXmlValidator {
     @Inject
     public void setPremisSchema(@Value("${arclib.premisSchema}") Resource premisSchema) {
         this.premisSchema = premisSchema;
-    }
-
-    @Inject
-    public void setPathToAipId(@Value("${arclib.arclibXmlValidator.pathToAipId}") String pathToAipId) {
-        this.pathToAipId = pathToAipId;
-    }
-
-    @Inject
-    public void setPathToAuthorialId(@Value("${arclib.arclibXmlValidator.pathToAuthorialId}")
-                                             String pathToAuthorialId) {
-        this.pathToAuthorialId = pathToAuthorialId;
-    }
-
-    @Inject
-    public void setPathToSipVersionNumber(@Value("${arclib.arclibXmlValidator.pathToSipVersionNumber}")
-                                                  String pathToSipVersionNumber) {
-        this.pathToSipVersionNumber = pathToSipVersionNumber;
-    }
-
-    @Inject
-    public void setPathToPhysicalVersionOf(@Value("${arclib.arclibXmlValidator.pathToPhysicalVersionOf}")
-                                                   String pathToPhysicalVersionOf) {
-        this.pathToPhysicalVersionOf = pathToPhysicalVersionOf;
     }
 
     @Inject

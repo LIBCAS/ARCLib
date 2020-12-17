@@ -8,6 +8,7 @@ import cz.cas.lib.arclib.domain.packages.FolderStructure;
 import cz.cas.lib.arclib.domain.packages.Sip;
 import cz.cas.lib.arclib.domain.preservationPlanning.Tool;
 import cz.cas.lib.arclib.exception.validation.MissingNode;
+import cz.cas.lib.arclib.service.SipProfileService;
 import cz.cas.lib.arclib.service.fixity.MetsChecksumType;
 import cz.cas.lib.arclib.store.IngestEventStore;
 import cz.cas.lib.arclib.store.IngestWorkflowStore;
@@ -54,6 +55,7 @@ public class ArclibXmlGenerator {
     private Map<String, String> uris;
     private String arclibVersion;
     private IngestEventStore ingestEventStore;
+    private SipProfileService sipProfileService;
 
     /**
      * Supplements ArclibXml with generated metadata
@@ -104,7 +106,7 @@ public class ArclibXmlGenerator {
         /*
           Add SIP and XML versions and related SIP and XML
          */
-        addSipAndXmlVersion(metsElement, ingestWorkflow);
+        addSipInfo(metsElement, ingestWorkflow, variables);
 
         /*
           Add premis:agents and respective premis:events
@@ -157,7 +159,7 @@ public class ArclibXmlGenerator {
         sipIdentifierElement.addAttribute("TYPE", "original SIP identifier");
     }
 
-    private void addSipAndXmlVersion(Element metsElement, IngestWorkflow ingestWorkflow) {
+    private void addSipInfo(Element metsElement, IngestWorkflow ingestWorkflow, Map<String, Object> variables) {
         Element amdSecEl = metsElement.addElement("METS:amdSec");
 
         Element digiprovMdEl = amdSecEl.addElement("METS:digiprovMD");
@@ -183,6 +185,12 @@ public class ArclibXmlGenerator {
                 ? relatedWorkflow.getExternalId() : INITIAL_VERSION;
         Element xmlVersionOf = arclibSipInfoEl.addElement("ARCLib:xmlVersionOf");
         xmlVersionOf.addText(previousVersionXmlId);
+
+        Element ingestProfilesEl = arclibSipInfoEl.addElement("ARCLib:ingestProfiles");
+        ingestProfilesEl.addElement("ARCLib:producerProfile").addText(ingestWorkflow.getProducerProfile().getExternalId());
+        ingestProfilesEl.addElement("ARCLib:sipProfile").addText((String) variables.get(MetadataExtraction.usedSipProfile));
+        ingestProfilesEl.addElement("ARCLib:validationProfile").addText((String) variables.get(Validation.usedValidationProfile));
+        ingestProfilesEl.addElement("ARCLib:workflowDefinition").addText(ingestWorkflow.getProducerProfile().getWorkflowDefinition().getExternalId());
     }
 
     /**
@@ -660,5 +668,10 @@ public class ArclibXmlGenerator {
     @Inject
     public void setArclibVersion(@Value("${arclib.version}") String arclibVersion) {
         this.arclibVersion = arclibVersion;
+    }
+
+    @Inject
+    public void setSipProfileService(SipProfileService sipProfileService) {
+        this.sipProfileService = sipProfileService;
     }
 }

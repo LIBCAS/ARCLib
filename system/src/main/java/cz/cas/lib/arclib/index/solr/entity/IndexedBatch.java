@@ -32,17 +32,22 @@ public class IndexedBatch extends IndexedDatedObject {
 
     @Field
     @Indexed(type = IndexFieldType.STRING)
-    private String producerProfileId;
-
-    @Field
-    @Indexed(type = IndexFieldType.FOLDING, copyTo = {"producerProfileName_sort"})
-    private String producerProfileName;
-
-    @Field
-    @Indexed(type = IndexFieldType.STRING)
     private String userId;
 
     @Field
     @Indexed(type = IndexFieldType.BOOLEAN)
     private Boolean pendingIncidents;
+
+    @Field
+    @Indexed(type = IndexFieldType.FOLDING)
+    private String producerProfile;
+    @Field
+    @Indexed(type = IndexFieldType.FOLDING)
+    private String initialSipProfile;
+    @Field
+    @Indexed(type = IndexFieldType.FOLDING)
+    private String initialWorkflowDefinition;
+    @Field
+    @Indexed(type = IndexFieldType.FOLDING)
+    private String initialValidationProfile;
 }

@@ -15,6 +15,7 @@ import cz.cas.lib.arclib.service.archivalStorage.ObjectState;
 import cz.cas.lib.arclib.store.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import javax.inject.Inject;
@@ -27,9 +28,8 @@ import static cz.cas.lib.core.util.Utils.notNull;
 
 @Service
 @Slf4j
+@Async
 public class ReindexService {
-
-    public static final String DEFAULT_DEBUG_USER = "arc-bob";
 
     private BatchStore batchStore;
     private ProducerProfileStore producerProfileStore;

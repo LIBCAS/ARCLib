@@ -61,11 +61,6 @@ arclib:
     workspace: workspace
     quarantine: workspace/quarantine
     fileStorage: fileStorage
-  arclibXmlValidator:
-    pathToAipId: /mets/@OBJID
-    pathToAuthorialId: /mets/metsHdr/altRecordID[@TYPE='original SIP identifier']
-    pathToSipVersionNumber: /mets/amdSec/digiprovMD[@ID='ARCLIB_SIP_INFO']/mdWrap/xmlData/sipInfo/sipVersionNumber
-    pathToPhysicalVersionOf: /mets/amdSec/digiprovMD[@ID='ARCLIB_SIP_INFO']/mdWrap/xmlData/sipInfo/sipVersionOf
   arclibXmlDefinition: classpath:index/arclibXmlDefinition.csv
   arclibXmlSchema: classpath:xmlSchemas/arclibXml.xsd
   metsSchema: classpath:xmlSchemas/mets.xsd

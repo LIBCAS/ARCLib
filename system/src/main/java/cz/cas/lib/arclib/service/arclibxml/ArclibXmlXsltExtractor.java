@@ -57,14 +57,14 @@ public class ArclibXmlXsltExtractor {
             throw new GeneralException(String.format("Multiple files found at the path given by regex: %s", sipMetadataPathRegex));
 
         File metadataFile = matchingFiles.get(0);
-        String sipProfileXsd = sipProfile.getXsl();
+        String sipProfileXsl = sipProfile.getXsl();
 
         log.debug("Extracting metadata for SIP at path " + sipFolderWorkspacePath + " using SIP profile with id " + sipProfileExternalId + ".");
 
 
         TransformerFactory tf = SaxonTransformerFactory.newInstance();
 
-        Transformer xsltProc = tf.newTransformer(new StreamSource(new ByteArrayInputStream(sipProfileXsd.getBytes())));
+        Transformer xsltProc = tf.newTransformer(new StreamSource(new ByteArrayInputStream(sipProfileXsl.getBytes())));
         xsltProc.setParameter(PATH_TO_SIP_XSLT_PARAM, pathToSipAbsolute.toString().replace("\\", "/") + "/");
         xsltProc.setParameter(SIP_METADATA_PATH_XSLT_PARAM, metadataFile.getPath()
                 .replace("\\", "/"));
