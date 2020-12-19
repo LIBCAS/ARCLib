@@ -8,6 +8,7 @@ import lombok.Getter;
 import lombok.NonNull;
 import org.springframework.stereotype.Repository;
 
+import javax.inject.Inject;
 import javax.transaction.Transactional;
 import java.util.List;
 
@@ -51,4 +52,8 @@ public class WorkflowDefinitionStore extends NamedStore<WorkflowDefinition, QWor
         return fetch;
     }
 
+    @Inject
+    public void setGenerator(Generator generator) {
+        this.generator = generator;
+    }
 }

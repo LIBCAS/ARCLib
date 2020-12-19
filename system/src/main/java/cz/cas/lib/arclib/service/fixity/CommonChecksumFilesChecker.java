@@ -45,9 +45,6 @@ public class CommonChecksumFilesChecker extends FixityChecker {
         for (Path checksumFile : filesWithChecksums) {
             log.debug("Verifying fixity of files specified in checksum file: {}", checksumFile);
             List<Pair<Path, String>> checksumPairs = parseChecksumPairs(checksumFile);
-            List<Path> pathsToFiles = checksumPairs.stream()
-                    .map(Pair::getLeft)
-                    .collect(Collectors.toList());
             FixityCounter counter;
             switch (FilenameUtils.getExtension(checksumFile.toFile().getName())) {
                 case "md5":
@@ -66,20 +63,19 @@ public class CommonChecksumFilesChecker extends FixityChecker {
                     continue;
             }
 
-            List<Pair<Path, String>> validChecksumPairs = checksumPairs.stream()
-                    .filter(p -> p.getLeft().toFile().isFile())
-                    .collect(Collectors.toList());
-
-            List<Path> pathsToExistingFiles = validChecksumPairs.stream()
-                    .map(Pair::getLeft)
-                    .collect(Collectors.toList());
-
-            List<Path> pathsToMissingFiles = new ArrayList<>(pathsToFiles);
-            pathsToMissingFiles.removeAll(pathsToExistingFiles);
+            List<Path> pathsToMissingFiles = new ArrayList<>();
+            Iterator<Pair<Path, String>> iterator = checksumPairs.iterator();
+            while (iterator.hasNext()) {
+                Pair<Path, String> checksumPair = iterator.next();
+                if (checksumPair.getLeft().toFile().isFile()) {
+                    pathsToMissingFiles.add(checksumPair.getLeft());
+                    iterator.remove();
+                }
+            }
 
             missingFiles.addAll(pathsToMissingFiles);
 
-            for (Pair<Path, String> checksumPair : validChecksumPairs) {
+            for (Pair<Path, String> checksumPair : checksumPairs) {
                 Path filePath = checksumPair.getLeft();
                 byte[] computedChecksum = counter.computeDigest(filePath);
                 if (!counter.checkIfDigestsMatches(checksumPair.getRight(), computedChecksum)) {
@@ -110,7 +106,7 @@ public class CommonChecksumFilesChecker extends FixityChecker {
                 log.warn("Unable to parse manifest line: " + line);
                 continue;
             }
-            checksumPairs.add(Pair.of(manifestFile.getParent().resolve(matcher.group(2)).normalize().toAbsolutePath(), matcher.group(1)))
+            checksumPairs.add(Pair.of(manifestFile.getParent().resolve(matcher.group(2).replace("\\","/")).normalize().toAbsolutePath(), matcher.group(1)))
             ;
         }
         return checksumPairs;
