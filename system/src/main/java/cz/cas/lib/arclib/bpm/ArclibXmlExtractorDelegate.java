@@ -55,11 +55,14 @@ public class ArclibXmlExtractorDelegate extends ArclibDelegate {
 
         //extract metadata from original SIP using XSLT
         JsonNode configRoot = getConfigRoot(execution);
-        String sipProfileExternalId = configRoot.get(SIP_PROFILE_CONFIG_ENTRY).textValue();
-        if (sipProfileExternalId == null) {
+        String sipProfileExternalId;
+        JsonNode sipProfileConfigEntry = configRoot.at("/" + SIP_PROFILE_CONFIG_ENTRY);
+        if (sipProfileConfigEntry.isMissingNode()) {
             String producerProfileExternalId = getProducerProfileExternalId(execution);
             ProducerProfile producerProfile = producerProfileStore.findByExternalId(producerProfileExternalId);
             sipProfileExternalId = producerProfile.getSipProfile().getExternalId();
+        } else {
+            sipProfileExternalId = sipProfileConfigEntry.textValue();
         }
 
         String uglyPrintedExtractedMetadata = arclibXmlXsltExtractor.extractMetadata(sipProfileExternalId, execution.getVariables());

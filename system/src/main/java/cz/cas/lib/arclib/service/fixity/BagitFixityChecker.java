@@ -1,9 +1,8 @@
 package cz.cas.lib.arclib.service.fixity;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import cz.cas.lib.arclib.domain.IngestToolFunction;
+import cz.cas.lib.arclib.bpm.IngestTool;
 import cz.cas.lib.arclib.exception.bpm.IncidentException;
-import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.stereotype.Service;
@@ -26,10 +25,6 @@ public class BagitFixityChecker extends FixityChecker {
 
     private static final String FILENAME_PATTERN = "[tag]?manifest-(.+)\\.txt";
     private static final String FILE_LINE_PATTERN = "(\\w+)\\s+\\*?\\s*(\\S+)\\s*";
-    @Getter
-    private String toolName = "ARCLib_bagit_" + IngestToolFunction.fixity_check;
-    @Getter
-    private String toolVersion = null;
 
     /**
      * Verifies fixity of every file specified in manifest files of the package.
@@ -39,18 +34,22 @@ public class BagitFixityChecker extends FixityChecker {
      *                         of {@link FixityChecker}
      */
     @Override
-    public void verifySIP(Path sipWsPath, Path pathToFixityFile, String externalId, JsonNode configRoot, Map<String, Pair<String, String>> formatIdentificationResult)
+    public void verifySIP(Path sipWsPath, Path pathToFixityFile, String externalId, JsonNode configRoot, Map<String, Pair<String, String>> formatIdentificationResult,
+                          int fixityCheckToolCounter, IngestTool fixityCheckerTool)
             throws IncidentException, IOException {
         log.debug("Verifying fixity of SIP of type Bagit, package root path: " + sipWsPath);
 
-        List<Path> missingFiles = new ArrayList<>();
-        List<Path> invalidFixities = new ArrayList<>();
-        Map<String, List<Path>> unsupportedChecksumTypes = new HashMap<>();
+        Map<Path, List<Path>> invalidFixitiesWrapper = new HashMap<>();
+        Map<Path, List<Path>> missingFilesWrapper = new HashMap<>();
+        Map<Path, Map<String, List<Path>>> unsupportedChecksumTypesWrapper = new HashMap<>();
 
         Pattern fileNamePattern = Pattern.compile(FILENAME_PATTERN);
         File[] files = sipWsPath.toFile().listFiles((dir, name) -> fileNamePattern.matcher(name).find());
 
+        assert files != null;
         for (File file : files) {
+            Map<String, List<Path>> unsupportedChecksumTypes = new HashMap<>();
+            List<Path> invalidFixities = new ArrayList<>();
             List<Pair<Path, String>> checksumPairs = parseChecksumPairs(file.toPath(), sipWsPath);
             List<Path> pathsToFiles = checksumPairs.stream()
                     .map(Pair::getLeft)
@@ -76,6 +75,7 @@ public class BagitFixityChecker extends FixityChecker {
                     break;
                 default:
                     unsupportedChecksumTypes.put(checksumType, pathsToFiles);
+                    unsupportedChecksumTypesWrapper.put(file.toPath(), unsupportedChecksumTypes);
                     continue;
             }
 
@@ -90,7 +90,7 @@ public class BagitFixityChecker extends FixityChecker {
             List<Path> pathsToMissingFiles = new ArrayList<>(pathsToFiles);
             pathsToMissingFiles.removeAll(pathsToExistingFiles);
 
-            missingFiles.addAll(pathsToMissingFiles);
+            List<Path> missingFiles = new ArrayList<>(pathsToMissingFiles);
 
             for (Pair<Path, String> checksumPair : validChecksumPairs) {
                 Path filePath = checksumPair.getLeft();
@@ -99,13 +99,17 @@ public class BagitFixityChecker extends FixityChecker {
                     invalidFixities.add(filePath);
                 }
             }
+            if (!invalidFixities.isEmpty())
+                invalidFixitiesWrapper.put(file.toPath(), invalidFixities);
+            if (!missingFiles.isEmpty())
+                missingFilesWrapper.put(file.toPath(), missingFiles);
         }
-        if (!unsupportedChecksumTypes.isEmpty())
-            invokeUnsupportedChecksumTypeIssue(sipWsPath, unsupportedChecksumTypes, externalId, configRoot, formatIdentificationResult);
-        if (!missingFiles.isEmpty())
-            invokeMissingFilesIssue(sipWsPath, missingFiles, externalId, configRoot, formatIdentificationResult);
-        if (!invalidFixities.isEmpty())
-            invokeInvalidChecksumsIssue(sipWsPath, invalidFixities, externalId, configRoot, formatIdentificationResult);
+        if (!unsupportedChecksumTypesWrapper.isEmpty())
+            invokeUnsupportedChecksumTypeIssue(sipWsPath, unsupportedChecksumTypesWrapper, externalId, configRoot, formatIdentificationResult, fixityCheckToolCounter, fixityCheckerTool);
+        if (!missingFilesWrapper.isEmpty())
+            invokeMissingFilesIssue(sipWsPath, missingFilesWrapper, externalId, configRoot, fixityCheckToolCounter, fixityCheckerTool);
+        if (!invalidFixitiesWrapper.isEmpty())
+            invokeInvalidChecksumsIssue(sipWsPath, invalidFixitiesWrapper, externalId, configRoot, formatIdentificationResult, fixityCheckToolCounter, fixityCheckerTool);
     }
 
     /**

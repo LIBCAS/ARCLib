@@ -45,11 +45,14 @@ public class ValidatorDelegate extends ArclibDelegate {
                 "Attempting to start Validator but the usedValidationProfile variable is already filled. Workflow definition can contain only one instance of the validator.")));
 
         JsonNode configRoot = getConfigRoot(execution);
-        String validationProfileExternalId = configRoot.get(VALIDATION_PROFILE_CONFIG_ENTRY).textValue();
-        if (validationProfileExternalId == null) {
+        String validationProfileExternalId;
+        JsonNode validationProfileConfigEntry = configRoot.at("/" + VALIDATION_PROFILE_CONFIG_ENTRY);
+        if (validationProfileConfigEntry.isMissingNode()) {
             String producerProfileExternalId = getProducerProfileExternalId(execution);
             ProducerProfile producerProfile = producerProfileStore.findByExternalId(producerProfileExternalId);
             validationProfileExternalId = producerProfile.getValidationProfile().getExternalId();
+        } else {
+            validationProfileExternalId = validationProfileConfigEntry.textValue();
         }
 
         String externalId = getStringVariable(execution, BpmConstants.ProcessVariables.ingestWorkflowExternalId);

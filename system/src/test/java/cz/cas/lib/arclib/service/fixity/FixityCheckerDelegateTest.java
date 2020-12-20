@@ -222,9 +222,9 @@ public class FixityCheckerDelegateTest {
         assertThat(captor.getAllValues().get(1).get(0).getDescription(), containsString(INVALID_CHECKSUM_FILE_1));
         assertThat(captor.getAllValues().get(1).get(1).getDescription(), containsString(INVALID_CHECKSUM_FILE_2));
 
-        verify(metsFixityVerifier, times(1)).invokeUnsupportedChecksumTypeIssue(any(), any(), any(), any(), any());
-        verify(metsFixityVerifier, times(1)).invokeInvalidChecksumsIssue(any(), any(), any(), any(), any());
-        verify(metsFixityVerifier, never()).invokeMissingFilesIssue(any(), any(), any(), any(), any());
+        verify(metsFixityVerifier, times(1)).invokeUnsupportedChecksumTypeIssue(any(), any(), any(), any(), any(), any(), any());
+        verify(metsFixityVerifier, times(1)).invokeInvalidChecksumsIssue(any(), any(), any(), any(), any(), any(), any());
+        verify(metsFixityVerifier, never()).invokeMissingFilesIssue(any(), any(), any(), any(), any(), any());
         verify(formatDefinitionService, times(2)).findPreferredDefinitionsByPuid(eq("xml"));
         verify(formatDefinitionService).findPreferredDefinitionsByPuid(eq("txt"));
     }
@@ -260,9 +260,9 @@ public class FixityCheckerDelegateTest {
         assertThat(captor.getAllValues().get(1).get(0).getDescription(), containsString(FixityCheckerDelegate.CONFIG_MISSING_FILES));
         assertThat(captor.getAllValues().get(1).get(0).getDescription(), containsString(MISSING_FILE));
 
-        verify(metsFixityVerifier, times(1)).invokeUnsupportedChecksumTypeIssue(any(), any(), any(), any(), any());
-        verify(metsFixityVerifier, times(1)).invokeMissingFilesIssue(any(), any(), any(), any(), any());
-        verify(metsFixityVerifier, never()).invokeInvalidChecksumsIssue(any(), any(), any(), any(), any());
+        verify(metsFixityVerifier, times(1)).invokeUnsupportedChecksumTypeIssue(any(), any(), any(), any(), any(), any(), any());
+        verify(metsFixityVerifier, times(1)).invokeMissingFilesIssue(any(), any(), any(), any(), any(), any());
+        verify(metsFixityVerifier, never()).invokeInvalidChecksumsIssue(any(), any(), any(), any(), any(), any(), any());
         verify(formatDefinitionService).findPreferredDefinitionsByPuid(eq("xml"));
         verify(formatDefinitionService, times(0)).findPreferredDefinitionsByPuid(eq("txt"));
     }
@@ -296,9 +296,9 @@ public class FixityCheckerDelegateTest {
         assertThat(captor.getAllValues().get(1).get(0).getDescription(), containsString(INVALID_CHECKSUM_FILE_2));
         assertThat(captor.getAllValues().get(1).get(1).getDescription(), containsString(INVALID_CHECKSUM_FILE_1));
 
-        verify(bagitPackageFixityVerifier, times(1)).invokeUnsupportedChecksumTypeIssue(any(), any(), any(), any(), any());
-        verify(bagitPackageFixityVerifier, times(1)).invokeInvalidChecksumsIssue(any(), any(), any(), any(), any());
-        verify(bagitPackageFixityVerifier, never()).invokeMissingFilesIssue(any(), any(), any(), any(), any());
+        verify(bagitPackageFixityVerifier, times(1)).invokeUnsupportedChecksumTypeIssue(any(), any(), any(), any(), any(), any(), any());
+        verify(bagitPackageFixityVerifier, times(1)).invokeInvalidChecksumsIssue(any(), any(), any(), any(), any(), any(), any());
+        verify(bagitPackageFixityVerifier, never()).invokeMissingFilesIssue(any(), any(), any(), any(), any(), any());
         verify(formatDefinitionService, times(2)).findPreferredDefinitionsByPuid(eq("xml"));
         verify(formatDefinitionService).findPreferredDefinitionsByPuid(eq("txt"));
     }
@@ -334,9 +334,9 @@ public class FixityCheckerDelegateTest {
         assertThat(captor.getAllValues().get(1).get(0).getDescription(), containsString(FixityCheckerDelegate.CONFIG_MISSING_FILES));
         assertThat(captor.getAllValues().get(1).get(0).getDescription(), containsString(MISSING_FILE));
 
-        verify(bagitPackageFixityVerifier, times(1)).invokeUnsupportedChecksumTypeIssue(any(), any(), any(), any(), any());
-        verify(bagitPackageFixityVerifier, times(1)).invokeMissingFilesIssue(any(), any(), any(), any(), any());
-        verify(bagitPackageFixityVerifier, never()).invokeInvalidChecksumsIssue(any(), any(), any(), any(), any());
+        verify(bagitPackageFixityVerifier, times(1)).invokeUnsupportedChecksumTypeIssue(any(), any(), any(), any(), any(), any(), any());
+        verify(bagitPackageFixityVerifier, times(1)).invokeMissingFilesIssue(any(), any(), any(), any(), any(), any());
+        verify(bagitPackageFixityVerifier, never()).invokeInvalidChecksumsIssue(any(), any(), any(), any(), any(), any(), any());
         verify(formatDefinitionService).findPreferredDefinitionsByPuid(eq("xml"));
         verify(formatDefinitionService, times(0)).findPreferredDefinitionsByPuid(eq("txt"));
     }

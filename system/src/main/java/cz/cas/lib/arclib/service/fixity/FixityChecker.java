@@ -6,7 +6,6 @@ import cz.cas.lib.arclib.bpm.FixityCheckerDelegate;
 import cz.cas.lib.arclib.bpm.IngestTool;
 import cz.cas.lib.arclib.domain.ingestWorkflow.IngestIssue;
 import cz.cas.lib.arclib.domain.ingestWorkflow.IngestWorkflow;
-import cz.cas.lib.arclib.domain.packages.PackageType;
 import cz.cas.lib.arclib.domain.preservationPlanning.IngestIssueDefinitionCode;
 import cz.cas.lib.arclib.exception.bpm.IncidentException;
 import cz.cas.lib.arclib.formatlibrary.domain.FormatDefinition;
@@ -29,7 +28,7 @@ import java.util.*;
 
 @Slf4j
 @Service
-public abstract class FixityChecker implements IngestTool {
+public abstract class FixityChecker {
 
     Md5Counter md5Counter;
     Sha512Counter sha512Counter;
@@ -40,11 +39,10 @@ public abstract class FixityChecker implements IngestTool {
     private ToolService toolService;
     private IngestIssueDefinitionStore ingestIssueDefinitionStore;
     private FormatDefinitionService formatDefinitionService;
-    private int fixityCheckToolCounter;
 
     /**
      * Verifies fixity of every file specified in metadata file(s) of the package.
-     * The logic of implementing class is tied with {@link PackageType}
+     * The logic of implementing class is tied with {@link FixityCheckMethod}
      * Currently supports MD5, SHA-1, SHA-256 and SHA-512.
      * May invoke three types of issue in following order:
      * <ol>
@@ -63,12 +61,15 @@ public abstract class FixityChecker implements IngestTool {
      */
     public abstract void verifySIP(Path sipWsPath, Path pathToFixityFile,
                                    String externalId, JsonNode configRoot,
-                                   Map<String, Pair<String, String>> formatIdentificationResult)
+                                   Map<String, Pair<String, String>> formatIdentificationResult,
+                                   int fixityToolCheckCounter,
+                                   IngestTool fixityCheckerTool)
             throws IOException, IncidentException;
 
     @Transactional
-    public void invokeUnsupportedChecksumTypeIssue(Path pathToSip, Map<String, List<Path>> files, String externalId,
-                                                   JsonNode configRoot, Map<String, Pair<String, String>> formatIdentificationResult)
+    public void invokeUnsupportedChecksumTypeIssue(Path pathToSip, Map<Path, Map<String, List<Path>>> files, String externalId,
+                                                   JsonNode configRoot, Map<String, Pair<String, String>> formatIdentificationResult,
+                                                   int fixityCheckToolCounter, IngestTool fixityCheckerTool)
             throws IncidentException {
         log.warn("Invoked unsupported checksum type issue for ingest workflow " + externalId + " .");
         IngestWorkflow ingestWorkflow = ingestWorkflowStore.findByExternalId(externalId);
@@ -76,27 +77,30 @@ public abstract class FixityChecker implements IngestTool {
                 FixityCheckerDelegate.FIXITY_CHECK_TOOL + "/" + fixityCheckToolCounter + FixityCheckerDelegate.CONFIG_UNSUPPORTED_CHECKSUM_TYPE);
         List<IngestIssue> issues = new ArrayList<>();
 
-        for (String algorithm : files.keySet()) {
-            for (Path filePath : files.get(algorithm)) {
-                log.info("unsupported checksum algorithm: " + algorithm + " used for file: " + filePath);
-                Pair<String, FormatDefinition> fileFormat = ArclibUtils.findFormat(pathToSip, filePath,
-                        formatIdentificationResult, formatDefinitionService);
-                issues.add(new IngestIssue(
-                        ingestWorkflow,
-                        toolService.getByNameAndVersion(getToolName(), getToolVersion()),
-                        ingestIssueDefinitionStore.findByCode(IngestIssueDefinitionCode.FILE_UNSUPPORTED_CHECKSUM_TYPE),
-                        fileFormat.getRight(),
-                        "unsupported checksum algorithm: " + algorithm + " used for file: " + fileFormat.getLeft() +
-                                ". " + parsedConfigValue.getRight(),
-                        parsedConfigValue.getLeft() != null)
-                );
+        List<Path> filesWithUnsupportedChecksums = new ArrayList<>();
+        for (Path checksumSource : files.keySet()) {
+            for (String algorithm : files.get(checksumSource).keySet()) {
+                for (Path filePath : files.get(checksumSource).get(algorithm)) {
+                    log.info("unsupported checksum algorithm: " + algorithm + " used for file: " + filePath);
+                    Pair<String, FormatDefinition> fileFormat = ArclibUtils.findFormat(pathToSip, filePath,
+                            formatIdentificationResult, formatDefinitionService);
+                    issues.add(new IngestIssue(
+                            ingestWorkflow,
+                            toolService.getByNameAndVersion(fixityCheckerTool.getToolName(), fixityCheckerTool.getToolVersion()),
+                            ingestIssueDefinitionStore.findByCode(IngestIssueDefinitionCode.FILE_UNSUPPORTED_CHECKSUM_TYPE),
+                            fileFormat.getRight(),
+                            "File: " + pathToSip.toAbsolutePath().relativize(checksumSource.toAbsolutePath()) + " contains unsupported checksum algorithm: " + algorithm + " used for file: " + fileFormat.getLeft() +
+                                    ". " + parsedConfigValue.getRight(),
+                            parsedConfigValue.getLeft() != null)
+                    );
+                    filesWithUnsupportedChecksums.add(filePath);
+                }
             }
         }
 
-        Path[] problemFiles = files.values().stream().flatMap(Collection::stream).toArray(Path[]::new);
         String errorMsg = IngestIssueDefinitionCode.FILE_UNSUPPORTED_CHECKSUM_TYPE +
                 " issue occurred, unsupported checksum types: " + Arrays.toString(files.keySet().toArray()) +
-                " files: " + Arrays.toString(problemFiles);
+                " files: " + Arrays.toString(filesWithUnsupportedChecksums.toArray());
 
         if (parsedConfigValue.getLeft() == null)
             throw new IncidentException(issues);
@@ -106,8 +110,9 @@ public abstract class FixityChecker implements IngestTool {
     }
 
     @Transactional
-    public void invokeInvalidChecksumsIssue(Path pathToSip, List<Path> files, String externalId, JsonNode configRoot,
-                                            Map<String, Pair<String, String>> formatIdentificationResult)
+    public void invokeInvalidChecksumsIssue(Path pathToSip, Map<Path, List<Path>> files, String externalId, JsonNode configRoot,
+                                            Map<String, Pair<String, String>> formatIdentificationResult,
+                                            int fixityCheckToolCounter, IngestTool fixityCheckerTool)
             throws IncidentException {
         log.warn("Invoked invalid checksums issue for ingest workflow " + externalId + " .");
         IngestWorkflow ingestWorkflow = ingestWorkflowStore.findByExternalId(externalId);
@@ -115,20 +120,23 @@ public abstract class FixityChecker implements IngestTool {
                 FixityCheckerDelegate.FIXITY_CHECK_TOOL + "/" + fixityCheckToolCounter + FixityCheckerDelegate.CONFIG_INVALID_CHECKSUMS);
         List<IngestIssue> issues = new ArrayList<>();
 
-        for (Path filePath : files) {
-            log.info("invalid checksum of file: " + filePath);
-            Pair<String, FormatDefinition> fileFormat = ArclibUtils.findFormat(pathToSip, filePath,
-                    formatIdentificationResult, formatDefinitionService);
-            issues.add(new IngestIssue(
-                    ingestWorkflow,
-                    toolService.getByNameAndVersion(getToolName(), getToolVersion()),
-                    ingestIssueDefinitionStore.findByCode(IngestIssueDefinitionCode.FILE_INVALID_CHECKSUM),
-                    fileFormat.getRight(),
-                    "invalid checksum of file: " + fileFormat.getLeft() + ". " + parsedConfigValue.getRight(),
-                    parsedConfigValue.getLeft() != null)
-            );
+        for (Path checksumSource : files.keySet()) {
+            for (Path filePath : files.get(checksumSource)) {
+                log.info("invalid checksum of file: " + filePath);
+                Pair<String, FormatDefinition> fileFormat = ArclibUtils.findFormat(pathToSip, filePath,
+                        formatIdentificationResult, formatDefinitionService);
+                issues.add(new IngestIssue(
+                        ingestWorkflow,
+                        toolService.getByNameAndVersion(fixityCheckerTool.getToolName(), fixityCheckerTool.getToolVersion()),
+                        ingestIssueDefinitionStore.findByCode(IngestIssueDefinitionCode.FILE_INVALID_CHECKSUM),
+                        fileFormat.getRight(),
+                        "File: " + pathToSip.toAbsolutePath().relativize(checksumSource.toAbsolutePath()) + " contains invalid checksum of file: " + fileFormat.getLeft() + ". " + parsedConfigValue.getRight(),
+                        parsedConfigValue.getLeft() != null)
+                );
+            }
         }
-        String errorMsg = IngestIssueDefinitionCode.FILE_INVALID_CHECKSUM + " issue occurred, files: " + Arrays.toString(files.toArray());
+
+        String errorMsg = IngestIssueDefinitionCode.FILE_INVALID_CHECKSUM + " issue occurred, files: " + Arrays.toString(files.values().stream().flatMap(Collection::stream).toArray());
 
         if (parsedConfigValue.getLeft() == null)
             throw new IncidentException(issues);
@@ -138,38 +146,36 @@ public abstract class FixityChecker implements IngestTool {
     }
 
     @Transactional
-    public void invokeMissingFilesIssue(Path pathToSip, List<Path> files, String externalId, JsonNode configRoot,
-                                        Map<String, Pair<String, String>> formatIdentificationResult)
+    public void invokeMissingFilesIssue(Path pathToSip, Map<Path, List<Path>> files, String externalId, JsonNode configRoot,
+                                        int fixityCheckToolCounter, IngestTool fixityCheckerTool)
             throws IncidentException {
         log.warn("Invoked missing files issue for ingest workflow " + externalId + " .");
         IngestWorkflow ingestWorkflow = ingestWorkflowStore.findByExternalId(externalId);
         Pair<Boolean, String> parsedConfigValue = ArclibUtils.parseBooleanConfig(configRoot, FixityCheckerDelegate.FIXITY_CHECK_TOOL + "/" + fixityCheckToolCounter + FixityCheckerDelegate.CONFIG_MISSING_FILES);
         List<IngestIssue> issues = new ArrayList<>();
 
-        for (Path filePath : files) {
-            log.info("missing file: " + filePath);
-            Pair<String, FormatDefinition> fileFormat = ArclibUtils.findFormat(pathToSip, filePath,
-                    formatIdentificationResult, formatDefinitionService);
-            issues.add(new IngestIssue(
-                    ingestWorkflow,
-                    toolService.getByNameAndVersion(getToolName(), getToolVersion()),
-                    ingestIssueDefinitionStore.findByCode(IngestIssueDefinitionCode.FILE_MISSING),
-                    fileFormat.getRight(),
-                    "missing file: " + fileFormat.getLeft() + ". " + parsedConfigValue.getRight(),
-                    parsedConfigValue.getLeft() != null)
-            );
+        for (Path checksumSource : files.keySet()) {
+            for (Path filePath : files.get(checksumSource)) {
+                log.info("missing file: " + filePath);
+                String pathToSipStr = pathToSip.toAbsolutePath().toString().replace("\\", "/");
+                String fileRelativePath = filePath.toAbsolutePath().toString().replace("\\", "/").replace(pathToSipStr + "/", "");
+                issues.add(new IngestIssue(
+                        ingestWorkflow,
+                        toolService.getByNameAndVersion(fixityCheckerTool.getToolName(), fixityCheckerTool.getToolVersion()),
+                        ingestIssueDefinitionStore.findByCode(IngestIssueDefinitionCode.FILE_MISSING),
+                        null,
+                        "File: " + pathToSip.toAbsolutePath().relativize(checksumSource.toAbsolutePath()) + " references missing file: " + fileRelativePath + ". " + parsedConfigValue.getRight(),
+                        parsedConfigValue.getLeft() != null)
+                );
+            }
         }
-        String errorMsg = IngestIssueDefinitionCode.FILE_MISSING + " issue occurred, files: " + Arrays.toString(files.toArray());
+        String errorMsg = IngestIssueDefinitionCode.FILE_MISSING + " issue occurred, files: " + Arrays.toString(files.values().stream().flatMap(Collection::stream).toArray());
 
         if (parsedConfigValue.getLeft() == null)
             throw new IncidentException(issues);
         ingestIssueService.save(issues);
         if (!parsedConfigValue.getLeft())
             throw new BpmnError(BpmConstants.ErrorCodes.ProcessFailure, ArclibUtils.trimBpmnErrorMsg(errorMsg));
-    }
-
-    public void setFixityCheckToolCounter(int fixityCheckToolCounter) {
-        this.fixityCheckToolCounter = fixityCheckToolCounter;
     }
 
     @Inject

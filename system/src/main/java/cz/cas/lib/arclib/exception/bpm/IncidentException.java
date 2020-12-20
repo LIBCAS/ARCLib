@@ -15,9 +15,7 @@ import java.util.List;
  */
 public class IncidentException extends Exception {
     public static final String INCIDENT_MSG_PREFIX = "ARCLib incident: ";
-    /**
-     * throwing method may provide pre-constructed issue objects to be persisted by {@link ArclibDelegate}
-     */
+
     @Getter
     private List<IngestIssue> providedIssues;
 
@@ -25,8 +23,12 @@ public class IncidentException extends Exception {
         super(INCIDENT_MSG_PREFIX + message);
     }
 
+    /**
+     * throwing method may provide pre-constructed issue objects to be persisted by {@link ArclibDelegate}
+     */
     public IncidentException(List<IngestIssue> issues) {
         super(INCIDENT_MSG_PREFIX + (issues != null ? Arrays.toString(issues.toArray()) : ""));
+        this.providedIssues = issues;
     }
 
     public IncidentException(String message, Throwable cause) {

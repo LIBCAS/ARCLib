@@ -3,15 +3,17 @@ package cz.cas.lib.arclib.bpm;
 import com.fasterxml.jackson.databind.JsonNode;
 import cz.cas.lib.arclib.domain.IngestToolFunction;
 import cz.cas.lib.arclib.domain.ingestWorkflow.IngestEvent;
-import cz.cas.lib.arclib.domain.packages.PackageType;
+import cz.cas.lib.arclib.domain.profiles.ProducerProfile;
 import cz.cas.lib.arclib.domain.profiles.SipProfile;
 import cz.cas.lib.arclib.domainbase.exception.GeneralException;
+import cz.cas.lib.arclib.exception.bpm.ConfigParserException;
 import cz.cas.lib.arclib.exception.bpm.IncidentException;
 import cz.cas.lib.arclib.service.SipProfileService;
 import cz.cas.lib.arclib.service.fixity.BagitFixityChecker;
 import cz.cas.lib.arclib.service.fixity.CommonChecksumFilesChecker;
+import cz.cas.lib.arclib.service.fixity.FixityCheckMethod;
 import cz.cas.lib.arclib.service.fixity.MetsFixityChecker;
-import cz.cas.lib.arclib.utils.ArclibUtils;
+import cz.cas.lib.arclib.store.ProducerProfileStore;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.camunda.bpm.engine.delegate.DelegateExecution;
@@ -22,7 +24,11 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import static cz.cas.lib.arclib.bpm.ArclibXmlExtractorDelegate.SIP_PROFILE_CONFIG_ENTRY;
 import static cz.cas.lib.arclib.bpm.BpmConstants.FixityCheck;
@@ -36,12 +42,13 @@ public class FixityCheckerDelegate extends ArclibDelegate {
     public static final String CONFIG_INVALID_CHECKSUMS = "/continueOnInvalidChecksums";
     public static final String CONFIG_UNSUPPORTED_CHECKSUM_TYPE = "/continueOnUnsupportedChecksumType";
     public static final String CONFIG_MISSING_FILES = "/continueOnMissingFiles";
-    public static final String PACKAGE_TYPE = "/packageType";
+    public static final String CHECK_METHODS = "/methods";
 
     private MetsFixityChecker metsFixityVerifier;
     private BagitFixityChecker bagitFixityVerifier;
     private CommonChecksumFilesChecker commonChecksumFilesChecker;
     private SipProfileService sipProfileService;
+    private ProducerProfileStore producerProfileStore;
     @Getter
     private String toolName = "ARCLib_" + IngestToolFunction.fixity_check;
 
@@ -57,12 +64,34 @@ public class FixityCheckerDelegate extends ArclibDelegate {
         Path sipFolderWorkspacePath = Paths.get((String) execution.getVariable(ProcessVariables.sipFolderWorkspacePath));
         int fixityCheckToolCounter = (int) execution.getVariable(FixityCheck.fixityCheckToolCounter);
 
-        PackageType packageType = ArclibUtils.parseEnumFromConfig(config, FIXITY_CHECK_TOOL + "/" + fixityCheckToolCounter + PACKAGE_TYPE, PackageType.class, false);
-        IngestTool tollToLog = this;
-        if (packageType != null) {
-            switch (packageType) {
+        String methodsConfigPath = FIXITY_CHECK_TOOL + "/" + fixityCheckToolCounter + CHECK_METHODS;
+        JsonNode jsonNode = config.at(methodsConfigPath);
+        if (jsonNode.isMissingNode() || !jsonNode.isTextual())
+            throw new ConfigParserException(methodsConfigPath, jsonNode.isMissingNode() ? "missing" : jsonNode.toString(), FixityCheckMethod.class);
+        String checkMethodsListFromConfig = jsonNode.textValue();
+        Map<String, FixityCheckMethod> supportedCheckMethods = Arrays.stream(FixityCheckMethod.values()).collect(Collectors.toMap(Enum::toString, m -> m));
+        List<FixityCheckMethod> requestedCheckMethods = new ArrayList<>();
+        for (String s : checkMethodsListFromConfig.split("\\s*,\\s*")) {
+            FixityCheckMethod requestedCheckMethod = supportedCheckMethods.get(s.toUpperCase());
+            if (requestedCheckMethod == null)
+                throw new ConfigParserException(methodsConfigPath, checkMethodsListFromConfig, FixityCheckMethod.class);
+            requestedCheckMethods.add(requestedCheckMethod);
+        }
+        if (requestedCheckMethods.isEmpty())
+            throw new ConfigParserException(methodsConfigPath, checkMethodsListFromConfig, FixityCheckMethod.class);
+
+        for (FixityCheckMethod requestedCheckMethod : requestedCheckMethods) {
+            switch (requestedCheckMethod) {
                 case METS:
-                    String sipProfileExternalId = config.get(SIP_PROFILE_CONFIG_ENTRY).textValue();
+                    String sipProfileExternalId;
+                    JsonNode sipProfileConfigEntry = config.at("/" + SIP_PROFILE_CONFIG_ENTRY);
+                    if (sipProfileConfigEntry.isMissingNode()) {
+                        String producerProfileExternalId = getProducerProfileExternalId(execution);
+                        ProducerProfile producerProfile = producerProfileStore.findByExternalId(producerProfileExternalId);
+                        sipProfileExternalId = producerProfile.getSipProfile().getExternalId();
+                    } else {
+                        sipProfileExternalId = sipProfileConfigEntry.textValue();
+                    }
                     SipProfile sipProfile = sipProfileService.findByExternalId(sipProfileExternalId);
                     String sipMetadataPathRegex = sipProfile.getSipMetadataPathRegex();
                     List<File> matchingFiles = listFilesMatchingRegex(new File(sipFolderWorkspacePath.toAbsolutePath().toString()), sipMetadataPathRegex, true);
@@ -74,24 +103,22 @@ public class FixityCheckerDelegate extends ArclibDelegate {
                         throw new GeneralException(String.format("Multiple files found at the path given by regex: %s", sipMetadataPathRegex));
 
                     File metsFile = matchingFiles.get(0);
-                    metsFixityVerifier.setFixityCheckToolCounter(fixityCheckToolCounter);
                     metsFixityVerifier.verifySIP(sipFolderWorkspacePath, metsFile.toPath(), ingestWorkflowExternalId,
-                            config, getFormatIdentificationResult(execution));
-                    tollToLog = metsFixityVerifier;
+                            config, getFormatIdentificationResult(execution), fixityCheckToolCounter, this);
                     break;
                 case BAGIT:
-                    bagitFixityVerifier.setFixityCheckToolCounter(fixityCheckToolCounter);
                     bagitFixityVerifier.verifySIP(sipFolderWorkspacePath, sipFolderWorkspacePath,
-                            ingestWorkflowExternalId, config, getFormatIdentificationResult(execution));
-                    tollToLog = bagitFixityVerifier;
+                            ingestWorkflowExternalId, config, getFormatIdentificationResult(execution), fixityCheckToolCounter, this);
+                    break;
+                case COMMON:
+                    commonChecksumFilesChecker.verifySIP(sipFolderWorkspacePath, sipFolderWorkspacePath, ingestWorkflowExternalId, config, getFormatIdentificationResult(execution), fixityCheckToolCounter, this);
                     break;
                 default:
-                    throw new GeneralException("Unsupported package type: " + packageType);
+                    throw new GeneralException("Unsupported check method: " + requestedCheckMethod);
             }
         }
 
-        commonChecksumFilesChecker.verifySIP(sipFolderWorkspacePath, sipFolderWorkspacePath, ingestWorkflowExternalId, config, getFormatIdentificationResult(execution));
-        IngestEvent fixityCheckEvent = new IngestEvent(ingestWorkflowService.findByExternalId(ingestWorkflowExternalId), toolService.getByNameAndVersion(tollToLog.getToolName(), tollToLog.getToolVersion()), true, null);
+        IngestEvent fixityCheckEvent = new IngestEvent(ingestWorkflowService.findByExternalId(ingestWorkflowExternalId), toolService.getByNameAndVersion(getToolName(), getToolVersion()), true, null);
         ingestEventStore.save(fixityCheckEvent);
 
         execution.setVariable(FixityCheck.fixityCheckToolCounter, fixityCheckToolCounter + 1);
@@ -115,5 +142,10 @@ public class FixityCheckerDelegate extends ArclibDelegate {
     @Inject
     public void setCommonChecksumFilesChecker(CommonChecksumFilesChecker commonChecksumFilesChecker) {
         this.commonChecksumFilesChecker = commonChecksumFilesChecker;
+    }
+
+    @Inject
+    public void setProducerProfileStore(ProducerProfileStore producerProfileStore) {
+        this.producerProfileStore = producerProfileStore;
     }
 }

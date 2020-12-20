@@ -1,10 +1,9 @@
 package cz.cas.lib.arclib.service.fixity;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import cz.cas.lib.arclib.domain.IngestToolFunction;
+import cz.cas.lib.arclib.bpm.IngestTool;
 import cz.cas.lib.arclib.domainbase.exception.GeneralException;
 import cz.cas.lib.arclib.exception.bpm.IncidentException;
-import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.beans.factory.annotation.Value;
@@ -35,10 +34,6 @@ import static cz.cas.lib.core.util.Utils.notNull;
 @Service
 public class MetsFixityChecker extends FixityChecker {
 
-    @Getter
-    private String toolName = "ARCLib_mets_" + IngestToolFunction.fixity_check;
-    @Getter
-    private String toolVersion = null;
     private Map<String, String> uris;
 
     /**
@@ -49,15 +44,24 @@ public class MetsFixityChecker extends FixityChecker {
      */
     @Override
     public void verifySIP(Path sipWsPath, Path pathToMets, String externalId,
-                          JsonNode configRoot, Map<String, Pair<String, String>> formatIdentificationResult)
+                          JsonNode configRoot, Map<String, Pair<String, String>> formatIdentificationResult, int fixityCheckToolCounter, IngestTool fixityCheckerTool)
             throws IOException, IncidentException {
         log.debug("Verifying fixity of SIP, METS path: " + pathToMets);
         notNull(pathToMets, () -> {
             throw new IllegalArgumentException("Path to mets is null.");
         });
+
+        Map<Path, List<Path>> invalidFixitiesWrapper = new HashMap<>();
         List<Path> invalidFixities = new ArrayList<>();
+        invalidFixitiesWrapper.put(pathToMets, invalidFixities);
+
+        Map<Path, List<Path>> missingFilesWrapper = new HashMap<>();
         List<Path> missingFiles = new ArrayList<>();
+        missingFilesWrapper.put(pathToMets, missingFiles);
+
+        Map<Path, Map<String, List<Path>>> unsupportedChecksumTypesWrapper = new HashMap<>();
         Map<String, List<Path>> unsupportedChecksumTypes = new HashMap<>();
+        unsupportedChecksumTypesWrapper.put(pathToMets, unsupportedChecksumTypes);
 
         Pair<Document, XPath> domAndXpath;
         try (FileInputStream fis = new FileInputStream(pathToMets.toFile())) {
@@ -124,11 +128,11 @@ public class MetsFixityChecker extends FixityChecker {
             }
         }
         if (!unsupportedChecksumTypes.isEmpty())
-            invokeUnsupportedChecksumTypeIssue(sipWsPath, unsupportedChecksumTypes, externalId, configRoot, formatIdentificationResult);
+            invokeUnsupportedChecksumTypeIssue(sipWsPath, unsupportedChecksumTypesWrapper, externalId, configRoot, formatIdentificationResult, fixityCheckToolCounter, fixityCheckerTool);
         if (!missingFiles.isEmpty())
-            invokeMissingFilesIssue(sipWsPath, missingFiles, externalId, configRoot, formatIdentificationResult);
+            invokeMissingFilesIssue(sipWsPath, missingFilesWrapper, externalId, configRoot, fixityCheckToolCounter, fixityCheckerTool);
         if (!invalidFixities.isEmpty())
-            invokeInvalidChecksumsIssue(sipWsPath, invalidFixities, externalId, configRoot, formatIdentificationResult);
+            invokeInvalidChecksumsIssue(sipWsPath, invalidFixitiesWrapper, externalId, configRoot, formatIdentificationResult, fixityCheckToolCounter, fixityCheckerTool);
     }
 
     /**
