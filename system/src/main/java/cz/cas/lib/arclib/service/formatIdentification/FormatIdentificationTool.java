@@ -54,7 +54,7 @@ public abstract class FormatIdentificationTool implements IngestTool {
      * @param pathToSip path to the SIP to analyze
      * @return map of key-value pairs where the key is the path to a file from SIP and
      * value is a list of pairs of the format that has been identified for the file and
-     * the respective identification method
+     * the respective identification method.. <b>value can be null if the format was not identified</b>
      * @throws IOException if the SIP is not found
      */
     public abstract Map<String, List<Pair<String, String>>> analyze(Path pathToSip) throws IOException;
@@ -86,11 +86,11 @@ public abstract class FormatIdentificationTool implements IngestTool {
                     String filePath = pathToListOfFormats.getKey();
                     List<Pair<String, String>> formatsAndIdentificationMethods = pathToListOfFormats.getValue();
 
-                    if (formatsAndIdentificationMethods.size() == 1) {
+                    if (formatsAndIdentificationMethods != null && formatsAndIdentificationMethods.size() == 1) {
                         //file has been identified with only a single format
                         formatToIdentificationMethod = formatsAndIdentificationMethods.get(0);
                     } else {
-                        //file has been identified with multiple formats
+                        //file has been identified with multiple formats or was not identified at all
                         log.debug("Resolving ambiguous format identification for file at path " + filePath + ".");
                         List<Pair<String, String>> matchingPatterns = predefinedFormats.stream()
                                 .filter(filePathRegexAndFormat -> Pattern.compile(filePathRegexAndFormat.getLeft()).matcher(filePath).matches())
@@ -172,26 +172,36 @@ public abstract class FormatIdentificationTool implements IngestTool {
         log.warn("Invoking unresolvable formats issue for ingest workflow " + externalId + ".");
         List<IngestIssue> issues = new ArrayList<>();
 
-        ambiguousFormats.entrySet().stream()
-                .forEach(item -> {
-                    List<Pair<String, String>> formats = item.getValue();
-                    StringBuilder oneFileSb = new StringBuilder();
-                    oneFileSb.append("File at path: " + item.getKey() + " was identified with multiple formats: {\n");
-                    formats.forEach(pair -> {
-                        oneFileSb.append("format: " + pair.getLeft() + ", identification method: " + pair.getRight() + "\n");
-                    });
-                    oneFileSb.append("}\n");
-                    formats.forEach(pair -> {
-                        issues.add(new IngestIssue(
-                                ingestWorkflow,
-                                toolEntity,
-                                ingestIssueDefinitionStore.findByCode(IngestIssueDefinitionCode.FILE_FORMAT_UNRESOLVABLE),
-                                formatDefinitionService.findPreferredDefinitionsByPuid(pair.getLeft()),
-                                oneFileSb.toString(),
-                                false
-                        ));
-                    });
+        ambiguousFormats.forEach((key, formats) -> {
+            StringBuilder oneFileSb = new StringBuilder();
+            if (formats == null) {
+                oneFileSb.append("Format of file at path: ").append(key).append(" was not identified\n");
+                issues.add(new IngestIssue(
+                        ingestWorkflow,
+                        toolEntity,
+                        ingestIssueDefinitionStore.findByCode(IngestIssueDefinitionCode.FILE_FORMAT_UNRESOLVABLE),
+                        null,
+                        oneFileSb.toString(),
+                        false
+                ));
+            } else {
+                oneFileSb.append("File at path: ").append(key).append(" was identified with multiple formats: {\n");
+                formats.forEach(pair -> {
+                    oneFileSb.append("format: ").append(pair.getLeft()).append(", identification method: ").append(pair.getRight()).append("\n");
                 });
+                oneFileSb.append("}\n");
+                formats.forEach(pair -> {
+                    issues.add(new IngestIssue(
+                            ingestWorkflow,
+                            toolEntity,
+                            ingestIssueDefinitionStore.findByCode(IngestIssueDefinitionCode.FILE_FORMAT_UNRESOLVABLE),
+                            formatDefinitionService.findPreferredDefinitionsByPuid(pair.getLeft()),
+                            oneFileSb.toString(),
+                            false
+                    ));
+                });
+            }
+        });
         throw new IncidentException(issues);
     }
 

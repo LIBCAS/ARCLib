@@ -6,6 +6,7 @@ spring:
     name: mainPool
     username: changeme
     password: changeme
+    testOnBorrow: true
   solr-arclib-xml-datasource:
     url: jdbc:solr://localhost:9983/?collection=arclibXmlC
   jpa:

@@ -121,7 +121,7 @@ public class Validator {
         for (int i = 0; i < nodes.getLength(); i++) {
             Element element = (Element) nodes.item(i);
             String filePathGlobPattern = element.getElementsByTagName("filePathGlobPattern").item(0).getTextContent();
-            String schema = element.getElementsByTagName("schema").item(0).getTextContent();
+            String schema = element.getElementsByTagName("schema").item(0).getTextContent().trim();
 
             List<File> matchingFiles = listFilesMatchingGlobPattern(new File(sipPath), filePathGlobPattern);
             if (matchingFiles.size() == 0) throw new MissingFile(sipId, validationProfileExternalId, filePathGlobPattern);

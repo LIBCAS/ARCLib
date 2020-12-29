@@ -25,7 +25,10 @@ import org.springframework.stereotype.Service;
 import javax.inject.Inject;
 import java.io.IOException;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 import java.util.stream.Collectors;
 
 import static cz.cas.lib.arclib.service.formatIdentification.FormatIdentificationTool.FORMAT_IDENTIFICATON_TOOL_EXPR;
@@ -65,14 +68,16 @@ public class FormatIdentificationDelegate extends ArclibDelegate {
 
         Map<String, List<Pair<String, String>>> identifiedFormats = formatIdentificationTool.analyze
                 (Paths.get((String) execution.getVariable(BpmConstants.ProcessVariables.sipFolderWorkspacePath)));
-        updateFormatOccurrences(identifiedFormats, getProducerProfileExternalId(execution));
 
         TreeMap<String, Pair<String, String>> resultingFormats = formatIdentificationTool
                 .resolveAmbiguousIdentifications(identifiedFormats, configRoot, iw.getExternalId());
 
+        updateFormatOccurrences(resultingFormats, getProducerProfileExternalId(execution));
+
         IngestEvent event = ingestEventStore.save(new IngestEvent(new IngestWorkflow(iw.getId()), formatIdentificationTool.getToolEntity(), true, null));
         mapOfEventIdsToMapsOfFilesToFormats.put(event.getId(), resultingFormats);
-        if (formatIdentificationToolCounter == 0) execution.setVariable(BpmConstants.FormatIdentification.preferredFormatIdentificationEventId, event.getId());
+        if (formatIdentificationToolCounter == 0)
+            execution.setVariable(BpmConstants.FormatIdentification.preferredFormatIdentificationEventId, event.getId());
     }
 
     /**
@@ -101,18 +106,17 @@ public class FormatIdentificationDelegate extends ArclibDelegate {
         return tool;
     }
 
-    private void updateFormatOccurrences(Map<String, List<Pair<String, String>>> analyzedFormats, String producerProfileExId) {
+    private void updateFormatOccurrences(Map<String, Pair<String, String>> analyzedFormats, String producerProfileExId) {
         Map<String, Integer> puidOccurrenceMap = analyzedFormats
                 .values()
                 .stream()
-                .flatMap(Collection::stream)
                 .collect(Collectors.toMap(Pair::getLeft, pair -> 1, (fst, snd) -> fst + 1));
         for (String puid : puidOccurrenceMap.keySet()) {
             FormatDefinition formatDefinition = formatDefinitionService.findPreferredDefinitionsByPuid(puid);
             ProducerProfile producerProfile = producerProfileService.findByExternalId(producerProfileExId);
             FormatOccurrence formatOccurrence = formatOccurrenceStore.findByFormatDefinitionAndProducerProfile(
                     formatDefinition.getId(), producerProfile.getId());
-            if(formatOccurrence == null)
+            if (formatOccurrence == null)
                 formatOccurrence = new FormatOccurrence(formatDefinition,0,producerProfile);
             formatOccurrence.setOccurrences(formatOccurrence.getOccurrences() + puidOccurrenceMap.get(puid));
             formatOccurrenceStore.save(formatOccurrence);

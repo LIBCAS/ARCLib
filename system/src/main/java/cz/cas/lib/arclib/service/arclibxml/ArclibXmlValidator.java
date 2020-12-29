@@ -121,7 +121,10 @@ public class ArclibXmlValidator {
             if (record.get(4).equalsIgnoreCase("true") && (!onlyXsltRelatedNodes || record.get(3).startsWith("SIP profile XSLT"))) {
                 String xPath = record.get(1);
                 NodeList withXPath = XmlUtils.findWithXPath(new ByteArrayInputStream(xml.getBytes()), xPath, uris);
-                Utils.ne(withXPath.getLength(), 0, () -> new MissingNode(xPath));
+                Utils.ne(withXPath.getLength(), 0, () -> {
+                    log.error(xml);
+                    return new MissingNode(xPath);
+                });
             }
         }
     }

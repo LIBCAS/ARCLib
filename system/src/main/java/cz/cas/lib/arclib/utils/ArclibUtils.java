@@ -307,7 +307,7 @@ public class ArclibUtils {
     }
 
     public static final String trimBpmnErrorMsg(String errorMsg) {
-        return errorMsg.substring(0, 3500) + "... message reduced";
+        return errorMsg.length() > 3500 ? errorMsg.substring(0, 3500) + "... message reduced" : errorMsg;
     }
 
     public static final String prepareBpmnDefinitionForDeployment(String bpmnDefinition, String ingestBatchId) throws ParserConfigurationException, IOException, SAXException, TransformerException, XPathExpressionException {

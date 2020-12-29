@@ -123,10 +123,12 @@ public class DroidFormatIdentificationTool extends FormatIdentificationTool {
 
                 filePath = filePath.replaceAll("file:/?" + Pattern.quote(pathToSipStr) + "/", "");
 
-                List<Pair<String, String>> puids = filePathsToPuidValues.get(filePath);
-                if (puids == null) {
-                    puids = new ArrayList<>();
+                if (puid == null || puid.isBlank()) {
+                    filePathsToPuidValues.put(filePath, null);
+                    log.warn("File at path \"" + filePath + "\" was not identified by droid.");
+                    continue;
                 }
+                List<Pair<String, String>> puids = filePathsToPuidValues.computeIfAbsent(filePath, s -> new ArrayList<>());
                 puids.add(Pair.of(puid, method));
                 filePathsToPuidValues.put(filePath, puids);
 
