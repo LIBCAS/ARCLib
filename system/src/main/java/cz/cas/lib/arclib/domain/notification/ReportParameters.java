@@ -6,6 +6,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.util.HashMap;
 import java.util.Map;
 
 @Getter
@@ -13,6 +14,6 @@ import java.util.Map;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ReportParameters {
-    private ExportFormat format;
-    private Map<String, String> params;
+    private ExportFormat format = ExportFormat.PDF;
+    private Map<String, String> params = new HashMap<>();
 }

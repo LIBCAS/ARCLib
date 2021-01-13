@@ -5,14 +5,12 @@ import cz.cas.lib.arclib.domain.User;
 import cz.cas.lib.arclib.domain.notification.Notification;
 import cz.cas.lib.arclib.domain.notification.NotificationElement;
 import cz.cas.lib.arclib.domain.notification.ReportParameters;
-import cz.cas.lib.arclib.domainbase.exception.BadArgument;
 import cz.cas.lib.arclib.domainbase.exception.MissingObject;
 import cz.cas.lib.arclib.exception.ForbiddenException;
 import cz.cas.lib.arclib.formatlibrary.domain.Format;
 import cz.cas.lib.arclib.formatlibrary.service.FormatService;
 import cz.cas.lib.arclib.index.autocomplete.AutoCompleteItem;
 import cz.cas.lib.arclib.mail.ArclibMailCenter;
-import cz.cas.lib.arclib.report.ExportFormat;
 import cz.cas.lib.arclib.report.ExporterService;
 import cz.cas.lib.arclib.report.Report;
 import cz.cas.lib.arclib.security.authorization.permission.Permissions;
@@ -93,7 +91,6 @@ public class NotificationService {
                 break;
             case REPORT:
                 log.debug("Scheduling report notification.");
-                validateReportNotificationParameters(notification);
                 createScheduledJob(notification, "Report notification sender.", reportNotificationScript);
                 break;
         }
@@ -138,14 +135,18 @@ public class NotificationService {
 
             log.info(String.format("Deleting exported report files (count: %d) for notification: %s...", reports.size(), id));
 
-            ReportParameters reportParameters;
-            try {
-                reportParameters = objectMapper.readValue(entity.getParameters(), ReportParameters.class);
-            } catch (IOException e) {
-                throw new UncheckedIOException(e);
+            ReportParameters reportParameters = new ReportParameters();
+            if (entity.getParameters() != null) {
+                try {
+                    reportParameters = objectMapper.readValue(entity.getParameters(), ReportParameters.class);
+                } catch (IOException e) {
+                    throw new UncheckedIOException(e);
+                }
             }
+            //lambda expression..
+            final ReportParameters finalReportParameters = reportParameters;
 
-            reports.forEach(report -> exporterService.deleteExportedReportFile(report, reportParameters.getFormat()));
+            reports.forEach(report -> exporterService.deleteExportedReportFile(report, finalReportParameters.getFormat()));
         }
 
         store.delete(entity);
@@ -189,19 +190,6 @@ public class NotificationService {
         }
     }
 
-    private void validateReportNotificationParameters(Notification notification) {
-        eq(notification.getType(), Notification.NotificationType.REPORT, () -> new BadArgument("Notification must be of REPORT type to validate its parameters"));
-        notNull(notification.getParameters(), () -> new BadArgument("Report Notification parameters cannot be null."));
-        ReportParameters reportParameters;
-        try {
-            reportParameters = objectMapper.readValue(notification.getParameters(), ReportParameters.class);
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
-        }
-        ExportFormat format = reportParameters.getFormat();
-        notNull(format, () -> new BadArgument("Report Notification parameters' format cannot be null."));
-    }
-
     /**
      * Sends email notification about the necessary revisions of format politics to all users with permissions:
      * <ul>
@@ -237,18 +225,22 @@ public class NotificationService {
 
         Notification notification = this.find(notificationId);
 
-        ReportParameters reportParameters;
-        try {
-            reportParameters = objectMapper.readValue(notification.getParameters(), ReportParameters.class);
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
+        ReportParameters reportParameters = new ReportParameters();
+        if (notification.getParameters() != null) {
+            try {
+                reportParameters = objectMapper.readValue(notification.getParameters(), ReportParameters.class);
+            } catch (IOException e) {
+                throw new UncheckedIOException(e);
+            }
         }
+        //lambda expression..
+        final ReportParameters finalReportParameters = reportParameters;
 
         List<Report> reports = reportService.findAllInList(notification.obtainRelatedEntitiesIds());
-        reports.forEach(report -> exporterService.exportToFileSystem(report, reportParameters.getFormat(), reportParameters.getParams()));
+        reports.forEach(report -> exporterService.exportToFileSystem(report, finalReportParameters.getFormat(), finalReportParameters.getParams()));
 
         List<Pair<String, File>> reportNamesAndFiles = reports.stream()
-                .map(report -> Pair.of(report.getName(), exporterService.getExportedReportFile(report, reportParameters.getFormat())))
+                .map(report -> Pair.of(report.getName(), exporterService.getExportedReportFile(report, finalReportParameters.getFormat())))
                 .collect(Collectors.toList());
 
         Collection<User> toBeNotified = new HashSet<>();

@@ -6,13 +6,11 @@ import cz.cas.lib.arclib.formatlibrary.domain.Format;
 import cz.cas.lib.arclib.report.Report;
 import cz.cas.lib.arclib.utils.NotificationComponentConverter;
 import cz.cas.lib.core.scheduling.job.Job;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import org.hibernate.annotations.BatchSize;
 
 import javax.persistence.*;
+import javax.validation.constraints.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -27,21 +25,25 @@ import java.util.stream.Collectors;
 public class Notification extends DatedObject {
 
     @Enumerated(EnumType.STRING)
+    @NonNull
     private NotificationType type;
 
     /**
      * Predmet e-mailu
      */
+    @NotNull
     private String subject;
 
     /**
      * Obsah notifikácie
      */
+    @NotNull
     private String message;
 
     /**
      * CRON
      */
+    @NotNull
     private String cron;
 
     /**

@@ -34,7 +34,7 @@ public class NotificationApi {
     @PreAuthorize("hasAuthority('" + Permissions.NOTIFICATION_RECORDS_WRITE + "')")
     @PutMapping(value = "/{id}")
     public Notification save(@ApiParam(value = "Id of the instance", required = true) @PathVariable("id") String id,
-                             @ApiParam(value = "Single instance", required = true) @RequestBody Notification notification) {
+                             @ApiParam(value = "Single instance", required = true) @RequestBody @Valid Notification notification) {
         eq(id, notification.getId(), () -> new BadArgument("id"));
         return service.save(notification);
     }
