@@ -1271,14 +1271,11 @@
     <changeSet id="23" author="radvan">
         <sql>
             -- SUPER_ADMIN
-            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('b7a43ad5-883f-4741-948b-08678fa38604',
-            'USER_ROLE_RECORDS_READ');
-            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('b7a43ad5-883f-4741-948b-08678fa38604',
-            'USER_ROLE_RECORDS_WRITE');
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('b7a43ad5-883f-4741-948b-08678fa38604', 'USER_ROLE_RECORDS_READ');
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('b7a43ad5-883f-4741-948b-08678fa38604', 'USER_ROLE_RECORDS_WRITE');
 
             -- ADMIN
-            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('7354de69-e7b6-4276-96e1-6be55aa096d0',
-            'USER_ROLE_RECORDS_READ');
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('7354de69-e7b6-4276-96e1-6be55aa096d0', 'USER_ROLE_RECORDS_READ');
         </sql>
     </changeSet>
     <changeSet id="24" author="tomasek">
@@ -1311,6 +1308,38 @@
                 <constraints foreignKeyName="arclib_batch_sip_profile_fk"
                              referencedTableName="arclib_sip_profile" referencedColumnNames="id"/>
             </column>
+        </addColumn>
+    </changeSet>
+    <changeSet id="26" author="radvan">
+        <createTable tableName="arclib_notification">
+            <column name="id" type="varchar(255)">
+                <constraints primaryKey="true" primaryKeyName="arclib_notification_pkey" nullable="false"/>
+            </column>
+            <column name="created" type="datetime"/>
+            <column name="updated" type="datetime"/>
+            <column name="deleted" type="datetime"/>
+
+            <column name="type" type="varchar(255)"/>
+            <column name="subject" type="varchar(255)"/>
+            <column name="message" type="nclob"/>
+            <column name="cron" type="varchar(255)"/>
+            <column name="related_entities" type="clob"/> <!-- Using JSON converter -->
+            <column name="job_id" type="varchar(255)">
+                <constraints foreignKeyName="uas_job_fk" referencedTableName="uas_job"
+                             referencedColumnNames="id"/>
+            </column>
+            <column name="creator_id" type="varchar(255)">
+                <constraints foreignKeyName="arclib_user_fk" referencedTableName="arclib_user"
+                             referencedColumnNames="id"/>
+            </column>
+        </createTable>
+
+        <!-- Remove old notification entity -->
+        <dropTable tableName="arclib_formats_revision_notification" cascadeConstraints="true" />
+    </changeSet>
+    <changeSet id="27" author="radvan">
+        <addColumn tableName="arclib_notification">
+            <column name="parameters" type="nclob"/>
         </addColumn>
     </changeSet>
 </databaseChangeLog>

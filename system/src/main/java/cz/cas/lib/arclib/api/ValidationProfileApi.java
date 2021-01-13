@@ -52,14 +52,15 @@ public class ValidationProfileApi {
         service.delete(entity);
     }
 
-    @ApiOperation(value = "Gets one instance specified by id [Perm.VALIDATION_PROFILE_RECORDS_READ]", response = ValidationProfile.class)
+    @ApiOperation(value = "Gets one instance specified by id [Perm.VALIDATION_PROFILE_RECORDS_READ]",
+            notes = "Returns deleted entities as well.", response = ValidationProfile.class)
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Successful response", response = ValidationProfile.class),
             @ApiResponse(code = 404, message = "Instance does not exist")})
     @PreAuthorize("hasAuthority('" + Permissions.VALIDATION_PROFILE_RECORDS_READ + "')")
     @RequestMapping(value = "/{id}", method = RequestMethod.GET)
     public ValidationProfile get(@ApiParam(value = "Id of the instance", required = true) @PathVariable("id") String id) {
-        ValidationProfile entity = service.find(id);
+        ValidationProfile entity = service.findWithDeletedFilteringOff(id);
         notNull(entity, () -> new MissingObject(ValidationProfile.class, id));
 
         return entity;

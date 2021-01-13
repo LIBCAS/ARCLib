@@ -5,9 +5,12 @@ import cz.cas.lib.arclib.domainbase.domain.DomainObject;
 import cz.cas.lib.arclib.domainbase.exception.GeneralException;
 import cz.cas.lib.arclib.domainbase.store.DatedStore;
 import cz.cas.lib.arclib.domainbase.store.DomainStore;
+import cz.cas.lib.arclib.index.autocomplete.AutoCompleteAware;
+import cz.cas.lib.arclib.index.autocomplete.AutoCompleteItem;
 import cz.cas.lib.arclib.index.solr.IndexQueryUtils;
 import cz.cas.lib.core.index.dto.Params;
 import cz.cas.lib.core.index.dto.Result;
+import lombok.NonNull;
 import lombok.SneakyThrows;
 import org.apache.commons.lang3.reflect.FieldUtils;
 import org.apache.solr.client.solrj.SolrClient;
@@ -35,8 +38,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import static cz.cas.lib.arclib.index.solr.IndexQueryUtils.buildFilters;
-import static cz.cas.lib.arclib.index.solr.IndexQueryUtils.initializeQuery;
+import static cz.cas.lib.arclib.index.solr.IndexQueryUtils.*;
 
 /**
  * {@link DatedStore} with automatic Solr indexing and filtering.
@@ -67,6 +69,8 @@ public interface IndexedStore<T extends DomainObject, U extends IndexedDomainObj
 
     SolrTemplate getTemplate();
 
+    Class<T> getType();
+
     Class<U> getUType();
 
     U toIndexObject(T obj);
@@ -91,7 +95,6 @@ public interface IndexedStore<T extends DomainObject, U extends IndexedDomainObj
 
     /**
      * Reindexes all entities from JPA to Solr.
-     * <p>
      * <p>
      * Also creates the mapping for type.
      * </p>
@@ -161,6 +164,53 @@ public interface IndexedStore<T extends DomainObject, U extends IndexedDomainObj
         List<T> sorted = findAllInList(ids);
         result.setItems(sorted);
         result.setCount(page.getTotalElements());
+        return result;
+    }
+
+    /**
+     * Finds all instances that respect the selected {@link Params} and converts them to autocomplete entries.
+     *
+     * The type {@link T} must implement interface {@link AutoCompleteAware}
+     * or override generic AutoComplete logic (more at JavaDoc of {@link #isAutoCompleteSearchAllowed()}),
+     * otherwise an exception is thrown.
+     *
+     * @param params parameters to comply with
+     * @return autocomplete items wrapped by the {@link Result} class
+     * @throws UnsupportedOperationException if {@link #isAutoCompleteSearchAllowed} check fails
+     * @implSpec Only index is queried and not database, therefore it is a faster search than {@link
+     *         #findAll(Params)}
+     */
+    default Result<AutoCompleteItem> listAutoComplete(@NonNull Params params) throws UnsupportedOperationException {
+        if (!isAutoCompleteSearchAllowed()) {
+            throw new UnsupportedOperationException("Type class '" + getType() + "' must implement interface '" + AutoCompleteAware.class.getName() + "'.");
+        }
+
+        SimpleQuery query = new SimpleQuery();
+        Map<String, IndexField> indexedFields = IndexQueryUtils.INDEXED_FIELDS_MAP.get(getIndexType());
+        initializeQuery(query, params, indexedFields);
+
+        query.addProjectionOnField("id");
+        query.addProjectionOnField(AUTOCOMPLETE_FIELD_NAME);
+        query.addCriteria(typeCriteria());
+        if (params.getInternalQuery() != null)
+            query.addCriteria(params.getInternalQuery());
+        query.addFilterQuery(new SimpleFilterQuery(buildFilters(params, getIndexType(), indexedFields)));
+
+        Page<U> page = getTemplate().query(getIndexCollection(), query, getUType());
+
+        List<AutoCompleteItem> queriedAutoCompleteData = page.getContent().stream().map(u -> {
+            AutoCompleteItem item = new AutoCompleteItem();
+            item.setId(u.getId());
+            if (u.getAutoCompleteLabel() != null) {
+                item.setAutoCompleteLabel(u.getAutoCompleteLabel());
+            }
+            return item;
+        }).collect(Collectors.toList());
+
+        Result<AutoCompleteItem> result = new Result<>();
+        result.setItems(queriedAutoCompleteData);
+        result.setCount(page.getTotalElements());
+
         return result;
     }
 
@@ -332,9 +382,10 @@ public interface IndexedStore<T extends DomainObject, U extends IndexedDomainObj
 
     /**
      * nested index support
-     * <br>
-     * <b>all child docs are removed during parent removal and also during parent indexation, therefore child objects MUST be allways indexed
-     * during parent object indexation in custom {@link #index(DomainObject)} method</b>
+     *
+     * all child docs are removed during parent removal and also during parent indexation,
+     * therefore <b>child objects</b> MUST always be indexed
+     * during parent object indexation in custom {@link #index(DomainObject)} method
      */
     default boolean isParentStore() {
         return false;
@@ -347,5 +398,15 @@ public interface IndexedStore<T extends DomainObject, U extends IndexedDomainObj
      */
     default boolean isChildStore() {
         return false;
+    }
+
+    /**
+     * Method to override by classes that wants to access AutoComplete logic
+     * and do not implement AutoCompleteAware interface.
+     *
+     * @implNote {@link #toIndexObject} must be overridden to set value of {@link IndexedDatedObject#autoCompleteLabel}
+     */
+    default boolean isAutoCompleteSearchAllowed() {
+        return AutoCompleteAware.class.isAssignableFrom(getType());
     }
 }

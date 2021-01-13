@@ -3,6 +3,7 @@ package cz.cas.lib.arclib.report;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import cz.cas.lib.arclib.domainbase.domain.DomainObject;
 import cz.cas.lib.arclib.domainbase.store.InstantGenerator;
+import cz.cas.lib.arclib.index.autocomplete.AutoCompleteAware;
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.commons.lang.SerializationUtils;
@@ -19,7 +20,7 @@ import java.time.Instant;
 @Table(name = "arclib_report")
 @Setter
 @Getter
-public class Report extends DomainObject implements Serializable {
+public class Report extends DomainObject implements Serializable, AutoCompleteAware {
 
     @Column(updatable = false)
     @GeneratorType(type = InstantGenerator.class, when = GenerationTime.INSERT)
@@ -33,6 +34,7 @@ public class Report extends DomainObject implements Serializable {
 
     @Column(columnDefinition = "LONGVARCHAR")
     private String template;
+
     @Column(length = 10485760)
     @JsonIgnore
     private byte[] compiled;
@@ -66,5 +68,10 @@ public class Report extends DomainObject implements Serializable {
 
     public void setCompiledObject(Object compiled) {
         this.compiled = SerializationUtils.serialize((Serializable) compiled);
+    }
+
+    @Override
+    public String getAutoCompleteLabel() {
+        return name;
     }
 }

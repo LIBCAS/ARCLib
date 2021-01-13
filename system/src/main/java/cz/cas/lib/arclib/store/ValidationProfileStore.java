@@ -37,6 +37,21 @@ public class ValidationProfileStore extends NamedStore<ValidationProfile, QValid
         return entity;
     }
 
+    /**
+     * Queries for ValidationProfile of given id, entity can be deleted as well (deleted flag is not null).
+     *
+     * @param id of entity
+     * @return ValidationProfile entity, even deleted. Or null if no ValidationProfile matches provided id.
+     */
+    public ValidationProfile findWithDeletedFilteringOff(String id) {
+        ValidationProfile entity = query()
+                .select(qObject())
+                .where(qObject().id.eq(id))
+                .fetchFirst();
+        detachAll();
+        return entity;
+    }
+
     @Transactional
     public List<ValidationProfile> findByProducerId(String producerId) {
         QValidationProfile validationProfile = qObject();

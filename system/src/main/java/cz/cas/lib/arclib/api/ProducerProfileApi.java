@@ -75,7 +75,8 @@ public class ProducerProfileApi {
         producerProfileService.delete(producerProfile);
     }
 
-    @ApiOperation(value = "Gets one instance specified by id [Perm.PRODUCER_PROFILE_RECORDS_READ]", response = ProducerProfile.class)
+    @ApiOperation(value = "Gets one instance specified by id [Perm.PRODUCER_PROFILE_RECORDS_READ]",
+            notes = "Returns deleted entities as well.", response = ProducerProfile.class)
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Successful response", response = ProducerProfile.class),
             @ApiResponse(code = 404, message = "Instance does not exist")})
@@ -83,7 +84,7 @@ public class ProducerProfileApi {
     @RequestMapping(value = "/{id}", method = RequestMethod.GET)
     public ProducerProfile get(@ApiParam(value = "Id of the instance", required = true)
                                @PathVariable("id") String id) {
-        ProducerProfile entity = producerProfileService.find(id);
+        ProducerProfile entity = producerProfileService.findWithDeletedFilteringOff(id);
         notNull(entity, () -> new MissingObject(producerProfileService.getType(), id));
 
         return entity;

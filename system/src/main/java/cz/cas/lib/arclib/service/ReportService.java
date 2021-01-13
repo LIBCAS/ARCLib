@@ -3,8 +3,11 @@ package cz.cas.lib.arclib.service;
 import cz.cas.lib.arclib.domainbase.exception.BadArgument;
 import cz.cas.lib.arclib.domainbase.exception.GeneralException;
 import cz.cas.lib.arclib.domainbase.exception.MissingObject;
+import cz.cas.lib.arclib.index.autocomplete.AutoCompleteItem;
 import cz.cas.lib.arclib.report.Report;
 import cz.cas.lib.arclib.report.ReportStore;
+import cz.cas.lib.core.index.dto.Params;
+import cz.cas.lib.core.index.dto.Result;
 import cz.cas.lib.core.store.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import net.sf.jasperreports.engine.*;
@@ -15,13 +18,15 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collection;
+import java.util.List;
 
 import static cz.cas.lib.arclib.domainbase.util.DomainBaseUtils.notNull;
 
 @Service
 @Slf4j
 public class ReportService {
-    private ReportStore reportStore;
+
+    private ReportStore store;
 
     /**
      * Compile template and stores it text form as well as compiled form to the database.
@@ -56,7 +61,7 @@ public class ReportService {
             validateParameter(param);
         }
         report.setCompiledObject(compiledReport);
-        return reportStore.save(report);
+        return store.save(report);
     }
 
     /**
@@ -66,7 +71,7 @@ public class ReportService {
     public void delete(String id) {
         log.info(String.format("Deleting report template: %s", id));
         Report report = find(id);
-        reportStore.delete(report);
+        store.delete(report);
     }
 
     /**
@@ -75,13 +80,21 @@ public class ReportService {
      * @throws MissingObject if does not exist or deleted
      */
     public Report find(String id) {
-        Report report = reportStore.find(id);
+        Report report = store.find(id);
         notNull(report, () -> new MissingObject(Report.class, id));
         return report;
     }
 
     public Collection<Report> findAll() {
-        return reportStore.findAll();
+        return store.findAll();
+    }
+
+    public List<Report> findAllInList(List<String> ids) {
+        return store.findAllInList(ids);
+    }
+
+    public Result<AutoCompleteItem> listAutoComplete(Params params) {
+        return store.listAutoComplete(params);
     }
 
     private void validateParameter(JRParameter param) {
@@ -125,7 +138,8 @@ public class ReportService {
     }
 
     @Inject
-    public void setReportStore(ReportStore reportStore) {
-        this.reportStore = reportStore;
+    public void setStore(ReportStore store) {
+        this.store = store;
     }
+
 }

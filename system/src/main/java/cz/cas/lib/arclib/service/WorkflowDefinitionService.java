@@ -28,6 +28,10 @@ public class WorkflowDefinitionService {
         return store.find(id);
     }
 
+    public WorkflowDefinition findWithDeletedFilteringOff(String id) {
+        return store.findWithDeletedFilteringOff(id);
+    }
+
     @Transactional
     public WorkflowDefinition save(WorkflowDefinition entity) {
         if (!hasRole(userDetails, Permissions.SUPER_ADMIN_PRIVILEGE)) {

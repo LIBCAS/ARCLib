@@ -37,7 +37,7 @@
         <class>cz.cas.lib.arclib.domain.preservationPlanning.Tool</class>
         <class>cz.cas.lib.arclib.domain.preservationPlanning.FormatOccurrence</class>
         <class>cz.cas.lib.arclib.domain.preservationPlanning.IngestIssueDefinition</class>
-        <class>cz.cas.lib.arclib.domain.FormatsRevisionNotification</class>
+        <class>cz.cas.lib.arclib.domain.notification.Notification</class>
 
         <class>cz.cas.lib.arclib.formatlibrary.domain.Format</class>
         <class>cz.cas.lib.arclib.formatlibrary.domain.RelatedFormat</class>

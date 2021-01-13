@@ -1,12 +1,12 @@
 <p>Hello,</p>
 
-<p>in ${createdDate} at ${createdTime} a request for revision of format politics has been created.</p>
+<p>in ${createdDate} at ${createdTime} reports have been generated.</p>
 <p>${result}</p>
 <div>
-    <#list formats>
+    <#list reports>
         <ul>
-            <#items as format>
-                <li>${format}</li>
+            <#items as report>
+                <li>${report}</li>
             </#items>
         </ul>
     </#list>

@@ -75,6 +75,10 @@ public class SipProfileService {
         return store.find(id);
     }
 
+    public SipProfile findWithDeletedFilteringOff(String id) {
+        return store.findWithDeletedFilteringOff(id);
+    }
+
     public SipProfile findByExternalId(String externalId) {
         return store.findByExternalId(externalId);
     }

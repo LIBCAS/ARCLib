@@ -3,6 +3,7 @@ package cz.cas.lib.core.index.solr;
 import com.querydsl.core.types.dsl.EntityPathBase;
 import cz.cas.lib.arclib.domainbase.domain.NamedObject;
 import cz.cas.lib.arclib.domainbase.store.NamedStore;
+import cz.cas.lib.arclib.index.autocomplete.AutoCompleteAware;
 import cz.cas.lib.core.index.dto.Params;
 import cz.cas.lib.core.index.dto.Result;
 import cz.cas.lib.core.rest.data.DataAdapter;
@@ -36,6 +37,9 @@ public abstract class IndexedNamedStore<T extends NamedObject, Q extends EntityP
         u.setCreated(toDate(obj.getCreated()));
         u.setUpdated(toDate(obj.getUpdated()));
         u.setName(obj.getName());
+        if (obj instanceof AutoCompleteAware) {
+            u.setAutoCompleteLabel(((AutoCompleteAware) obj).getAutoCompleteLabel());
+        }
         return u;
     }
 

@@ -34,6 +34,8 @@ public class SipProfileStore extends NamedStore<SipProfile, QSipProfile> {
 
     @Transactional
     public List<SipProfile> findByProducerId(String producerId) {
+        if (producerId == null) return List.of();
+
         QSipProfile sipProfile = qObject();
 
         List<SipProfile> fetch = query()
@@ -48,6 +50,21 @@ public class SipProfileStore extends NamedStore<SipProfile, QSipProfile> {
 
     public SipProfile findByExternalId(@NonNull String number) {
         SipProfile entity = query().select(qObject()).where(qObject().externalId.eq(number)).fetchOne();
+        detachAll();
+        return entity;
+    }
+
+    /**
+     * Queries for SipProfile of given id, entity can be deleted as well (deleted flag is not null).
+     *
+     * @param id of entity
+     * @return SipProfile entity, even deleted. Or null if no SipProfile matches provided id.
+     */
+    public SipProfile findWithDeletedFilteringOff(String id) {
+        SipProfile entity = query()
+                .select(qObject())
+                .where(qObject().id.eq(id))
+                .fetchFirst();
         detachAll();
         return entity;
     }

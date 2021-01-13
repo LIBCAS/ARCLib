@@ -1,7 +1,9 @@
 package cz.cas.lib.arclib.report;
 
 import cz.cas.lib.arclib.domainbase.exception.BadArgument;
+import cz.cas.lib.arclib.domainbase.exception.ForbiddenObject;
 import cz.cas.lib.arclib.domainbase.exception.GeneralException;
+import cz.cas.lib.arclib.domainbase.exception.MissingObject;
 import lombok.extern.slf4j.Slf4j;
 import net.sf.jasperreports.engine.*;
 import net.sf.jasperreports.engine.export.HtmlExporter;
@@ -9,18 +11,22 @@ import net.sf.jasperreports.engine.export.JRCsvExporter;
 import net.sf.jasperreports.engine.export.JRPdfExporter;
 import net.sf.jasperreports.engine.export.ooxml.JRXlsxExporter;
 import net.sf.jasperreports.export.*;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import javax.inject.Inject;
 import javax.sql.DataSource;
-import java.io.IOException;
-import java.io.OutputStream;
+import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import static java.nio.file.Files.*;
 
 @Service
 @Slf4j
@@ -28,8 +34,12 @@ public class ExporterService {
 
     @Resource(name = "SolrArclibXmlDatasource")
     private DataSource solrArclibXmlDs;
-
     private DataSource arclibSystemDbDs;
+    /**
+     * Place on filesystem where exported reports are saved to.
+     * (if they are exported to filesystem instead of directly to API response)
+     */
+    private Path reportsDirectory;
 
     private static final String ONE_PAGE_PER_SHEET_PROPERTY_NAME = "net.sf.jasperreports.export.xls.one.page.per.sheet";
     private static final String ONE_PAGE_PER_SHEET_PROPERTY_VALUE = "true";
@@ -47,7 +57,7 @@ public class ExporterService {
         JasperReport jasperReport = (JasperReport) report.getCompiledObject();
         jasperReport.setProperty(ONE_PAGE_PER_SHEET_PROPERTY_NAME, ONE_PAGE_PER_SHEET_PROPERTY_VALUE);
 
-        log.info(String.format("Exporting: %s to: %s", report.getName(), format.toString()));
+        log.info(String.format("Exporting report: %s to format: %s", report.getName(), format.toString()));
         DataSource dataSourceToUse = report.isArclibXmlDs() ? solrArclibXmlDs : arclibSystemDbDs;
         try {
             jasperPrint = JasperFillManager.fillReport(jasperReport, parseParams(customParams, jasperReport), dataSourceToUse.getConnection());
@@ -61,7 +71,7 @@ public class ExporterService {
             throw new GeneralException(e, ex);
         }
         Exporter exporter;
-        log.debug("Preparing exporter");
+        log.debug("Preparing exporter for format:" + format);
         switch (format) {
             case PDF:
                 exporter = getPdfExporter();
@@ -84,14 +94,76 @@ public class ExporterService {
         }
         exporter.setExporterInput(new SimpleExporterInput(jasperPrint));
         try {
-            log.debug("Exporting");
+            log.debug("Exporting...");
             exporter.exportReport();
+            log.debug("Exporting succeeded.");
         } catch (JRException e) {
             throw new GeneralException("Export to " + format + " failed.", e);
         }
     }
 
-    private Exporter getPdfExporter() throws IOException {
+
+    /**
+     * Exports report with {@link #export} and saves it to application's filesystem.
+     *
+     * @param report       {@link Report entity}
+     * @param format       file format to which export
+     * @param customParams parameters used to override default parameter values
+     */
+    public void exportToFileSystem(Report report, ExportFormat format, Map<String, String> customParams) {
+        try {
+            if (!isDirectory(reportsDirectory) && exists(reportsDirectory)) {
+                throw new ForbiddenObject(Path.class, reportsDirectory.toString());
+            } else if (!isDirectory(reportsDirectory)) {
+                createDirectories(reportsDirectory);
+            }
+
+            Path reportPath = reportsDirectory.resolve(report.getId() + format.getExtension());
+            this.export(report, format, customParams, new BufferedOutputStream(Files.newOutputStream(reportPath)));
+        } catch (IOException e) {
+            throw new GeneralException("Export has failed with IOException", e);
+        }
+    }
+
+    /**
+     * Obtains reference to exported report file
+     *
+     * @param report for which to obtain File reference
+     * @param format of exported report
+     * @return reference to specific exported report File
+     * @throws GeneralException when reports directory does not exists.
+     * @throws MissingObject    if expected file for report + format does not exists
+     */
+    public File getExportedReportFile(Report report, ExportFormat format) {
+        if (!exists(reportsDirectory) || !isDirectory(reportsDirectory)) {
+            throw new GeneralException("Directory with exported reports does not exists.");
+        }
+
+        Path reportPath = reportsDirectory.resolve(report.getId() + format.getExtension());
+        if (!exists(reportPath) || !isRegularFile(reportPath)) {
+            throw new MissingObject(Path.class, reportPath.toString());
+        }
+
+        return reportPath.toFile();
+    }
+
+    /**
+     * Deletes exported report file from filesystem if exists
+     *
+     * @param report for which to remove file from filesystem
+     * @param format for matching extension of exported file
+     */
+    public void deleteExportedReportFile(Report report, ExportFormat format) {
+        Path reportPath = reportsDirectory.resolve(report.getId() + format.getExtension());
+        try {
+            log.debug("Deleting exported report file: " + reportPath.toString());
+            Files.deleteIfExists(reportPath);
+        } catch (IOException e) {
+            throw new UncheckedIOException("Exported report file deletion has failed", e);
+        }
+    }
+
+    private Exporter getPdfExporter() {
         JRPdfExporter exporter = new JRPdfExporter();
         SimplePdfReportConfiguration reportConfig
                 = new SimplePdfReportConfiguration();
@@ -110,7 +182,7 @@ public class ExporterService {
         return new JRCsvExporter();
     }
 
-    private Exporter getXlsExporter() throws IOException {
+    private Exporter getXlsExporter() {
         JRXlsxExporter exporter = new JRXlsxExporter();
         SimpleXlsxReportConfiguration reportConfig
                 = new SimpleXlsxReportConfiguration();
@@ -182,5 +254,10 @@ public class ExporterService {
     @Inject
     public ExporterService(DataSource arclibSystemDbDs) {
         this.arclibSystemDbDs = arclibSystemDbDs;
+    }
+
+    @Inject
+    public void setReportsDirectory(@Value("${arclib.path.reports}") Path reportsDirectory) {
+        this.reportsDirectory = reportsDirectory;
     }
 }

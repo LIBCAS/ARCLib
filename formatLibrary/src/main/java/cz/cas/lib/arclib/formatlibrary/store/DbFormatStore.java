@@ -9,8 +9,7 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 @Repository
-public class DbFormatStore
-        extends DatedStore<Format, QFormat> implements FormatStore {
+public class DbFormatStore extends DatedStore<Format, QFormat> implements FormatStore {
     public DbFormatStore() {
         super(Format.class, QFormat.class);
     }

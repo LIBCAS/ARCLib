@@ -24,6 +24,7 @@ public class BatchDto {
     private boolean pendingIncidents;
     @Enumerated(EnumType.STRING)
     private BatchState state;
+    private ProducerProfileDto producerProfile;
     private SipProfileDto initialSipProfile;
     private ValidationProfileDto initialValidationProfile;
     private WorkflowDefinitionDto initialWorkflowDefinition;

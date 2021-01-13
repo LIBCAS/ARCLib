@@ -19,4 +19,5 @@ public class WorkflowDefinitionDto {
     private Instant created;
     private Instant updated;
     private String externalId;
+    private Boolean editable;
 }

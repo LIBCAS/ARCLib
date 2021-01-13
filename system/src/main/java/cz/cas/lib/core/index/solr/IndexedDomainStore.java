@@ -3,6 +3,7 @@ package cz.cas.lib.core.index.solr;
 import com.querydsl.core.types.dsl.EntityPathBase;
 import cz.cas.lib.arclib.domainbase.domain.DomainObject;
 import cz.cas.lib.arclib.domainbase.store.DomainStore;
+import cz.cas.lib.arclib.index.autocomplete.AutoCompleteAware;
 import cz.cas.lib.core.index.dto.Params;
 import cz.cas.lib.core.index.dto.Result;
 import cz.cas.lib.core.rest.data.DataAdapter;
@@ -41,7 +42,9 @@ public abstract class IndexedDomainStore<T extends DomainObject, Q extends Entit
         U u = getIndexObjectInstance();
         u.setId(obj.getId());
         u.setType(getIndexType());
-
+        if (obj instanceof AutoCompleteAware) {
+            u.setAutoCompleteLabel(((AutoCompleteAware) obj).getAutoCompleteLabel());
+        }
         return u;
     }
 

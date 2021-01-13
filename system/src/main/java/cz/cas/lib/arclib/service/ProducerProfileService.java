@@ -101,6 +101,10 @@ public class ProducerProfileService implements DelegateAdapter<ProducerProfile> 
         return delegate.findByExternalId(number);
     }
 
+    public ProducerProfile findWithDeletedFilteringOff(String id) {
+        return delegate.findWithDeletedFilteringOff(id);
+    }
+
     @Inject
     public void setBeanMappingService(BeanMappingService beanMappingService) {
         this.beanMappingService = beanMappingService;

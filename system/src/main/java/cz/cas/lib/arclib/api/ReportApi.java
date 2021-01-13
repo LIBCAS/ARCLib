@@ -43,14 +43,12 @@ public class ReportApi {
             @ApiResponse(code = 400, message = "Given parameter is not defined within template or the value can not be parsed")})
     @PreAuthorize("hasAuthority('" + Permissions.REPORT_TEMPLATE_RECORDS_READ + "')")
     @RequestMapping(value = "/{reportId}/{format}", method = RequestMethod.GET)
-    public void getReport(@ApiParam(value = "Id of the report", required = true)
-                          @PathVariable("reportId") String reportId,
-                          @ApiParam(value = "Output format, one of CSV, XLSX, HTML, PDF", required = true)
-                          @PathVariable("format") String format,
+    public void getReport(@ApiParam(value = "Id of the report", required = true) @PathVariable("reportId") String reportId,
+                          @ApiParam(value = "Output format, one of CSV, XLSX, HTML, PDF", required = true) @PathVariable("format") String format,
                           @ApiParam(value = "Query string with parameters used to override default parameters values" +
                                   " which are specified inside template itself. Boolean parameter value should be in" +
-                                  " string form i.e. true/false")
-                          @RequestParam(required = false) Map<String, String> params, HttpServletResponse response) throws IOException {
+                                  " string form i.e. true/false") @RequestParam(required = false) Map<String, String> params,
+                          HttpServletResponse response) throws IOException {
         checkUUID(reportId);
         switch (format.toUpperCase()) {
             case "PDF":

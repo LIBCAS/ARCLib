@@ -34,7 +34,7 @@ import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
 
 public class ArclibXmlXsltExtractorTest extends SrDbTest {
-    private static final String PATH_TO_METS = "mets_7033d800-0935-11e4-beed-5ef3fc9ae867.xml";
+    private static final String REGEX_TO_METS = ".+/mets_7033d800-0935-11e4-beed-5ef3fc9ae867.xml";
     public static final Path WS = Paths.get("testWorkspace");
     public static final Path SIP = Paths.get("src/test/resources/SIP_PACKAGE/" +
             "7033d800-0935-11e4-beed-5ef3fc9ae867");
@@ -112,7 +112,7 @@ public class ArclibXmlXsltExtractorTest extends SrDbTest {
         String sipProfileXml = Resources.toString(this.getClass().getResource(
                 "/sipProfiles/comprehensiveSipProfile.xsl"), StandardCharsets.UTF_8);
         sipProfile.setXsl(sipProfileXml);
-        sipProfile.setSipMetadataPathRegex(PATH_TO_METS);
+        sipProfile.setSipMetadataPathRegex(REGEX_TO_METS);
         sipProfileStore.save(sipProfile);
 
         sipProfileService = new SipProfileService();

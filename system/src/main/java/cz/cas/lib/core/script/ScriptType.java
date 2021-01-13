@@ -9,7 +9,7 @@ public enum ScriptType implements Labeled {
     JAVASCRIPT("javascript"),
     SHELL("shell");
 
-    private String label;
+    private final String label;
 
     ScriptType(String label) {
         this.label = label;

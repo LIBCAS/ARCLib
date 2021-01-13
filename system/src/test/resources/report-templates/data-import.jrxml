@@ -71,7 +71,7 @@
 			<defaultValueExpression><![CDATA["4000-12-31T00:00:00Z"]]></defaultValueExpression>
 		</parameter>
 		<queryString language="SQL">
-			<![CDATA[SELECT iw.versioning_level, iw.processing_state, count(*), sum(sip.size_in_bytes) FROM arclib_ingest_workflow iw inner join arclib_sip sip on (iw.sip_id=sip.id) WHERE iw.batch_id IS NOT NULL AND iw.ended > '$P!{from}' and iw.ended < '$P!{to}' and (processing_state = 'PERSISTED' OR processing_state = 'FAILED') GROUP BY iw.versioning_level, iw.processing_state]]>
+			<![CDATA[SELECT iw.versioning_level, iw.processing_state, count(*), sum(sip.size_in_bytes) FROM arclib_ingest_workflow iw inner join arclib_sip sip on (iw.sip_id=sip.id) WHERE iw.ended > '$P!{from}' and iw.ended < '$P!{to}' and (processing_state = 'PERSISTED' OR processing_state = 'FAILED') GROUP BY iw.versioning_level, iw.processing_state]]>
 		</queryString>
 		<field name="versioning_level" class="java.lang.String">
 			<property name="com.jaspersoft.studio.field.label" value="versioning_level"/>
@@ -100,7 +100,7 @@
 			<defaultValueExpression><![CDATA["4000-12-31T00:00:00Z"]]></defaultValueExpression>
 		</parameter>
 		<queryString language="SQL">
-			<![CDATA[SELECT avg((select EXTRACT(epoch from iw.ended-iw.created))) FROM arclib_ingest_workflow iw WHERE iw.batch_id IS NOT NULL AND iw.ended > '$P!{from}' and iw.ended < '$P!{to}']]>
+			<![CDATA[SELECT avg((select EXTRACT(epoch from iw.ended-iw.created))) FROM arclib_ingest_workflow iw WHERE iw.ended > '$P!{from}' and iw.ended < '$P!{to}']]>
 		</queryString>
 		<field name="avg" class="java.lang.Double">
 			<property name="com.jaspersoft.studio.field.label" value="avg"/>
@@ -121,10 +121,19 @@
 		<band splitType="Stretch"/>
 	</background>
 	<pageHeader>
-		<band height="35" splitType="Stretch"/>
+		<band height="24" splitType="Stretch"/>
 	</pageHeader>
 	<columnHeader>
-		<band height="75" splitType="Stretch"/>
+		<band height="24" splitType="Stretch">
+			<staticText>
+				<reportElement x="80" y="0" width="52" height="14" uuid="3aafb4a4-e6ed-4942-885f-d8cce82fe26e"/>
+				<text><![CDATA[Generated:]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="132" y="0" width="218" height="15" uuid="5fa0366f-28a6-4917-9bac-6dab984a46dd"/>
+				<textFieldExpression><![CDATA[new SimpleDateFormat("yyyy.MM.dd HH:mm:ss").format(new Date())]]></textFieldExpression>
+			</textField>
+		</band>
 	</columnHeader>
 	<detail>
 		<band height="270" splitType="Stretch">
@@ -162,7 +171,7 @@
 							</staticText>
 						</jr:columnHeader>
 						<jr:detailCell style="Table 1_TD" height="30">
-							<textField>
+							<textField pattern="##0.00">
 								<reportElement x="0" y="0" width="140" height="30" uuid="fd78f7a7-c196-4e1a-9c2a-f6dbdd7f855e"/>
 								<textFieldExpression><![CDATA[$F{avg}]]></textFieldExpression>
 							</textField>
@@ -253,12 +262,12 @@
 		</band>
 	</detail>
 	<columnFooter>
-		<band height="45" splitType="Stretch"/>
+		<band height="24" splitType="Stretch"/>
 	</columnFooter>
 	<pageFooter>
-		<band height="54" splitType="Stretch"/>
+		<band height="24" splitType="Stretch"/>
 	</pageFooter>
 	<summary>
-		<band height="42" splitType="Stretch"/>
+		<band height="24" splitType="Stretch"/>
 	</summary>
 </jasperReport>

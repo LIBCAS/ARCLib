@@ -246,13 +246,10 @@ public class ArclibXmlGeneratorDelegateTest extends DelegateTest {
         arclibXmlGeneratorDelegate.setIngestEventStore(ingestEventStore);
         arclibXmlGeneratorDelegate.setObjectMapper(new ObjectMapper());
         arclibXmlGeneratorDelegate.setWorkspace(WS.toString());
-        arclibXmlGeneratorDelegate.setIndexArclibXmlStore(indexedArclibXmlStore);
         arclibXmlGeneratorDelegate.setArclibXmlGenerator(arclibXmlGenerator);
         arclibXmlGeneratorDelegate.setIngestWorkflowService(ingestWorkflowService);
         arclibXmlGeneratorDelegate.setSha512Counter(sha512Counter);
         arclibXmlGeneratorDelegate.setToolService(toolService);
-        arclibXmlGeneratorDelegate.setUserService(userService);
-        arclibXmlGeneratorDelegate.setProducerStore(mockedProducerStore);
         arclibXmlGeneratorDelegate.setSipStore(sipStore);
         arclibXmlGeneratorDelegate.setValidator(validator);
 

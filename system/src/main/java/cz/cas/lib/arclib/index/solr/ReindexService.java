@@ -7,6 +7,7 @@ import cz.cas.lib.arclib.domain.ingestWorkflow.IngestWorkflowState;
 import cz.cas.lib.arclib.domainbase.exception.GeneralException;
 import cz.cas.lib.arclib.index.solr.arclibxml.IndexedAipState;
 import cz.cas.lib.arclib.index.solr.arclibxml.IndexedArclibXmlStore;
+import cz.cas.lib.arclib.report.ReportStore;
 import cz.cas.lib.arclib.service.IngestWorkflowService;
 import cz.cas.lib.arclib.service.archivalStorage.ArchivalStorageException;
 import cz.cas.lib.arclib.service.archivalStorage.ArchivalStorageService;
@@ -32,6 +33,7 @@ import static cz.cas.lib.core.util.Utils.notNull;
 public class ReindexService {
 
     private BatchStore batchStore;
+    private ReportStore reportStore;
     private ProducerProfileStore producerProfileStore;
     private UserStore userStore;
     private IndexedFormatStore formatStore;
@@ -50,6 +52,7 @@ public class ReindexService {
         producerProfileStore.dropReindex();
         userStore.dropReindex();
         ingestIssueStore.dropReindex();
+        reportStore.dropReindex();
     }
 
     public void dropReindexFormat() {
@@ -63,7 +66,7 @@ public class ReindexService {
     public void reindexArclibXml() {
         log.info("recovering ARCLib XML index from DB, retrieving XMLs from Archival Storage");
         ingestWorkflowService.findAll().stream()
-                .filter(iw -> iw.getProcessingState() == IngestWorkflowState.PERSISTED || iw.getProcessingState() == IngestWorkflowState.PROCESSED)
+                .filter(iw -> iw.getProcessingState() == IngestWorkflowState.PERSISTED)
                 .forEach(iw -> {
                     try {
                         Producer p = iw.getProducerProfile().getProducer();
@@ -102,7 +105,7 @@ public class ReindexService {
 
     private IndexedAipState objectStateToIndexedAipState(ObjectState aipState) {
         IndexedAipState stateAtArchivalStorage;
-        switch (aipState){
+        switch (aipState) {
             case PROCESSING:
             case PRE_PROCESSING:
             case ROLLED_BACK:
@@ -179,5 +182,10 @@ public class ReindexService {
     @Inject
     public void setArchivalStorageServiceDebug(ArchivalStorageServiceDebug archivalStorageServiceDebug) {
         this.archivalStorageServiceDebug = archivalStorageServiceDebug;
+    }
+
+    @Inject
+    public void setReportStore(ReportStore reportStore) {
+        this.reportStore = reportStore;
     }
 }

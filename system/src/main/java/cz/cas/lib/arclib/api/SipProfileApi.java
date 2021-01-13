@@ -52,14 +52,15 @@ public class SipProfileApi {
         service.delete(entity);
     }
 
-    @ApiOperation(value = "Gets one instance specified by id [Perm.SIP_PROFILE_RECORDS_READ]", response = SipProfile.class)
+    @ApiOperation(value = "Gets one instance specified by id [Perm.SIP_PROFILE_RECORDS_READ]",
+            notes = "Returns deleted entities as well.", response = SipProfile.class)
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Successful response", response = SipProfile.class),
             @ApiResponse(code = 404, message = "Instance does not exist")})
     @PreAuthorize("hasAuthority('" + Permissions.SIP_PROFILE_RECORDS_READ + "')")
     @RequestMapping(value = "/{id}", method = RequestMethod.GET)
     public SipProfile get(@ApiParam(value = "Id of the instance", required = true) @PathVariable("id") String id) {
-        SipProfile entity = service.find(id);
+        SipProfile entity = service.findWithDeletedFilteringOff(id);
         notNull(entity, () -> new MissingObject(SipProfile.class, id));
 
         return entity;

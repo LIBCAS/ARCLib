@@ -52,6 +52,21 @@ public class WorkflowDefinitionStore extends NamedStore<WorkflowDefinition, QWor
         return fetch;
     }
 
+    /**
+     * Queries for WorkflowDefinition of given id, entity can be deleted as well (deleted flag is not null).
+     *
+     * @param id of entity
+     * @return WorkflowDefinition entity, even deleted. Or null if no WorkflowDefinition matches provided id.
+     */
+    public WorkflowDefinition findWithDeletedFilteringOff(String id) {
+        WorkflowDefinition entity = query()
+                .select(qObject())
+                .where(qObject().id.eq(id))
+                .fetchFirst();
+        detachAll();
+        return entity;
+    }
+
     @Inject
     public void setGenerator(Generator generator) {
         this.generator = generator;

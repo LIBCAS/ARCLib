@@ -131,10 +131,19 @@
 		<band splitType="Stretch"/>
 	</background>
 	<pageHeader>
-		<band height="35" splitType="Stretch"/>
+		<band height="24" splitType="Stretch"/>
 	</pageHeader>
 	<columnHeader>
-		<band height="75" splitType="Stretch"/>
+		<band height="24" splitType="Stretch">
+			<staticText>
+				<reportElement x="80" y="0" width="52" height="14" uuid="02a30a0a-e2c8-4615-bfa2-1819a4ce4d2d"/>
+				<text><![CDATA[Generated:]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="132" y="0" width="218" height="15" uuid="b6754fb2-4915-45d8-83b9-4b75d6112544"/>
+				<textFieldExpression><![CDATA[new SimpleDateFormat("yyyy.MM.dd HH:mm:ss").format(new Date())]]></textFieldExpression>
+			</textField>
+		</band>
 	</columnHeader>
 	<detail>
 		<band height="260" splitType="Stretch">
@@ -352,12 +361,12 @@
 		</band>
 	</detail>
 	<columnFooter>
-		<band height="45" splitType="Stretch"/>
+		<band height="24" splitType="Stretch"/>
 	</columnFooter>
 	<pageFooter>
-		<band height="54" splitType="Stretch"/>
+		<band height="24" splitType="Stretch"/>
 	</pageFooter>
 	<summary>
-		<band height="42" splitType="Stretch"/>
+		<band height="24" splitType="Stretch"/>
 	</summary>
 </jasperReport>

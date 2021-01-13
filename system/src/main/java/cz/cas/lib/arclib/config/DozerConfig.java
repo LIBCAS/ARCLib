@@ -27,8 +27,7 @@ public class DozerConfig {
                     .fields("producer", "producerProfile.producer", FieldsMappingOptions.copyByReference());
             mapping(BatchDetailDto.class, Batch.class)
                     .fields("created", "created", FieldsMappingOptions.copyByReference())
-                    .fields("updated", "updated", FieldsMappingOptions.copyByReference())
-                    .fields("producerProfile", "producerProfile", FieldsMappingOptions.copyByReference());
+                    .fields("updated", "updated", FieldsMappingOptions.copyByReference());
             mapping(BatchDetailIngestWorkflowDto.class, IngestWorkflow.class)
                     .fields("created", "created", FieldsMappingOptions.copyByReference())
                     .fields("updated", "updated", FieldsMappingOptions.copyByReference())

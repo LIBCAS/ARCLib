@@ -1,15 +1,20 @@
 package cz.cas.lib.arclib.bpm;
 
+import cz.cas.lib.arclib.domain.Producer;
+import cz.cas.lib.arclib.domain.User;
 import cz.cas.lib.arclib.domain.VersioningLevel;
 import cz.cas.lib.arclib.domain.ingestWorkflow.IngestWorkflow;
 import cz.cas.lib.arclib.domain.ingestWorkflow.IngestWorkflowState;
 import cz.cas.lib.arclib.index.IndexArclibXmlStore;
 import cz.cas.lib.arclib.index.solr.arclibxml.IndexedAipState;
+import cz.cas.lib.arclib.index.solr.arclibxml.IndexedArclibXmlDocument;
 import cz.cas.lib.arclib.service.AipService;
 import cz.cas.lib.arclib.service.archivalStorage.ArchivalStorageException;
 import cz.cas.lib.arclib.service.archivalStorage.ArchivalStorageService;
 import cz.cas.lib.arclib.service.archivalStorage.ArchivalStorageServiceDebug;
 import cz.cas.lib.arclib.service.archivalStorage.ObjectState;
+import cz.cas.lib.arclib.store.ProducerStore;
+import cz.cas.lib.arclib.store.UserStore;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
@@ -34,6 +39,8 @@ public class StorageSuccessVerifierDelegate extends ArclibDelegate {
     private IndexArclibXmlStore indexArclibXmlStore;
     private Boolean deleteSipFromTransferArea;
     private AipService aipService;
+    private ProducerStore producerStore;
+    private UserStore userStore;
     @Getter
     private String toolName = "ARCLib_archival_storage_verification";
 
@@ -42,7 +49,7 @@ public class StorageSuccessVerifierDelegate extends ArclibDelegate {
      * <p>
      * Archival storage is asked for the state of the AIP / AIP XML. In case the state is:
      * a) ARCHIVED:
-     * 1. ingest workflow is marked as PERSISTED and indexed arclib xml document state is set to PERSISTED
+     * 1. {@link IngestWorkflow#processingState} is set to {@link IngestWorkflowState#PERSISTED} and {@link IndexedArclibXmlDocument#aipState} is set to {@link IndexedAipState#ARCHIVED}
      * 2. JMS message is sent to Coordinator to inform the batch that the ingest workflow process has finished
      * 3. SIP content is deleted from workspace
      * 4. SIP content is deleted from transfer area
@@ -97,24 +104,26 @@ public class StorageSuccessVerifierDelegate extends ArclibDelegate {
                     ingestWorkflowService.save(relatedWorkflow);
                 }
 
-                indexArclibXmlStore.changeAipState(ingestWorkflowExternalId, IndexedAipState.ARCHIVED, Files.readAllBytes(getAipXmlWorkspacePath(ingestWorkflow.getExternalId(), workspace)));
+                String producerId = (String) execution.getVariable(BpmConstants.ProcessVariables.producerId);
+                User user = userStore.find(getResponsiblePerson(execution));
+                Producer producer = producerStore.find(producerId);
+                indexArclibXmlStore.createIndex(Files.readAllBytes(getAipXmlWorkspacePath(ingestWorkflowExternalId, workspace)), producerId, producer.getName(), user.getUsername(), IndexedAipState.ARCHIVED, debuggingModeActive, true);
                 if (relatedWorkflow != null)
                     indexArclibXmlStore.setLatestFlag(relatedWorkflow.getExternalId(), false, previousAipXml);
-                log.info("Index of XML of ingest workflow " + ingestWorkflowExternalId + " has been updated with the ingest workflow state PERSISTED.");
+                log.debug("ArclibXml of IngestWorkflow with external id {} has been indexed.", ingestWorkflowExternalId);
 
                 ingestWorkflowService.save(ingestWorkflow);
-                log.info("Processing of ingest workflow with external id " + ingestWorkflow.getExternalId()
-                        + " has finished. The ingest workflow state changed to " + IngestWorkflowState.PERSISTED.toString() + ".");
+                log.info("Processing of ingest workflow with external id {} has finished. The ingest workflow state changed to {}.", ingestWorkflowExternalId, IngestWorkflowState.PERSISTED);
 
                 //delete data from workspace
-                FileSystemUtils.deleteRecursively(getIngestWorkflowWorkspacePath(ingestWorkflow.getExternalId(), workspace).toAbsolutePath().toFile());
-                log.debug("Data of ingest workflow with external id " + ingestWorkflow.getExternalId() + " has been deleted from workspace.");
+                FileSystemUtils.deleteRecursively(getIngestWorkflowWorkspacePath(ingestWorkflowExternalId, workspace).toAbsolutePath().toFile());
+                log.debug("Data of ingest workflow with external id {} has been deleted from workspace.", ingestWorkflowExternalId);
 
                 //delete SIP from transfer area
                 if (deleteSipFromTransferArea) {
                     Files.deleteIfExists(getSipZipTransferAreaPath(ingestWorkflow).toAbsolutePath());
                     Files.deleteIfExists(getSipSumsTransferAreaPath(getSipZipTransferAreaPath(ingestWorkflow)).toAbsolutePath());
-                    log.debug("SIP of ingest workflow with external id " + ingestWorkflow.getExternalId() + " has been deleted from transfer area.");
+                    log.debug("SIP of ingest workflow with external id {} has been deleted from transfer area.", ingestWorkflowExternalId);
                 }
                 aipService.deactivateLock(ingestWorkflow.getSip().getAuthorialPackage().getId());
                 break;
@@ -154,5 +163,15 @@ public class StorageSuccessVerifierDelegate extends ArclibDelegate {
     @Inject
     public void setDeleteSipFromTransferArea(@Value("${arclib.deleteSipFromTransferArea}") Boolean deleteSipFromTransferArea) {
         this.deleteSipFromTransferArea = deleteSipFromTransferArea;
+    }
+
+    @Inject
+    public void setProducerStore(ProducerStore producerStore) {
+        this.producerStore = producerStore;
+    }
+
+    @Inject
+    public void setUserStore(UserStore userStore) {
+        this.userStore = userStore;
     }
 }

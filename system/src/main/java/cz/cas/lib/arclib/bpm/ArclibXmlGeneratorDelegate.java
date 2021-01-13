@@ -1,16 +1,15 @@
 package cz.cas.lib.arclib.bpm;
 
-import cz.cas.lib.arclib.domain.*;
+import cz.cas.lib.arclib.domain.Hash;
+import cz.cas.lib.arclib.domain.HashType;
+import cz.cas.lib.arclib.domain.IngestToolFunction;
 import cz.cas.lib.arclib.domain.ingestWorkflow.IngestEvent;
 import cz.cas.lib.arclib.domain.ingestWorkflow.IngestWorkflow;
 import cz.cas.lib.arclib.domain.ingestWorkflow.IngestWorkflowState;
 import cz.cas.lib.arclib.domain.packages.Sip;
-import cz.cas.lib.arclib.index.IndexArclibXmlStore;
-import cz.cas.lib.arclib.service.UserService;
 import cz.cas.lib.arclib.service.arclibxml.ArclibXmlGenerator;
 import cz.cas.lib.arclib.service.arclibxml.ArclibXmlValidator;
 import cz.cas.lib.arclib.service.fixity.Sha512Counter;
-import cz.cas.lib.arclib.store.ProducerStore;
 import cz.cas.lib.arclib.store.SipStore;
 import cz.cas.lib.arclib.utils.ArclibUtils;
 import lombok.Getter;
@@ -34,11 +33,8 @@ import static cz.cas.lib.core.util.Utils.bytesToHexString;
 @Service
 public class ArclibXmlGeneratorDelegate extends ArclibDelegate {
 
-    private IndexArclibXmlStore indexArclibXmlStore;
     private ArclibXmlGenerator arclibXmlGenerator;
     private Sha512Counter sha512Counter;
-    private UserService userService;
-    private ProducerStore producerStore;
     private ArclibXmlValidator validator;
     private SipStore sipStore;
     @Getter
@@ -66,16 +62,9 @@ public class ArclibXmlGeneratorDelegate extends ArclibDelegate {
         String previousVersionSipId = previousVersionSip != null ? previousVersionSip.getId() : ArclibXmlGenerator.INITIAL_VERSION;
         validator.validateFinalXml(arclibXmlString, sip.getId(), authorialId, sip.getVersionNumber(), previousVersionSipId);
 
-        //store arclib xml to index
-        String producerId = (String) execution.getVariable(BpmConstants.ProcessVariables.producerId);
-        String responsiblePerson = (String) execution.getVariable(BpmConstants.ProcessVariables.responsiblePerson);
-        User user = userService.find(responsiblePerson);
-        Producer producer = producerStore.find(producerId);
-        indexArclibXmlStore.createIndex(arclibXmlString.getBytes(), producer.getId(), producer.getName(), user.getUsername(), null, isInDebugMode(execution), true);
-        String externalId = (String) execution.getVariable(BpmConstants.ProcessVariables.ingestWorkflowExternalId);
+        //store arclib xml to workspace
         Files.write(getAipXmlPath(execution), arclibXmlString.getBytes());
-
-        log.debug("ArclibXml of IngestWorkflow with external id " + externalId + " has been indexed.");
+        log.debug("generated ARCLib XML was stored to the workspace: {}", getAipXmlPath(execution));
 
         String arclibXmlHashValue = bytesToHexString(sha512Counter.computeDigest(new ByteArrayInputStream(arclibXmlString.getBytes())));
         Hash arclibXmlHash = new Hash(arclibXmlHashValue, HashType.Sha512);
@@ -103,11 +92,6 @@ public class ArclibXmlGeneratorDelegate extends ArclibDelegate {
     }
 
     @Inject
-    public void setIndexArclibXmlStore(IndexArclibXmlStore indexArclibXmlStore) {
-        this.indexArclibXmlStore = indexArclibXmlStore;
-    }
-
-    @Inject
     public void setArclibXmlGenerator(ArclibXmlGenerator arclibXmlGenerator) {
         this.arclibXmlGenerator = arclibXmlGenerator;
     }
@@ -115,15 +99,5 @@ public class ArclibXmlGeneratorDelegate extends ArclibDelegate {
     @Inject
     public void setSha512Counter(Sha512Counter sha512Counter) {
         this.sha512Counter = sha512Counter;
-    }
-
-    @Inject
-    public void setUserService(UserService userService) {
-        this.userService = userService;
-    }
-
-    @Inject
-    public void setProducerStore(ProducerStore producerStore) {
-        this.producerStore = producerStore;
     }
 }

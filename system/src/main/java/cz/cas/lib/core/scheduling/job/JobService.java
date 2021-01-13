@@ -61,7 +61,8 @@ public class JobService {
                 runningJobs.put(job.getId(), future);
             }
         } catch (Exception ex) {
-            log.error("Failed to schedule '{}'", job);
+            ex.printStackTrace();
+            log.error("Failed to schedule '{}'. Reason: '{}'", job, ex.getMessage());
         }
     }
 

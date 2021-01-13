@@ -53,14 +53,15 @@ public class WorkflowDefinitionApi {
         service.delete(entity);
     }
 
-    @ApiOperation(value = "Gets one instance specified by id [Perm.WORKFLOW_DEFINITION_RECORDS_READ]", response = WorkflowDefinition.class)
+    @ApiOperation(value = "Gets one instance specified by id [Perm.WORKFLOW_DEFINITION_RECORDS_READ]",
+            notes = "Returns deleted entities as well.", response = WorkflowDefinition.class)
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Successful response", response = WorkflowDefinition.class),
             @ApiResponse(code = 404, message = "Instance does not exist")})
     @PreAuthorize("hasAuthority('" + Permissions.WORKFLOW_DEFINITION_RECORDS_READ + "')")
     @RequestMapping(value = "/{id}", method = RequestMethod.GET)
     public WorkflowDefinition get(@ApiParam(value = "Id of the instance", required = true) @PathVariable("id") String id) {
-        WorkflowDefinition entity = service.find(id);
+        WorkflowDefinition entity = service.findWithDeletedFilteringOff(id);
         notNull(entity, () -> new MissingObject(WorkflowDefinition.class, id));
 
         return entity;

@@ -11,18 +11,18 @@ import cz.cas.lib.core.mail.MailCenter;
 import cz.cas.lib.core.util.Utils;
 import freemarker.template.TemplateException;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 
 import javax.inject.Inject;
 import javax.mail.MessagingException;
+import java.io.File;
 import java.io.IOException;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -116,8 +116,67 @@ public class ArclibMailCenter extends MailCenter implements FormatLibraryNotifie
      */
     public void sendFormatsRevisionNotification(String email, String message, Instant created) {
         sendNotificationInternal(email, null, message, created, "templates/en/formatsRevisionNotification.ftl");
-        log.debug("Sent notification mail about necessary revision of format politics to " +
-                email + ".");
+        log.debug("Sent notification mail about necessary revision of format politics to " + email + ".");
+    }
+
+
+    /**
+     * Send notification about necessary revision of format politics
+     *
+     * @param email         email address of the recipient
+     * @param resultParam   information about the necessary format format politics revision
+     * @param formatsOutput formatted strings with information about specific Formats
+     * @param created       time when the notification was created
+     */
+    public void sendFormatsRevisionNotification(String email, String subject, String resultParam, List<String> formatsOutput, Instant created) {
+        try {
+            DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm");
+            DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd. MM. yyyy");
+
+            MimeMessageHelper message = generalMessage(email, subject, false);
+
+            Map<String, Object> params = generalArguments();
+            params.put("result", resultParam);
+            params.put("formats", formatsOutput);
+            params.put("createdDate", Utils.extractDate(created).format(dateFormatter));
+            params.put("createdTime", Utils.extractTime(created).format(timeFormatter));
+
+            transformAndSend("templates/en/formatsRevisionNotification.ftl", params, message);
+        } catch (MessagingException | IOException | TemplateException ex) {
+            throw new GeneralException(ex);
+        }
+        log.debug("Sent notification mail about necessary revision of format politics to " + email + ".");
+    }
+
+    /**
+     * Send notification with reports
+     *
+     * @param email       email address of the recipient
+     * @param resultParam message about reports
+     * @param reports     pairs of report name + file
+     * @param created     time when the notification was created
+     */
+    public void sendReportNotification(String email, String subject, String resultParam, List<Pair<String, File>> reports, Instant created) {
+        try {
+            DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm");
+            DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd. MM. yyyy");
+
+            MimeMessageHelper message = generalMessage(email, subject, true);
+            for (Pair<String, File> reportNameAndFile : reports) {
+                message.addAttachment(reportNameAndFile.getLeft(), reportNameAndFile.getRight());
+            }
+
+            Map<String, Object> params = generalArguments();
+            params.put("result", resultParam);
+            params.put("reports", reports.stream().map(Pair::getLeft).collect(Collectors.toList()));
+            params.put("createdDate", Utils.extractDate(created).format(dateFormatter));
+            params.put("createdTime", Utils.extractTime(created).format(timeFormatter));
+
+            transformAndSend("templates/en/reportNotification.ftl", params, message);
+        } catch (MessagingException | IOException | TemplateException ex) {
+            throw new GeneralException(ex);
+        }
+        log.debug("Sent notification mail with reports to " + email + ".");
     }
 
     /**

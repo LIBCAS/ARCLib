@@ -1,12 +1,12 @@
 <p>Dobrý den,</p>
 
-<p>dne ${createdDate} ve ${createdTime} byla vygenerována žádost o revizi formátových politik.</p>
+<p>dne ${createdDate} ve ${createdTime} byli vygenerované reporty.</p>
 <p>${result}</p>
 <div>
-    <#list formats>
+    <#list reports>
         <ul>
-            <#items as format>
-                <li>${format}</li>
+            <#items as report>
+                <li>${report}</li>
             </#items>
         </ul>
     </#list>

@@ -58,6 +58,10 @@ public class ValidationProfileService {
         return store.find(id);
     }
 
+    public ValidationProfile findWithDeletedFilteringOff(String id) {
+        return store.findWithDeletedFilteringOff(id);
+    }
+
     public Collection<ValidationProfile> findAll() {
         return store.findAll();
     }
@@ -100,5 +104,6 @@ public class ValidationProfileService {
     public void setUserDetails(UserDetails userDetails) {
         this.userDetails = userDetails;
     }
+
 
 }

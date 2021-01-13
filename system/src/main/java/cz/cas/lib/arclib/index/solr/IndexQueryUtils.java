@@ -27,6 +27,12 @@ public class IndexQueryUtils {
 
     public static final DefaultQueryParser queryParser = new DefaultQueryParser(new SimpleSolrMappingContext());
     public static final String TYPE_FIELD = "index_type";
+
+    /**
+     * Name of autocomplete field defined in {@link IndexedDomainObject#autoCompleteLabel}.
+     */
+    public static final String AUTOCOMPLETE_FIELD_NAME = "autoCompleteLabel";
+
     /**
      * <p>map containing {@link IndexQueryUtils#TYPE_FIELD} as key and fields configuration as value</p>
      * <p>fields configuration is a map which contains field name as key and its index config as value</p>
@@ -43,6 +49,7 @@ public class IndexQueryUtils {
             return null;
         }
     }
+
     /**
      * Builds an IN query.
      * <p>
@@ -50,8 +57,8 @@ public class IndexQueryUtils {
      * Tests if the attribute of an instance is found in provided {@link Set} of values.
      * </p>
      *
-     * @param indexedField   field to check
-     * @param values {@link Set} of valid values
+     * @param indexedField field to check
+     * @param values       {@link Set} of valid values
      * @return Solr query builder
      */
     public static Criteria inQuery(IndexField indexedField, Set<?> values) {
@@ -69,8 +76,8 @@ public class IndexQueryUtils {
      * Tests if the attribute of an instance is not found in provided {@link Set} of values.
      * </p>
      *
-     * @param indexedField   field to check
-     * @param values {@link Set} of invalid values
+     * @param indexedField field to check
+     * @param values       {@link Set} of invalid values
      * @return Solr query builder
      */
     public static Criteria notInQuery(IndexField indexedField, Set<?> values) {
@@ -88,8 +95,9 @@ public class IndexQueryUtils {
      * <p>
      * Tests if the attribute of an instance starts with the specified value.
      * </p>
-     * @param indexedField   field to check
-     * @param value Value to test against
+     *
+     * @param indexedField field to check
+     * @param value        Value to test against
      * @return Solr query builder
      */
     public static Criteria prefixQuery(IndexField indexedField, String value) {
@@ -103,8 +111,9 @@ public class IndexQueryUtils {
      * <p>
      * Tests if the attribute of an instance ends with the specified value.
      * </p>
-     * @param indexedField   field to check
-     * @param value Value to test against
+     *
+     * @param indexedField field to check
+     * @param value        Value to test against
      * @return Solr query builder
      */
     public static Criteria suffixQuery(IndexField indexedField, String value) {
@@ -119,8 +128,9 @@ public class IndexQueryUtils {
      * <p>
      * Tests if the attribute of an instance contains the specified value.
      * </p>
-     * @param indexedField   field to check
-     * @param value Value to test against
+     *
+     * @param indexedField field to check
+     * @param value        Value to test against
      * @return Solr query builder
      */
     public static Criteria containsQuery(IndexField indexedField, String value) {
@@ -276,7 +286,6 @@ public class IndexQueryUtils {
      *                       child object
      * @param filters        filters applied to the the child collection
      * @param indexType      type of the parent object
-     * @return
      */
     public static Criteria nestedQuery(String childIndexType, List<Filter> filters, String indexType) {
         Criteria parentCriteria = Criteria.where(IndexQueryUtils.TYPE_FIELD).is(indexType);

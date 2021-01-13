@@ -23,6 +23,7 @@ import org.springframework.data.solr.core.mapping.Indexed;
 @Getter
 @Setter
 public abstract class IndexedDomainObject {
+
     @Indexed(type = IndexFieldType.STRING)
     @Field
     protected String id;
@@ -30,6 +31,11 @@ public abstract class IndexedDomainObject {
     @Indexed(type = IndexFieldType.STRING)
     @Field(IndexQueryUtils.TYPE_FIELD)
     protected String type;
+
+    @Indexed(type = IndexFieldType.FOLDING)
+    @Field(IndexQueryUtils.AUTOCOMPLETE_FIELD_NAME)
+    protected String autoCompleteLabel;
+
 
     public IndexedDomainObject(String id) {
         this.id = id;

@@ -15,8 +15,7 @@ import java.util.List;
 
 @Repository
 @Primary
-public class IndexedFormatStore
-        extends IndexedDatedStore<Format, QFormat, IndexedFormat> implements FormatStore {
+public class IndexedFormatStore extends IndexedDatedStore<Format, QFormat, IndexedFormat> implements FormatStore {
     public IndexedFormatStore() {
         super(Format.class, QFormat.class, IndexedFormat.class);
     }
@@ -48,6 +47,13 @@ public class IndexedFormatStore
     public IndexedFormat toIndexObject(Format obj) {
         IndexedFormat indexObject = super.toIndexObject(obj);
 
+        if (obj.getFormatName() != null) {
+            // Manually set AutoCompleteAware field because Format class is not allowed to implement AutoCompleteAware interface
+            indexObject.setAutoCompleteLabel(obj.getFormatName() + " (" + obj.getPuid() + ")");
+
+            indexObject.setFormatName(obj.getFormatName());
+        }
+
         Integer formatId = obj.getFormatId();
         if (formatId != null) {
             indexObject.setFormatId(formatId);
@@ -58,12 +64,17 @@ public class IndexedFormatStore
             indexObject.setPuid(puid);
         }
 
-        String formatName = obj.getFormatName();
-        if (formatName != null) {
-            indexObject.setFormatName(formatName);
-        }
         indexObject.setThreatLevel(obj.getThreatLevel());
         return indexObject;
+    }
+
+    /**
+     * Manually override AutoCompleteAware interface check
+     * because Format class cannot implement this interface but still needs to support AutoComplete searches.
+     */
+    @Override
+    public boolean isAutoCompleteSearchAllowed() {
+        return true;
     }
 
     @Inject

@@ -13,6 +13,8 @@ public interface FormatStore {
 
     Format find(String id);
 
+    List<Format> findAllInList(List<String> ids);
+
     List<Format> findFormatsOfRisk(String riskId);
 
     void delete(Format format);

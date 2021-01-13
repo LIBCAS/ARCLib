@@ -4,10 +4,9 @@ import cz.cas.lib.arclib.formatlibrary.domain.Format;
 import cz.cas.lib.arclib.formatlibrary.store.FormatStore;
 import lombok.Getter;
 import org.springframework.stereotype.Service;
-
-import javax.inject.Inject;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.inject.Inject;
 import java.util.List;
 
 @Service
@@ -35,12 +34,17 @@ public class FormatService {
         return store.update(entity);
     }
 
+    public List<Format> findFormatsOfRisk(String riskId) {
+        return store.findFormatsOfRisk(riskId);
+    }
+
+    public List<Format> findAllInList(List<String> ids) {
+        return store.findAllInList(ids);
+    }
+
     @Inject
     public void setFormatStore(FormatStore formatStore) {
         this.store = formatStore;
     }
 
-    public List<Format> findFormatsOfRisk(String riskId){
-        return store.findFormatsOfRisk(riskId);
-    }
 }
