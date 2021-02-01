@@ -1342,4 +1342,28 @@
             <column name="parameters" type="nclob"/>
         </addColumn>
     </changeSet>
+    <changeSet id="28" author="radvan">
+        <addColumn tableName="arclib_ingest_routine">
+            <column name="auto" type="boolean" defaultValueBoolean="false" />
+        </addColumn>
+
+        <!-- Drop old OneToOne association with Batch -->
+        <dropForeignKeyConstraint baseTableName="arclib_ingest_routine" constraintName="currently_processing_batch_fk" />
+        <dropColumn tableName="arclib_ingest_routine" columnName="currently_processing_batch_id" />
+        <!-- New OneToMany association with Batch -->
+        <addColumn tableName="arclib_batch">
+            <column name="routine_id" type="varchar(255)">
+                <constraints foreignKeyName="arclib_batch_routine_fk"
+                             referencedTableName="arclib_ingest_routine" referencedColumnNames="id"/>
+            </column>
+        </addColumn>
+    </changeSet>
+    <changeSet id="29" author="tomasek">
+        <update tableName="arclib_ingest_routine">
+            <column name="auto" value="0"/>
+        </update>
+        <addColumn tableName="arclib_ingest_workflow">
+            <column name="processing_time" type="bigint" value="0"/>
+        </addColumn>
+    </changeSet>
 </databaseChangeLog>

@@ -120,6 +120,11 @@ public class IngestWorkflow extends DatedObject {
     @Column(length = 10485760)
     private String initialConfig;
 
+    /**
+     * processing time in seconds
+     */
+    private long processingTime = 0;
+
     public boolean wasIngestedInDebugMode() {
         return batch != null && batch.isDebuggingModeActive();
     }

@@ -40,22 +40,6 @@
                             <xsd:element name="creatingApplicationVersion" type="xsd:string"/>
                             <xsd:element name="dateCreatedByApplication" type="xsd:date"/>
                             <xsd:element name="preservationLevelValue" type="xsd:string" minOccurs="0"/>
-                            <xsd:element name="scannerModelSerialNo" type="xsd:string" minOccurs="0"/>
-                            <xsd:element name="fileCount" type="xsd:int"/>
-                        </xsd:all>
-                    </xsd:complexType>
-                </xsd:element>
-            </xsd:sequence>
-        </xsd:complexType>
-    </xsd:element>
-
-    <xsd:element name="devices">
-        <xsd:complexType>
-            <xsd:sequence>
-                <xsd:element name="device" minOccurs="0" maxOccurs="unbounded">
-                    <xsd:complexType>
-                        <xsd:all>
-                            <xsd:element name="deviceId" type="xsd:string"/>
                             <xsd:element name="fileCount" type="xsd:int"/>
                         </xsd:all>
                     </xsd:complexType>
@@ -72,11 +56,9 @@
                         <xsd:all>
                             <xsd:element name="eventType" type="xsd:string"/>
                             <xsd:element name="agentName" type="xsd:string"/>
-                            <xsd:element name="linkingDeviceID" type="xsd:string"/>
                             <xsd:element name="scannerModelSerialNo" type="xsd:string" minOccurs="0"/>
-                            <xsd:element name="scanningSoftwareName" type="xsd:string" minOccurs="0"/>
                             <xsd:element name="eventDate" type="xsd:date"/>
-                            <xsd:element name="eventCount" type="xsd:int"/>
+                            <xsd:element name="fileCount" type="xsd:int"/>
                         </xsd:all>
                     </xsd:complexType>
                 </xsd:element>

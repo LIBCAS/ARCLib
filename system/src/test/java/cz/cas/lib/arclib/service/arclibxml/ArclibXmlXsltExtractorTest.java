@@ -127,7 +127,7 @@ public class ArclibXmlXsltExtractorTest extends SrDbTest {
         Map<String, Object> variables = asMap(BpmConstants.ProcessVariables.batchId, batch.getId());
         variables.put(BpmConstants.ProcessVariables.latestConfig, String.format("{\"%s\":\"%s\"}", ArclibXmlExtractorDelegate.SIP_PROFILE_CONFIG_ENTRY, sipProfile.getExternalId()));
         variables.put(BpmConstants.ProcessVariables.ingestWorkflowExternalId, ingestWorkflow.getExternalId());
-        variables.put(BpmConstants.Ingestion.sipFileName, ingestWorkflow.getFileName());
+        variables.put(BpmConstants.ProcessVariables.sipFileName, ingestWorkflow.getFileName());
         variables.put(BpmConstants.ProcessVariables.sipFolderWorkspacePath,SIP.toAbsolutePath().toString());
         String extractionResult = arclibXmlXsltExtractor.extractMetadata(sipProfile.getExternalId(), variables).replace("\\", "");
         assertThat(extractionResult.contains("mets:mets"), is(true));

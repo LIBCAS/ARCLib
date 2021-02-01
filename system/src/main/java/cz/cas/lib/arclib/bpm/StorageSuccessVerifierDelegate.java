@@ -1,8 +1,6 @@
 package cz.cas.lib.arclib.bpm;
 
-import cz.cas.lib.arclib.domain.Producer;
-import cz.cas.lib.arclib.domain.User;
-import cz.cas.lib.arclib.domain.VersioningLevel;
+import cz.cas.lib.arclib.domain.*;
 import cz.cas.lib.arclib.domain.ingestWorkflow.IngestWorkflow;
 import cz.cas.lib.arclib.domain.ingestWorkflow.IngestWorkflowState;
 import cz.cas.lib.arclib.index.IndexArclibXmlStore;
@@ -54,9 +52,9 @@ public class StorageSuccessVerifierDelegate extends ArclibDelegate {
      * 3. SIP content is deleted from workspace
      * 4. SIP content is deleted from transfer area
      * <p>
-     * b) PROCESSING or PRE_PROCESSING: variable <code>aipSavedCheckRetries</code> is decremented
+     * b) PROCESSING or PRE_PROCESSING: variable <code>aipSavedCheckAttempts</code> is decremented
      * <p>
-     * c) ARCHIVAL_FAILURE or ROLLED_BACK: variable <code>aipStoreRetries</code> is decremented
+     * c) ARCHIVAL_FAILURE or ROLLED_BACK: variable <code>aipStoreAttempts</code> is decremented
      * <p>
      * In case of the debugging mode set to active, an internal debugging version of archival storage is used
      * instead of the production archival storage.
@@ -65,6 +63,8 @@ public class StorageSuccessVerifierDelegate extends ArclibDelegate {
      */
     @Override
     public void executeArclibDelegate(DelegateExecution execution) throws ArchivalStorageException, IOException {
+        execution.setVariable(BpmConstants.ArchivalStorage.archivalStorageResult, null);
+
         IngestWorkflow ingestWorkflow = ingestWorkflowService.findByExternalId(ingestWorkflowExternalId);
         boolean xmlVersioning = ingestWorkflow.getVersioningLevel() == VersioningLevel.ARCLIB_XML_VERSIONING;
         String aipId = ingestWorkflow.getSip().getId();
@@ -72,12 +72,23 @@ public class StorageSuccessVerifierDelegate extends ArclibDelegate {
         String objectLogId = xmlVersioning
                 ? "AIP XML (version " + ingestWorkflow.getXmlVersionNumber() + ") of AIP: " + ingestWorkflow.getSip().getId()
                 : "AIP: " + ingestWorkflow.getSip().getId();
+        Integer remainingStateCheckRetries = (Integer) execution.getVariable(BpmConstants.ArchivalStorage.aipSavedCheckAttempts) - 1;
+
         //check that the aip has been successfully stored
         ObjectState stateInArchivalStorage;
         if (!debuggingModeActive) {
-            stateInArchivalStorage = xmlVersioning
-                    ? archivalStorageService.getXmlState(aipId, ingestWorkflow.getXmlVersionNumber())
-                    : archivalStorageService.getAipState(aipId);
+            try {
+                stateInArchivalStorage = xmlVersioning
+                        ? archivalStorageService.getXmlState(aipId, ingestWorkflow.getXmlVersionNumber())
+                        : archivalStorageService.getAipState(aipId);
+            } catch (ArchivalStorageException e) {
+                execution.setVariable(BpmConstants.ArchivalStorage.archivalStorageResult, BpmConstants.ArchivalStorage.ArchivalStorageResultEnum.PROCESSING);
+                execution.setVariable(BpmConstants.ArchivalStorage.aipSavedCheckAttempts, remainingStateCheckRetries);
+                //looks like connection to the server is lost, but we assume that the package is still processing (counting seconds, not setting idle point)
+                //execution.setVariable(BpmConstants.ProcessVariables.idlePoint, Instant.now());
+                log.debug("Non-standard response to {} state request: {}. Number of remaining attempts to check the object state is {}.", objectLogId, e.toString(), remainingStateCheckRetries);
+                return;
+            }
         } else {
             stateInArchivalStorage = xmlVersioning
                     ? archivalStorageServiceDebug.getXmlState(aipId, ingestWorkflow.getXmlVersionNumber())
@@ -85,59 +96,85 @@ public class StorageSuccessVerifierDelegate extends ArclibDelegate {
         }
         log.debug("State of " + objectLogId + " at archival storage has been successfully retrieved." +
                 " State is: " + stateInArchivalStorage.toString() + ".");
-        execution.setVariable(BpmConstants.ArchivalStorage.stateInArchivalStorage, stateInArchivalStorage.toString());
 
         switch (stateInArchivalStorage) {
             case ARCHIVED:
-                ingestWorkflow.setProcessingState(IngestWorkflowState.PERSISTED);
-                ingestWorkflow.setLatestVersion(true);
-                ingestWorkflow.setEnded(Instant.now());
-
-                IngestWorkflow relatedWorkflow = ingestWorkflow.getRelatedWorkflow();
-                byte[] previousAipXml = null;
-                if (relatedWorkflow != null) {
-                    InputStream previousAipXmlStream = debuggingModeActive
-                            ? archivalStorageServiceDebug.exportSingleXml(relatedWorkflow.getSip().getId(), relatedWorkflow.getXmlVersionNumber())
-                            : archivalStorageService.exportSingleXml(relatedWorkflow.getSip().getId(), relatedWorkflow.getXmlVersionNumber());
-                    previousAipXml = IOUtils.toByteArray(previousAipXmlStream);
-                    relatedWorkflow.setLatestVersion(false);
-                    ingestWorkflowService.save(relatedWorkflow);
-                }
-
-                String producerId = (String) execution.getVariable(BpmConstants.ProcessVariables.producerId);
-                User user = userStore.find(getResponsiblePerson(execution));
-                Producer producer = producerStore.find(producerId);
-                indexArclibXmlStore.createIndex(Files.readAllBytes(getAipXmlWorkspacePath(ingestWorkflowExternalId, workspace)), producerId, producer.getName(), user.getUsername(), IndexedAipState.ARCHIVED, debuggingModeActive, true);
-                if (relatedWorkflow != null)
-                    indexArclibXmlStore.setLatestFlag(relatedWorkflow.getExternalId(), false, previousAipXml);
-                log.debug("ArclibXml of IngestWorkflow with external id {} has been indexed.", ingestWorkflowExternalId);
-
-                ingestWorkflowService.save(ingestWorkflow);
-                log.info("Processing of ingest workflow with external id {} has finished. The ingest workflow state changed to {}.", ingestWorkflowExternalId, IngestWorkflowState.PERSISTED);
-
-                //delete data from workspace
-                FileSystemUtils.deleteRecursively(getIngestWorkflowWorkspacePath(ingestWorkflowExternalId, workspace).toAbsolutePath().toFile());
-                log.debug("Data of ingest workflow with external id {} has been deleted from workspace.", ingestWorkflowExternalId);
-
-                //delete SIP from transfer area
-                if (deleteSipFromTransferArea) {
-                    Files.deleteIfExists(getSipZipTransferAreaPath(ingestWorkflow).toAbsolutePath());
-                    Files.deleteIfExists(getSipSumsTransferAreaPath(getSipZipTransferAreaPath(ingestWorkflow)).toAbsolutePath());
-                    log.debug("SIP of ingest workflow with external id {} has been deleted from transfer area.", ingestWorkflowExternalId);
-                }
-                aipService.deactivateLock(ingestWorkflow.getSip().getAuthorialPackage().getId());
+                success(ingestWorkflow, debuggingModeActive, execution);
+                execution.setVariable(BpmConstants.ArchivalStorage.archivalStorageResult, BpmConstants.ArchivalStorage.ArchivalStorageResultEnum.SUCCESS);
                 break;
             case PROCESSING:
             case PRE_PROCESSING:
-                Integer aipSavedCheckRetries = (Integer) execution.getVariable(BpmConstants.ArchivalStorage.aipSavedCheckRetries);
-                execution.setVariable(BpmConstants.ArchivalStorage.aipSavedCheckRetries, aipSavedCheckRetries - 1);
-                log.debug("Number of remaining retries to check the object state is " + aipSavedCheckRetries + ".");
-                break;
+                execution.setVariable(BpmConstants.ArchivalStorage.archivalStorageResult, BpmConstants.ArchivalStorage.ArchivalStorageResultEnum.PROCESSING);
+                execution.setVariable(BpmConstants.ArchivalStorage.aipSavedCheckAttempts, remainingStateCheckRetries);
+                log.debug("{} is still in {} state at Archival Storage. Number of remaining attempts to check the object state is {}.", objectLogId, stateInArchivalStorage, remainingStateCheckRetries);
+                return;
+            case ARCHIVAL_FAILURE:
+            case ROLLED_BACK:
+            case ROLLBACK_FAILURE:
+                Integer remainingStoreAttemptRetries = (Integer) execution.getVariable(BpmConstants.ArchivalStorage.aipStoreAttempts) - 1;
+                execution.setVariable(BpmConstants.ArchivalStorage.archivalStorageResult, BpmConstants.ArchivalStorage.ArchivalStorageResultEnum.FAIL);
+                execution.setVariable(BpmConstants.ArchivalStorage.aipStoreAttempts, remainingStoreAttemptRetries);
+                execution.setVariable(BpmConstants.ProcessVariables.idlePoint, Instant.now());
+                log.debug("Archival Storage has failed leaving the object {} at state {}. Number of remaining attempts to store the object is {}", objectLogId, stateInArchivalStorage, remainingStoreAttemptRetries);
+                return;
             default:
-                execution.setVariable(BpmConstants.ArchivalStorage.aipStoreRetries, 0);
-                log.error(objectLogId + " saved in the Archival Storage is in an unexpected state: " + stateInArchivalStorage);
+                log.error("{} - unexpected state at the Archival Storage: {}", objectLogId, stateInArchivalStorage);
                 break;
         }
+    }
+
+    private void success(IngestWorkflow ingestWorkflow, boolean debuggingModeActive, DelegateExecution execution) throws IOException, ArchivalStorageException {
+        Instant NOW = Instant.now();
+        ingestWorkflow.setProcessingState(IngestWorkflowState.PERSISTED);
+        ingestWorkflow.setLatestVersion(true);
+        ingestWorkflow.setEnded(NOW);
+        Long idleTimeSum = getLongVariable(execution, BpmConstants.ProcessVariables.idleTime);
+        ingestWorkflow.setProcessingTime((NOW.toEpochMilli() - ingestWorkflow.getCreated().toEpochMilli() - idleTimeSum) / 1000);
+
+        IngestWorkflow relatedWorkflow = ingestWorkflow.getRelatedWorkflow();
+        byte[] previousAipXml = null;
+        if (relatedWorkflow != null) {
+            InputStream previousAipXmlStream = debuggingModeActive
+                    ? archivalStorageServiceDebug.exportSingleXml(relatedWorkflow.getSip().getId(), relatedWorkflow.getXmlVersionNumber())
+                    : archivalStorageService.exportSingleXml(relatedWorkflow.getSip().getId(), relatedWorkflow.getXmlVersionNumber());
+            previousAipXml = IOUtils.toByteArray(previousAipXmlStream);
+            relatedWorkflow.setLatestVersion(false);
+            ingestWorkflowService.save(relatedWorkflow);
+        }
+
+        String producerId = (String) execution.getVariable(BpmConstants.ProcessVariables.producerId);
+        User user = userStore.find(getResponsiblePerson(execution));
+        Producer producer = producerStore.find(producerId);
+        indexArclibXmlStore.createIndex(Files.readAllBytes(getAipXmlWorkspacePath(ingestWorkflowExternalId, workspace)), producerId, producer.getName(), user.getUsername(), IndexedAipState.ARCHIVED, debuggingModeActive, true);
+        if (relatedWorkflow != null)
+            indexArclibXmlStore.setLatestFlag(relatedWorkflow.getExternalId(), false, previousAipXml);
+        log.debug("ArclibXml of IngestWorkflow with external id {} has been indexed.", ingestWorkflowExternalId);
+
+        ingestWorkflowService.save(ingestWorkflow);
+        log.info("Processing of ingest workflow with external id {} has finished. The ingest workflow state changed to {}.", ingestWorkflowExternalId, IngestWorkflowState.PERSISTED);
+
+        //delete data from workspace
+        FileSystemUtils.deleteRecursively(getIngestWorkflowWorkspacePath(ingestWorkflowExternalId, workspace).toAbsolutePath().toFile());
+        log.debug("Data of ingest workflow with external id {} has been deleted from workspace.", ingestWorkflowExternalId);
+
+        Batch workflowBatch = ingestWorkflow.getBatch();
+        //delete SIP from transfer area
+        if (deleteSipFromTransferArea) {
+            // automatic processing
+            if (workflowBatch.getIngestRoutine() != null && workflowBatch.getIngestRoutine().isAuto()) {
+                Files.deleteIfExists(getSipZipTransferAreaPathPrefixed(ingestWorkflow, AutoIngestFilePrefix.PROCESSING).toAbsolutePath());
+            } else {
+                Files.deleteIfExists(getSipZipTransferAreaPath(ingestWorkflow).toAbsolutePath());
+            }
+            Files.deleteIfExists(getSipSumsTransferAreaPath(getSipZipTransferAreaPath(ingestWorkflow)).toAbsolutePath());
+            log.debug("SIP of ingest workflow with external id {} has been deleted from transfer area.", ingestWorkflowExternalId);
+        } else if (workflowBatch.getIngestRoutine() != null && workflowBatch.getIngestRoutine().isAuto()) {
+            // renaming to ARCHIVED_<file_name>
+            log.debug(String.format("Changing prefix of file:'%s' from:'%s' to:'%s'.", ingestWorkflow.getFileName(), AutoIngestFilePrefix.PROCESSING.getPrefix(), AutoIngestFilePrefix.ARCHIVED.getPrefix()));
+            changeFilePrefix(AutoIngestFilePrefix.PROCESSING, AutoIngestFilePrefix.ARCHIVED, ingestWorkflow);
+        }
+
+        aipService.deactivateLock(ingestWorkflow.getSip().getAuthorialPackage().getId());
     }
 
     @Inject

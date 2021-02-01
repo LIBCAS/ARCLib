@@ -103,7 +103,7 @@ public class FormatIdentificationToolDelegateTest extends DelegateTest {
         variables.put(BpmConstants.ProcessVariables.ingestWorkflowExternalId, EXTERNAL_ID);
         variables.put(BpmConstants.ProcessVariables.latestConfig, INGEST_CONFIG);
         variables.put(BpmConstants.ProcessVariables.responsiblePerson, "user");
-        variables.put(BpmConstants.Ingestion.sipFileName, ORIGINAL_SIP_FILE_NAME);
+        variables.put(BpmConstants.ProcessVariables.sipFileName, ORIGINAL_SIP_FILE_NAME);
         variables.put(BpmConstants.ProcessVariables.sipFolderWorkspacePath, SIP.toAbsolutePath().toString());
         variables.put(BpmConstants.FormatIdentification.preferredFormatIdentificationEventId, 0);
         variables.put(BpmConstants.FormatIdentification.mapOfEventIdsToMapsOfFilesToFormats, new HashMap<>());

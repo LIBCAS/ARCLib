@@ -12,6 +12,11 @@ public class BpmConstants {
         public static final String sipVersion = "sipVersion";
         public static final String xmlVersion = "xmlVersion";
 
+        //milliseconds
+        public static final String idleTime = "idleTime";
+        //epoch milliseconds
+        public static final String idlePoint = "idlePoint";
+
         /**
          * id of the user
          */
@@ -24,10 +29,7 @@ public class BpmConstants {
         public static final String debuggingModeActive = "debuggingModeActive";
         public static final String producerProfileExternalId = "producerProfileExternalId";
         public static final String randomPriority = "randomPriority";
-    }
 
-    public static class Ingestion {
-        public static final String dateTime = "ingestionDateTime";
         public static final String sipFileName = "sipFileName";
         public static final String authorialId = "authorialId";
     }
@@ -68,14 +70,16 @@ public class BpmConstants {
     }
 
     public static class ArchivalStorage {
-        public static final String aipSavedCheckRetries = "aipSavedCheckRetries";
-        public static final String aipSavedCheckTimeout = "aipSavedCheckTimeout";
-        public static final String aipStoreRetries = "aipStoreRetries";
-        public static final String aipStoreTimeout = "aipStoreTimeout";
+        public static final String aipSavedCheckAttempts = "aipSavedCheckAttempts";
+        public static final String aipSavedCheckAttemptsInterval = "aipSavedCheckAttemptsInterval";
+        public static final String aipStoreAttempts = "aipStoreAttempts";
+        public static final String aipStoreAttemptsInterval = "aipStoreAttemptsInterval";
         /**
          * state of the object (AIP in case of data versioning, AIP XML in case of metadata versioning) in Archival Storage
          */
-        public static final String stateInArchivalStorage = "aipState";
+        public static final String archivalStorageResult = "archivalStorageResult";
+
+        public enum ArchivalStorageResultEnum {FAIL, SUCCESS, PROCESSING}
     }
 
     public static class Antivirus {

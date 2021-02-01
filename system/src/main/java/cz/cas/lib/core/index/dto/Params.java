@@ -1,6 +1,7 @@
 package cz.cas.lib.core.index.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import cz.cas.lib.arclib.index.solr.IndexQueryUtils;
 import cz.cas.lib.core.index.solr.IndexedStore;
 import lombok.Getter;
 import lombok.Setter;
@@ -8,6 +9,7 @@ import org.springframework.data.solr.core.query.Criteria;
 
 import javax.persistence.Transient;
 import javax.validation.Valid;
+import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 import java.util.ArrayList;
 import java.util.List;
@@ -60,9 +62,11 @@ public class Params {
 
     /**
      * Number of requested instances.
-     * <p>
-     * If null or 0, then paging is disabled and all ({@link Integer#MAX_VALUE}) items are returned.
+     *
+     * Minimum is 1 and maximum is configured by {@link IndexQueryUtils#solrMaxRows}
      */
+    @NotNull
+    @Min(1)
     protected Integer pageSize = 10;
 
     /**

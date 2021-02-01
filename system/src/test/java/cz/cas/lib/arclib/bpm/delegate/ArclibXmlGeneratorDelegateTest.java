@@ -386,9 +386,8 @@ public class ArclibXmlGeneratorDelegateTest extends DelegateTest {
         variables.put(BpmConstants.ProcessVariables.producerId, PRODUCER_ID);
         variables.put(BpmConstants.ProcessVariables.debuggingModeActive, true);
 
-        variables.put(BpmConstants.Ingestion.sipFileName, SIP_FILE_NAME);
-        variables.put(BpmConstants.Ingestion.dateTime, "2018-05-11T10:27:00Z");
-        variables.put(BpmConstants.Ingestion.authorialId, authorialPackage.getAuthorialId());
+        variables.put(BpmConstants.ProcessVariables.sipFileName, SIP_FILE_NAME);
+        variables.put(BpmConstants.ProcessVariables.authorialId, authorialPackage.getAuthorialId());
         variables.put(BpmConstants.ProcessVariables.latestConfig, String.format("{\"%s\":\"%s\"}", ArclibXmlExtractorDelegate.SIP_PROFILE_CONFIG_ENTRY, sipProfile.getExternalId()));
 
         variables.put(BpmConstants.FixityGeneration.preferredFixityGenerationEventId, fixityGenerationEvent.getId());

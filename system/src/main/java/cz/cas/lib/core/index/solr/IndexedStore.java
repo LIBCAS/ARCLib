@@ -19,8 +19,6 @@ import org.apache.solr.client.solrj.beans.Field;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
 import org.springframework.data.solr.core.SolrTemplate;
 import org.springframework.data.solr.core.mapping.Indexed;
 import org.springframework.data.solr.core.mapping.SolrDocument;
@@ -216,28 +214,6 @@ public interface IndexedStore<T extends DomainObject, U extends IndexedDomainObj
 
     default Criteria typeCriteria() {
         return Criteria.where(IndexQueryUtils.TYPE_FIELD).in(getIndexType());
-    }
-
-    /**
-     * Counts all instances that respect the selected {@link Params}.
-     * <p>
-     * <p>
-     * Though {@link Params} one could specify filtering. For further explanation
-     * see {@link Params}.
-     * </p>
-     *
-     * @param params Parameters to comply with
-     * @return Total number of instances
-     */
-    default Long count(Params params) {
-        SimpleQuery query = new SimpleQuery();
-        query.addSort(Sort.by(Sort.Direction.valueOf(params.getOrder().toString()), params.getSort()));
-        query.addProjectionOnField("id");
-        if (params.getPageSize() != null && params.getPageSize() > 0)
-            query.setPageRequest(PageRequest.of(params.getPage(), params.getPageSize()));
-        query.addFilterQuery(new SimpleFilterQuery(buildFilters(params, getIndexType(), IndexQueryUtils.INDEXED_FIELDS_MAP.get(getIndexType()))));
-        Page<U> page = getTemplate().query(getIndexCollection(), query, getUType());
-        return page.getTotalElements();
     }
 
     /**

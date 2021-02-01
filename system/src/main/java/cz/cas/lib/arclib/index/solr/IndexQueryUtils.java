@@ -40,6 +40,10 @@ public class IndexQueryUtils {
      * store and its index types, e.g. {@link ArclibXmlIndexTypeConfig#indexType}</p>
      */
     public static Map<String, Map<String, IndexField>> INDEXED_FIELDS_MAP = new HashMap<>();
+    /**
+     * Page size maximum configuration property.
+     * If application property {@code 'solr.maxRows'} is set then default value is overridden by PostInitializer.
+     */
     public static int solrMaxRows = Integer.MAX_VALUE;
 
     public static String sanitizeFilterValue(String value) {
@@ -327,12 +331,12 @@ public class IndexQueryUtils {
             }
             query.addSort(Sort.by(Sort.Direction.valueOf(params.getOrder().toString()), sortField));
         }
-        if (params.getPageSize() != null && params.getPageSize() > 0) {
-            notNull(params.getPage(), () -> new BadArgument("page"));
-            gte(params.getPage(), 0, () -> new BadArgument("page"));
-            query.setPageRequest(PageRequest.of(params.getPage(), params.getPageSize()));
-        } else
-            query.setPageRequest(PageRequest.of(0, solrMaxRows));
+        notNull(params.getPageSize(), () -> new BadArgument("pageSize can't be null"));
+        gte(params.getPageSize(), 1, () -> new BadArgument("pageSize must be >= 1"));
+        lte(params.getPageSize(), solrMaxRows, () -> new BadArgument("pageSize must be lesser than solrMaxRows config property: " + solrMaxRows));
+        notNull(params.getPage(), () -> new BadArgument("page can't be null"));
+        gte(params.getPage(), 0, () -> new BadArgument("page must be >= 0"));
+        query.setPageRequest(PageRequest.of(params.getPage(), params.getPageSize()));
     }
 
     public static Criteria buildFilters(Params params, String indexType, Map<String, IndexField> indexedFields) {

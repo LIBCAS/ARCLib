@@ -127,10 +127,6 @@
              dest="identified_format_creating_application_version_s"/>
   <field name="identified_format_date_created_by_application" type="pdate"/>
 
-  <field name="device_id" type="keyword_folding"/>
-  <copyField source="device_id" dest="device_id_s"/>
-  <field name="device_file_count" type="pint"/>
-
   <field name="dublin_core_id" type="string"/>
   <field name="dublin_core_value" type="standard_folding"/>
 
@@ -161,12 +157,9 @@
   <field name="arc_event_type" type="string"/>
   <field name="arc_event_agent_name" type="keyword_folding"/>
   <copyField source="arc_event_agent_name" dest="arc_event_agent_name_s"/>
-  <field name="arc_event_linking_device_id" type="string"/>
   <field name="arc_event_scanner_model_serial_no" type="string"/>
-  <field name="arc_event_scanning_software_name" type="keyword_folding"/>
-  <copyField source="arc_event_scanning_software_name" dest="arc_event_scanning_software_name_s"/>
   <field name="arc_event_date" type="pdate"/>
-  <field name="arc_event_count" type="pint"/>
+  <field name="arc_event_file_count" type="pint"/>
 
   <dynamicField name="*_s" type="string" indexed="true" stored="true"/>
   <dynamicField name="*_sort" type="collated" indexed="true" stored="false"/>

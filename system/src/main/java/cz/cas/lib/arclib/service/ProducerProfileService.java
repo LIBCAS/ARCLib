@@ -4,12 +4,17 @@ import cz.cas.lib.arclib.domain.ingestWorkflow.WorkflowDefinition;
 import cz.cas.lib.arclib.domain.profiles.ProducerProfile;
 import cz.cas.lib.arclib.domain.profiles.SipProfile;
 import cz.cas.lib.arclib.domain.profiles.ValidationProfile;
+import cz.cas.lib.arclib.domainbase.exception.ForbiddenObject;
 import cz.cas.lib.arclib.domainbase.exception.MissingObject;
 import cz.cas.lib.arclib.dto.ProducerProfileDto;
+import cz.cas.lib.arclib.security.authorization.permission.Permissions;
+import cz.cas.lib.arclib.security.user.UserDetails;
 import cz.cas.lib.arclib.store.ProducerProfileStore;
 import cz.cas.lib.arclib.store.SipProfileStore;
 import cz.cas.lib.arclib.store.ValidationProfileStore;
 import cz.cas.lib.arclib.store.WorkflowDefinitionStore;
+import cz.cas.lib.core.index.dto.Filter;
+import cz.cas.lib.core.index.dto.FilterOperation;
 import cz.cas.lib.core.index.dto.Params;
 import cz.cas.lib.core.index.dto.Result;
 import cz.cas.lib.core.rest.data.DelegateAdapter;
@@ -22,6 +27,8 @@ import java.util.Collection;
 import java.util.List;
 
 import static cz.cas.lib.arclib.domainbase.util.DomainBaseUtils.notNull;
+import static cz.cas.lib.arclib.utils.ArclibUtils.hasRole;
+import static cz.cas.lib.core.util.Utils.addPrefilter;
 
 @Service
 public class ProducerProfileService implements DelegateAdapter<ProducerProfile> {
@@ -31,11 +38,25 @@ public class ProducerProfileService implements DelegateAdapter<ProducerProfile> 
     private ValidationProfileStore validationProfileStore;
     private WorkflowDefinitionStore workflowDefinitionStore;
     private BeanMappingService beanMappingService;
+    private UserDetails userDetails;
+
+
+    public ProducerProfile get(String id) {
+        ProducerProfile entity = delegate.findWithDeletedFilteringOff(id);
+        notNull(entity, () -> new MissingObject(ProducerProfile.class, id));
+        return entity;
+    }
 
     @Transactional
-    @Override
-    public void delete(ProducerProfile entity) {
-        delegate.delete(entity);
+    public void delete(String id) {
+        ProducerProfile producerProfile = delegate.find(id);
+        notNull(producerProfile, () -> new MissingObject(ProducerProfile.class, id));
+
+        if (!hasRole(userDetails, Permissions.SUPER_ADMIN_PRIVILEGE) &&
+                !userDetails.getProducerId().equals(producerProfile.getProducer().getId())) {
+            throw new ForbiddenObject(ProducerProfile.class, id);
+        }
+        delegate.delete(producerProfile);
     }
 
     @Transactional
@@ -59,6 +80,11 @@ public class ProducerProfileService implements DelegateAdapter<ProducerProfile> 
     @Transactional
     @Override
     public ProducerProfile save(ProducerProfile producerProfile) {
+        if (!hasRole(userDetails, Permissions.SUPER_ADMIN_PRIVILEGE) &&
+                !userDetails.getProducerId().equals(producerProfile.getProducer().getId())) {
+            throw new ForbiddenObject(ProducerProfile.class, producerProfile.getId());
+        }
+
         if (!producerProfile.isDebuggingModeActive()) {
 
             SipProfile sipProfileFound = sipProfileStore.find(producerProfile.getSipProfile().getId());
@@ -86,13 +112,32 @@ public class ProducerProfileService implements DelegateAdapter<ProducerProfile> 
         return delegate.save(producerProfile);
     }
 
-    public Result<ProducerProfileDto> listProducerProfileDtos(Params params) {
+    public Result<ProducerProfileDto> listProducerProfileDtosFromIndex(Params params) {
+        if (!hasRole(userDetails, Permissions.SUPER_ADMIN_PRIVILEGE)) {
+            addPrefilter(params, new Filter("producerId", FilterOperation.EQ, userDetails.getProducerId(), null));
+        }
         Result<ProducerProfile> all = delegate.findAll(params);
         List<ProducerProfileDto> allAsDtos = beanMappingService.mapTo(all.getItems(), ProducerProfileDto.class);
 
         Result<ProducerProfileDto> result = new Result<>();
         result.setItems(allAsDtos);
         result.setCount(all.getCount());
+        return result;
+    }
+
+    public Result<ProducerProfileDto> listProducerProfileDtosFromDatabase() {
+        List<ProducerProfile> profiles;
+        if (!hasRole(userDetails, Permissions.SUPER_ADMIN_PRIVILEGE)) {
+            profiles = delegate.findAllFilteredByProducer(true, userDetails.getProducerId());
+        } else {
+            profiles = delegate.findAllFilteredByProducer(false, userDetails.getProducerId());
+        }
+
+        List<ProducerProfileDto> allAsDtos = beanMappingService.mapTo(profiles, ProducerProfileDto.class);
+
+        Result<ProducerProfileDto> result = new Result<>();
+        result.setItems(allAsDtos);
+        result.setCount((long) profiles.size());
         return result;
     }
 
@@ -129,4 +174,10 @@ public class ProducerProfileService implements DelegateAdapter<ProducerProfile> 
     public void setWorkflowDefinitionStore(WorkflowDefinitionStore workflowDefinitionStore) {
         this.workflowDefinitionStore = workflowDefinitionStore;
     }
+
+    @Inject
+    public void setUserDetails(UserDetails userDetails) {
+        this.userDetails = userDetails;
+    }
+
 }

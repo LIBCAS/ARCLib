@@ -22,6 +22,10 @@ public interface VariableMapper {
         return (String) execution.getVariable(name);
     }
 
+    default Long getLongVariable(DelegateExecution execution, String name) {
+        return (Long) execution.getVariable(name);
+    }
+
     default Boolean getBooleanVariable(DelegateExecution execution, String name) {
         return (Boolean) execution.getVariable(name);
     }

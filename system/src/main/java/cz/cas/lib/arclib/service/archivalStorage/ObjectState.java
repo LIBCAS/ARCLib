@@ -22,5 +22,7 @@ public enum ObjectState {
     //object archiving has failed and following rollback has also failed, this state is held only in DB
     ARCHIVAL_FAILURE,
     //object deletion has failed, this state is held only in DB
-    DELETION_FAILURE
+    DELETION_FAILURE,
+    //object rollback has failed, this state is held only in DB
+    ROLLBACK_FAILURE;
 }

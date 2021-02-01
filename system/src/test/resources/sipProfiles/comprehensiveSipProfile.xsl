@@ -58,13 +58,7 @@
                                                      premis:creatingApplicationVersion,
                                                      substring(premis:objectCharacteristics/premis:creatingApplication/
                                                      premis:dateCreatedByApplication, 1, 10),
-                                                premis:preservationLevel/premis:preservationLevelValue,
-                                                /METS:mets/METS:amdSec/METS:techMD/METS:mdWrap/
-                                                        METS:xmlData/mix:mix[mix:BasicDigitalObjectInformation/
-                                                        mix:ObjectIdentifier/mix:objectIdentifierValue/text()=
-                                                        current()/premis:objectIdentifier/premis:objectIdentifierValue/text()]
-                                                        /mix:ImageCaptureMetadata/mix:ScannerCapture/mix:ScannerModel/
-                                                        mix:scannerModelSerialNo)">
+                                                premis:preservationLevel/premis:preservationLevelValue)">
                                     <xsl:element name="ARCLib:format">
                                         <xsl:element name="ARCLib:fileFormat">
                                             <xsl:value-of
@@ -105,21 +99,6 @@
                                             <xsl:value-of
                                                     select="premis:preservationLevel/premis:preservationLevelValue"/>
                                         </xsl:element>
-                                        <xsl:variable
-                                                name="scannerModelSerialNo"
-                                                select="/METS:mets/METS:amdSec/METS:techMD/METS:mdWrap/
-                                                        METS:xmlData/mix:mix[mix:BasicDigitalObjectInformation/
-                                                        mix:ObjectIdentifier/mix:objectIdentifierValue/text()=
-                                                        current()/premis:objectIdentifier/premis:objectIdentifierValue/text()]
-                                                        /mix:ImageCaptureMetadata/mix:ScannerCapture/mix:ScannerModel/
-                                                        mix:scannerModelSerialNo"
-                                        />
-                                        <xsl:if test="$scannerModelSerialNo">
-                                            <xsl:element name="ARCLib:scannerModelSerialNo">
-                                                <xsl:value-of
-                                                        select="$scannerModelSerialNo"/>
-                                            </xsl:element>
-                                        </xsl:if>
                                         <xsl:element name="ARCLib:fileCount">
                                             <xsl:value-of select="count(current-group())"/>
                                         </xsl:element>
@@ -244,14 +223,13 @@
         <xsl:param name="amdSecs"/>
         <xsl:for-each-group select="$amdSecs/METS:mets/METS:amdSec/METS:digiprovMD/METS:mdWrap/
                                                     METS:xmlData/premis:agent"
-                            group-by="premis:agentIdentifier/premis:agentIdentifierValue">
+                            group-by="premis:agentName">
             <xsl:variable name="agentName" select="premis:agentName"/>
-            <xsl:variable name="linkingDeviceID"
-                          select="premis:agentIdentifier/premis:agentIdentifierValue"/>
+            <xsl:variable name="agentId" select="premis:agentIdentifier/premis:agentIdentifierValue"/>
             <xsl:for-each-group select="$amdSecs/METS:mets/METS:amdSec/METS:digiprovMD/METS:mdWrap/
                                                     METS:xmlData/premis:event[premis:linkingAgentIdentifier/
                                                     premis:linkingAgentIdentifierValue/text() =
-                                                    current-grouping-key()]"
+                                                    $agentId]"
                                 group-by="concat(premis:eventType,substring(premis:eventDateTime,1,10))">
                 <xsl:element name="ARCLib:eventAgent">
                     <xsl:element name="ARCLib:eventType">
@@ -261,10 +239,6 @@
                     <xsl:element name="ARCLib:agentName">
                         <xsl:value-of
                                 select="$agentName"/>
-                    </xsl:element>
-                    <xsl:element name="ARCLib:linkingDeviceID">
-                        <xsl:value-of
-                                select="$linkingDeviceID"/>
                     </xsl:element>
                     <xsl:element name="ARCLib:eventDate">
                         <xsl:value-of
@@ -291,10 +265,9 @@
                     <xsl:value-of
                             select="mix:ScannerCapture/mix:ScannerModel/mix:scannerModelName"/>
                 </xsl:element>
-                <xsl:element name="ARCLib:linkingDeviceID">
+                <xsl:element name="ARCLib:scannerModelSerialNo">
                     <xsl:value-of
-                            select="concat(mix:ScannerCapture/mix:ScannerModel/mix:scannerModelName,'-',
-                                                    mix:ScannerCapture/mix:ScannerModel/mix:scannerModelSerialNo)"/>
+                            select="mix:ScannerCapture/mix:ScannerModel/mix:scannerModelSerialNo"/>
                 </xsl:element>
                 <xsl:element name="ARCLib:eventDate">
                     <xsl:value-of
@@ -309,7 +282,6 @@
                 select="$amdSecs/METS:mets/METS:amdSec/METS:techMD/
                                         METS:mdWrap/METS:xmlData/mix:mix/mix:ImageCaptureMetadata"
                 group-by="concat(mix:ScannerCapture/mix:ScanningSystemSoftware/mix:scanningSoftwareName,
-                                                    mix:ScannerCapture/mix:ScanningSystemSoftware/mix:scanningSoftwareVersionNo,
                                                     substring(mix:GeneralCaptureInformation/mix:dateTimeCreated, 1, 10))">
             <xsl:element name="ARCLib:eventAgent">
                 <xsl:element name="ARCLib:eventType">
@@ -318,11 +290,6 @@
                 <xsl:element name="ARCLib:agentName">
                     <xsl:value-of
                             select="mix:ScannerCapture/mix:ScanningSystemSoftware/mix:scanningSoftwareName"/>
-                </xsl:element>
-                <xsl:element name="ARCLib:linkingDeviceID">
-                    <xsl:value-of
-                            select="concat(mix:ScannerCapture/mix:ScanningSystemSoftware/mix:scanningSoftwareName,'-',
-                                                    mix:ScannerCapture/mix:ScanningSystemSoftware/mix:scanningSoftwareVersionNo)"/>
                 </xsl:element>
                 <xsl:element name="ARCLib:eventDate">
                     <xsl:value-of

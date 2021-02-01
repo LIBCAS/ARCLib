@@ -100,7 +100,7 @@
 			<defaultValueExpression><![CDATA["4000-12-31T00:00:00Z"]]></defaultValueExpression>
 		</parameter>
 		<queryString language="SQL">
-			<![CDATA[SELECT avg((select EXTRACT(epoch from iw.ended-iw.created))) FROM arclib_ingest_workflow iw WHERE iw.ended > '$P!{from}' and iw.ended < '$P!{to}']]>
+			<![CDATA[SELECT avg(iw.processing_time) FROM arclib_ingest_workflow iw WHERE iw.ended > '$P!{from}' and iw.ended < '$P!{to}' and iw.processing_time > 0]]>
 		</queryString>
 		<field name="avg" class="java.lang.Double">
 			<property name="com.jaspersoft.studio.field.label" value="avg"/>
@@ -136,7 +136,7 @@
 		</band>
 	</columnHeader>
 	<detail>
-		<band height="270" splitType="Stretch">
+		<band height="260" splitType="Stretch">
 			<staticText>
 				<reportElement x="80" y="10" width="400" height="30" uuid="97f843fc-1353-41df-a1e3-fc60b1e8ed92"/>
 				<textElement textAlignment="Center">
@@ -167,11 +167,11 @@
 						<jr:columnHeader style="Table 1_CH" height="30" rowSpan="1">
 							<staticText>
 								<reportElement x="0" y="0" width="140" height="30" uuid="ffa2e834-eeaf-405d-a971-0f0766aca3d3"/>
-								<text><![CDATA[Average ingest time (minutes)]]></text>
+								<text><![CDATA[Average ingest time (seconds)]]></text>
 							</staticText>
 						</jr:columnHeader>
 						<jr:detailCell style="Table 1_TD" height="30">
-							<textField pattern="##0.00">
+							<textField>
 								<reportElement x="0" y="0" width="140" height="30" uuid="fd78f7a7-c196-4e1a-9c2a-f6dbdd7f855e"/>
 								<textFieldExpression><![CDATA[$F{avg}]]></textFieldExpression>
 							</textField>

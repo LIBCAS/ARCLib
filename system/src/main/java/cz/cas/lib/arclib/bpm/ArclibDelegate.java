@@ -25,6 +25,7 @@ import org.springframework.stereotype.Service;
 import javax.inject.Inject;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.TreeMap;
 
@@ -72,7 +73,13 @@ public abstract class ArclibDelegate implements VariableMapper, IngestTool, Java
     @TransactionalNew
     @Override
     public void execute(DelegateExecution execution) throws Exception {
+        Instant NOW = Instant.now();
         try {
+            Long idlePoint = getLongVariable(execution, BpmConstants.ProcessVariables.idlePoint);
+            if (idlePoint != null) {
+                execution.setVariable(BpmConstants.ProcessVariables.idleTime, (NOW.toEpochMilli() - idlePoint));
+                execution.setVariable(BpmConstants.ProcessVariables.idlePoint, null);
+            }
             ingestWorkflowExternalId = getIngestWorkflowExternalId(execution);
             log.debug("Execution of {} started for ingest workflow {}", getClass().getSimpleName(), ingestWorkflowExternalId);
             executeArclibDelegate(execution);
@@ -82,11 +89,13 @@ public abstract class ArclibDelegate implements VariableMapper, IngestTool, Java
                 ingestIssueService.save(e.getProvidedIssues());
             else
                 persistSingleUnresolvedIssue(execution, e.getDefaultIssueDefinitionCode(), e.toString());
+            execution.setVariable(BpmConstants.ProcessVariables.idlePoint, NOW.toEpochMilli());
             throw e;
         } catch (BpmnError e) {
             throw e;
         } catch (Exception e) {
             persistSingleUnresolvedIssue(execution, IngestIssueDefinitionCode.INTERNAL_ERROR, e.toString());
+            execution.setVariable(BpmConstants.ProcessVariables.idlePoint, NOW.toEpochMilli());
             throw new IncidentException("Ingest workflow internal runtime exception: " + e.toString(), e);
         }
     }
@@ -169,7 +178,7 @@ public abstract class ArclibDelegate implements VariableMapper, IngestTool, Java
      * @return path to the zip with SIP content
      */
     public Path getSipZipPath(DelegateExecution execution) {
-        String sipFileName = getStringVariable(execution, BpmConstants.Ingestion.sipFileName);
+        String sipFileName = getStringVariable(execution, BpmConstants.ProcessVariables.sipFileName);
         return getSipZipWorkspacePath(getIngestWorkflowExternalId(execution), workspace, sipFileName);
     }
 

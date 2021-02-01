@@ -1,9 +1,6 @@
 package cz.cas.lib.arclib.service;
 
-import cz.cas.lib.arclib.domain.Batch;
-import cz.cas.lib.arclib.domain.BatchState;
-import cz.cas.lib.arclib.domain.Hash;
-import cz.cas.lib.arclib.domain.VersioningLevel;
+import cz.cas.lib.arclib.domain.*;
 import cz.cas.lib.arclib.domain.ingestWorkflow.IngestWorkflow;
 import cz.cas.lib.arclib.domain.ingestWorkflow.IngestWorkflowFailureInfo;
 import cz.cas.lib.arclib.domain.ingestWorkflow.IngestWorkflowFailureType;
@@ -28,7 +25,6 @@ import cz.cas.lib.arclib.store.SipStore;
 import cz.cas.lib.arclib.utils.ArclibUtils;
 import cz.cas.lib.arclib.utils.XmlUtils;
 import cz.cas.lib.arclib.utils.ZipUtils;
-import cz.cas.lib.core.util.Utils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.commons.lang3.tuple.Pair;
@@ -53,7 +49,6 @@ import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 import java.util.*;
 
 import static cz.cas.lib.arclib.bpm.BpmConstants.*;
@@ -79,10 +74,10 @@ public class WorkerService {
     private AipService aipService;
     private TransactionTemplate transactionTemplate;
 
-    private int aipSavedCheckRetries;
-    private String aipSavedCheckTimeout;
-    private int aipStoreRetries;
-    private String aipStoreTimeout;
+    private int aipSavedCheckAttempts;
+    private String aipSavedCheckAttemptsInterval;
+    private int aipStoreAttempts;
+    private String aipStoreAttemptsInterval;
 
     /**
      * Receives JMS message from Coordinator and starts processing of the ingest workflow.
@@ -97,7 +92,7 @@ public class WorkerService {
         String externalId = dto.getId();
 
         IngestWorkflow ingestWorkflow = ingestWorkflowService.findByExternalId(externalId);
-        Utils.notNull(ingestWorkflow, () -> new MissingObject(IngestWorkflow.class, externalId));
+        notNull(ingestWorkflow, () -> new MissingObject(IngestWorkflow.class, externalId));
 
         try {
             Batch batch = ingestWorkflow.getBatch();
@@ -107,13 +102,10 @@ public class WorkerService {
 
             //workaround to initialize batch because of the lazy initialization of batch entity
             batch = batchService.get(batchId);
-            notNull(batch, () -> {
-                throw new MissingObject(Batch.class, batchId);
-            });
+            notNull(batch, () -> new MissingObject(Batch.class, batchId));
 
             if (batch.getState() != BatchState.PROCESSING) {
-                log.warn("Cannot process ingest workflow " + externalId + " because the batch " + batchId +
-                        " is in state " + batch.getState().toString() + ".");
+                log.warn("Cannot process ingest workflow " + externalId + " because the batch " + batchId + " is in state " + batch.getState().toString() + ".");
                 return;
             }
 
@@ -131,6 +123,12 @@ public class WorkerService {
                     processIngestWorkflow(ingestWorkflow, dto.getUserId());
                     log.info("State of ingest workflow with external id " + externalId + " changed to PROCESSING.");
                 } catch (IOException e) {
+                    // renaming to FAILED_<file_name>
+                    Batch workflowBatch = ingestWorkflow.getBatch();
+                    if (workflowBatch != null && workflowBatch.getIngestRoutine() != null && workflowBatch.getIngestRoutine().isAuto()) {
+                        log.debug(String.format("Changing prefix of file:'%s' from:'%s' to:'%s'.", ingestWorkflow.getFileName(), AutoIngestFilePrefix.PROCESSING.getPrefix(), AutoIngestFilePrefix.FAILED.getPrefix()));
+                        changeFilePrefix(AutoIngestFilePrefix.PROCESSING, AutoIngestFilePrefix.FAILED, ingestWorkflow);
+                    }
                     throw new UncheckedIOException(e);
                 }
                 return null;
@@ -188,18 +186,18 @@ public class WorkerService {
      * @throws IOException SIP package does not exist in temporary area or in workspace
      */
     private void processIngestWorkflow(IngestWorkflow ingestWorkflow, String userId) throws IOException {
+        log.debug("Start of processing of ingest workflow:" + ingestWorkflow.getId() + " of user:" + userId);
         Batch batch = ingestWorkflow.getBatch();
 
         ProducerProfile producerProfile = batch.getProducerProfile();
-        notNull(producerProfile, () -> {
-            throw new IllegalArgumentException("null producer profile of batch ID " + batch.getId());
-        });
+        notNull(producerProfile, () -> new IllegalArgumentException("null producer profile of batch ID " + batch.getId()));
         SipProfile sipProfile = producerProfile.getSipProfile();
-        notNull(sipProfile, () -> {
-            throw new IllegalArgumentException("null sip profile of producer profile with external id " + producerProfile.getExternalId());
-        });
+        notNull(sipProfile, () -> new IllegalArgumentException("null sip profile of producer profile with external id " + producerProfile.getExternalId()));
 
-        verifyHash(getSipZipTransferAreaPath(ingestWorkflow).toAbsolutePath(), ingestWorkflow);
+        Path pathToSip = ingestWorkflow.getBatch().getIngestRoutine() != null && ingestWorkflow.getBatch().getIngestRoutine().isAuto()
+                ? getSipZipTransferAreaPathPrefixed(ingestWorkflow, AutoIngestFilePrefix.PROCESSING).toAbsolutePath()
+                : getSipZipTransferAreaPath(ingestWorkflow).toAbsolutePath();
+        verifyHash(pathToSip, ingestWorkflow);
         Pair<String, Long> rootDirNameAndSizeInBytes = copySipToWorkspace(ingestWorkflow);
 
         Path sipFolderWorkspacePath = getIngestWorkflowWorkspacePath(ingestWorkflow.getExternalId(), workspace)
@@ -209,9 +207,10 @@ public class WorkerService {
         createSipAndAuthorialPackages(ingestWorkflow, sipFolderWorkspacePath, filePaths, userId, rootDirNameAndSizeInBytes.getRight());
 
         Map<String, Object> initVars = new HashMap<>();
-        initVars.put(Ingestion.sipFileName, ingestWorkflow.getFileName());
-        initVars.put(Ingestion.dateTime, Instant.now().truncatedTo(ChronoUnit.SECONDS).toString());
-        initVars.put(Ingestion.authorialId, ingestWorkflow.getSip().getAuthorialPackage().getAuthorialId());
+        initVars.put(ProcessVariables.sipFileName, ingestWorkflow.getFileName());
+        initVars.put(ProcessVariables.idlePoint, Instant.now().toEpochMilli());
+        initVars.put(ProcessVariables.idleTime, 0);
+        initVars.put(ProcessVariables.authorialId, ingestWorkflow.getSip().getAuthorialPackage().getAuthorialId());
         initVars.put(ProcessVariables.randomPriority, new Random().nextInt(100));
         initVars.put(ProcessVariables.sipFolderWorkspacePath, sipFolderWorkspacePath.toString());
         initVars.put(ProcessVariables.ingestWorkflowExternalId, ingestWorkflow.getExternalId());
@@ -224,10 +223,10 @@ public class WorkerService {
         initVars.put(ProcessVariables.xmlVersion, ingestWorkflow.getXmlVersionNumber());
         initVars.put(ProcessVariables.debuggingModeActive, producerProfile.isDebuggingModeActive());
         initVars.put(ProcessVariables.producerProfileExternalId, producerProfile.getExternalId());
-        initVars.put(ArchivalStorage.aipSavedCheckRetries, aipSavedCheckRetries);
-        initVars.put(ArchivalStorage.aipSavedCheckTimeout, aipSavedCheckTimeout);
-        initVars.put(ArchivalStorage.aipStoreRetries, aipStoreRetries);
-        initVars.put(ArchivalStorage.aipStoreTimeout, aipStoreTimeout);
+        initVars.put(ArchivalStorage.aipSavedCheckAttempts, aipSavedCheckAttempts);
+        initVars.put(ArchivalStorage.aipSavedCheckAttemptsInterval, aipSavedCheckAttemptsInterval);
+        initVars.put(ArchivalStorage.aipStoreAttempts, aipStoreAttempts);
+        initVars.put(ArchivalStorage.aipStoreAttemptsInterval, aipStoreAttemptsInterval);
         initVars.put(Antivirus.antivirusToolCounter, 0);
         initVars.put(FixityCheck.fixityCheckToolCounter, 0);
         initVars.put(FormatIdentification.mapOfEventIdsToMapsOfFilesToFormats, new HashMap<String, TreeMap<String, Pair<String, String>>>());
@@ -363,8 +362,6 @@ public class WorkerService {
     /**
      * Counts the number of ingest workflows with the state FAILED for the given batch. If the count is bigger than 1/2
      * of all the ingest workflows of the batch, sets the batch state to CANCELED and returns true, otherwise returns false.
-     *
-     * @param batch batch
      */
     private boolean tooManyFailedIngestWorkflows(Batch batch) {
         List<IngestWorkflow> ingestWorkflows = batch.getIngestWorkflows();
@@ -423,7 +420,10 @@ public class WorkerService {
      * @return pair where the left value is name of the root folder of the extracted SIP and right value is number of copied bytes
      */
     private Pair<String, Long> copySipToWorkspace(IngestWorkflow ingestWorkflow) {
-        Path sourceSipFilePath = getSipZipTransferAreaPath(ingestWorkflow);
+        Path sourceSipFilePath = ingestWorkflow.getBatch().getIngestRoutine() != null && ingestWorkflow.getBatch().getIngestRoutine().isAuto()
+                ? getSipZipTransferAreaPathPrefixed(ingestWorkflow, AutoIngestFilePrefix.PROCESSING)
+                : getSipZipTransferAreaPath(ingestWorkflow);
+
         Path destinationIngestWorkflowPath = getIngestWorkflowWorkspacePath(ingestWorkflow.getExternalId(), workspace);
         Path destinationSipZipPath = destinationIngestWorkflowPath.resolve(ingestWorkflow.getFileName());
 
@@ -431,8 +431,7 @@ public class WorkerService {
             Files.createDirectories(destinationIngestWorkflowPath);
             log.debug("Created directory at workspace for ingest workflow external id " + ingestWorkflow.getExternalId() + ".");
         } catch (IOException e) {
-            throw new GeneralException("Unable to create directory in workspace " + workspace
-                    + " for ingest workflow with external id : " + ingestWorkflow.getExternalId(), e);
+            throw new GeneralException("Unable to create directory in workspace " + workspace + " for ingest workflow with external id : " + ingestWorkflow.getExternalId(), e);
         }
 
         //copy the zip content to workspace
@@ -441,11 +440,9 @@ public class WorkerService {
             numberOfBytesCopied = Files.copy(sipContent, destinationSipZipPath);
             verifyHash(getSipZipWorkspacePath(ingestWorkflow.getExternalId(), workspace,
                     ingestWorkflow.getFileName()), ingestWorkflow);
-            log.debug("Zip archive with SIP content for ingest workflow external id " + ingestWorkflow.getExternalId() + " has been" +
-                    " copied to workspace at path " + destinationSipZipPath + ".");
+            log.debug("Zip archive with SIP content for ingest workflow external id " + ingestWorkflow.getExternalId() + " has been copied to workspace at path " + destinationSipZipPath + ".");
         } catch (IOException e) {
-            throw new GeneralException("Unable to find SIP at path: " + sourceSipFilePath.toAbsolutePath().toString()
-                    + " or access the destination path: " + destinationSipZipPath.toAbsolutePath().toString(), e);
+            throw new GeneralException("Unable to find SIP at path: " + sourceSipFilePath.toAbsolutePath().toString() + " or access the destination path: " + destinationSipZipPath.toAbsolutePath().toString(), e);
         }
 
         //unzip the zip content in workspace
@@ -464,9 +461,7 @@ public class WorkerService {
      */
     private String extractAuthorialId(IngestWorkflow ingestWorkflow, Path sipFolderWorkspacePath, SipProfile profile) throws IOException {
         PathToSipId pathToSipId = profile.getPathToSipId();
-        notNull(pathToSipId, () -> {
-            throw new IllegalArgumentException("null path to sip id of sip profile with id " + profile.getId());
-        });
+        notNull(pathToSipId, () -> new IllegalArgumentException("null path to sip id of sip profile with id " + profile.getId()));
 
         String pathToXmlRegex = pathToSipId.getPathToXmlRegex();
         notNull(pathToXmlRegex, () -> new IllegalArgumentException("null pathToXmlRegex in path to authorial id"));
@@ -559,24 +554,24 @@ public class WorkerService {
     }
 
     @Inject
-    public void setAipSavedCheckRetries(@Value("${arclib.aipSavedCheckRetries}")
-                                                int aipSavedCheckRetries) {
-        this.aipSavedCheckRetries = aipSavedCheckRetries;
+    public void setaipSavedCheckAttempts(@Value("${arclib.aipSavedCheckAttempts}")
+                                                int aipSavedCheckAttempts) {
+        this.aipSavedCheckAttempts = aipSavedCheckAttempts;
     }
 
     @Inject
-    public void setAipStoreRetries(@Value("${arclib.aipStoreRetries}") int aipStoreRetries) {
-        this.aipStoreRetries = aipStoreRetries;
+    public void setaipStoreAttempts(@Value("${arclib.aipStoreAttempts}") int aipStoreAttempts) {
+        this.aipStoreAttempts = aipStoreAttempts;
     }
 
     @Inject
-    public void setAipStoreTimeout(@Value("${arclib.aipStoreTimeout}") String aipStoreTimeout) {
-        this.aipStoreTimeout = aipStoreTimeout;
+    public void setaipStoreAttemptsInterval(@Value("${arclib.aipStoreAttemptsInterval}") String aipStoreAttemptsInterval) {
+        this.aipStoreAttemptsInterval = aipStoreAttemptsInterval;
     }
 
     @Inject
-    public void setAipSavedCheckTimeout(@Value("${arclib.aipSavedCheckTimeout}") String aipSavedCheckTimeout) {
-        this.aipSavedCheckTimeout = aipSavedCheckTimeout;
+    public void setaipSavedCheckAttemptsInterval(@Value("${arclib.aipSavedCheckAttemptsInterval}") String aipSavedCheckAttemptsInterval) {
+        this.aipSavedCheckAttemptsInterval = aipSavedCheckAttemptsInterval;
     }
 
     @Inject

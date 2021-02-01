@@ -70,7 +70,7 @@ public class IndexIntegrationTest extends TransformerFactoryWorkaroundTest imple
     @Inject
     private AipApi api;
     @Inject
-    private IndexArclibXmlStore<IndexedArclibXmlDocument> indexArclibXmlStore;
+    private IndexArclibXmlStore indexArclibXmlStore;
     @Inject
     private UserStore userStore;
     @Inject

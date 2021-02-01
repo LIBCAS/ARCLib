@@ -80,11 +80,10 @@ arclib:
   cron:
     bpmDefUndeploy: "0 0 23 ? * SUN"
   deleteSipFromTransferArea: true
-  skipRoutineIfPreviousBatchProcessing: true
-  aipStoreRetries: 3
-  aipStoreTimeout: PT1M
-  aipSavedCheckRetries: 10
-  aipSavedCheckTimeout: PT1M
+  aipStoreAttempts: 3
+  aipStoreAttemptsInterval: PT5M
+  aipSavedCheckAttempts: 10
+  aipSavedCheckAttemptsInterval: PT1M
   keepAliveUpdateTimeout: 10
   keepAliveNetworkDelay: 2
 namespaces:
@@ -97,7 +96,6 @@ namespaces:
   xlink: http://www.w3.org/1999/xlink
 mail:
   sender:
-    email: noreply@arclib.lib.cas.cz
     name: Aplikace Arclib
   app:
     name: Arclib
@@ -127,7 +125,7 @@ solr:
   endpoint: http://localhost:8983/solr
   arclibxml:
     corename: arclibXmlC
-  maxRows: 2100000000 # was Integer max but some Solr instances were not able to handle it
+  maxRows: 1000 # was Integer max but some Solr instances were not able to handle it
 archivalStorage:
   debugLocation: arcStorageData
 formatLibrary:

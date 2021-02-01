@@ -1,10 +1,12 @@
 package cz.cas.lib.arclib.utils;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import cz.cas.lib.arclib.domain.AutoIngestFilePrefix;
 import cz.cas.lib.arclib.domain.Batch;
 import cz.cas.lib.arclib.domain.ingestWorkflow.IngestIssue;
 import cz.cas.lib.arclib.domain.ingestWorkflow.IngestWorkflow;
 import cz.cas.lib.arclib.domain.packages.FolderStructure;
+import cz.cas.lib.arclib.domainbase.exception.MissingObject;
 import cz.cas.lib.arclib.exception.bpm.ConfigParserException;
 import cz.cas.lib.arclib.formatlibrary.domain.FormatDefinition;
 import cz.cas.lib.arclib.formatlibrary.service.FormatDefinitionService;
@@ -39,6 +41,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static cz.cas.lib.arclib.utils.XmlUtils.createDomAndXpath;
+import static cz.cas.lib.core.util.Utils.notNull;
 import static java.util.stream.Collectors.groupingBy;
 
 public class ArclibUtils {
@@ -111,14 +114,44 @@ public class ArclibUtils {
     }
 
     /**
+     * Computes path to the zip file with the SIP content prefixed with {@link AutoIngestFilePrefix}
+     *
+     * @param ingestWorkflow ingest workflow
+     * @return computed path
+     */
+    public static Path getSipZipTransferAreaPathPrefixed(IngestWorkflow ingestWorkflow, AutoIngestFilePrefix filePrefix) {
+        Batch batch = ingestWorkflow.getBatch();
+        return Paths.get(batch.getTransferAreaPath(), filePrefix.getPrefix() + ingestWorkflow.getFileName());
+    }
+
+    /**
+     * Renames a file so that prefix is changed.
+     *
+     * @throws UncheckedIOException when rename operation fails.
+     * @throws MissingObject        when ingest workflow does not have assigned batch.
+     */
+    public static void changeFilePrefix(AutoIngestFilePrefix oldPrefix, AutoIngestFilePrefix newPrefix, IngestWorkflow ingestWorkflow) {
+        notNull(ingestWorkflow.getBatch(), () -> new MissingObject(Batch.class, "ingest workflow does not have assigned batch."));
+        changeFilePrefix(oldPrefix, newPrefix, ingestWorkflow.getFileName(), ingestWorkflow.getBatch().getTransferAreaPath());
+    }
+
+    public static void changeFilePrefix(AutoIngestFilePrefix oldPrefix, AutoIngestFilePrefix newPrefix, String fileName, String transferAreaPath) {
+        try {
+            Path oldPrefixedPath = Paths.get(transferAreaPath, oldPrefix.getPrefix() + fileName);
+            Files.move(oldPrefixedPath, oldPrefixedPath.resolveSibling(newPrefix.getPrefix() + fileName));
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
+    /**
      * Computes path to the folder in the transfer area where the SIP of the ingest workflow is located
      *
      * @param sipZipTransferAreaPath path to the zip file with the SIP content
      * @return computed path
      */
     public static Path getSipSumsTransferAreaPath(Path sipZipTransferAreaPath) {
-        String sipSumsTransferAreaPathString = sipZipTransferAreaPath.toString()
-                .replace(ZIP_EXTENSION, SUMS_EXTENSION);
+        String sipSumsTransferAreaPathString = sipZipTransferAreaPath.toString().replace(ZIP_EXTENSION, SUMS_EXTENSION);
         return Paths.get(sipSumsTransferAreaPathString);
     }
 

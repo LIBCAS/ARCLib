@@ -107,7 +107,7 @@ public class ValidatorDelegateTest extends DelegateTest {
         variables.put(BpmConstants.ProcessVariables.ingestWorkflowExternalId, EXTERNAL_ID);
         variables.put(BpmConstants.ProcessVariables.sipId, SIP_ID);
         variables.put(BpmConstants.ProcessVariables.latestConfig, String.format("{\"%s\":\"%s\"}", ValidatorDelegate.VALIDATION_PROFILE_CONFIG_ENTRY, validationProfile.getExternalId()));
-        variables.put(BpmConstants.Ingestion.sipFileName, ORIGINAL_SIP_FILE_NAME);
+        variables.put(BpmConstants.ProcessVariables.sipFileName, ORIGINAL_SIP_FILE_NAME);
         variables.put(BpmConstants.ProcessVariables.responsiblePerson, "user");
         variables.put(BpmConstants.ProcessVariables.sipFolderWorkspacePath, SIP.toAbsolutePath().toString());
 
@@ -131,7 +131,7 @@ public class ValidatorDelegateTest extends DelegateTest {
         variables.put(BpmConstants.ProcessVariables.latestConfig, String.format("{\"%s\":\"%s\"}", ValidatorDelegate.VALIDATION_PROFILE_CONFIG_ENTRY, validationProfile.getExternalId()));
         variables.put(BpmConstants.ProcessVariables.sipId, SIP_ID);
         variables.put(BpmConstants.ProcessVariables.responsiblePerson, "user");
-        variables.put(BpmConstants.Ingestion.sipFileName, ORIGINAL_SIP_FILE_NAME);
+        variables.put(BpmConstants.ProcessVariables.sipFileName, ORIGINAL_SIP_FILE_NAME);
         variables.put(BpmConstants.ProcessVariables.sipFolderWorkspacePath, SIP.toString());
 
         assertThrown(() -> startJob(PROCESS_INSTANCE_KEY, variables)).isInstanceOf(MissingFile.class);

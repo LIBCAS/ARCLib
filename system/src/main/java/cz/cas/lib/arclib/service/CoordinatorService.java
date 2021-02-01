@@ -46,8 +46,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static cz.cas.lib.arclib.utils.ArclibUtils.ZIP_EXTENSION;
-import static cz.cas.lib.arclib.utils.ArclibUtils.getSipSumsTransferAreaPath;
+import static cz.cas.lib.arclib.domain.AutoIngestFilePrefix.fileNameIsNotPrefixed;
+import static cz.cas.lib.arclib.utils.ArclibUtils.*;
 import static cz.cas.lib.core.util.Utils.asList;
 import static cz.cas.lib.core.util.Utils.notNull;
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
@@ -70,7 +70,6 @@ public class CoordinatorService {
     private RuntimeService runtimeService;
     private TransactionTemplate transactionTemplate;
     private IngestRoutineStore ingestRoutineStore;
-    private Boolean skipRoutineIfPreviousBatchProcessing;
 
     /**
      * Processes one SIP package:
@@ -86,7 +85,6 @@ public class CoordinatorService {
      * @param originalFileName    original file name of the SIP
      * @param transferAreaPath    custom path to the transfer area to which the SIP content is copied from <code>sipContent</code>
      * @return id of the created batch
-     * @throws IOException
      */
     public String processSip(InputStream sipContent, Hash hash, String externalId, String batchWorkflowConfig,
                              String originalFileName, String transferAreaPath) throws IOException {
@@ -136,7 +134,7 @@ public class CoordinatorService {
         String batchId = transactionTemplate.execute(s -> {
             hashStore.save(hash);
             ingestWorkflowService.save(ingestWorkflow);
-            return prepareBatch(asList(ingestWorkflow), producerProfile, batchWorkflowConfig, computedWorkflowConfig, fullTransferAreaPath, userDetails.getId()).getId();
+            return prepareBatch(asList(ingestWorkflow), producerProfile, batchWorkflowConfig, computedWorkflowConfig, fullTransferAreaPath, userDetails.getId(), null).getId();
         });
         log.debug("Sending a message to Worker to process ingest workflow with external id " + ingestWorkflow.getExternalId() + ".");
         template.convertAndSend("worker", new JmsDto(ingestWorkflow.getExternalId(), userDetails.getId()));
@@ -155,23 +153,21 @@ public class CoordinatorService {
      * @return id of the created batch or 'null' if no batch has been created
      */
     public String processBatchOfSips(String externalId, String batchWorkflowConfig, String transferAreaPath, String userId, String routineId) throws IOException {
-        IngestRoutine ingestRoutine = ingestRoutineStore.find(routineId);
-        if (skipRoutineIfPreviousBatchProcessing && ingestRoutine.getCurrentlyProcessingBatch() != null) {
-            log.debug("Skipping job of ingest routine: {} because there is still batch with id: {} processing", routineId, ingestRoutine.getCurrentlyProcessingBatch().getId());
+        IngestRoutine ingestRoutine = ingestRoutineStore.findWithBatchesFilled(routineId);
+
+        if (!ingestRoutine.isAuto() && !ingestRoutine.getCurrentlyProcessingBatches().isEmpty()) {
+            log.debug("Skipping job of ingest routine: {} because there is still batch with id: {} processing", routineId, ingestRoutine.getCurrentlyProcessingBatches().get(0));
             return null;
         }
 
         log.info("Processing of a batch of SIP packages has been triggered, routine id: {}", routineId);
 
-        if (batchWorkflowConfig.isEmpty()) throw new BadArgument("Workflow config is empty.");
+        if (batchWorkflowConfig.isEmpty()) throw new BadArgument("Workflow config is empty. Try to use '{}'");
 
         ProducerProfile producerProfile = producerProfileService.findByExternalId(externalId);
         notNull(producerProfile, () -> new MissingObject(ProducerProfile.class, externalId));
-
         Producer producer = producerProfile.getProducer();
-        notNull(producer, () ->
-                new IllegalArgumentException("null producer in the producer profile with external id " + producerProfile.getExternalId())
-        );
+        notNull(producer, () -> new IllegalArgumentException("null producer in the producer profile with external id " + producerProfile.getExternalId()));
 
         String mergedWorkflowConfig = computeIngestWorkflowConfig(batchWorkflowConfig, producerProfile);
 
@@ -181,27 +177,28 @@ public class CoordinatorService {
             log.error("There is no folder on the path: {} ", fullTransferAreaPath.toString());
             return null;
         }
+
         String assignedUserId = userId == null ? userDetails.getId() : userId;
         List<IngestWorkflow> ingestWorkflows = new ArrayList<>();
         String batchId = transactionTemplate.execute(s -> {
-            ingestWorkflows.addAll(scanTransferArea(transferArea, mergedWorkflowConfig));
+            ingestWorkflows.addAll(scanTransferArea(transferArea, mergedWorkflowConfig, ingestRoutine.isAuto()));
             if (ingestWorkflows.isEmpty()) {
                 return null;
             }
+
             log.debug("Merged workflow config to be used: {}", mergedWorkflowConfig);
-            Batch batch = prepareBatch(ingestWorkflows, producerProfile, batchWorkflowConfig, mergedWorkflowConfig, fullTransferAreaPath, assignedUserId);
-            if (ingestRoutine.getCurrentlyProcessingBatch() == null) {
-                ingestRoutine.setCurrentlyProcessingBatch(batch);
-                ingestRoutineStore.save(ingestRoutine);
-            }
+            Batch batch = prepareBatch(ingestWorkflows, producerProfile, batchWorkflowConfig, mergedWorkflowConfig, fullTransferAreaPath, assignedUserId, ingestRoutine);
+            ingestRoutine.getCurrentlyProcessingBatches().add(batch);
             return batch.getId();
         });
-        if (batchId == null)
-            return null;
+
+        if (batchId == null) return null;
+
         ingestWorkflows.forEach(ingestWorkflow -> {
             log.debug("Sending a message to Worker to process ingest workflow with external id " + ingestWorkflow.getExternalId() + ".");
             template.convertAndSend("worker", new JmsDto(ingestWorkflow.getExternalId(), assignedUserId));
         });
+
         return batchId;
     }
 
@@ -226,15 +223,13 @@ public class CoordinatorService {
 
         if (allIngestWorkflowsInFinalState && batch.getState() == BatchState.PROCESSING) {
             batch.setPendingIncidents(false);
+            batch.setIngestRoutine(null);
+
             if (batch.getIngestWorkflows().stream().anyMatch(iw -> iw.getProcessingState() == IngestWorkflowState.FAILED))
                 batch.setState(BatchState.PROCESSED_WITH_FAILURES);
             else
                 batch.setState(BatchState.PROCESSED);
-            IngestRoutine ingestRoutine = ingestRoutineStore.findRoutineOfBatch(batchId);
-            if (ingestRoutine != null) {
-                ingestRoutine.setCurrentlyProcessingBatch(null);
-                ingestRoutineStore.save(ingestRoutine);
-            }
+
             batchService.save(batch);
             log.info("Batch " + batchId + " has been processed. The batch state changed to " + batch.getState());
             if (user.getEmail() != null) {
@@ -276,12 +271,8 @@ public class CoordinatorService {
         transactionTemplate.execute(s -> {
             batch.setState(BatchState.CANCELED);
             batch.setPendingIncidents(false);
+            batch.setIngestRoutine(null);
             batchService.save(batch);
-            IngestRoutine ingestRoutine = ingestRoutineStore.findRoutineOfBatch(batchId);
-            if (ingestRoutine != null) {
-                ingestRoutine.setCurrentlyProcessingBatch(null);
-                ingestRoutineStore.save(ingestRoutine);
-            }
             return null;
         });
         log.info("Batch " + batch.getId() + " has been canceled. The batch state changed to CANCELED.");
@@ -365,26 +356,38 @@ public class CoordinatorService {
      * @param folder folder containing files to be processed
      * @return list of created ingest workflows
      */
-    private List<IngestWorkflow> scanTransferArea(File folder, String initialIngestWorkflowConfig) {
+    private List<IngestWorkflow> scanTransferArea(File folder, String initialIngestWorkflowConfig, boolean automaticProcessing) {
         log.debug("Scanning transfer area at path " + folder.toPath().toString() + " for SIP packages.");
         List<IngestWorkflow> ingestWorkflows = Arrays
                 .stream(folder.listFiles())
-                .filter(f -> f.getName().toLowerCase().endsWith(ZIP_EXTENSION))
+                .filter(f -> {
+                    String fileName = f.toPath().getFileName().toString().toLowerCase();
+                    return automaticProcessing
+                            ? fileNameIsNotPrefixed(fileName) && fileName.endsWith(ZIP_EXTENSION)
+                            : fileName.endsWith(ZIP_EXTENSION);
+                })
                 .map(f -> {
                     IngestWorkflow ingestWorkflow = new IngestWorkflow();
                     ingestWorkflow.setProcessingState(IngestWorkflowState.NEW);
                     ingestWorkflow.setFileName(f.getName());
                     ingestWorkflow.setInitialConfig(initialIngestWorkflowConfig);
 
-                    Path pathToChecksumFile = getSipSumsTransferAreaPath(f.toPath());
+                    Path file = f.toPath();
+                    Path pathToChecksumFile = getSipSumsTransferAreaPath(file);
                     try {
                         Hash hash = extractHash(pathToChecksumFile);
                         hashStore.save(hash);
                         ingestWorkflow.setHash(hash);
                     } catch (IOException e) {
-                        throw new GeneralException("File with checksum for file with name " +
-                                f.getName() + " is inaccessible.", e);
+                        throw new GeneralException("File with checksum for file with name " + f.getName() + " is inaccessible.", e);
                     }
+
+                    // prefixing with PROCESSING_<file_name>
+                    if (automaticProcessing) {
+                        log.debug("Prefixing file:'" + file.toString() + "' with:'" + AutoIngestFilePrefix.PROCESSING.getPrefix() + "'.");
+                        changeFilePrefix(AutoIngestFilePrefix.NONE, AutoIngestFilePrefix.PROCESSING, ingestWorkflow.getFileName(), folder.toPath().toString());
+                    }
+
                     ingestWorkflowService.save(ingestWorkflow);
                     return ingestWorkflow;
                 })
@@ -409,17 +412,18 @@ public class CoordinatorService {
      * @return created batch
      */
     private Batch prepareBatch(List<IngestWorkflow> ingestWorkflows, ProducerProfile producerProfile,
-                               String batchWorkflowConfig, String computedWorkflowConfig, Path transferAreaPath, String userId) {
+                               String batchWorkflowConfig, String computedWorkflowConfig, Path transferAreaPath, String userId, IngestRoutine ingestRoutine) {
         WorkflowDefinition workflowDefinition = producerProfile.getWorkflowDefinition();
-        notNull(workflowDefinition, () -> new IllegalArgumentException(
-                "null workflowDefinition of producer profile with id " + producerProfile.getId()));
+        notNull(workflowDefinition, () -> new IllegalArgumentException("null workflowDefinition of producer profile with id " + producerProfile.getId()));
 
         String bpmnDefinition = workflowDefinition.getBpmnDefinition();
-        notNull(bpmnDefinition, () -> new IllegalArgumentException(
-                "null bpmnDefinition of producer profile with id " + producerProfile.getId()));
+        notNull(bpmnDefinition, () -> new IllegalArgumentException("null bpmnDefinition of producer profile with id " + producerProfile.getId()));
 
-        Batch batch = new Batch(ingestWorkflows, BatchState.PROCESSING, producerProfile, batchWorkflowConfig, computedWorkflowConfig,
-                transferAreaPath.toString(), producerProfile.isDebuggingModeActive(), true, false, producerProfile.getValidationProfile(), producerProfile.getSipProfile(), producerProfile.getWorkflowDefinition());
+        Batch batch = new Batch(ingestWorkflows, BatchState.PROCESSING, producerProfile, batchWorkflowConfig,
+                computedWorkflowConfig, transferAreaPath.toString(), producerProfile.isDebuggingModeActive(),
+                true, false, producerProfile.getValidationProfile(),
+                producerProfile.getSipProfile(), producerProfile.getWorkflowDefinition(), ingestRoutine);
+
         try {
             String bpmnString = ArclibUtils.prepareBpmnDefinitionForDeployment(bpmnDefinition, batch.getId());
             repositoryService.createDeployment().addInputStream(batch.getId() + ".bpmn",
@@ -477,15 +481,11 @@ public class CoordinatorService {
      * b) Otherwise it returns a path composed from the path path to file storage, transfer area path of the producer
      * and <code>batchTransferAreaPath</code>.
      *
-     * @param batchTransferAreaPath
-     * @param producer
      * @return computed transfer area path
      */
     private Path computeTransferAreaPath(String batchTransferAreaPath, Producer producer) {
         String producerTransferAreaPath = producer.getTransferAreaPath();
-        notNull(producerTransferAreaPath, () ->
-                new IllegalArgumentException("null fullTransferAreaPath to transfer area in producer with id " + producer.getId())
-        );
+        notNull(producerTransferAreaPath, () -> new IllegalArgumentException("null fullTransferAreaPath to transfer area in producer with id " + producer.getId()));
         Path fullTransferAreaPath = Paths.get(fileStorage, producerTransferAreaPath);
         return batchTransferAreaPath != null ? fullTransferAreaPath.resolve(batchTransferAreaPath) : fullTransferAreaPath;
     }
@@ -588,10 +588,5 @@ public class CoordinatorService {
     @Inject
     public void setIngestRoutineStore(IngestRoutineStore ingestRoutineStore) {
         this.ingestRoutineStore = ingestRoutineStore;
-    }
-
-    @Inject
-    public void setSkipRoutineIfPreviousBatchProcessing(@Value("${arclib.skipRoutineIfPreviousBatchProcessing}") Boolean skipRoutineIfPreviousBatchProcessing) {
-        this.skipRoutineIfPreviousBatchProcessing = skipRoutineIfPreviousBatchProcessing;
     }
 }

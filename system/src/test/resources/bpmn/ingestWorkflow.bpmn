@@ -39,7 +39,7 @@
     <bpmn:sequenceFlow id="SequenceFlow_1lv9rpm" sourceRef="fixityCheck" targetRef="validator" />
     <bpmn:subProcess id="SubProcess_07ljd3i" name="finalize ingest">
       <bpmn:incoming>SequenceFlow_0ftlkmr</bpmn:incoming>
-      <bpmn:serviceTask id="ServiceTask_0b2g5c0" name="ArclibXml generator" camunda:asyncBefore="true" camunda:delegateExpression="${arclibXmlGeneratorDelegate}">
+      <bpmn:serviceTask id="arclibXmlGenerator" name="ArclibXml generator" camunda:asyncBefore="true" camunda:delegateExpression="${arclibXmlGeneratorDelegate}">
         <bpmn:incoming>SequenceFlow_1iwnh8s</bpmn:incoming>
         <bpmn:outgoing>SequenceFlow_0n2wp4g</bpmn:outgoing>
       </bpmn:serviceTask>
@@ -47,85 +47,112 @@
         <bpmn:extensionElements>
           <camunda:executionListener delegateExpression="${ingestSuccessEventDelegate}" event="start" />
         </bpmn:extensionElements>
-        <bpmn:incoming>SequenceFlow_0np9etf</bpmn:incoming>
+        <bpmn:incoming>success</bpmn:incoming>
       </bpmn:endEvent>
-      <bpmn:exclusiveGateway id="ExclusiveGateway_16nlbuk" camunda:asyncBefore="true">
+      <bpmn:exclusiveGateway id="successVerifierResult" name="success verifier result?" camunda:asyncBefore="true" default="failedTooManyTimesOrProcessingForTooLong">
         <bpmn:extensionElements>
           <camunda:properties>
             <camunda:property />
           </camunda:properties>
         </bpmn:extensionElements>
         <bpmn:incoming>SequenceFlow_1j4hj2j</bpmn:incoming>
-        <bpmn:outgoing>SequenceFlow_1qfqjnh</bpmn:outgoing>
-        <bpmn:outgoing>SequenceFlow_15x18qm</bpmn:outgoing>
-        <bpmn:outgoing>SequenceFlow_0np9etf</bpmn:outgoing>
-        <bpmn:outgoing>SequenceFlow_1gtsp32</bpmn:outgoing>
+        <bpmn:outgoing>failedTooManyTimesOrProcessingForTooLong</bpmn:outgoing>
+        <bpmn:outgoing>stillProcessingWait</bpmn:outgoing>
+        <bpmn:outgoing>success</bpmn:outgoing>
+        <bpmn:outgoing>failedRetry</bpmn:outgoing>
       </bpmn:exclusiveGateway>
       <bpmn:startEvent id="StartEvent_16sfszv">
         <bpmn:outgoing>SequenceFlow_0a6zqyo</bpmn:outgoing>
       </bpmn:startEvent>
-      <bpmn:sequenceFlow id="SequenceFlow_1qfqjnh" name="storage failed too many times or it is processing for too long" sourceRef="ExclusiveGateway_16nlbuk" targetRef="ingestErrorEvent">
-        <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${aipStoreRetries == 0 || aipSavedCheckRetries == 0}</bpmn:conditionExpression>
-      </bpmn:sequenceFlow>
+      <bpmn:sequenceFlow id="failedTooManyTimesOrProcessingForTooLong" name="failed too many times or processing for too long" sourceRef="successVerifierResult" targetRef="ingestErrorJoinPoint" />
       <bpmn:sequenceFlow id="SequenceFlow_0a6zqyo" sourceRef="StartEvent_16sfszv" targetRef="fixityGenerator" />
-      <bpmn:sequenceFlow id="SequenceFlow_15x18qm" name="storage still processing" sourceRef="ExclusiveGateway_16nlbuk" targetRef="IntermediateThrowEvent_0oopavs">
-        <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${aipState == 'PROCESSING' &amp;&amp; aipSavedCheckRetries &gt; 0}</bpmn:conditionExpression>
+      <bpmn:sequenceFlow id="stillProcessingWait" name="still processing, wait" sourceRef="successVerifierResult" targetRef="aipSavedCheckTimer">
+        <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${aipSavedCheckAttempts &gt; 0 &amp;&amp; archivalStorageResult == 'PROCESSING'}</bpmn:conditionExpression>
       </bpmn:sequenceFlow>
-      <bpmn:sequenceFlow id="SequenceFlow_0np9etf" name="storage ok" sourceRef="ExclusiveGateway_16nlbuk" targetRef="ingestSuccessEvent">
-        <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${aipState == 'ARCHIVED'}</bpmn:conditionExpression>
+      <bpmn:sequenceFlow id="success" name="success" sourceRef="successVerifierResult" targetRef="ingestSuccessEvent">
+        <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${archivalStorageResult == 'SUCCESS'}</bpmn:conditionExpression>
       </bpmn:sequenceFlow>
-      <bpmn:sequenceFlow id="SequenceFlow_1gtsp32" name="storage failed" sourceRef="ExclusiveGateway_16nlbuk" targetRef="IntermediateThrowEvent_0qpz5bp">
-        <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${aipState == 'ARCHIVAL_FAILURE' &amp;&amp; aipStoreRetries &gt; 0}</bpmn:conditionExpression>
+      <bpmn:sequenceFlow id="failedRetry" name="failed, retry" sourceRef="successVerifierResult" targetRef="storeRetryJoinPoint">
+        <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${aipStoreAttempts &gt; 0 &amp;&amp; archivalStorageResult == 'FAIL'}</bpmn:conditionExpression>
       </bpmn:sequenceFlow>
-      <bpmn:intermediateCatchEvent id="IntermediateThrowEvent_0qpz5bp">
-        <bpmn:incoming>SequenceFlow_1gtsp32</bpmn:incoming>
+      <bpmn:intermediateCatchEvent id="aipStoreTimer">
+        <bpmn:incoming>SequenceFlow_11u84yh</bpmn:incoming>
         <bpmn:outgoing>SequenceFlow_1589txq</bpmn:outgoing>
         <bpmn:timerEventDefinition>
-          <bpmn:timeDuration xsi:type="bpmn:tFormalExpression">${aipStoreTimeout}</bpmn:timeDuration>
+          <bpmn:timeDuration xsi:type="bpmn:tFormalExpression">${aipStoreAttemptsInterval}</bpmn:timeDuration>
         </bpmn:timerEventDefinition>
       </bpmn:intermediateCatchEvent>
-      <bpmn:intermediateCatchEvent id="IntermediateThrowEvent_0oopavs">
-        <bpmn:incoming>SequenceFlow_15x18qm</bpmn:incoming>
+      <bpmn:intermediateCatchEvent id="aipSavedCheckTimer">
+        <bpmn:incoming>stillProcessingWait</bpmn:incoming>
         <bpmn:outgoing>SequenceFlow_0ooeftp</bpmn:outgoing>
         <bpmn:timerEventDefinition>
-          <bpmn:timeDuration xsi:type="bpmn:tFormalExpression">${aipSavedCheckTimeout}</bpmn:timeDuration>
+          <bpmn:timeDuration xsi:type="bpmn:tFormalExpression">${aipSavedCheckAttemptsInterval}</bpmn:timeDuration>
         </bpmn:timerEventDefinition>
       </bpmn:intermediateCatchEvent>
       <bpmn:endEvent id="ingestErrorEvent" name="ingest error event">
-        <bpmn:incoming>SequenceFlow_1qfqjnh</bpmn:incoming>
+        <bpmn:incoming>SequenceFlow_08u1i35</bpmn:incoming>
         <bpmn:errorEventDefinition errorRef="Error_1olr0r0" />
       </bpmn:endEvent>
-      <bpmn:serviceTask id="ServiceTask_1snmjbd" name="archival storage" camunda:asyncBefore="true" camunda:delegateExpression="${archivalStorageDelegate}">
-        <bpmn:extensionElements>
-          <camunda:failedJobRetryTimeCycle>R5/PT1M</camunda:failedJobRetryTimeCycle>
-        </bpmn:extensionElements>
-        <bpmn:incoming>SequenceFlow_1589txq</bpmn:incoming>
-        <bpmn:incoming>SequenceFlow_0n2wp4g</bpmn:incoming>
+      <bpmn:serviceTask id="archivalStorage" name="archival storage" camunda:asyncBefore="true" camunda:delegateExpression="${archivalStorageDelegate}">
+        <bpmn:incoming>SequenceFlow_0t0dvxs</bpmn:incoming>
         <bpmn:outgoing>SequenceFlow_0oizux8</bpmn:outgoing>
       </bpmn:serviceTask>
-      <bpmn:sequenceFlow id="SequenceFlow_1589txq" sourceRef="IntermediateThrowEvent_0qpz5bp" targetRef="ServiceTask_1snmjbd" />
-      <bpmn:sequenceFlow id="SequenceFlow_0n2wp4g" sourceRef="ServiceTask_0b2g5c0" targetRef="ServiceTask_1snmjbd" />
+      <bpmn:sequenceFlow id="SequenceFlow_1589txq" sourceRef="aipStoreTimer" targetRef="storeAttemptJoinPoint" />
+      <bpmn:sequenceFlow id="SequenceFlow_0n2wp4g" sourceRef="arclibXmlGenerator" targetRef="storeAttemptJoinPoint" />
       <bpmn:serviceTask id="ServiceTask_15sn5m2" name="storage success verifier" camunda:asyncBefore="true" camunda:delegateExpression="${storageSuccessVerifierDelegate}">
-        <bpmn:extensionElements>
-          <camunda:failedJobRetryTimeCycle>R5/PT1M</camunda:failedJobRetryTimeCycle>
-        </bpmn:extensionElements>
-        <bpmn:incoming>SequenceFlow_0oizux8</bpmn:incoming>
-        <bpmn:incoming>SequenceFlow_0ooeftp</bpmn:incoming>
+        <bpmn:incoming>SequenceFlow_1rgeiby</bpmn:incoming>
         <bpmn:outgoing>SequenceFlow_1j4hj2j</bpmn:outgoing>
       </bpmn:serviceTask>
-      <bpmn:sequenceFlow id="SequenceFlow_1j4hj2j" sourceRef="ServiceTask_15sn5m2" targetRef="ExclusiveGateway_16nlbuk" />
-      <bpmn:sequenceFlow id="SequenceFlow_0oizux8" sourceRef="ServiceTask_1snmjbd" targetRef="ServiceTask_15sn5m2" />
-      <bpmn:sequenceFlow id="SequenceFlow_0ooeftp" sourceRef="IntermediateThrowEvent_0oopavs" targetRef="ServiceTask_15sn5m2" />
-      <bpmn:serviceTask id="ServiceTask_0fxsc9x" name="ArclibXml extractor" camunda:asyncBefore="true" camunda:delegateExpression="${arclibXmlExtractorDelegate}">
+      <bpmn:sequenceFlow id="SequenceFlow_1j4hj2j" sourceRef="ServiceTask_15sn5m2" targetRef="successVerifierResult" />
+      <bpmn:sequenceFlow id="SequenceFlow_0oizux8" sourceRef="archivalStorage" targetRef="storageResponse" />
+      <bpmn:sequenceFlow id="SequenceFlow_0ooeftp" sourceRef="aipSavedCheckTimer" targetRef="checkStateAttemptJoinPoint" />
+      <bpmn:serviceTask id="arclibXmlExtractor" name="ArclibXml extractor" camunda:asyncBefore="true" camunda:delegateExpression="${arclibXmlExtractorDelegate}">
         <bpmn:incoming>SequenceFlow_0l27cd5</bpmn:incoming>
         <bpmn:outgoing>SequenceFlow_1iwnh8s</bpmn:outgoing>
       </bpmn:serviceTask>
-      <bpmn:sequenceFlow id="SequenceFlow_1iwnh8s" sourceRef="ServiceTask_0fxsc9x" targetRef="ServiceTask_0b2g5c0" />
+      <bpmn:sequenceFlow id="SequenceFlow_1iwnh8s" sourceRef="arclibXmlExtractor" targetRef="arclibXmlGenerator" />
       <bpmn:serviceTask id="fixityGenerator" name="fixity generator" camunda:asyncBefore="true" camunda:delegateExpression="${fixityGeneratorDelegate}">
         <bpmn:incoming>SequenceFlow_0a6zqyo</bpmn:incoming>
         <bpmn:outgoing>SequenceFlow_0l27cd5</bpmn:outgoing>
       </bpmn:serviceTask>
-      <bpmn:sequenceFlow id="SequenceFlow_0l27cd5" sourceRef="fixityGenerator" targetRef="ServiceTask_0fxsc9x" />
+      <bpmn:sequenceFlow id="SequenceFlow_0l27cd5" sourceRef="fixityGenerator" targetRef="arclibXmlExtractor" />
+      <bpmn:exclusiveGateway id="storageResponse" name="storage response?" camunda:asyncBefore="true" default="responseOk">
+        <bpmn:incoming>SequenceFlow_0oizux8</bpmn:incoming>
+        <bpmn:outgoing>responseOk</bpmn:outgoing>
+        <bpmn:outgoing>nonStandardResponseRetry</bpmn:outgoing>
+        <bpmn:outgoing>nonStandardResponseKill</bpmn:outgoing>
+      </bpmn:exclusiveGateway>
+      <bpmn:sequenceFlow id="responseOk" name="response OK" sourceRef="storageResponse" targetRef="checkStateAttemptJoinPoint" />
+      <bpmn:sequenceFlow id="nonStandardResponseRetry" name="non-standard response, retry" sourceRef="storageResponse" targetRef="storeRetryJoinPoint">
+        <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${aipStoreAttempts &gt; 0 &amp;&amp; archivalStorageResult == 'FAIL'}</bpmn:conditionExpression>
+      </bpmn:sequenceFlow>
+      <bpmn:exclusiveGateway id="storeRetryJoinPoint" name="store retry join point" camunda:asyncBefore="true">
+        <bpmn:incoming>nonStandardResponseRetry</bpmn:incoming>
+        <bpmn:incoming>failedRetry</bpmn:incoming>
+        <bpmn:outgoing>SequenceFlow_11u84yh</bpmn:outgoing>
+      </bpmn:exclusiveGateway>
+      <bpmn:sequenceFlow id="SequenceFlow_11u84yh" sourceRef="storeRetryJoinPoint" targetRef="aipStoreTimer" />
+      <bpmn:sequenceFlow id="nonStandardResponseKill" name="non-standard response, kill" sourceRef="storageResponse" targetRef="ingestErrorJoinPoint">
+        <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${aipStoreAttempts &lt; 1 &amp;&amp; archivalStorageResult == 'FAIL'}</bpmn:conditionExpression>
+      </bpmn:sequenceFlow>
+      <bpmn:exclusiveGateway id="checkStateAttemptJoinPoint" name="check state attempt join point">
+        <bpmn:incoming>SequenceFlow_0ooeftp</bpmn:incoming>
+        <bpmn:incoming>responseOk</bpmn:incoming>
+        <bpmn:outgoing>SequenceFlow_1rgeiby</bpmn:outgoing>
+      </bpmn:exclusiveGateway>
+      <bpmn:sequenceFlow id="SequenceFlow_1rgeiby" sourceRef="checkStateAttemptJoinPoint" targetRef="ServiceTask_15sn5m2" />
+      <bpmn:exclusiveGateway id="ingestErrorJoinPoint" name="ingest error join point">
+        <bpmn:incoming>nonStandardResponseKill</bpmn:incoming>
+        <bpmn:incoming>failedTooManyTimesOrProcessingForTooLong</bpmn:incoming>
+        <bpmn:outgoing>SequenceFlow_08u1i35</bpmn:outgoing>
+      </bpmn:exclusiveGateway>
+      <bpmn:sequenceFlow id="SequenceFlow_08u1i35" sourceRef="ingestErrorJoinPoint" targetRef="ingestErrorEvent" />
+      <bpmn:exclusiveGateway id="storeAttemptJoinPoint" name="store attempt join point">
+        <bpmn:incoming>SequenceFlow_0n2wp4g</bpmn:incoming>
+        <bpmn:incoming>SequenceFlow_1589txq</bpmn:incoming>
+        <bpmn:outgoing>SequenceFlow_0t0dvxs</bpmn:outgoing>
+      </bpmn:exclusiveGateway>
+      <bpmn:sequenceFlow id="SequenceFlow_0t0dvxs" sourceRef="storeAttemptJoinPoint" targetRef="archivalStorage" />
     </bpmn:subProcess>
     <bpmn:subProcess id="SubProcess_15fffya" triggeredByEvent="true">
       <bpmn:startEvent id="storageErrorStartEvent" name="storage error start event">
@@ -166,7 +193,7 @@
         <dc:Bounds x="-89" y="-371" width="100" height="80" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="ServiceTask_0nhvpwh_di" bpmnElement="fixityGenerator">
-        <dc:Bounds x="-381" y="-156" width="100" height="80" />
+        <dc:Bounds x="-279" y="-215" width="100" height="80" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="SubProcess_0m3ut3d_di" bpmnElement="SubProcess_0m3ut3d" isExpanded="true">
         <dc:Bounds x="-403" y="216" width="306" height="122" />
@@ -224,84 +251,82 @@
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNShape id="SubProcess_07ljd3i_di" bpmnElement="SubProcess_07ljd3i" isExpanded="true">
-        <dc:Bounds x="-401" y="-243" width="674" height="429" />
+        <dc:Bounds x="-401" y="-243" width="833" height="444" />
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="ServiceTask_0b2g5c0_di" bpmnElement="ServiceTask_0b2g5c0">
-        <dc:Bounds x="-381" y="101" width="100" height="80" />
+      <bpmndi:BPMNShape id="ServiceTask_0b2g5c0_di" bpmnElement="arclibXmlGenerator">
+        <dc:Bounds x="4" y="-215" width="100" height="80" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="EndEvent_0lrb2a4_di" bpmnElement="ingestSuccessEvent">
-        <dc:Bounds x="195" y="-40" width="36" height="36" />
+        <dc:Bounds x="-308" y="100" width="36" height="36" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="177" y="0" width="73" height="27" />
+          <dc:Bounds x="-326" y="140" width="73" height="27" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="ExclusiveGateway_16nlbuk_di" bpmnElement="ExclusiveGateway_16nlbuk" isMarkerVisible="true">
-        <dc:Bounds x="54" y="12" width="50" height="50" />
+      <bpmndi:BPMNShape id="ExclusiveGateway_16nlbuk_di" bpmnElement="successVerifierResult" isMarkerVisible="true">
+        <dc:Bounds x="-315" y="0" width="50" height="50" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="0" y="-38" width="90" height="12" />
+          <dc:Bounds x="-370" y="-5" width="77" height="27" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="StartEvent_16sfszv_di" bpmnElement="StartEvent_16sfszv">
-        <dc:Bounds x="-349" y="-214" width="36" height="36" />
+        <dc:Bounds x="-363" y="-193" width="36" height="36" />
         <bpmndi:BPMNLabel>
           <dc:Bounds x="-376" y="-148" width="90" height="12" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNEdge id="SequenceFlow_1qfqjnh_di" bpmnElement="SequenceFlow_1qfqjnh">
-        <di:waypoint x="79" y="62" />
-        <di:waypoint x="79" y="99" />
-        <di:waypoint x="195" y="99" />
+      <bpmndi:BPMNEdge id="SequenceFlow_1qfqjnh_di" bpmnElement="failedTooManyTimesOrProcessingForTooLong">
+        <di:waypoint x="-281" y="41" />
+        <di:waypoint x="-259" y="83" />
+        <di:waypoint x="197" y="83" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="104" y="38" width="89" height="53" />
+          <dc:Bounds x="-234" y="91" width="88" height="53" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="SequenceFlow_0a6zqyo_di" bpmnElement="SequenceFlow_0a6zqyo">
-        <di:waypoint x="-331" y="-178" />
-        <di:waypoint x="-331" y="-156" />
+        <di:waypoint x="-327" y="-175" />
+        <di:waypoint x="-279" y="-175" />
         <bpmndi:BPMNLabel>
           <dc:Bounds x="-361" y="-135" width="90" height="12" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="SequenceFlow_15x18qm_di" bpmnElement="SequenceFlow_15x18qm">
-        <di:waypoint x="79" y="62" />
-        <di:waypoint x="79" y="141" />
-        <di:waypoint x="-33" y="141" />
+      <bpmndi:BPMNEdge id="SequenceFlow_15x18qm_di" bpmnElement="stillProcessingWait">
+        <di:waypoint x="-280" y="10" />
+        <di:waypoint x="-167" y="-13" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="-4" y="146" width="56" height="27" />
+          <dc:Bounds x="-277" y="-31" width="76" height="27" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="SequenceFlow_0np9etf_di" bpmnElement="SequenceFlow_0np9etf">
-        <di:waypoint x="79" y="12" />
-        <di:waypoint x="79" y="-22" />
-        <di:waypoint x="195" y="-22" />
+      <bpmndi:BPMNEdge id="SequenceFlow_0np9etf_di" bpmnElement="success">
+        <di:waypoint x="-290" y="50" />
+        <di:waypoint x="-290" y="100" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="112" y="-43" width="53" height="14" />
+          <dc:Bounds x="-338" y="72" width="40" height="14" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="SequenceFlow_1gtsp32_di" bpmnElement="SequenceFlow_1gtsp32">
-        <di:waypoint x="79" y="12" />
-        <di:waypoint x="79" y="-66" />
-        <di:waypoint x="-172" y="-66" />
+      <bpmndi:BPMNEdge id="SequenceFlow_1gtsp32_di" bpmnElement="failedRetry">
+        <di:waypoint x="-265" y="25" />
+        <di:waypoint x="361" y="25" />
+        <di:waypoint x="361" y="-49" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="-85" y="-89" width="67" height="14" />
+          <dc:Bounds x="-215" y="31" width="54" height="14" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNEdge>
-      <bpmndi:BPMNShape id="IntermediateCatchEvent_10c18o1_di" bpmnElement="IntermediateThrowEvent_0qpz5bp">
-        <dc:Bounds x="-208" y="-84" width="36" height="36" />
+      <bpmndi:BPMNShape id="IntermediateCatchEvent_10c18o1_di" bpmnElement="aipStoreTimer">
+        <dc:Bounds x="343" y="-193" width="36" height="36" />
         <bpmndi:BPMNLabel>
           <dc:Bounds x="-235" y="-148" width="90" height="12" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="IntermediateCatchEvent_0wx1ml4_di" bpmnElement="IntermediateThrowEvent_0oopavs">
-        <dc:Bounds x="-69" y="123" width="36" height="36" />
+      <bpmndi:BPMNShape id="IntermediateCatchEvent_0wx1ml4_di" bpmnElement="aipSavedCheckTimer">
+        <dc:Bounds x="-168" y="-35" width="36" height="36" />
         <bpmndi:BPMNLabel>
           <dc:Bounds x="-96" y="59" width="90" height="12" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="EndEvent_0kegd0b_di" bpmnElement="ingestErrorEvent">
-        <dc:Bounds x="195" y="81" width="36" height="36" />
+        <dc:Bounds x="343" y="65" width="36" height="36" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="169" y="124" width="87" height="14" />
+          <dc:Bounds x="317" y="111" width="87" height="14" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="SubProcess_15fffya_di" bpmnElement="SubProcess_15fffya" isExpanded="true">
@@ -350,57 +375,57 @@
           <dc:Bounds x="-402" y="-352" width="0" height="12" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNEdge>
-      <bpmndi:BPMNShape id="ServiceTask_1snmjbd_di" bpmnElement="ServiceTask_1snmjbd">
-        <dc:Bounds x="-240" y="-3" width="100" height="80" />
+      <bpmndi:BPMNShape id="ServiceTask_1snmjbd_di" bpmnElement="archivalStorage">
+        <dc:Bounds x="211" y="-215" width="100" height="80" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNEdge id="SequenceFlow_1589txq_di" bpmnElement="SequenceFlow_1589txq">
-        <di:waypoint x="-190" y="-48" />
-        <di:waypoint x="-190" y="-3" />
+        <di:waypoint x="361" y="-193" />
+        <di:waypoint x="361" y="-229" />
+        <di:waypoint x="158" y="-229" />
+        <di:waypoint x="158" y="-200" />
         <bpmndi:BPMNLabel>
           <dc:Bounds x="-220" y="-135" width="90" height="12" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="SequenceFlow_0n2wp4g_di" bpmnElement="SequenceFlow_0n2wp4g">
-        <di:waypoint x="-281" y="141" />
-        <di:waypoint x="-260" y="141" />
-        <di:waypoint x="-260" y="37" />
-        <di:waypoint x="-240" y="37" />
+        <di:waypoint x="104" y="-175" />
+        <di:waypoint x="133" y="-175" />
         <bpmndi:BPMNLabel>
           <dc:Bounds x="-305" y="-88" width="90" height="12" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNShape id="ServiceTask_15sn5m2_di" bpmnElement="ServiceTask_15sn5m2">
-        <dc:Bounds x="-101" y="-3" width="100" height="80" />
+        <dc:Bounds x="-279" y="-114" width="100" height="80" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNEdge id="SequenceFlow_1j4hj2j_di" bpmnElement="SequenceFlow_1j4hj2j">
-        <di:waypoint x="-1" y="37" />
-        <di:waypoint x="54" y="37" />
+        <di:waypoint x="-279" y="-74" />
+        <di:waypoint x="-290" y="-74" />
+        <di:waypoint x="-290" y="0" />
         <bpmndi:BPMNLabel>
           <dc:Bounds x="-18" y="-88" width="90" height="12" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="SequenceFlow_0oizux8_di" bpmnElement="SequenceFlow_0oizux8">
-        <di:waypoint x="-140" y="37" />
-        <di:waypoint x="-101" y="37" />
+        <di:waypoint x="222" y="-135" />
+        <di:waypoint x="222" y="-99" />
         <bpmndi:BPMNLabel>
           <dc:Bounds x="-165" y="-88" width="90" height="12" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="SequenceFlow_0ooeftp_di" bpmnElement="SequenceFlow_0ooeftp">
-        <di:waypoint x="-51" y="123" />
-        <di:waypoint x="-51" y="100" />
-        <di:waypoint x="-51" y="100" />
-        <di:waypoint x="-51" y="77" />
+        <di:waypoint x="-132" y="-17" />
+        <di:waypoint x="8" y="-17" />
+        <di:waypoint x="8" y="-49" />
         <bpmndi:BPMNLabel>
           <dc:Bounds x="-81" y="-10" width="90" height="12" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNEdge>
-      <bpmndi:BPMNShape id="ServiceTask_0fxsc9x_di" bpmnElement="ServiceTask_0fxsc9x">
-        <dc:Bounds x="-381" y="-36" width="100" height="80" />
+      <bpmndi:BPMNShape id="ServiceTask_0fxsc9x_di" bpmnElement="arclibXmlExtractor">
+        <dc:Bounds x="-149" y="-215" width="100" height="80" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNEdge id="SequenceFlow_1iwnh8s_di" bpmnElement="SequenceFlow_1iwnh8s">
-        <di:waypoint x="-331" y="44" />
-        <di:waypoint x="-331" y="101" />
+        <di:waypoint x="-49" y="-175" />
+        <di:waypoint x="4" y="-175" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNShape id="ServiceTask_0tr54un_di" bpmnElement="duplicateSipCheck">
         <dc:Bounds x="-333" y="-371" width="100" height="80" />
@@ -410,14 +435,81 @@
         <di:waypoint x="-216" y="-331" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="SequenceFlow_0l27cd5_di" bpmnElement="SequenceFlow_0l27cd5">
-        <di:waypoint x="-331" y="-76" />
-        <di:waypoint x="-331" y="-36" />
+        <di:waypoint x="-179" y="-175" />
+        <di:waypoint x="-149" y="-175" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="SequenceFlow_0ftlkmr_di" bpmnElement="SequenceFlow_0ftlkmr">
         <di:waypoint x="220" y="-291" />
         <di:waypoint x="220" y="-267" />
-        <di:waypoint x="-64" y="-267" />
-        <di:waypoint x="-64" y="-243" />
+        <di:waypoint x="16" y="-267" />
+        <di:waypoint x="16" y="-243" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="ExclusiveGateway_039qlqk_di" bpmnElement="storageResponse" isMarkerVisible="true">
+        <dc:Bounds x="197" y="-99" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="157" y="-111" width="52" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_0h43nr6_di" bpmnElement="responseOk">
+        <di:waypoint x="197" y="-74" />
+        <di:waypoint x="33" y="-74" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="76" y="-94" width="65" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SequenceFlow_0toj5rg_di" bpmnElement="nonStandardResponseRetry">
+        <di:waypoint x="247" y="-74" />
+        <di:waypoint x="336" y="-74" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="250" y="-106" width="74" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="ExclusiveGateway_15fbe7w_di" bpmnElement="storeRetryJoinPoint" isMarkerVisible="true">
+        <dc:Bounds x="336" y="-99" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="364" y="-111" width="70" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_11u84yh_di" bpmnElement="SequenceFlow_11u84yh">
+        <di:waypoint x="361" y="-99" />
+        <di:waypoint x="361" y="-157" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SequenceFlow_0xkuhz8_di" bpmnElement="nonStandardResponseKill">
+        <di:waypoint x="222" y="-49" />
+        <di:waypoint x="222" y="58" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="154" y="-40" width="66" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="ExclusiveGateway_1q7mq15_di" bpmnElement="checkStateAttemptJoinPoint" isMarkerVisible="true">
+        <dc:Bounds x="-17" y="-99" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="-35" y="-128" width="85" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_1rgeiby_di" bpmnElement="SequenceFlow_1rgeiby">
+        <di:waypoint x="-17" y="-74" />
+        <di:waypoint x="-179" y="-74" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="ExclusiveGateway_0fc3qax_di" bpmnElement="ingestErrorJoinPoint" isMarkerVisible="true">
+        <dc:Bounds x="197" y="58" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="183.5" y="113" width="77" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_08u1i35_di" bpmnElement="SequenceFlow_08u1i35">
+        <di:waypoint x="247" y="83" />
+        <di:waypoint x="343" y="83" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="ExclusiveGateway_1dmgh2f_di" bpmnElement="storeAttemptJoinPoint" isMarkerVisible="true">
+        <dc:Bounds x="133" y="-200" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="115" y="-149" width="85" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_0t0dvxs_di" bpmnElement="SequenceFlow_0t0dvxs">
+        <di:waypoint x="183" y="-175" />
+        <di:waypoint x="211" y="-175" />
       </bpmndi:BPMNEdge>
     </bpmndi:BPMNPlane>
   </bpmndi:BPMNDiagram>

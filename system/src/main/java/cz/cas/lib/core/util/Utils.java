@@ -122,8 +122,13 @@ public class Utils {
         }
     }
 
-    public static <U, T extends RuntimeException> void notEmpty(Collection c, Supplier<T> supplier) {
+    public static <U, T extends RuntimeException> void notEmpty(Collection<U> c, Supplier<T> supplier) {
         if (c == null || c.isEmpty())
+            throw supplier.get();
+    }
+
+    public static <U, T extends RuntimeException> void isEmpty(Collection<U> c, Supplier<T> supplier) {
+        if (c == null || !c.isEmpty())
             throw supplier.get();
     }
 
@@ -189,6 +194,18 @@ public class Utils {
 
     public static <T extends RuntimeException> void gt(BigDecimal n, BigDecimal l, Supplier<T> supplier) {
         if (n.compareTo(l) <= 0) {
+            throw supplier.get();
+        }
+    }
+
+    public static <T extends RuntimeException> void lte(Integer n, Integer l, Supplier<T> supplier) {
+        if (n > l) {
+            throw supplier.get();
+        }
+    }
+
+    public static <T extends RuntimeException> void lt(BigDecimal n, BigDecimal l, Supplier<T> supplier) {
+        if (n.compareTo(l) >= 0) {
             throw supplier.get();
         }
     }

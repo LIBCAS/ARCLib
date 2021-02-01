@@ -66,7 +66,7 @@ public class FixityGeneratorDelegateTest extends DelegateTest {
         Map variables = new HashMap();
         variables.put(BpmConstants.ProcessVariables.ingestWorkflowId, INGEST_WORKFLOW_ID);
         variables.put(BpmConstants.ProcessVariables.ingestWorkflowExternalId, EXTERNAL_ID);
-        variables.put(BpmConstants.Ingestion.sipFileName, SIP_ZIP.getFileName().toString());
+        variables.put(BpmConstants.ProcessVariables.sipFileName, SIP_ZIP.getFileName().toString());
         variables.put(BpmConstants.FixityGeneration.mapOfEventIdsToSipMd5, new HashMap<>());
         variables.put(BpmConstants.FixityGeneration.mapOfEventIdsToSipCrc32, new HashMap<>());
         variables.put(BpmConstants.FixityGeneration.mapOfEventIdsToSipSha512, new HashMap<>());

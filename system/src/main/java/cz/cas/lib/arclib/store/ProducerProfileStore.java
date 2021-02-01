@@ -1,5 +1,6 @@
 package cz.cas.lib.arclib.store;
 
+import com.querydsl.jpa.impl.JPAQuery;
 import cz.cas.lib.arclib.domain.Producer;
 import cz.cas.lib.arclib.domain.ingestWorkflow.WorkflowDefinition;
 import cz.cas.lib.arclib.domain.profiles.ProducerProfile;
@@ -14,6 +15,7 @@ import lombok.NonNull;
 import org.springframework.stereotype.Repository;
 
 import javax.inject.Inject;
+import java.util.List;
 
 @Repository
 public class ProducerProfileStore extends IndexedNamedStore<ProducerProfile, QProducerProfile, IndexedProducerProfile> {
@@ -41,6 +43,22 @@ public class ProducerProfileStore extends IndexedNamedStore<ProducerProfile, QPr
         ProducerProfile entity = query().select(qObject()).where(qObject().externalId.eq(number)).fetchOne();
         detachAll();
         return entity;
+    }
+
+    public List<ProducerProfile> findAllFilteredByProducer(boolean filterByProducer, String producerId) {
+        QProducerProfile qProducerProfile = qObject();
+
+        JPAQuery<ProducerProfile> query = query()
+                .select(qProducerProfile)
+                .where(qProducerProfile.deleted.isNull());
+        if (filterByProducer)
+            query.where(qProducerProfile.producer.id.eq(producerId));
+        query.orderBy(qProducerProfile.externalId.asc());
+
+        List<ProducerProfile> fetch = query.fetch();
+        detachAll();
+
+        return fetch;
     }
 
     @Override

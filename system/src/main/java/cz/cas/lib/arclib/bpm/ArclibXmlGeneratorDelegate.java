@@ -55,7 +55,7 @@ public class ArclibXmlGeneratorDelegate extends ArclibDelegate {
         String arclibXmlString = ArclibUtils.prettyPrint(arclibXml);
 
         //validate against ARCLib XML definition
-        String authorialId = getStringVariable(execution, BpmConstants.Ingestion.authorialId);
+        String authorialId = getStringVariable(execution, BpmConstants.ProcessVariables.authorialId);
         String sipId = getStringVariable(execution, BpmConstants.ProcessVariables.sipId);
         Sip sip = sipStore.find(sipId);
         Sip previousVersionSip = sip.getPreviousVersionSip();

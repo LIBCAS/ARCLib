@@ -135,7 +135,7 @@ public class ArclibXmlGenerator {
 
     private void fillMetsHdr(Element metsHdrElement, IngestWorkflow ingestWorkflow, Map<String, Object> variables) {
         String xmlId = (String) variables.get(ProcessVariables.ingestWorkflowExternalId);
-        String authorialId = (String) variables.get(Ingestion.authorialId);
+        String authorialId = (String) variables.get(ProcessVariables.authorialId);
 
         metsHdrElement.addAttribute("CREATEDATE", ingestWorkflow.getCreated().truncatedTo(ChronoUnit.SECONDS).toString());
         metsHdrElement.addAttribute("LASTMODDATE", ingestWorkflow.getUpdated().truncatedTo(ChronoUnit.SECONDS).toString());

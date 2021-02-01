@@ -66,7 +66,7 @@ import static org.w3c.dom.Node.TEXT_NODE;
 
 @Service
 @Slf4j
-public class IndexedArclibXmlStore implements IndexArclibXmlStore<IndexedArclibXmlDocument> {
+public class IndexedArclibXmlStore implements IndexArclibXmlStore {
     /**
      * Configuration of those index fields which are indexed according to arclibXmlDefinition.csv
      * Map contains collection names (main and nested) as keys and their Xpath configurations as values.
@@ -174,10 +174,12 @@ public class IndexedArclibXmlStore implements IndexArclibXmlStore<IndexedArclibX
         try {
             page = solrTemplate.query(coreName, query, IndexedArclibXmlDocument.class);
         } catch (UncategorizedSolrException ex) {
-            Matcher matcher = Pattern.compile(".+ undefined field (.+)").matcher(ex.getMessage());
-            if (matcher.find()) {
-                String msg = "query contains undefined field: " + matcher.group(1);
-                throw new BadArgument(msg);
+            if (ex.getMessage() != null) {
+                Matcher matcher = Pattern.compile(".+ undefined field (.+)").matcher(ex.getMessage());
+                if (matcher.find()) {
+                    String msg = "query contains undefined field: " + matcher.group(1);
+                    throw new BadArgument(msg);
+                }
             }
             throw ex;
         } catch (DataAccessResourceFailureException ex) {

@@ -228,7 +228,7 @@
 				<text><![CDATA[List of used formats]]></text>
 			</staticText>
 		</band>
-		<band height="280" splitType="Stretch">
+		<band height="260" splitType="Stretch">
 			<componentElement>
 				<reportElement x="9" y="60" width="540" height="60" uuid="d006050f-61e1-4b67-8a4c-1a3a64ccb7ab">
 					<property name="com.jaspersoft.studio.layout" value="com.jaspersoft.studio.editor.layout.VerticalRowLayout"/>
@@ -350,7 +350,7 @@
 				<text><![CDATA[List of used format PUIDs]]></text>
 			</staticText>
 		</band>
-		<band height="380" splitType="Stretch">
+		<band height="260" splitType="Stretch">
 			<componentElement>
 				<reportElement x="129" y="60" width="301" height="60" uuid="d006050f-61e1-4b67-8a4c-1a3a64ccb7ab">
 					<property name="com.jaspersoft.studio.layout" value="com.jaspersoft.studio.editor.layout.VerticalRowLayout"/>

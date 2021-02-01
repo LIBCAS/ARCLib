@@ -44,9 +44,6 @@ Agregated techMD – generated,/METS:mets/METS:amdSec/METS:techMD/METS:mdWrap[@M
 Agregated techMD – generated,/METS:mets/METS:amdSec/METS:techMD/METS:mdWrap[@MDTYPE='PREMIS']/METS:xmlData/ARCLib:formats/ARCLib:format/ARCLib:creatingApplicationName,FALSE,format identifier,TRUE,1,identified_format_creating_application_name,other,identified_format
 Agregated techMD – generated,/METS:mets/METS:amdSec/METS:techMD/METS:mdWrap[@MDTYPE='PREMIS']/METS:xmlData/ARCLib:formats/ARCLib:format/ARCLib:creatingApplicationVersion,FALSE,format identifier,TRUE,1,identified_format_creating_application_version,other,identified_format
 Agregated techMD – generated,/METS:mets/METS:amdSec/METS:techMD/METS:mdWrap[@MDTYPE='PREMIS']/METS:xmlData/ARCLib:formats/ARCLib:format/ARCLib:dateCreatedByApplication,FALSE,format identifier,TRUE,1,identified_format_date_created_by_application,date,identified_format
-TechMD – extracted,/METS:mets/METS:amdSec/METS:techMD/METS:mdWrap[@MDTYPE='OTHER']/METS:xmlData/ARCLib:devices/ARCLib:device,FALSE,SIP profile XSLT,FALSE,N,,,device
-TechMD – extracted,/METS:mets/METS:amdSec/METS:techMD/METS:mdWrap[@MDTYPE='OTHER']/METS:xmlData/ARCLib:devices/ARCLib:device/ARCLib:deviceId,FALSE,SIP profile XSLT,FALSE,1,device_id,other,device
-TechMD – extracted,/METS:mets/METS:amdSec/METS:techMD/METS:mdWrap[@MDTYPE='OTHER']/METS:xmlData/ARCLib:devices/ARCLib:device/ARCLib:fileCount,FALSE,SIP profile XSLT,FALSE,1,device_file_count,other,device
 TechMD – extracted,/METS:mets/METS:amdSec/METS:techMD/METS:mdWrap[@MDTYPE='OTHER']/METS:xmlData/ARCLib:ImageCaptureInformation/ARCLib:ImageCaptureMetadata,FALSE,SIP profile XSLT,FALSE,N,,,img_metadata
 TechMD – extracted,/METS:mets/METS:amdSec/METS:techMD/METS:mdWrap[@MDTYPE='OTHER']/METS:xmlData/ARCLib:ImageCaptureInformation/ARCLib:ImageCaptureMetadata/ARCLib:dateCreated,FALSE,SIP profile XSLT,FALSE,1,img_metadata_date_created,date,img_metadata
 TechMD – extracted,/METS:mets/METS:amdSec/METS:techMD/METS:mdWrap[@MDTYPE='OTHER']/METS:xmlData/ARCLib:ImageCaptureInformation/ARCLib:ImageCaptureMetadata/ARCLib:imageProducer,FALSE,SIP profile XSLT,FALSE,1,img_metadata_image_producer,other,img_metadata
@@ -72,11 +69,9 @@ Events – generated,/METS:mets/METS:amdSec/METS:digiprovMD/METS:mdWrap[@MDTYPE=
 Events – extracted,/METS:mets/METS:amdSec/METS:techMD/METS:mdWrap[@MDTYPE='OTHER']/METS:xmlData/ARCLib:eventAgents/ARCLib:eventAgent,FALSE,SIP profile XSLT,FALSE,N,,,arc_event
 Events – extracted,/METS:mets/METS:amdSec/METS:techMD/METS:mdWrap[@MDTYPE='OTHER']/METS:xmlData/ARCLib:eventAgents/ARCLib:eventAgent/ARCLib:eventType,FALSE,SIP profile XSLT,FALSE,1,arc_event_type,other,arc_event
 Events – extracted,/METS:mets/METS:amdSec/METS:techMD/METS:mdWrap[@MDTYPE='OTHER']/METS:xmlData/ARCLib:eventAgents/ARCLib:eventAgent/ARCLib:agentName,FALSE,SIP profile XSLT,FALSE,1,arc_event_agent_name,other,arc_event
-Events – extracted,/METS:mets/METS:amdSec/METS:techMD/METS:mdWrap[@MDTYPE='OTHER']/METS:xmlData/ARCLib:eventAgents/ARCLib:eventAgent/ARCLib:linkingDeviceID,FALSE,SIP profile XSLT,FALSE,1,arc_event_linking_device_id,other,arc_event
 Events – extracted,/METS:mets/METS:amdSec/METS:techMD/METS:mdWrap[@MDTYPE='OTHER']/METS:xmlData/ARCLib:eventAgents/ARCLib:eventAgent/ARCLib:scannerModelSerialNo,FALSE,SIP profile XSLT,FALSE,1,arc_event_scanner_model_serial_no,other,arc_event
-Events – extracted,/METS:mets/METS:amdSec/METS:techMD/METS:mdWrap[@MDTYPE='OTHER']/METS:xmlData/ARCLib:eventAgents/ARCLib:eventAgent/ARCLib:scanningSoftwareName,FALSE,SIP profile XSLT,FALSE,1,arc_event_scanning_software_name,other,arc_event
 Events – extracted,/METS:mets/METS:amdSec/METS:techMD/METS:mdWrap[@MDTYPE='OTHER']/METS:xmlData/ARCLib:eventAgents/ARCLib:eventAgent/ARCLib:eventDate,FALSE,SIP profile XSLT,FALSE,1,arc_event_date,datetime,arc_event
-Events – extracted,/METS:mets/METS:amdSec/METS:techMD/METS:mdWrap[@MDTYPE='OTHER']/METS:xmlData/ARCLib:eventAgents/ARCLib:eventAgent/ARCLib:eventCount,FALSE,SIP profile XSLT,FALSE,1,arc_event_count,other,arc_event
+Events – extracted,/METS:mets/METS:amdSec/METS:techMD/METS:mdWrap[@MDTYPE='OTHER']/METS:xmlData/ARCLib:eventAgents/ARCLib:eventAgent/ARCLib:fileCount,FALSE,SIP profile XSLT,FALSE,1,arc_event_file_count,other,arc_event
 Rights,/METS:mets/METS:amdSec/METS:rightsMD,FALSE,SIP profile XSLT,FALSE,1,,,
 Other bibliographic metadata,/METS:mets/METS:amdSec/METS:sourceMD,FALSE,SIP profile XSLT,FALSE,1,,,
 AIP structure,/METS:mets/METS:fileSec,TRUE,system; fixity generator,TRUE,1,,,

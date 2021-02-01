@@ -233,10 +233,10 @@ public class ArchivalStorageDelegateTest extends DelegateTest {
         variables.put(BpmConstants.ProcessVariables.debuggingModeActive, true);
         variables.put(BpmConstants.FixityGeneration.preferredFixityGenerationEventId, eventId);
         variables.put(BpmConstants.FixityGeneration.mapOfEventIdsToSipSha512, mapOfEventIdsToSha512Calculations);
-        variables.put(BpmConstants.Ingestion.sipFileName, SIP_FILE_NAME);
+        variables.put(BpmConstants.ProcessVariables.sipFileName, SIP_FILE_NAME);
         variables.put(BpmConstants.ProcessVariables.sipId, sip.getId());
 
-        variables.put(BpmConstants.ArchivalStorage.aipStoreRetries, 3);
+        variables.put(BpmConstants.ArchivalStorage.aipStoreAttempts, 3);
         flushCache();
 
         startJob(PROCESS_INSTANCE_KEY, variables);

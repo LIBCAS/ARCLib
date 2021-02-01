@@ -69,7 +69,7 @@ public class AipApi extends ArchivalStoragePipe {
             @ApiResponse(code = 200, message = "Successful response")})
     @PreAuthorize("hasAuthority('" + Permissions.AIP_RECORDS_READ + "')")
     @RequestMapping(value = "/list", method = RequestMethod.GET)
-    public Result list(
+    public Result<IndexedArclibXmlDocument> list(
             @ApiParam(value = "Parameters to comply with", required = true)
             @ModelAttribute Params params,
             @ApiParam(value = "Save query")

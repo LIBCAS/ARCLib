@@ -1,5 +1,7 @@
 package cz.cas.lib.arclib.service;
 
+import cz.cas.lib.arclib.domain.AutoIngestFilePrefix;
+import cz.cas.lib.arclib.domain.Batch;
 import cz.cas.lib.arclib.domain.ingestWorkflow.IngestWorkflow;
 import cz.cas.lib.arclib.domain.ingestWorkflow.IngestWorkflowFailureInfo;
 import cz.cas.lib.arclib.domain.ingestWorkflow.IngestWorkflowFailureType;
@@ -10,7 +12,6 @@ import cz.cas.lib.arclib.domainbase.exception.MissingObject;
 import cz.cas.lib.arclib.dto.JmsDto;
 import cz.cas.lib.arclib.service.archivalStorage.ArchivalStorageException;
 import cz.cas.lib.arclib.service.archivalStorage.ArchivalStorageService;
-import cz.cas.lib.core.util.Utils;
 import lombok.extern.slf4j.Slf4j;
 import org.camunda.bpm.engine.RuntimeService;
 import org.springframework.beans.factory.annotation.Value;
@@ -21,7 +22,9 @@ import org.springframework.util.FileSystemUtils;
 
 import javax.inject.Inject;
 
+import static cz.cas.lib.arclib.utils.ArclibUtils.changeFilePrefix;
 import static cz.cas.lib.arclib.utils.ArclibUtils.getIngestWorkflowWorkspacePath;
+import static cz.cas.lib.core.util.Utils.notNull;
 
 @Service
 @Slf4j
@@ -47,7 +50,7 @@ public class IngestErrorHandler {
         IngestWorkflow iw = transactionTemplate.execute(status -> {
             //all DB operations in the template will be rolled back in case of any exception
             IngestWorkflow ingestWorkflow = ingestWorkflowService.findByExternalId(externalId);
-            Utils.notNull(ingestWorkflow, () -> new MissingObject(IngestWorkflow.class, externalId));
+            notNull(ingestWorkflow, () -> new MissingObject(IngestWorkflow.class, externalId));
 
             ingestWorkflow.setProcessingState(IngestWorkflowState.FAILED);
             ingestWorkflow.setFailureInfo(ingestWorkflowFailureInfo);
@@ -109,6 +112,13 @@ public class IngestErrorHandler {
                     aipService.deactivateLock(authorialPackageId);
                 }
             }
+
+            // renaming to FAILED_<file_name>
+            Batch workflowBatch = ingestWorkflow.getBatch();
+            if (workflowBatch != null && workflowBatch.getIngestRoutine() != null && workflowBatch.getIngestRoutine().isAuto()) {
+                log.debug(String.format("Changing prefix of file:'%s' from:'%s' to:'%s'.", ingestWorkflow.getFileName(), AutoIngestFilePrefix.PROCESSING.getPrefix(), AutoIngestFilePrefix.FAILED.getPrefix()));
+                changeFilePrefix(AutoIngestFilePrefix.PROCESSING, AutoIngestFilePrefix.FAILED, ingestWorkflow);
+            }
             return ingestWorkflow;
         });
         if (ingestWorkflowFailureInfo.getIngestWorkflowFailureType() != IngestWorkflowFailureType.BATCH_CANCELLATION)
@@ -146,5 +156,7 @@ public class IngestErrorHandler {
     }
 
     @Inject
-    public void setTransactionTemplate(TransactionTemplate transactionTemplate) {this.transactionTemplate = transactionTemplate;}
+    public void setTransactionTemplate(TransactionTemplate transactionTemplate) {
+        this.transactionTemplate = transactionTemplate;
+    }
 }

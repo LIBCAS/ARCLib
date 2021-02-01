@@ -202,7 +202,7 @@ public class FixityCheckerDelegateTest {
         variables.put(BpmConstants.ProcessVariables.ingestWorkflowExternalId, EXTERNAL_ID);
         String config1 = CONFIG1.replaceFirst("\\{", String.format("{\"%s\":\"%s\",", ArclibXmlExtractorDelegate.SIP_PROFILE_CONFIG_ENTRY, metsProfile.getExternalId()));
         variables.put(BpmConstants.ProcessVariables.latestConfig, config1);
-        variables.put(BpmConstants.Ingestion.sipFileName, ORIGINAL_SIP_FILE_NAME);
+        variables.put(BpmConstants.ProcessVariables.sipFileName, ORIGINAL_SIP_FILE_NAME);
         Map<String, TreeMap<String, Pair<String, String>>> mapOfEventIdsToMapsOfFilesToFormats = new HashMap<>();
         mapOfEventIdsToMapsOfFilesToFormats.put(eventId, droidResult);
         variables.put(BpmConstants.FormatIdentification.preferredFormatIdentificationEventId, eventId);
@@ -238,7 +238,7 @@ public class FixityCheckerDelegateTest {
         Map variables = new HashMap();
         variables.put(BpmConstants.ProcessVariables.ingestWorkflowId, INGEST_WORKFLOW_ID);
         variables.put(BpmConstants.ProcessVariables.ingestWorkflowExternalId, EXTERNAL_ID);
-        variables.put(BpmConstants.Ingestion.sipFileName, ORIGINAL_SIP_FILE_NAME);
+        variables.put(BpmConstants.ProcessVariables.sipFileName, ORIGINAL_SIP_FILE_NAME);
         String config2 = CONFIG2.replaceFirst("\\{", String.format("{\"%s\":\"%s\",", ArclibXmlExtractorDelegate.SIP_PROFILE_CONFIG_ENTRY, metsProfile.getExternalId()));
         variables.put(BpmConstants.ProcessVariables.latestConfig, config2);
         Map<String, TreeMap<String, Pair<String, String>>> mapOfEventIdsToMapsOfFilesToFormats = new HashMap<>();
@@ -274,7 +274,7 @@ public class FixityCheckerDelegateTest {
         Map variables = new HashMap();
         variables.put(BpmConstants.ProcessVariables.ingestWorkflowId, INGEST_WORKFLOW_ID);
         variables.put(BpmConstants.ProcessVariables.ingestWorkflowExternalId, EXTERNAL_ID);
-        variables.put(BpmConstants.Ingestion.sipFileName, ORIGINAL_SIP_BAG_FILE_NAME);
+        variables.put(BpmConstants.ProcessVariables.sipFileName, ORIGINAL_SIP_BAG_FILE_NAME);
         String config1 = CONFIG2.replaceFirst("\\{", String.format("{\"%s\":\"%s\",", ArclibXmlExtractorDelegate.SIP_PROFILE_CONFIG_ENTRY, bagProfile.getExternalId()));
         variables.put(BpmConstants.ProcessVariables.latestConfig, config1);
         Map<String, TreeMap<String, Pair<String, String>>> mapOfEventIdsToMapsOfFilesToFormats = new HashMap<>();
@@ -312,7 +312,7 @@ public class FixityCheckerDelegateTest {
         Map variables = new HashMap();
         variables.put(BpmConstants.ProcessVariables.ingestWorkflowId, INGEST_WORKFLOW_ID);
         variables.put(BpmConstants.ProcessVariables.ingestWorkflowExternalId, EXTERNAL_ID);
-        variables.put(BpmConstants.Ingestion.sipFileName, ORIGINAL_SIP_BAG_FILE_NAME);
+        variables.put(BpmConstants.ProcessVariables.sipFileName, ORIGINAL_SIP_BAG_FILE_NAME);
         String config2 = CONFIG2.replaceFirst("\\{", String.format("{\"%s\":\"%s\",", ArclibXmlExtractorDelegate.SIP_PROFILE_CONFIG_ENTRY, bagProfile.getExternalId()));
         variables.put(BpmConstants.ProcessVariables.latestConfig, config2);
         Map<String, TreeMap<String, Pair<String, String>>> mapOfEventIdsToMapsOfFilesToFormats = new HashMap<>();

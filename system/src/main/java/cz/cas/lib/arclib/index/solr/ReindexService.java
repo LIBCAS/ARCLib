@@ -109,7 +109,8 @@ public class ReindexService {
             case PROCESSING:
             case PRE_PROCESSING:
             case ROLLED_BACK:
-            case ARCHIVAL_FAILURE: {
+            case ARCHIVAL_FAILURE:
+            case ROLLBACK_FAILURE: {
                 stateAtArchivalStorage = null;
                 break;
             }

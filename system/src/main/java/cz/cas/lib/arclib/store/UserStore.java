@@ -50,6 +50,22 @@ public class UserStore extends IndexedDatedStore<User, QUser, IndexedUser> {
         return user;
     }
 
+    public List<User> findAllUsersOrderByName(boolean filterByProducer, String producerId) {
+        QUser qUser = qObject();
+
+        JPAQuery<User> query = query()
+                .select(qUser)
+                .where(qUser.deleted.isNull());
+        if (filterByProducer)
+            query.where(qUser.producer.id.eq(producerId));
+        query.orderBy(qUser.lastName.asc(), qUser.firstName.asc());
+
+        List<User> fetch = query.fetch();
+        detachAll();
+
+        return fetch;
+    }
+
     public User findEvenDeleted(String id) {
         QUser qUser = qObject();
         User user = query()

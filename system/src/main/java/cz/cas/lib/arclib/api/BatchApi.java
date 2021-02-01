@@ -2,7 +2,6 @@ package cz.cas.lib.arclib.api;
 
 import cz.cas.lib.arclib.domain.Batch;
 import cz.cas.lib.arclib.domain.Hash;
-import cz.cas.lib.arclib.domainbase.exception.GeneralException;
 import cz.cas.lib.arclib.dto.BatchDetailDto;
 import cz.cas.lib.arclib.dto.BatchDto;
 import cz.cas.lib.arclib.dto.JmsDto;
@@ -35,30 +34,28 @@ public class BatchApi {
     private CoordinatorService coordinatorService;
     private UserDetails userDetails;
 
-    private static final String PRODUCER = "producerId";
-    private static final String USER = "userId";
-
-    @ApiOperation(value = "Starts processing of SIPs stored in the specified folder. [Perm.BATCH_PROCESSING_WRITE]")
-    @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successful response"),
-            @ApiResponse(code = 400, message = "Workflow config is empty")})
-    @PreAuthorize("hasAuthority('" + Permissions.BATCH_PROCESSING_WRITE + "')")
-    @RequestMapping(value = "/start", method = RequestMethod.POST)
-    public String start(@ApiParam(value = "External id of the producer profile", required = true)
-                        @RequestParam("producerProfileExternalId") String producerProfileExternalId,
-                        @ApiParam(value = "JSON configuration of the ingest workflow", required = true)
-                        @RequestParam("workflowConfig") String workflowConfig,
-                        @ApiParam(value = "Transfer area path")
-                        @RequestParam(value = "transferAreaPath", required = false) String transferAreaPath,
-                        @ApiParam(value = "User id")
-                        @RequestParam(value = "userId", required = false) String userId) throws IOException {
-        if (userId == null) {
-            if (userDetails == null)
-                throw new GeneralException("No user specified while trying to start processing of SIPs.");
-            userId = userDetails.getId();
-        }
-        return coordinatorService.processBatchOfSips(producerProfileExternalId, workflowConfig, transferAreaPath, userId, null);
-    }
+    // Vykomentovane za suhlasu @Tomasek, ku dnu vykomentovania nebol endpoint pouzivany na FE
+//    @ApiOperation(value = "Starts processing of SIPs stored in the specified folder. [Perm.BATCH_PROCESSING_WRITE]")
+//    @ApiResponses(value = {
+//            @ApiResponse(code = 200, message = "Successful response"),
+//            @ApiResponse(code = 400, message = "Workflow config is empty")})
+//    @PreAuthorize("hasAuthority('" + Permissions.BATCH_PROCESSING_WRITE + "')")
+//    @RequestMapping(value = "/start", method = RequestMethod.POST)
+//    public String start(@ApiParam(value = "External id of the producer profile", required = true)
+//                        @RequestParam("producerProfileExternalId") String producerProfileExternalId,
+//                        @ApiParam(value = "JSON configuration of the ingest workflow", required = true)
+//                        @RequestParam("workflowConfig") String workflowConfig,
+//                        @ApiParam(value = "Transfer area path")
+//                        @RequestParam(value = "transferAreaPath", required = false) String transferAreaPath,
+//                        @ApiParam(value = "User id")
+//                        @RequestParam(value = "userId", required = false) String userId) throws IOException {
+//        if (userId == null) {
+//            if (userDetails == null)
+//                throw new GeneralException("No user specified while trying to start processing of SIPs.");
+//            userId = userDetails.getId();
+//        }
+//        return coordinatorService.processBatchOfSips(producerProfileExternalId, workflowConfig, transferAreaPath, userId, null);
+//    }
 
     @ApiOperation(value = "Starts processing of a SIP from the provided SIP content. [Perm.BATCH_PROCESSING_WRITE]")
     @ApiResponses(value = {
@@ -131,7 +128,7 @@ public class BatchApi {
     public Result<BatchDto> listDtos(@ApiParam(value = "Parameters to comply with", required = true)
                                      @ModelAttribute Params params) {
         if (!hasRole(userDetails, Permissions.SUPER_ADMIN_PRIVILEGE)) {
-                addPrefilter(params, new Filter(PRODUCER, FilterOperation.EQ, userDetails.getProducerId(), null));
+            addPrefilter(params, new Filter("producerId", FilterOperation.EQ, userDetails.getProducerId(), null));
         }
         return batchService.listBatchDtos(params);
     }

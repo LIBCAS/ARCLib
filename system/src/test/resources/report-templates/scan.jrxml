@@ -86,9 +86,11 @@
 			<property name="com.jaspersoft.studio.field.label" value="count_of_items"/>
 		</field>
 	</subDataset>
-	<subDataset name="ScannerDs" uuid="64cc43f0-00fe-4ba0-90b3-217a6ca912f9">
+	<subDataset name="ScannerHwDs" uuid="64cc43f0-00fe-4ba0-90b3-217a6ca912f9">
 		<property name="com.jaspersoft.studio.data.sql.tables" value=""/>
 		<property name="com.jaspersoft.studio.data.defaultdataadapter" value="DataAdapter.xml"/>
+		<property name="com.jaspersoft.studio.property.dataset.dialog.DatasetDialog.sash.w1" value="537"/>
+		<property name="com.jaspersoft.studio.property.dataset.dialog.DatasetDialog.sash.w2" value="453"/>
 		<parameter name="from" class="java.lang.String">
 			<parameterDescription><![CDATA[]]></parameterDescription>
 			<defaultValueExpression><![CDATA["1700-01-01T00:00:00Z"]]></defaultValueExpression>
@@ -98,15 +100,15 @@
 			<defaultValueExpression><![CDATA["4000-12-31T00:00:00Z"]]></defaultValueExpression>
 		</parameter>
 		<queryString language="SQL">
-			<![CDATA[SELECT arc.arc_event_scanning_software_name_s AS scanning_sw,
+			<![CDATA[SELECT arc.arc_event_agent_name_s AS scanner_name,
 			 arc.arc_event_scanner_model_serial_no AS scanner_serial_number,
 			COUNT(distinct(sub.id)) AS aip_count
 			FROM arclibXmlC arc JOIN arclibXmlC sub ON sub._root_ = arc._root_ WHERE
-			arc.arc_event_scanning_software_name_s = '[* TO *]' AND arc.arc_event_scanner_model_serial_no = '[* TO *]'
+			arc.arc_event_agent_name_s = '[* TO *]' AND arc.arc_event_scanner_model_serial_no = '[* TO *]'
 			AND sub.created = '[$P!{from} TO $P!{to}]'
-			GROUP BY arc.arc_event_scanning_software_name_s, arc.arc_event_scanner_model_serial_no]]>
+			GROUP BY arc.arc_event_agent_name_s, arc.arc_event_scanner_model_serial_no]]>
 		</queryString>
-		<field name="scanning_sw" class="java.lang.String">
+		<field name="scanner_name" class="java.lang.String">
 			<property name="com.jaspersoft.studio.field.label" value="scanning_sw"/>
 		</field>
 		<field name="scanner_serial_number" class="java.lang.String">
@@ -148,7 +150,7 @@
 	<detail>
 		<band height="260" splitType="Stretch">
 			<componentElement>
-				<reportElement x="130" y="40" width="300" height="60" uuid="d006050f-61e1-4b67-8a4c-1a3a64ccb7ab">
+				<reportElement x="80" y="40" width="400" height="60" uuid="d006050f-61e1-4b67-8a4c-1a3a64ccb7ab">
 					<property name="com.jaspersoft.studio.layout" value="com.jaspersoft.studio.editor.layout.VerticalRowLayout"/>
 					<property name="com.jaspersoft.studio.table.style.table_header" value="Table_TH"/>
 					<property name="com.jaspersoft.studio.table.style.column_header" value="Table_CH"/>
@@ -165,17 +167,17 @@
 						</datasetParameter>
 						<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
 					</datasetRun>
-					<jr:column width="100" uuid="8cb530c3-7d95-4336-933a-1b2c114beb35">
+					<jr:column width="250" uuid="8cb530c3-7d95-4336-933a-1b2c114beb35">
 						<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column1"/>
 						<jr:columnHeader style="Table_CH" height="30" rowSpan="1">
 							<staticText>
-								<reportElement x="0" y="0" width="100" height="30" uuid="00216162-f356-4daf-b412-0ff69889302b"/>
+								<reportElement x="0" y="0" width="250" height="30" uuid="00216162-f356-4daf-b412-0ff69889302b"/>
 								<text><![CDATA[Name]]></text>
 							</staticText>
 						</jr:columnHeader>
 						<jr:detailCell style="Table_TD" height="30">
 							<textField>
-								<reportElement x="0" y="0" width="100" height="30" uuid="9b2acbb8-910a-4c73-977f-368ad3f0393d"/>
+								<reportElement x="0" y="0" width="250" height="30" uuid="9b2acbb8-910a-4c73-977f-368ad3f0393d"/>
 								<textFieldExpression><![CDATA[$F{app_name}]]></textFieldExpression>
 							</textField>
 						</jr:detailCell>
@@ -195,17 +197,17 @@
 							</textField>
 						</jr:detailCell>
 					</jr:column>
-					<jr:column width="100" uuid="0159b4c8-3fb6-4f42-9f03-b5cecdb9f581">
+					<jr:column width="50" uuid="0159b4c8-3fb6-4f42-9f03-b5cecdb9f581">
 						<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column3"/>
 						<jr:columnHeader style="Table_CH" height="30" rowSpan="1">
 							<staticText>
-								<reportElement x="0" y="0" width="100" height="30" uuid="d0d36afa-5868-4219-b4e3-edc8313c95f7"/>
+								<reportElement x="0" y="0" width="50" height="30" uuid="d0d36afa-5868-4219-b4e3-edc8313c95f7"/>
 								<text><![CDATA[AIP count]]></text>
 							</staticText>
 						</jr:columnHeader>
 						<jr:detailCell style="Table_TD" height="30">
 							<textField>
-								<reportElement x="0" y="0" width="100" height="30" uuid="6ad6b939-b093-4136-b132-fcdcb9cf7554"/>
+								<reportElement x="0" y="0" width="50" height="30" uuid="6ad6b939-b093-4136-b132-fcdcb9cf7554"/>
 								<textFieldExpression><![CDATA[$F{aip_count}]]></textFieldExpression>
 							</textField>
 						</jr:detailCell>
@@ -220,9 +222,9 @@
 				<text><![CDATA[Creating application]]></text>
 			</staticText>
 		</band>
-		<band height="280" splitType="Stretch">
+		<band height="260" splitType="Stretch">
 			<componentElement>
-				<reportElement x="177" y="60" width="200" height="60" uuid="d006050f-61e1-4b67-8a4c-1a3a64ccb7ab">
+				<reportElement x="80" y="60" width="400" height="60" uuid="d006050f-61e1-4b67-8a4c-1a3a64ccb7ab">
 					<property name="com.jaspersoft.studio.layout" value="com.jaspersoft.studio.editor.layout.VerticalRowLayout"/>
 					<property name="com.jaspersoft.studio.table.style.table_header" value="Table_TH"/>
 					<property name="com.jaspersoft.studio.table.style.column_header" value="Table_CH"/>
@@ -239,32 +241,32 @@
 						</datasetParameter>
 						<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
 					</datasetRun>
-					<jr:column width="100" uuid="8cb530c3-7d95-4336-933a-1b2c114beb35">
+					<jr:column width="350" uuid="8cb530c3-7d95-4336-933a-1b2c114beb35">
 						<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column1"/>
 						<jr:columnHeader style="Table_CH" height="30" rowSpan="1">
 							<staticText>
-								<reportElement x="0" y="0" width="100" height="30" uuid="00216162-f356-4daf-b412-0ff69889302b"/>
+								<reportElement stretchType="RelativeToTallestObject" x="0" y="0" width="350" height="30" uuid="00216162-f356-4daf-b412-0ff69889302b"/>
 								<text><![CDATA[Producer]]></text>
 							</staticText>
 						</jr:columnHeader>
 						<jr:detailCell style="Table_TD" height="30">
 							<textField>
-								<reportElement x="0" y="0" width="100" height="30" uuid="9b2acbb8-910a-4c73-977f-368ad3f0393d"/>
+								<reportElement x="0" y="0" width="350" height="30" uuid="9b2acbb8-910a-4c73-977f-368ad3f0393d"/>
 								<textFieldExpression><![CDATA[$F{producer}]]></textFieldExpression>
 							</textField>
 						</jr:detailCell>
 					</jr:column>
-					<jr:column width="100" uuid="8cb530c3-7d95-4336-933a-1b2c114beb35">
+					<jr:column width="50" uuid="8cb530c3-7d95-4336-933a-1b2c114beb35">
 						<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column2"/>
 						<jr:columnHeader style="Table_CH" height="30" rowSpan="1">
 							<staticText>
-								<reportElement x="0" y="0" width="100" height="30" uuid="00216162-f356-4daf-b412-0ff69889302b"/>
+								<reportElement x="0" y="0" width="50" height="30" uuid="00216162-f356-4daf-b412-0ff69889302b"/>
 								<text><![CDATA[AIP count]]></text>
 							</staticText>
 						</jr:columnHeader>
 						<jr:detailCell style="Table_TD" height="30">
 							<textField>
-								<reportElement x="0" y="0" width="100" height="30" uuid="9b2acbb8-910a-4c73-977f-368ad3f0393d"/>
+								<reportElement x="0" y="0" width="50" height="30" uuid="9b2acbb8-910a-4c73-977f-368ad3f0393d"/>
 								<textFieldExpression><![CDATA[$F{count_of_items}]]></textFieldExpression>
 							</textField>
 						</jr:detailCell>
@@ -282,9 +284,9 @@
 				<text><![CDATA[Image Producer]]></text>
 			</staticText>
 		</band>
-		<band height="380" splitType="Stretch">
+		<band height="260" splitType="Stretch">
 			<componentElement>
-				<reportElement x="130" y="60" width="300" height="60" uuid="d006050f-61e1-4b67-8a4c-1a3a64ccb7ab">
+				<reportElement x="80" y="60" width="400" height="60" uuid="d006050f-61e1-4b67-8a4c-1a3a64ccb7ab">
 					<property name="com.jaspersoft.studio.layout" value="com.jaspersoft.studio.editor.layout.VerticalRowLayout"/>
 					<property name="com.jaspersoft.studio.table.style.table_header" value="Table_TH"/>
 					<property name="com.jaspersoft.studio.table.style.column_header" value="Table_CH"/>
@@ -292,7 +294,7 @@
 					<property name="net.sf.jasperreports.export.headertoolbar.table.name" value="Scanner"/>
 				</reportElement>
 				<jr:table xmlns:jr="http://jasperreports.sourceforge.net/jasperreports/components" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports/components http://jasperreports.sourceforge.net/xsd/components.xsd" whenNoDataType="AllSectionsNoDetail">
-					<datasetRun subDataset="ScannerDs" uuid="338bf013-e56c-4128-8107-0bd00752dcf3">
+					<datasetRun subDataset="ScannerHwDs" uuid="338bf013-e56c-4128-8107-0bd00752dcf3">
 						<datasetParameter name="from">
 							<datasetParameterExpression><![CDATA[$P{from}]]></datasetParameterExpression>
 						</datasetParameter>
@@ -301,18 +303,18 @@
 						</datasetParameter>
 						<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
 					</datasetRun>
-					<jr:column width="100" uuid="ad485d2c-6c88-4d9d-8202-ad0337242e8c">
+					<jr:column width="250" uuid="ad485d2c-6c88-4d9d-8202-ad0337242e8c">
 						<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column1"/>
 						<jr:columnHeader style="Table_CH" height="30" rowSpan="1">
 							<staticText>
-								<reportElement x="0" y="0" width="100" height="30" uuid="650e5a2e-4be7-480d-9798-0d5fae010848"/>
-								<text><![CDATA[Scanning software]]></text>
+								<reportElement x="0" y="0" width="250" height="30" uuid="650e5a2e-4be7-480d-9798-0d5fae010848"/>
+								<text><![CDATA[Scanner name]]></text>
 							</staticText>
 						</jr:columnHeader>
 						<jr:detailCell style="Table_TD" height="30">
 							<textField>
-								<reportElement x="0" y="0" width="100" height="30" uuid="24666d74-b62f-465f-80c0-7221a193b4d3"/>
-								<textFieldExpression><![CDATA[$F{scanning_sw}]]></textFieldExpression>
+								<reportElement x="0" y="0" width="250" height="30" uuid="24666d74-b62f-465f-80c0-7221a193b4d3"/>
+								<textFieldExpression><![CDATA[$F{scanner_name}]]></textFieldExpression>
 							</textField>
 						</jr:detailCell>
 					</jr:column>
@@ -331,17 +333,17 @@
 							</textField>
 						</jr:detailCell>
 					</jr:column>
-					<jr:column width="100" uuid="0159b4c8-3fb6-4f42-9f03-b5cecdb9f581">
-						<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column3"/>
+					<jr:column width="50" uuid="0159b4c8-3fb6-4f42-9f03-b5cecdb9f581">
+						<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column2"/>
 						<jr:columnHeader style="Table_CH" height="30" rowSpan="1">
 							<staticText>
-								<reportElement x="0" y="0" width="100" height="30" uuid="d0d36afa-5868-4219-b4e3-edc8313c95f7"/>
+								<reportElement x="0" y="0" width="50" height="30" uuid="d0d36afa-5868-4219-b4e3-edc8313c95f7"/>
 								<text><![CDATA[AIP count]]></text>
 							</staticText>
 						</jr:columnHeader>
 						<jr:detailCell style="Table_TD" height="30">
 							<textField>
-								<reportElement x="0" y="0" width="100" height="30" uuid="6ad6b939-b093-4136-b132-fcdcb9cf7554"/>
+								<reportElement x="0" y="0" width="50" height="30" uuid="6ad6b939-b093-4136-b132-fcdcb9cf7554"/>
 								<textFieldExpression><![CDATA[$F{aip_count}]]></textFieldExpression>
 							</textField>
 						</jr:detailCell>
