@@ -1,6 +1,5 @@
 package cz.cas.lib.arclib.service;
 
-import cz.cas.lib.arclib.domain.Producer;
 import cz.cas.lib.arclib.domain.ingestWorkflow.WorkflowDefinition;
 import cz.cas.lib.arclib.domainbase.exception.ForbiddenOperation;
 import cz.cas.lib.arclib.dto.WorkflowDefinitionDto;
@@ -16,6 +15,7 @@ import javax.inject.Inject;
 import java.util.Collection;
 
 import static cz.cas.lib.arclib.utils.ArclibUtils.hasRole;
+import static cz.cas.lib.core.util.Utils.eq;
 import static cz.cas.lib.core.util.Utils.notNull;
 
 @Service
@@ -34,18 +34,24 @@ public class WorkflowDefinitionService {
 
     @Transactional
     public WorkflowDefinition save(WorkflowDefinition entity) {
+        notNull(entity.getProducer(), () -> new BadRequestException("WorkflowDefinition must have producer assigned"));
+        // if user is not SUPER_ADMIN then entity must be assigned to user's producer
         if (!hasRole(userDetails, Permissions.SUPER_ADMIN_PRIVILEGE)) {
-            entity.setProducer(new Producer(userDetails.getProducerId()));
-        } else {
-            notNull(entity.getProducer(), () -> new BadRequestException("WorkflowDefinition has to have producer assigned"));
+            eq(entity.getProducer().getId(), userDetails.getUser().getProducer().getId(), () -> new ForbiddenOperation("Producer of WorkflowDefinition must be the same as producer of logged-in user."));
         }
 
         if (entity.getBpmnDefinition() != null && entity.getBpmnDefinition().contains("camunda:jobPriority"))
             throw new ForbiddenException("BPMN definition can't contain job prioritization (camunda:jobPriority)");
 
         WorkflowDefinition workflowDefinitionFound = store.find(entity.getId());
-        if (workflowDefinitionFound != null && !workflowDefinitionFound.isEditable()) {
-            throw new ForbiddenOperation(WorkflowDefinition.class, entity.getId());
+        if (workflowDefinitionFound != null) {
+            // if user is not SUPER_ADMIN then change of producer is forbidden
+            if (!hasRole(userDetails, Permissions.SUPER_ADMIN_PRIVILEGE)) {
+                eq(entity.getProducer().getId(), workflowDefinitionFound.getProducer().getId(), () -> new ForbiddenOperation("Cannot change WorkflowDefinition's Producer"));
+            }
+            if (!workflowDefinitionFound.isEditable()) {
+                throw new ForbiddenOperation(WorkflowDefinition.class, entity.getId());
+            }
         }
 
         entity.setEditable(true);

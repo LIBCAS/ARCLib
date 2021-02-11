@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import cz.cas.lib.arclib.domain.AipQuery;
 import cz.cas.lib.arclib.domain.ExportRoutine;
 import cz.cas.lib.arclib.domain.User;
+import cz.cas.lib.arclib.domainbase.exception.ForbiddenOperation;
 import cz.cas.lib.arclib.domainbase.exception.GeneralException;
 import cz.cas.lib.arclib.domainbase.exception.MissingAttribute;
 import cz.cas.lib.arclib.domainbase.exception.MissingObject;
@@ -36,6 +37,8 @@ import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static cz.cas.lib.arclib.utils.ArclibUtils.hasRole;
+import static cz.cas.lib.core.util.Utils.eq;
 import static cz.cas.lib.core.util.Utils.notNull;
 
 @Slf4j
@@ -66,6 +69,15 @@ public class ExportRoutineService {
      */
     @Transactional
     public ExportRoutine save(ExportRoutine exportRoutine) {
+        ExportRoutine oldExportRoutine = store.find(exportRoutine.getId());
+        if (oldExportRoutine != null) {
+            // if user is not SUPER_ADMIN then change of producer is forbidden
+            if (!hasRole(userDetails, Permissions.SUPER_ADMIN_PRIVILEGE)) {
+                if (oldExportRoutine.getCreator() != null && oldExportRoutine.getCreator().getProducer() != null)
+                    eq(oldExportRoutine.getCreator().getProducer().getId(), userDetails.getUser().getProducer().getId(), () -> new ForbiddenOperation("Cannot change ExportRoutine's Producer"));
+            }
+        }
+
         User creator = new User();
         creator.setId(userDetails.getId());
         exportRoutine.setCreator(creator);
@@ -155,7 +167,6 @@ public class ExportRoutineService {
      * The job is performed by the GROOVY script specified in <code>xmlExportScript</code>. The script is assigned
      * parameters according to the values derived from the provided instance of <code>exportRoutine</code>.
      *
-     * @param exportRoutine
      * @return export location path
      */
     @Transactional

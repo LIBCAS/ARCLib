@@ -1,7 +1,7 @@
 package cz.cas.lib.arclib.service;
 
-import cz.cas.lib.arclib.domain.Producer;
 import cz.cas.lib.arclib.domain.profiles.SipProfile;
+import cz.cas.lib.arclib.domain.profiles.ValidationProfile;
 import cz.cas.lib.arclib.domainbase.exception.ForbiddenOperation;
 import cz.cas.lib.arclib.dto.SipProfileDto;
 import cz.cas.lib.arclib.exception.BadRequestException;
@@ -19,6 +19,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 
 import static cz.cas.lib.arclib.utils.ArclibUtils.hasRole;
+import static cz.cas.lib.core.util.Utils.eq;
 import static cz.cas.lib.core.util.Utils.notNull;
 
 @Service
@@ -35,16 +36,25 @@ public class SipProfileService {
      */
     @Transactional
     public SipProfile save(SipProfile sipProfile) throws DocumentException {
+        notNull(sipProfile.getProducer(), () -> new BadRequestException("SipProfile must have producer assigned"));
+        // if user is not SUPER_ADMIN then entity must be assigned to user's producer
         if (!hasRole(userDetails, Permissions.SUPER_ADMIN_PRIVILEGE)) {
-            sipProfile.setProducer(new Producer(userDetails.getProducerId()));
-        } else {
-            notNull(sipProfile.getProducer(), () -> new BadRequestException("SipProfile has to have producer assigned"));
+            eq(sipProfile.getProducer().getId(), userDetails.getUser().getProducer().getId(), () -> new ForbiddenOperation("Producer of SipProfile must be the same as producer of logged-in user."));
         }
 
         SAXReader reader = new SAXReader();
         reader.read(new ByteArrayInputStream(sipProfile.getXsl().getBytes(StandardCharsets.UTF_8)));
 
         SipProfile sipProfileFound = store.find(sipProfile.getId());
+        if (sipProfileFound != null) {
+            // if user is not SUPER_ADMIN then change of producer is forbidden
+            if (!hasRole(userDetails, Permissions.SUPER_ADMIN_PRIVILEGE)) {
+                eq(sipProfile.getProducer().getId(), sipProfileFound.getProducer().getId(), () -> new ForbiddenOperation("Cannot change SipProfile's Producer"));
+            }
+            if (!sipProfileFound.isEditable()) {
+                throw new ForbiddenOperation(ValidationProfile.class, sipProfile.getId());
+            }
+        }
         if (sipProfileFound != null && !sipProfileFound.isEditable()) {
             throw new ForbiddenOperation(SipProfile.class, sipProfile.getId());
         }

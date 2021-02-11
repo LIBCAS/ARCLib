@@ -29,7 +29,7 @@ public class ProducerProfileApi {
             response = ProducerProfile.class)
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Successful response", response = ProducerProfile.class),
-            @ApiResponse(code = 400, message = "Specified id does not correspond to the id of the instance"),
+            @ApiResponse(code = 400, message = "Specified id does not correspond to the id of the instance | Producers of related entities differ from producer of given producer profile"),
             @ApiResponse(code = 403, message = "Id of the producer does not match the id of the producer of the logged on user.")})
     @PreAuthorize("hasAuthority('" + Permissions.PRODUCER_PROFILE_RECORDS_WRITE + "')")
     @RequestMapping(value = "/{id}", method = RequestMethod.PUT)

@@ -11,10 +11,12 @@ import cz.cas.lib.arclib.domain.*;
 import cz.cas.lib.arclib.domain.ingestWorkflow.*;
 import cz.cas.lib.arclib.domain.profiles.ProducerProfile;
 import cz.cas.lib.arclib.domainbase.exception.BadArgument;
+import cz.cas.lib.arclib.domainbase.exception.ForbiddenOperation;
 import cz.cas.lib.arclib.domainbase.exception.GeneralException;
 import cz.cas.lib.arclib.domainbase.exception.MissingObject;
 import cz.cas.lib.arclib.dto.JmsDto;
 import cz.cas.lib.arclib.mail.ArclibMailCenter;
+import cz.cas.lib.arclib.security.authorization.permission.Permissions;
 import cz.cas.lib.arclib.security.user.UserDetails;
 import cz.cas.lib.arclib.store.HashStore;
 import cz.cas.lib.arclib.store.IngestRoutineStore;
@@ -48,8 +50,7 @@ import java.util.stream.Collectors;
 
 import static cz.cas.lib.arclib.domain.AutoIngestFilePrefix.fileNameIsNotPrefixed;
 import static cz.cas.lib.arclib.utils.ArclibUtils.*;
-import static cz.cas.lib.core.util.Utils.asList;
-import static cz.cas.lib.core.util.Utils.notNull;
+import static cz.cas.lib.core.util.Utils.*;
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 
 @Slf4j
@@ -98,9 +99,9 @@ public class CoordinatorService {
         notNull(producerProfile, () -> new MissingObject(ProducerProfile.class, externalId));
 
         Producer producer = producerProfile.getProducer();
-        notNull(producer, () ->
-                new IllegalArgumentException("null producer in the producer profile with external id " + producerProfile.getExternalId())
-        );
+        notNull(producer, () -> new IllegalArgumentException("null producer in the producer profile with external id " + producerProfile.getExternalId()));
+
+        verifyProducer(producer, "User cannot process SIP when producer external ID does not match user's producer.");
 
         Path fullTransferAreaPath = computeTransferAreaPath(transferAreaPath, producer);
         if (!new File(fullTransferAreaPath.toString()).exists()) {
@@ -291,6 +292,10 @@ public class CoordinatorService {
         Batch batch = batchService.find(batchId);
         notNull(batch, () -> new MissingObject(Batch.class, batchId));
 
+        notNull(batch.getProducerProfile(), () -> new IllegalArgumentException("producer profile of batch " + batchId + " is null"));
+        notNull(batch.getProducerProfile().getProducer(), () -> new IllegalArgumentException("producer of batch " + batchId + " is null"));
+        verifyProducer(batch.getProducerProfile().getProducer(), "User cannot suspend batch that does not belong to his producer.");
+
         batch.setState(BatchState.SUSPENDED);
         batchService.save(batch);
 
@@ -313,6 +318,9 @@ public class CoordinatorService {
     public Boolean resumeBatch(String batchId) {
         Batch batch = batchService.get(batchId);
         notNull(batch, () -> new MissingObject(Batch.class, batchId));
+        notNull(batch.getProducerProfile(), () -> new IllegalArgumentException("producer profile of batch " + batchId + " is null"));
+        notNull(batch.getProducerProfile().getProducer(), () -> new IllegalArgumentException("producer of batch " + batchId + " is null"));
+        verifyProducer(batch.getProducerProfile().getProducer(), "User cannot resume batch that does not belong to his producer.");
 
         boolean hasProcessingIngestWorkflow = batch.getIngestWorkflows().stream()
                 .anyMatch(ingestWorkflow -> ingestWorkflow.getProcessingState() == IngestWorkflowState.PROCESSING);
@@ -518,6 +526,12 @@ public class CoordinatorService {
             log.trace("Batch ingest workflow is empty");
         }
         return mapper.writeValueAsString(ingestConfig);
+    }
+
+    public void verifyProducer(Producer producer, String exceptionMessage) {
+        if (!hasRole(userDetails, Permissions.SUPER_ADMIN_PRIVILEGE)) {
+            eq(producer.getId(), userDetails.getUser().getProducer().getId(), () -> new ForbiddenOperation(exceptionMessage));
+        }
     }
 
     @Inject

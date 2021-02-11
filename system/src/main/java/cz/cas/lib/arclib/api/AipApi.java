@@ -201,9 +201,7 @@ public class AipApi extends ArchivalStoragePipe {
     })
     @PreAuthorize("hasAuthority('" + Permissions.LOGICAL_FILE_REMOVE + "')")
     @RequestMapping(value = "/{aipId}/remove", method = RequestMethod.PUT)
-    public void remove(
-            @ApiParam(value = "AIP id", required = true) @PathVariable("aipId") String aipId,
-            HttpServletResponse response) throws ArchivalStorageException, AipStateChangeException, IOException {
+    public void remove(@ApiParam(value = "AIP id", required = true) @PathVariable("aipId") String aipId, HttpServletResponse response) throws ArchivalStorageException, AipStateChangeException, IOException {
         checkUUID(aipId);
         aipService.changeAipState(aipId, IndexedAipState.REMOVED);
     }
@@ -215,10 +213,7 @@ public class AipApi extends ArchivalStoragePipe {
     })
     @PreAuthorize("hasAuthority('" + Permissions.LOGICAL_FILE_RENEW + "')")
     @RequestMapping(value = "/{aipId}/renew", method = RequestMethod.PUT)
-    public void renew(
-            @ApiParam(value = "AIP id", required = true)
-            @PathVariable("aipId") String aipId)
-            throws ArchivalStorageException, AipStateChangeException, IOException {
+    public void renew(@ApiParam(value = "AIP id", required = true) @PathVariable("aipId") String aipId) throws ArchivalStorageException, AipStateChangeException, IOException {
         checkUUID(aipId);
         aipService.changeAipState(aipId, IndexedAipState.ARCHIVED);
     }

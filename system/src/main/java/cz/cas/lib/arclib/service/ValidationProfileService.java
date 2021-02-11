@@ -1,6 +1,5 @@
 package cz.cas.lib.arclib.service;
 
-import cz.cas.lib.arclib.domain.Producer;
 import cz.cas.lib.arclib.domain.profiles.ValidationProfile;
 import cz.cas.lib.arclib.domainbase.exception.ForbiddenOperation;
 import cz.cas.lib.arclib.dto.ValidationProfileDto;
@@ -20,6 +19,7 @@ import java.io.InputStream;
 import java.util.Collection;
 
 import static cz.cas.lib.arclib.utils.ArclibUtils.hasRole;
+import static cz.cas.lib.core.util.Utils.eq;
 import static cz.cas.lib.core.util.Utils.notNull;
 
 @Service
@@ -31,15 +31,21 @@ public class ValidationProfileService {
 
     @Transactional
     public ValidationProfile save(ValidationProfile entity) throws IOException {
+        notNull(entity.getProducer(), () -> new BadRequestException("ValidationProfile must have producer assigned"));
+        // if user is not SUPER_ADMIN then entity must be assigned to user's producer
         if (!hasRole(userDetails, Permissions.SUPER_ADMIN_PRIVILEGE)) {
-            entity.setProducer(new Producer(userDetails.getProducerId()));
-        } else {
-            notNull(entity.getProducer(), () -> new BadRequestException("ValidationProfile has to have producer assigned"));
+            eq(entity.getProducer().getId(), userDetails.getUser().getProducer().getId(), () -> new ForbiddenOperation("Producer of ValidationProfile must be the same as producer of logged-in user."));
         }
 
         ValidationProfile validationProfileFound = store.find(entity.getId());
-        if (validationProfileFound != null && !validationProfileFound.isEditable()) {
-            throw new ForbiddenOperation(ValidationProfile.class, entity.getId());
+        if (validationProfileFound != null) {
+            // if user is not SUPER_ADMIN then change of producer is forbidden
+            if (!hasRole(userDetails, Permissions.SUPER_ADMIN_PRIVILEGE)) {
+                eq(entity.getProducer().getId(), validationProfileFound.getProducer().getId(), () -> new ForbiddenOperation("Cannot change ValidationProfile's Producer"));
+            }
+            if (!validationProfileFound.isEditable()) {
+                throw new ForbiddenOperation(ValidationProfile.class, entity.getId());
+            }
         }
 
         String validationProfileXml = entity.getXml();

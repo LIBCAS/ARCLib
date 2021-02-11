@@ -7,6 +7,7 @@ import cz.cas.lib.arclib.domain.packages.AuthorialPackage;
 import cz.cas.lib.arclib.domain.packages.AuthorialPackageUpdateLock;
 import cz.cas.lib.arclib.domain.packages.Sip;
 import cz.cas.lib.arclib.domainbase.exception.ForbiddenObject;
+import cz.cas.lib.arclib.domainbase.exception.ForbiddenOperation;
 import cz.cas.lib.arclib.domainbase.exception.GeneralException;
 import cz.cas.lib.arclib.domainbase.exception.MissingObject;
 import cz.cas.lib.arclib.dto.AipDetailDto;
@@ -58,8 +59,7 @@ import java.time.Instant;
 import java.util.*;
 
 import static cz.cas.lib.arclib.utils.ArclibUtils.hasRole;
-import static cz.cas.lib.core.util.Utils.bytesToHexString;
-import static cz.cas.lib.core.util.Utils.notNull;
+import static cz.cas.lib.core.util.Utils.*;
 
 @Slf4j
 @Service
@@ -172,6 +172,10 @@ public class AipService {
         List<IngestWorkflow> unfinishedIws = new ArrayList<>();
         List<IngestWorkflow> successfulIws = new ArrayList<>();
         for (IngestWorkflow iw : iws) {
+            notNull(iw.getProducerProfile(), () -> new IllegalArgumentException("producer profile of IngestWorkflow " + iw.getId() + " is null"));
+            notNull(iw.getProducerProfile().getProducer(), () -> new IllegalArgumentException("producer of IngestWorkflow " + iw.getId() + " is null"));
+            verifyProducer(iw.getProducerProfile().getProducer(), "User cannot change AIP state because producer of IngestWorkflow:"+iw.getId()+" does not match user's producer.");
+
             switch (iw.getProcessingState()) {
                 case PERSISTED:
                     successfulIws.add(iw);
@@ -237,6 +241,10 @@ public class AipService {
     public void registerXmlUpdate(String authorialPackageId) throws IOException {
         AuthorialPackage authorialPackage = authorialPackageStore.find(authorialPackageId);
         notNull(authorialPackage, () -> new MissingObject(AuthorialPackage.class, authorialPackageId));
+
+        notNull(authorialPackage.getProducerProfile(), () -> new IllegalArgumentException("producer profile of AuthorialPackage " + authorialPackageId + " is null"));
+        notNull(authorialPackage.getProducerProfile().getProducer(), () -> new IllegalArgumentException("producer of AuthorialPackage " + authorialPackageId + " is null"));
+        verifyProducer(authorialPackage.getProducerProfile().getProducer(), "User cannot register XML update of AuthorialPackage that does not match user's producer.");
 
         activateLock(authorialPackageId, true, userDetails.getId());
         log.debug("Registered update of XML of authorial package " + authorialPackageId + ". Activated update lock.");
@@ -359,6 +367,10 @@ public class AipService {
         AuthorialPackage authorialPackage = authorialPackageStore.find(authorialPackageId);
         notNull(authorialPackage, () -> new MissingObject(AuthorialPackage.class, authorialPackageId));
 
+        notNull(authorialPackage.getProducerProfile(), () -> new IllegalArgumentException("producer profile of AuthorialPackage " + authorialPackageId + " is null"));
+        notNull(authorialPackage.getProducerProfile().getProducer(), () -> new IllegalArgumentException("producer of AuthorialPackage " + authorialPackageId + " is null"));
+        verifyProducer(authorialPackage.getProducerProfile().getProducer(), "User cannot refresh keep-alive update timeout of AuthorialPackage that does not match user's producer.");
+
         AuthorialPackageUpdateLock updateLock =
                 authorialPackageUpdateLockStore.findByAuthorialPackageId(authorialPackageId);
         if (updateLock == null || !updateLock.isLocked()) {
@@ -429,7 +441,7 @@ public class AipService {
      * @throws IOException keep alive update script is unreadable
      */
     @Transactional
-    private Job createTimeoutCheckJob(String authorialPackageId) throws IOException {
+    public Job createTimeoutCheckJob(String authorialPackageId) throws IOException {
         Job timeoutCheckJob = new Job();
         timeoutCheckJob.setName("Authorial package keepalive check");
         timeoutCheckJob.setScriptType(ScriptType.GROOVY);
@@ -456,9 +468,13 @@ public class AipService {
      */
     @Transactional
     public void deactivateLock(String authorialPackageId) throws ForbiddenException {
-        AuthorialPackageUpdateLock updateLock =
-                authorialPackageUpdateLockStore.findByAuthorialPackageId(authorialPackageId);
+        AuthorialPackageUpdateLock updateLock = authorialPackageUpdateLockStore.findByAuthorialPackageId(authorialPackageId);
+
         if (updateLock != null) {
+            notNull(updateLock.getAuthorialPackage().getProducerProfile(), () -> new IllegalArgumentException("producer profile of AuthorialPackage " + authorialPackageId + " is null"));
+            notNull(updateLock.getAuthorialPackage().getProducerProfile().getProducer(), () -> new IllegalArgumentException("producer of AuthorialPackage " + authorialPackageId + " is null"));
+            verifyProducer(updateLock.getAuthorialPackage().getProducerProfile().getProducer(), "User cannot deactivate the update lock of AuthorialPackage that does not match user's producer.");
+
             updateLock.setLocked(false);
             authorialPackageUpdateLockStore.save(updateLock);
 
@@ -473,6 +489,12 @@ public class AipService {
 
     public void removeAipXmlIndex(String externalId) {
         indexedArclibXmlStore.removeIndex(externalId);
+    }
+
+    public void verifyProducer(Producer producer, String exceptionMessage) {
+        if (!hasRole(userDetails, Permissions.SUPER_ADMIN_PRIVILEGE)) {
+            eq(producer.getId(), userDetails.getUser().getProducer().getId(), () -> new ForbiddenOperation(exceptionMessage));
+        }
     }
 
     /**

@@ -2,6 +2,7 @@ package cz.cas.lib.arclib.api;
 
 import cz.cas.lib.arclib.domain.Batch;
 import cz.cas.lib.arclib.domain.Hash;
+import cz.cas.lib.arclib.domainbase.exception.MissingObject;
 import cz.cas.lib.arclib.dto.BatchDetailDto;
 import cz.cas.lib.arclib.dto.BatchDto;
 import cz.cas.lib.arclib.dto.JmsDto;
@@ -24,6 +25,7 @@ import java.io.IOException;
 
 import static cz.cas.lib.arclib.utils.ArclibUtils.hasRole;
 import static cz.cas.lib.core.util.Utils.addPrefilter;
+import static cz.cas.lib.core.util.Utils.notNull;
 
 @RestController
 @Api(value = "batch", description = "Api for interaction with batches")
@@ -88,8 +90,7 @@ public class BatchApi {
             @ApiResponse(code = 404, message = "Instance does not exist")})
     @PreAuthorize("hasAuthority('" + Permissions.BATCH_PROCESSING_WRITE + "')")
     @RequestMapping(value = "/{batchId}/suspend", method = RequestMethod.POST)
-    public void suspend(@ApiParam(value = "Id of the batch to suspend", required = true)
-                        @PathVariable("batchId") String batchId) {
+    public void suspend(@ApiParam(value = "Id of the batch to suspend", required = true) @PathVariable("batchId") String batchId) {
         coordinatorService.suspendBatch(batchId);
     }
 
@@ -99,8 +100,13 @@ public class BatchApi {
             @ApiResponse(code = 404, message = "Instance does not exist")})
     @PreAuthorize("hasAuthority('" + Permissions.BATCH_PROCESSING_WRITE + "')")
     @RequestMapping(value = "/{batchId}/cancel", method = RequestMethod.POST)
-    public void cancel(@ApiParam(value = "Id of the batch to cancel", required = true)
-                       @PathVariable("batchId") String batchId) {
+    public void cancel(@ApiParam(value = "Id of the batch to cancel", required = true) @PathVariable("batchId") String batchId) {
+        Batch batch = batchService.find(batchId);
+        notNull(batch, () -> new MissingObject(Batch.class, batchId));
+        notNull(batch.getProducerProfile(), () -> new IllegalArgumentException("producer profile of batch " + batchId + " is null"));
+        notNull(batch.getProducerProfile().getProducer(), () -> new IllegalArgumentException("producer of batch " + batchId + " is null"));
+        coordinatorService.verifyProducer(batch.getProducerProfile().getProducer(), "User cannot cancel batch that does not belong to his producer.");
+
         coordinatorService.cancelBatch(new JmsDto(batchId, userDetails.getId()));
     }
 

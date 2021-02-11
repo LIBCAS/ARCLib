@@ -32,12 +32,9 @@ public class ExportRoutineApi {
     @PreAuthorize("hasAuthority('" + Permissions.EXPORT_ROUTINE_WRITE + "')")
     @RequestMapping(value = "/{id}", method = RequestMethod.PUT)
     @Transactional
-    public ExportRoutine save(@ApiParam(value = "Id of the instance", required = true)
-                              @PathVariable("id") String id,
-                              @ApiParam(value = "Single instance", required = true)
-                              @RequestBody ExportRoutine exportRoutine) throws JsonProcessingException {
+    public ExportRoutine save(@ApiParam(value = "Id of the instance", required = true) @PathVariable("id") String id,
+                              @ApiParam(value = "Single instance", required = true) @RequestBody ExportRoutine exportRoutine) throws JsonProcessingException {
         eq(id, exportRoutine.getId(), () -> new BadArgument("id"));
-
         return exportRoutineService.save(exportRoutine);
     }
 

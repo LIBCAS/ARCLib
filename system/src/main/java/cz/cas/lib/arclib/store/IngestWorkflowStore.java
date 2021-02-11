@@ -1,6 +1,7 @@
 package cz.cas.lib.arclib.store;
 
 import cz.cas.lib.arclib.domain.ingestWorkflow.IngestWorkflow;
+import cz.cas.lib.arclib.domain.ingestWorkflow.IngestWorkflowState;
 import cz.cas.lib.arclib.domain.ingestWorkflow.QIngestWorkflow;
 import cz.cas.lib.core.sequence.Generator;
 import cz.cas.lib.arclib.domainbase.store.DatedStore;
@@ -70,6 +71,19 @@ public class IngestWorkflowStore extends DatedStore<IngestWorkflow, QIngestWorkf
 
         detachAll();
         return ingestWorkflowsFound;
+    }
+
+    public List<IngestWorkflow> findByState(IngestWorkflowState... states) {
+        QIngestWorkflow ingestWorkflow = qObject();
+
+        List<IngestWorkflow> workflows = query()
+                .select(ingestWorkflow)
+                .where(ingestWorkflow.deleted.isNull())
+                .where(ingestWorkflow.processingState.in(states))
+                .fetch();
+
+        detachAll();
+        return workflows;
     }
 
     @Inject
