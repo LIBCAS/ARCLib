@@ -244,7 +244,7 @@ public class AipApi extends ArchivalStoragePipe {
             @ApiParam(value = "Authorial package id", required = true)
             @PathVariable("authorialPackageId") String authorialPackageId) {
         log.debug("Canceling XML update for authorial package " + authorialPackageId + ".");
-        aipService.deactivateLock(authorialPackageId);
+        aipService.deactivateLock(authorialPackageId, true);
     }
 
     @ApiOperation(value = "Updates Arclib XML of AIP. Register update must be called prior to calling this method. [Perm.UPDATE_XML]")

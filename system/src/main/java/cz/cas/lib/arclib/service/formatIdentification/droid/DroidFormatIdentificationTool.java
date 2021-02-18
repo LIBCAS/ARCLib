@@ -21,6 +21,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import static cz.cas.lib.core.util.Utils.*;
 
@@ -179,8 +180,8 @@ public class DroidFormatIdentificationTool extends FormatIdentificationTool {
     protected List<String> getDroidSignatureFilesVersions() {
         Pair<Integer, List<String>> result = executeProcessCustomResultHandle(false, CMD, "-x");
         if (result.getLeft() != 0)
-            throw new IllegalStateException("Droid signature files version CMD has failed: " + result.getRight());
-        return result.getRight();
+            throw new IllegalStateException("Droid cmd: " + CMD + " -x" + " has failed: " + result.getRight());
+        return result.getRight().stream().filter(s -> !s.contains("Starting DROID")).collect(Collectors.toList());
     }
 
     /**
@@ -191,8 +192,8 @@ public class DroidFormatIdentificationTool extends FormatIdentificationTool {
     protected List<String> getDroidVersion() {
         Pair<Integer, List<String>> result = executeProcessCustomResultHandle(false, CMD, "-v");
         if (result.getLeft() != 0)
-            throw new IllegalStateException("Droid version CMD has failed: " + result.getRight());
-        return result.getRight();
+            throw new IllegalStateException("Droid cmd: " + CMD + " -v" + " has failed: " + result.getRight());
+        return result.getRight().stream().filter(s -> !s.contains("Starting DROID")).collect(Collectors.toList());
     }
 
     /**

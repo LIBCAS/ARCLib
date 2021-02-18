@@ -36,7 +36,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jms.annotation.JmsListener;
 import org.springframework.jms.core.JmsTemplate;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.support.TransactionCallback;
 import org.springframework.transaction.support.TransactionTemplate;
 import org.xml.sax.SAXException;
 
@@ -115,7 +114,7 @@ public class WorkerService {
                 return;
             }
 
-            transactionTemplate.execute((TransactionCallback<Void>) status -> {
+            transactionTemplate.execute(t -> {
                 try {
                     //all DB operations in the template will be rolled back in case of any exception
                     ingestWorkflow.setProcessingState(IngestWorkflowState.PROCESSING);
@@ -123,12 +122,6 @@ public class WorkerService {
                     processIngestWorkflow(ingestWorkflow, dto.getUserId());
                     log.info("State of ingest workflow with external id " + externalId + " changed to PROCESSING.");
                 } catch (IOException e) {
-                    // renaming to FAILED_<file_name>
-                    Batch workflowBatch = ingestWorkflow.getBatch();
-                    if (workflowBatch != null && workflowBatch.getIngestRoutine() != null && workflowBatch.getIngestRoutine().isAuto()) {
-                        log.debug(String.format("Changing prefix of file:'%s' from:'%s' to:'%s'.", ingestWorkflow.getFileName(), AutoIngestFilePrefix.PROCESSING.getPrefix(), AutoIngestFilePrefix.FAILED.getPrefix()));
-                        changeFilePrefix(AutoIngestFilePrefix.PROCESSING, AutoIngestFilePrefix.FAILED, ingestWorkflow);
-                    }
                     throw new UncheckedIOException(e);
                 }
                 return null;

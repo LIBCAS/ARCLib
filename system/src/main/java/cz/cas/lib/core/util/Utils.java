@@ -604,6 +604,11 @@ public class Utils {
         }
     }
 
+    /**
+     * @param mergeOutputs merge stdout and stderr outputs
+     * @param cmd          cmd to execute
+     * @return Pair with return code as key and output (list of lines) as value
+     */
     public static Pair<Integer, List<String>> executeProcessCustomResultHandle(boolean mergeOutputs, String... cmd) {
         File stdFile = null;
         File errFile = null;

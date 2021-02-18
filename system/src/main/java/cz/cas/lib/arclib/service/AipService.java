@@ -271,6 +271,7 @@ public class AipService {
         log.info(opLogId + "started");
 
         IngestWorkflow originalIngestWorkflow = ingestWorkflowService.findByExternalId(xmlId);
+        verifyProducer(originalIngestWorkflow.getProducerProfile().getProducer(), "User cannot finish XML update of Ingest workflow that does not match user's producer.");
         AuthorialPackage authorialPackage = originalIngestWorkflow.getSip().getAuthorialPackage();
         AuthorialPackageUpdateLock lock = authorialPackageUpdateLockStore.findByAuthorialPackageId(authorialPackage.getId());
         if (!lock.isLocked()) {
@@ -351,7 +352,7 @@ public class AipService {
             return null;
         });
         transactionTemplate.execute(t -> {
-            deactivateLock(newIngestWorkflow.getSip().getAuthorialPackage().getId());
+            deactivateLock(newIngestWorkflow.getSip().getAuthorialPackage().getId(), false);
             return null;
         });
     }
@@ -395,7 +396,7 @@ public class AipService {
         if (latestLockedInstant != null && latestLockedInstant.plusSeconds(keepAliveUpdateTimeout)
                 .isBefore(Instant.now().minusSeconds(keepAliveNetworkDelay))) {
             log.debug("Job is canceling XML update for authorial package " + authorialPackageId + ".");
-            deactivateLock(authorialPackageId);
+            deactivateLock(authorialPackageId, false);
         }
     }
 
@@ -465,15 +466,18 @@ public class AipService {
      * Deactivates the update lock for the authorial package and deletes associated timeout check job
      *
      * @param authorialPackageId id of the authorial package
+     * @param verifyProducer     whether to verify that calling user is authorized to edit data of the producer related with the authorial package..
+     *                           can be set to true only if the user can be obtained from UserDetails (API thread context)
      */
     @Transactional
-    public void deactivateLock(String authorialPackageId) throws ForbiddenException {
+    public void deactivateLock(String authorialPackageId, boolean verifyProducer) throws ForbiddenException {
         AuthorialPackageUpdateLock updateLock = authorialPackageUpdateLockStore.findByAuthorialPackageId(authorialPackageId);
 
         if (updateLock != null) {
             notNull(updateLock.getAuthorialPackage().getProducerProfile(), () -> new IllegalArgumentException("producer profile of AuthorialPackage " + authorialPackageId + " is null"));
             notNull(updateLock.getAuthorialPackage().getProducerProfile().getProducer(), () -> new IllegalArgumentException("producer of AuthorialPackage " + authorialPackageId + " is null"));
-            verifyProducer(updateLock.getAuthorialPackage().getProducerProfile().getProducer(), "User cannot deactivate the update lock of AuthorialPackage that does not match user's producer.");
+            if (verifyProducer)
+                verifyProducer(updateLock.getAuthorialPackage().getProducerProfile().getProducer(), "User cannot deactivate the update lock of AuthorialPackage that does not match user's producer.");
 
             updateLock.setLocked(false);
             authorialPackageUpdateLockStore.save(updateLock);

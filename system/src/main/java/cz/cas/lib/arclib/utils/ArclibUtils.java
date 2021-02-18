@@ -11,6 +11,8 @@ import cz.cas.lib.arclib.exception.bpm.ConfigParserException;
 import cz.cas.lib.arclib.formatlibrary.domain.FormatDefinition;
 import cz.cas.lib.arclib.formatlibrary.service.FormatDefinitionService;
 import cz.cas.lib.arclib.security.user.UserDetails;
+import lombok.NonNull;
+import lombok.extern.slf4j.Slf4j;
 import net.sf.saxon.jaxp.SaxonTransformerFactory;
 import org.apache.commons.lang3.tuple.Pair;
 import org.dom4j.Document;
@@ -44,6 +46,7 @@ import static cz.cas.lib.arclib.utils.XmlUtils.createDomAndXpath;
 import static cz.cas.lib.core.util.Utils.notNull;
 import static java.util.stream.Collectors.groupingBy;
 
+@Slf4j
 public class ArclibUtils {
 
     public static final String ZIP_EXTENSION = ".zip";
@@ -130,15 +133,22 @@ public class ArclibUtils {
      * @throws UncheckedIOException when rename operation fails.
      * @throws MissingObject        when ingest workflow does not have assigned batch.
      */
-    public static void changeFilePrefix(AutoIngestFilePrefix oldPrefix, AutoIngestFilePrefix newPrefix, IngestWorkflow ingestWorkflow) {
+    public static void changeFilePrefix(@NonNull AutoIngestFilePrefix oldPrefix, @NonNull AutoIngestFilePrefix newPrefix, IngestWorkflow ingestWorkflow) {
         notNull(ingestWorkflow.getBatch(), () -> new MissingObject(Batch.class, "ingest workflow does not have assigned batch."));
-        changeFilePrefix(oldPrefix, newPrefix, ingestWorkflow.getFileName(), ingestWorkflow.getBatch().getTransferAreaPath());
-    }
-
-    public static void changeFilePrefix(AutoIngestFilePrefix oldPrefix, AutoIngestFilePrefix newPrefix, String fileName, String transferAreaPath) {
         try {
-            Path oldPrefixedPath = Paths.get(transferAreaPath, oldPrefix.getPrefix() + fileName);
-            Files.move(oldPrefixedPath, oldPrefixedPath.resolveSibling(newPrefix.getPrefix() + fileName));
+            Path oldPrefixedPath = Paths.get(ingestWorkflow.getBatch().getTransferAreaPath(), oldPrefix.getPrefix() + ingestWorkflow.getFileName());
+            switch (newPrefix) {
+                case PROCESSING:
+                    Files.move(oldPrefixedPath, oldPrefixedPath.resolveSibling(newPrefix.getPrefix() + ingestWorkflow.getFileName()));
+                case ARCHIVED:
+                case FAILED:
+                    if (oldPrefixedPath.toFile().exists())
+                        Files.move(oldPrefixedPath, oldPrefixedPath.resolveSibling(newPrefix.getPrefix() + ingestWorkflow.getFileName()));
+                    else
+                        log.debug("File at path: {} not found, skipping write of {} prefix", oldPrefixedPath, newPrefix);
+                default:
+                    throw new UnsupportedOperationException("change to prefix: " + newPrefix + " is not supported");
+            }
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }

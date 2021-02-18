@@ -1,13 +1,14 @@
 package cz.cas.lib.arclib.domainbase.store;
 
+import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.dsl.*;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
-import cz.cas.lib.arclib.domainbase.domain.DomainObject;
-import cz.cas.lib.arclib.domainbase.util.DomainBaseUtils;
 import cz.cas.lib.arclib.domainbase.audit.AuditLogger;
 import cz.cas.lib.arclib.domainbase.audit.EntityDeleteEvent;
 import cz.cas.lib.arclib.domainbase.audit.EntitySaveEvent;
+import cz.cas.lib.arclib.domainbase.domain.DomainObject;
+import cz.cas.lib.arclib.domainbase.util.DomainBaseUtils;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import org.springframework.beans.factory.BeanCreationException;
@@ -119,6 +120,7 @@ public abstract class DomainStore<T extends DomainObject, Q extends EntityPathBa
     public Collection<T> findAll(long offset, long limit) {
         JPAQuery<T> query = query().select(qObject());
         applyWhereExpression(query);
+        applyOrderByExpression(query);
 
         if (offset != 0) {
             query.offset(offset);
@@ -359,11 +361,29 @@ public abstract class DomainStore<T extends DomainObject, Q extends EntityPathBa
         return null;
     }
 
+    /**
+     * Provides extension point for inheriting classes to define ordering for the {@link #findAll()} and  {@link #findAll(long, long)} methods
+     * in {@link DomainStore}.
+     *
+     * @return order by clause or null
+     */
+    protected OrderSpecifier<?> findAllOrderByExpression() {
+        return null;
+    }
+
     private void applyWhereExpression(JPAQuery<T> query) {
         BooleanExpression expression = findWhereExpression();
 
         if (expression != null) {
             query.where(expression);
+        }
+    }
+
+    private void applyOrderByExpression(JPAQuery<T> query) {
+        OrderSpecifier<?> expression = findAllOrderByExpression();
+
+        if (expression != null) {
+            query.orderBy(expression);
         }
     }
 

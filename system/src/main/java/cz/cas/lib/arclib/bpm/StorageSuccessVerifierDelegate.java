@@ -114,7 +114,7 @@ public class StorageSuccessVerifierDelegate extends ArclibDelegate {
                 Integer remainingStoreAttemptRetries = (Integer) execution.getVariable(BpmConstants.ArchivalStorage.aipStoreAttempts) - 1;
                 execution.setVariable(BpmConstants.ArchivalStorage.archivalStorageResult, BpmConstants.ArchivalStorage.ArchivalStorageResultEnum.FAIL);
                 execution.setVariable(BpmConstants.ArchivalStorage.aipStoreAttempts, remainingStoreAttemptRetries);
-                execution.setVariable(BpmConstants.ProcessVariables.idlePoint, Instant.now());
+                execution.setVariable(BpmConstants.ProcessVariables.idlePoint, Instant.now().toEpochMilli());
                 log.debug("Archival Storage has failed leaving the object {} at state {}. Number of remaining attempts to store the object is {}", objectLogId, stateInArchivalStorage, remainingStoreAttemptRetries);
                 return;
             default:
@@ -174,7 +174,7 @@ public class StorageSuccessVerifierDelegate extends ArclibDelegate {
             changeFilePrefix(AutoIngestFilePrefix.PROCESSING, AutoIngestFilePrefix.ARCHIVED, ingestWorkflow);
         }
 
-        aipService.deactivateLock(ingestWorkflow.getSip().getAuthorialPackage().getId());
+        aipService.deactivateLock(ingestWorkflow.getSip().getAuthorialPackage().getId(), false);
     }
 
     @Inject

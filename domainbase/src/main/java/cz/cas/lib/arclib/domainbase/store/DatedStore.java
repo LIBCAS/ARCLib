@@ -1,5 +1,6 @@
 package cz.cas.lib.arclib.domainbase.store;
 
+import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.EntityPathBase;
 import com.querydsl.core.types.dsl.StringPath;
@@ -24,6 +25,13 @@ public abstract class DatedStore<T extends DatedObject, Q extends EntityPathBase
         StringPath deletedPath = propertyPath("deleted");
 
         return deletedPath.isNull();
+    }
+
+    @Override
+    protected OrderSpecifier<?> findAllOrderByExpression() {
+        StringPath updatedPath = propertyPath("updated");
+
+        return updatedPath.desc();
     }
 
     @Override

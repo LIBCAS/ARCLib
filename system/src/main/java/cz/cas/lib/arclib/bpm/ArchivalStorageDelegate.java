@@ -86,7 +86,7 @@ public class ArchivalStorageDelegate extends ArclibDelegate {
         } catch (ArchivalStorageException e) {
             execution.setVariable(BpmConstants.ArchivalStorage.archivalStorageResult, BpmConstants.ArchivalStorage.ArchivalStorageResultEnum.FAIL);
             execution.setVariable(BpmConstants.ArchivalStorage.aipStoreAttempts, remainingStoreAttemptRetries);
-            execution.setVariable(BpmConstants.ProcessVariables.idlePoint, Instant.now());
+            execution.setVariable(BpmConstants.ProcessVariables.idlePoint, Instant.now().toEpochMilli());
             log.debug("Non-standard response to store request: {}. Number of remaining attempts to store the object is {}.", e.toString(), remainingStoreAttemptRetries);
             return;
         }

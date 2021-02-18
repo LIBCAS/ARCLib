@@ -109,7 +109,7 @@ public class IngestErrorHandler {
                 AuthorialPackage authorialPackage = sip.getAuthorialPackage();
                 if (authorialPackage != null) {
                     String authorialPackageId = authorialPackage.getId();
-                    aipService.deactivateLock(authorialPackageId);
+                    aipService.deactivateLock(authorialPackageId, false);
                 }
             }
 

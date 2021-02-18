@@ -161,7 +161,7 @@ public class CoordinatorService {
             return null;
         }
 
-        log.info("Processing of a batch of SIP packages has been triggered, routine id: {}", routineId);
+        log.trace("Processing of a batch of SIP packages has been triggered, routine id: {}", routineId);
 
         if (batchWorkflowConfig.isEmpty()) throw new BadArgument("Workflow config is empty. Try to use '{}'");
 
@@ -190,10 +190,16 @@ public class CoordinatorService {
             log.debug("Merged workflow config to be used: {}", mergedWorkflowConfig);
             Batch batch = prepareBatch(ingestWorkflows, producerProfile, batchWorkflowConfig, mergedWorkflowConfig, fullTransferAreaPath, assignedUserId, ingestRoutine);
             ingestRoutine.getCurrentlyProcessingBatches().add(batch);
+
+            // prefixing with PROCESSING_<file_name>
+            if (ingestRoutine.isAuto()) {
+                ingestWorkflows.forEach(w -> {
+                    log.debug("Prefixing file:'" + w.getFileName() + "' with:'" + AutoIngestFilePrefix.PROCESSING.getPrefix() + "'.");
+                    changeFilePrefix(AutoIngestFilePrefix.NONE, AutoIngestFilePrefix.PROCESSING, w);
+                });
+            }
             return batch.getId();
         });
-
-        if (batchId == null) return null;
 
         ingestWorkflows.forEach(ingestWorkflow -> {
             log.debug("Sending a message to Worker to process ingest workflow with external id " + ingestWorkflow.getExternalId() + ".");
@@ -365,7 +371,7 @@ public class CoordinatorService {
      * @return list of created ingest workflows
      */
     private List<IngestWorkflow> scanTransferArea(File folder, String initialIngestWorkflowConfig, boolean automaticProcessing) {
-        log.debug("Scanning transfer area at path " + folder.toPath().toString() + " for SIP packages.");
+        log.trace("Scanning transfer area at path " + folder.toPath().toString() + " for SIP packages.");
         List<IngestWorkflow> ingestWorkflows = Arrays
                 .stream(folder.listFiles())
                 .filter(f -> {
@@ -390,17 +396,13 @@ public class CoordinatorService {
                         throw new GeneralException("File with checksum for file with name " + f.getName() + " is inaccessible.", e);
                     }
 
-                    // prefixing with PROCESSING_<file_name>
-                    if (automaticProcessing) {
-                        log.debug("Prefixing file:'" + file.toString() + "' with:'" + AutoIngestFilePrefix.PROCESSING.getPrefix() + "'.");
-                        changeFilePrefix(AutoIngestFilePrefix.NONE, AutoIngestFilePrefix.PROCESSING, ingestWorkflow.getFileName(), folder.toPath().toString());
-                    }
-
                     ingestWorkflowService.save(ingestWorkflow);
                     return ingestWorkflow;
                 })
                 .collect(Collectors.toList());
-        log.debug("Number of SIP packages to be processed: " + ingestWorkflows.size() + ".");
+        if (ingestWorkflows.size() > 0) {
+            log.info("Processing of a batch of {} SIP packages at path {} has been triggered.", ingestWorkflows.size(), folder.toPath().toString());
+        }
         return ingestWorkflows;
     }
 
