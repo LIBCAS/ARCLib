@@ -110,6 +110,7 @@ public class FormatDefinition extends DatedObject {
     /**
      * Poznámka
      */
+    @Column(length = 10485760)
     private String formatNote;
 
     /**

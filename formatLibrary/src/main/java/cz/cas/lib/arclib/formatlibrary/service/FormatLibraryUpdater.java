@@ -244,12 +244,7 @@ public class FormatLibraryUpdater {
                         formatDefinition.setFormatDescription(attributeValue);
                         break;
                     case FormatName:
-                        if (format.getFormatName() != null) {
-                            eq(attributeValue, format.getFormatName(), () -> new GeneralException(
-                                    "Value of attribute " + FormatItem.FormatName + " does not match the expected value."));
-                        } else {
-                            format.setFormatName(attributeValue);
-                        }
+                        format.setFormatName(attributeValue);
                         break;
                     case FormatNote:
                         formatDefinition.setFormatNote(attributeValue);

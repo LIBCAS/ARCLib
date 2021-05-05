@@ -1366,4 +1366,7 @@
             <column name="processing_time" type="bigint" value="0"/>
         </addColumn>
     </changeSet>
+    <changeSet id="30" author="tomasek">
+        <modifyDataType tableName="arclib_format_definition" columnName="format_note" newDataType="nclob"/>
+    </changeSet>
 </databaseChangeLog>
