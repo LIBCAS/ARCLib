@@ -15,3 +15,6 @@ The ARCLib project responds to needs of memory institutions and especially libra
 in the Wiki documentation https://github.com/LIBCAS/ARCLib/wiki.
 
 **More information about ARCLib project and team is at https://arclib.cz/**
+
+**The methodology for logical preservation of digital data: http://hdl.handle.net/11104/0282107**
+**The methodology for bit-level preservation of digital data: http://hdl.handle.net/11104/0294749**
