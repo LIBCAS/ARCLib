@@ -453,7 +453,6 @@ public class FormatLibraryUpdater {
 
         localDefinition.setId(null);
         localDefinition.setLocalDefinition(true);
-        localDefinition.setPreservationPlanFile(null);
 
         return formatDefinitionService.saveWithVersioning(localDefinition);
     }

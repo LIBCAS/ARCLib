@@ -38,7 +38,7 @@ public class PreservationPlanFileRef extends DatedObject {
     private InputStream stream;
 
     /**
-     * Size of the file contentł
+     * Size of the file content
      */
     @Transient
     private Long size;

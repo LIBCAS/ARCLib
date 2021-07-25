@@ -30,6 +30,23 @@
 			<rightPen lineWidth="0.5" lineColor="#000000"/>
 		</box>
 	</style>
+	<subDataset name="IdentifiedFormatsPuidsDs" uuid="f7a21021-c9d1-4926-9779-cb5d8b8031b2">
+		<property name="com.jaspersoft.studio.data.sql.tables" value=""/>
+		<property name="com.jaspersoft.studio.data.defaultdataadapter" value="DataAdapter.xml"/>
+		<parameter name="from" class="java.lang.String">
+			<parameterDescription><![CDATA[]]></parameterDescription>
+			<defaultValueExpression><![CDATA["1700-01-01T00:00:00Z"]]></defaultValueExpression>
+		</parameter>
+		<parameter name="to" class="java.lang.String">
+			<parameterDescription><![CDATA[]]></parameterDescription>
+			<defaultValueExpression><![CDATA["4000-12-31T00:00:00Z"]]></defaultValueExpression>
+		</parameter>
+		<queryString language="SQL">
+			<![CDATA[SELECT arc.identified_format_format_registry_key, SUM(arc.identified_format_file_count) AS count_of_items FROM arclibXmlC arc JOIN arclibXmlC sub ON sub._root_ = arc._root_ WHERE arc.identified_format_format_registry_key = '[* TO *]' AND sub.created = '[$P!{from} TO $P!{to}]' GROUP BY arc.identified_format_format_registry_key]]>
+		</queryString>
+		<field name="count_of_items" class="java.lang.String"/>
+		<field name="identified_format_format_registry_key" class="java.lang.String"/>
+	</subDataset>
 	<subDataset name="UsedFormatsDs" uuid="f7a21021-c9d1-4926-9779-cb5d8b8031b2">
 		<property name="com.jaspersoft.studio.data.sql.tables" value=""/>
 		<property name="com.jaspersoft.studio.data.defaultdataadapter" value="DataAdapter.xml"/>
@@ -141,6 +158,65 @@
 	<detail>
 		<band height="260" splitType="Stretch">
 			<componentElement>
+				<reportElement x="190" y="40" width="200" height="60" uuid="d006050f-61e1-4b67-8a4c-1a3a64ccb7ab">
+					<property name="com.jaspersoft.studio.layout" value="com.jaspersoft.studio.editor.layout.VerticalRowLayout"/>
+					<property name="com.jaspersoft.studio.table.style.table_header" value="Table_TH"/>
+					<property name="com.jaspersoft.studio.table.style.column_header" value="Table_CH"/>
+					<property name="com.jaspersoft.studio.table.style.detail" value="Table_TD"/>
+					<property name="net.sf.jasperreports.export.headertoolbar.table.name" value="UsedFormats"/>
+				</reportElement>
+				<jr:table xmlns:jr="http://jasperreports.sourceforge.net/jasperreports/components" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports/components http://jasperreports.sourceforge.net/xsd/components.xsd" whenNoDataType="AllSectionsNoDetail">
+					<datasetRun subDataset="IdentifiedFormatsPuidsDs" uuid="46ae24f3-ecad-47de-b764-55cf3f33f555">
+						<datasetParameter name="from">
+							<datasetParameterExpression><![CDATA[$P{from}]]></datasetParameterExpression>
+						</datasetParameter>
+						<datasetParameter name="to">
+							<datasetParameterExpression><![CDATA[$P{to}]]></datasetParameterExpression>
+						</datasetParameter>
+						<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
+					</datasetRun>
+					<jr:column width="100" uuid="8cb530c3-7d95-4336-933a-1b2c114beb35">
+						<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column1"/>
+						<jr:columnHeader style="Table_CH" height="30" rowSpan="1">
+							<staticText>
+								<reportElement x="0" y="0" width="100" height="30" uuid="00216162-f356-4daf-b412-0ff69889302b"/>
+								<text><![CDATA[PUID]]></text>
+							</staticText>
+						</jr:columnHeader>
+						<jr:detailCell style="Table_TD" height="30">
+							<textField>
+								<reportElement x="0" y="0" width="100" height="30" uuid="9b2acbb8-910a-4c73-977f-368ad3f0393d"/>
+								<textFieldExpression><![CDATA[$F{identified_format_format_registry_key}]]></textFieldExpression>
+							</textField>
+						</jr:detailCell>
+					</jr:column>
+					<jr:column width="100" uuid="0159b4c8-3fb6-4f42-9f03-b5cecdb9f581">
+						<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column2"/>
+						<jr:columnHeader style="Table_CH" height="30" rowSpan="1">
+							<staticText>
+								<reportElement x="0" y="0" width="100" height="30" uuid="d0d36afa-5868-4219-b4e3-edc8313c95f7"/>
+								<text><![CDATA[Count of files]]></text>
+							</staticText>
+						</jr:columnHeader>
+						<jr:detailCell style="Table_TD" height="30">
+							<textField>
+								<reportElement x="0" y="0" width="100" height="30" uuid="6ad6b939-b093-4136-b132-fcdcb9cf7554"/>
+								<textFieldExpression><![CDATA[$F{count_of_items}]]></textFieldExpression>
+							</textField>
+						</jr:detailCell>
+					</jr:column>
+				</jr:table>
+			</componentElement>
+			<staticText>
+				<reportElement x="80" y="10" width="400" height="30" uuid="97f843fc-1353-41df-a1e3-fc60b1e8ed92"/>
+				<textElement textAlignment="Center">
+					<font size="16"/>
+				</textElement>
+				<text><![CDATA[Identified formats by PUIDs]]></text>
+			</staticText>
+		</band>
+		<band height="260" splitType="Stretch">
+			<componentElement>
 				<reportElement x="80" y="40" width="400" height="60" uuid="d006050f-61e1-4b67-8a4c-1a3a64ccb7ab">
 					<property name="com.jaspersoft.studio.layout" value="com.jaspersoft.studio.editor.layout.VerticalRowLayout"/>
 					<property name="com.jaspersoft.studio.table.style.table_header" value="Table_TH"/>
@@ -225,7 +301,7 @@
 				<textElement textAlignment="Center">
 					<font size="16"/>
 				</textElement>
-				<text><![CDATA[List of used formats]]></text>
+				<text><![CDATA[Extracted formats]]></text>
 			</staticText>
 		</band>
 		<band height="260" splitType="Stretch">
@@ -347,7 +423,7 @@
 				<textElement textAlignment="Center">
 					<font size="16"/>
 				</textElement>
-				<text><![CDATA[List of used format PUIDs]]></text>
+				<text><![CDATA[Extracted formats by PUIDs]]></text>
 			</staticText>
 		</band>
 		<band height="260" splitType="Stretch">
@@ -424,7 +500,7 @@
 				<textElement textAlignment="Center">
 					<font size="16"/>
 				</textElement>
-				<text><![CDATA[Preservation level]]></text>
+				<text><![CDATA[Extracted formats preservation level]]></text>
 			</staticText>
 		</band>
 	</detail>

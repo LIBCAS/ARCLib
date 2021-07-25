@@ -1369,4 +1369,15 @@
     <changeSet id="30" author="tomasek">
         <modifyDataType tableName="arclib_format_definition" columnName="format_note" newDataType="nclob"/>
     </changeSet>
+    <changeSet id="31" author="radvan">
+        <addColumn tableName="arclib_format_preservation_plan_file">
+            <column name="format_id" type="varchar(255)">
+                <constraints foreignKeyName="arclib_format_file_fk"
+                             referencedTableName="arclib_format" referencedColumnNames="id"/>
+            </column>
+        </addColumn>
+    </changeSet>
+    <changeSet id="32" author="radvan">
+        <dropColumn tableName="arclib_format_definition" columnName="preservation_plan_file_id" />
+    </changeSet>
 </databaseChangeLog>

@@ -124,12 +124,6 @@ public class FormatDefinition extends DatedObject {
     private String preservationPlanDescription;
 
     /**
-     * Plán ochrany - súbor
-     */
-    @OneToOne
-    private PreservationPlanFileRef preservationPlanFile;
-
-    /**
      * Prechádzajúca verzia formátovej definície
      */
     @OneToOne
@@ -173,15 +167,14 @@ public class FormatDefinition extends DatedObject {
                 Objects.equals(developers, that.developers) &&
                 Objects.equals(trim(formatNote), trim(that.formatNote)) &&
                 Objects.equals(trim(nationalFormatGuarantor), trim(that.nationalFormatGuarantor)) &&
-                Objects.equals(trim(preservationPlanDescription), trim(that.preservationPlanDescription)) &&
-                Objects.equals(preservationPlanFile, that.preservationPlanFile);
+                Objects.equals(trim(preservationPlanDescription), trim(that.preservationPlanDescription));
     }
 
     @Override
     public int hashCode() {
         return Objects.hash(format, formatVersion, aliases, identifiers, formatFamilies,
                 formatClassifications, formatDescription, relatedFormats, releaseDate, withdrawnDate,
-                developers, formatNote, nationalFormatGuarantor, preservationPlanDescription, preservationPlanFile);
+                developers, formatNote, nationalFormatGuarantor, preservationPlanDescription);
     }
 
     @Override

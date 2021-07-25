@@ -1,17 +1,17 @@
 package cz.cas.lib.arclib.formatlibrary.domain;
 
-
 import cz.cas.lib.arclib.domainbase.domain.DatedObject;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.BatchSize;
+import org.hibernate.annotations.Fetch;
+import org.hibernate.annotations.FetchMode;
 
 import javax.persistence.*;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
-
 
 /**
  * Formát
@@ -52,6 +52,15 @@ public class Format extends DatedObject {
      */
     @Enumerated(EnumType.STRING)
     private ThreatLevel threatLevel;
+
+    /**
+     * Súbory
+     */
+    @Fetch(FetchMode.SELECT)
+    @OneToMany(fetch = FetchType.EAGER)
+    @JoinColumn(name = "format_id")
+    @OrderBy("created DESC, name")
+    private Set<PreservationPlanFileRef> files = new HashSet<>();
 
 
     @Override

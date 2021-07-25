@@ -175,7 +175,7 @@ public class PreservationPlanFileRefService {
     }
 
     /**
-     * Deletes a file.
+     * Removes file from DB and file system.
      *
      * Deleting non existing file will be silently ignored.
      *
@@ -183,12 +183,12 @@ public class PreservationPlanFileRefService {
      * @throws BadArgument If the provided {@link PreservationPlanFileRef} is null
      */
     @Transactional
-    public void del(PreservationPlanFileRef PreservationPlanFileRef) {
+    public void hardDelete(PreservationPlanFileRef PreservationPlanFileRef) {
         notNull(PreservationPlanFileRef, () -> new BadArgument("PreservationPlanFileRef"));
 
         Path path = Paths.get(basePath, PreservationPlanFileRef.getId());
 
-        store.delete(PreservationPlanFileRef);
+        store.hardDelete(PreservationPlanFileRef);
 
         if (exists(path)) {
             try {
