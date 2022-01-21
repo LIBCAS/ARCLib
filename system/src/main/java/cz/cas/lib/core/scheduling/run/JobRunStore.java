@@ -39,4 +39,14 @@ public class JobRunStore extends DatedStore<JobRun, QJobRun> {
         detachAll();
         return fetch;
     }
+
+    @Override
+    protected void logSaveEvent(JobRun entity) {
+        //not logging
+    }
+
+    @Override
+    protected void logDeleteEvent(JobRun entity) {
+        //not logging
+    }
 }

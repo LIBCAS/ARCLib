@@ -116,6 +116,7 @@
     </logger>
     <logger name="cz.cas.lib" level="DEBUG" additivity="false">
         <appender-ref ref="ARCLIB"/>
+        <appender-ref ref="FILE"/>
         <appender-ref ref="ERRORFILE"/>
         <appender-ref ref="DEBUGFILE"/>
     </logger>

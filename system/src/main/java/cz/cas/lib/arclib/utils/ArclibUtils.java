@@ -140,12 +140,14 @@ public class ArclibUtils {
             switch (newPrefix) {
                 case PROCESSING:
                     Files.move(oldPrefixedPath, oldPrefixedPath.resolveSibling(newPrefix.getPrefix() + ingestWorkflow.getFileName()));
+                    break;
                 case ARCHIVED:
                 case FAILED:
                     if (oldPrefixedPath.toFile().exists())
                         Files.move(oldPrefixedPath, oldPrefixedPath.resolveSibling(newPrefix.getPrefix() + ingestWorkflow.getFileName()));
                     else
                         log.debug("File at path: {} not found, skipping write of {} prefix", oldPrefixedPath, newPrefix);
+                    break;
                 default:
                     throw new UnsupportedOperationException("change to prefix: " + newPrefix + " is not supported");
             }

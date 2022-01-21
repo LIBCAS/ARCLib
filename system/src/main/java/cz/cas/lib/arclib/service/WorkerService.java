@@ -254,7 +254,7 @@ public class WorkerService {
         ProducerProfile producerProfile = ingestWorkflow.getBatch().getProducerProfile();
         String extractedAuthorialId = extractAuthorialId(ingestWorkflow, sipFolderWorkspacePath, producerProfile.getSipProfile());
 
-        AuthorialPackage authorialPackage = authorialPackageStore.findByAuthorialIdAndProducerProfileId(extractedAuthorialId, producerProfile.getId());
+        AuthorialPackage authorialPackage = authorialPackageStore.findByAuthorialIdAndProducerId(extractedAuthorialId, producerProfile.getProducer().getId());
         if (authorialPackage != null) {
             aipService.activateLock(authorialPackage.getId(), false, userId);
 
@@ -548,7 +548,7 @@ public class WorkerService {
 
     @Inject
     public void setaipSavedCheckAttempts(@Value("${arclib.aipSavedCheckAttempts}")
-                                                int aipSavedCheckAttempts) {
+                                                 int aipSavedCheckAttempts) {
         this.aipSavedCheckAttempts = aipSavedCheckAttempts;
     }
 
