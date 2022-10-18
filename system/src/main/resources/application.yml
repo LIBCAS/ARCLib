@@ -131,8 +131,8 @@ archivalStorage:
 formatLibrary:
   scheduleUpdate: false
   updateCron: "0 0 0 1 * ?"
-  formatDetailListUrl: http://www.nationalarchives.gov.uk/PRONOM/Format/proFormatListAction.aspx
-  formatListUrl: http://www.nationalarchives.gov.uk/PRONOM/Format/proFormatDetailListAction.aspx
+  formatDetailListUrl: https://www.nationalarchives.gov.uk/PRONOM/Format/proFormatListAction.aspx
+  formatListUrl: https://www.nationalarchives.gov.uk/PRONOM/Format/proFormatDetailListAction.aspx
 logging:
   path: ../logs
   level:

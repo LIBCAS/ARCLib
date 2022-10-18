@@ -8,9 +8,9 @@ import lombok.Getter;
 @Getter
 public enum FormatIdentifierType {
     PUID,
-    GDFRClass,
-    GDFRFormat,
-    GDFRRegistry,
+    GDFRCLASS("GDFRClass"),
+    GDFRFORMAT("GDFRFormat"),
+    GDFRREGISTRY("GDFRRegistry"),
     TOM,
     MIME,
     FOUR_CC("4CC"),
@@ -21,7 +21,7 @@ public enum FormatIdentifierType {
     URL,
     URN,
     UUID_GUID("UUID/GUID"),
-    Handle,
+    HANDLE("Handle"),
     ISBN,
     ISSN,
     APPLE_UNIFORM_TYPE_IDENTIFIER,
@@ -34,7 +34,7 @@ public enum FormatIdentifierType {
     ANSI,
     ISO,
     BSI,
-    Other;
+    OTHER("Other");
 
     private String label;
 
