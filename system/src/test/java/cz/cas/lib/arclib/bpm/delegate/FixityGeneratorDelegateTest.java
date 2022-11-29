@@ -4,10 +4,7 @@ import cz.cas.lib.arclib.bpm.BpmConstants;
 import cz.cas.lib.arclib.bpm.FixityGeneratorDelegate;
 import cz.cas.lib.arclib.domain.ingestWorkflow.IngestEvent;
 import cz.cas.lib.arclib.service.IngestWorkflowService;
-import cz.cas.lib.arclib.service.fixity.Crc32Counter;
-import cz.cas.lib.arclib.service.fixity.Md5Counter;
 import cz.cas.lib.arclib.service.fixity.MetsChecksumType;
-import cz.cas.lib.arclib.service.fixity.Sha512Counter;
 import cz.cas.lib.arclib.service.preservationPlanning.ToolService;
 import cz.cas.lib.arclib.store.IngestEventStore;
 import org.apache.commons.lang3.EnumUtils;
@@ -48,9 +45,6 @@ public class FixityGeneratorDelegateTest extends DelegateTest {
     public void before() {
         MockitoAnnotations.initMocks(this);
         FixityGeneratorDelegate fixityGeneratorDelegate = new FixityGeneratorDelegate();
-        fixityGeneratorDelegate.setCrc32Counter(new Crc32Counter());
-        fixityGeneratorDelegate.setMd5Counter(new Md5Counter());
-        fixityGeneratorDelegate.setSha512Counter(new Sha512Counter());
         fixityGeneratorDelegate.setWorkspace(WS.toString());
         fixityGeneratorDelegate.setIngestEventStore(ingestEventStore);
         fixityGeneratorDelegate.setIngestWorkflowService(ingestWorkflowService);

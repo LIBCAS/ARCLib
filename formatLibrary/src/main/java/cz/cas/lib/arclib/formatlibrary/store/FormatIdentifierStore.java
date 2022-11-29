@@ -1,10 +1,9 @@
 package cz.cas.lib.arclib.formatlibrary.store;
 
 import com.querydsl.jpa.impl.JPAQuery;
-import cz.cas.lib.arclib.formatlibrary.domain.FormatIdentifier;
-import cz.cas.lib.arclib.formatlibrary.domain.FormatIdentifierType;
-import cz.cas.lib.arclib.formatlibrary.domain.QFormatIdentifier;
 import cz.cas.lib.arclib.domainbase.store.DatedStore;
+import cz.cas.lib.arclib.formatlibrary.domain.FormatIdentifier;
+import cz.cas.lib.arclib.formatlibrary.domain.QFormatIdentifier;
 import org.springframework.stereotype.Repository;
 
 @Repository
@@ -14,7 +13,7 @@ public class FormatIdentifierStore
         super(FormatIdentifier.class, QFormatIdentifier.class);
     }
 
-    public FormatIdentifier findByIdentifierTypeAndIdentifier(FormatIdentifierType identifierType, String identifier) {
+    public FormatIdentifier findByIdentifierTypeAndIdentifier(String identifierType, String identifier) {
         QFormatIdentifier formatIdentifier = qObject();
 
         JPAQuery<FormatIdentifier> query = query()

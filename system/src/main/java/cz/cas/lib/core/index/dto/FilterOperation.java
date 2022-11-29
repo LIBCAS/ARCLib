@@ -132,5 +132,9 @@ public enum FilterOperation {
     /**
      * Negates inner filter
      */
-    NEGATE
+    NEGATE,
+    /**
+     * IN(v1,v2) is a shortcut for (EQ=v1 OR EQ=v2)
+     */
+    IN
 };

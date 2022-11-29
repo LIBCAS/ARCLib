@@ -66,8 +66,7 @@ public class FormatIdentificationDelegate extends ArclibDelegate {
 
         FormatIdentificationTool formatIdentificationTool = initialize(configRoot, iw, formatIdentificationToolCounter);
 
-        Map<String, List<Pair<String, String>>> identifiedFormats = formatIdentificationTool.analyze
-                (Paths.get((String) execution.getVariable(BpmConstants.ProcessVariables.sipFolderWorkspacePath)));
+        Map<String, List<Pair<String, String>>> identifiedFormats = formatIdentificationTool.analyze(getSipFolderWorkspacePath(execution));
 
         TreeMap<String, Pair<String, String>> resultingFormats = formatIdentificationTool
                 .resolveAmbiguousIdentifications(identifiedFormats, configRoot, iw.getExternalId());

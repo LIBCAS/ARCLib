@@ -6,7 +6,7 @@ import cz.cas.lib.arclib.domain.User;
 import cz.cas.lib.arclib.domain.ingestWorkflow.IngestWorkflowState;
 import cz.cas.lib.arclib.domainbase.exception.GeneralException;
 import cz.cas.lib.arclib.index.solr.arclibxml.IndexedAipState;
-import cz.cas.lib.arclib.index.solr.arclibxml.IndexedArclibXmlStore;
+import cz.cas.lib.arclib.index.solr.arclibxml.SolrArclibXmlStore;
 import cz.cas.lib.arclib.report.ReportStore;
 import cz.cas.lib.arclib.service.IngestWorkflowService;
 import cz.cas.lib.arclib.service.archivalStorage.ArchivalStorageException;
@@ -20,10 +20,11 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import javax.inject.Inject;
-import java.io.IOException;
 import java.io.InputStream;
-import java.io.UncheckedIOException;
 import java.nio.charset.Charset;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicLong;
 
 import static cz.cas.lib.core.util.Utils.notNull;
 
@@ -40,7 +41,7 @@ public class ReindexService {
     private IngestIssueStore ingestIssueStore;
     private IndexedFormatDefinitionStore formatDefinitionStore;
     private IngestWorkflowService ingestWorkflowService;
-    private IndexedArclibXmlStore indexedArclibXmlStore;
+    private SolrArclibXmlStore indexedArclibXmlStore;
     private ArchivalStorageService archivalStorageService;
     private ArchivalStorageServiceDebug archivalStorageServiceDebug;
 
@@ -65,6 +66,8 @@ public class ReindexService {
 
     public void reindexArclibXml() {
         log.info("recovering ARCLib XML index from DB, retrieving XMLs from Archival Storage");
+        AtomicLong successCount = new AtomicLong(0);
+        List<String> failures = new ArrayList<>();
         ingestWorkflowService.findAll().stream()
                 .filter(iw -> iw.getProcessingState() == IngestWorkflowState.PERSISTED)
                 .forEach(iw -> {
@@ -94,13 +97,13 @@ public class ReindexService {
                             stateAtArchivalStorage = objectStateToIndexedAipState(aipState);
                         }
                         indexedArclibXmlStore.createIndex(xml.getBytes(), p.getId(), p.getName(), username, stateAtArchivalStorage, iw.wasIngestedInDebugMode(), iw.isLatestVersion());
-                    } catch (IOException ioe) {
-                        throw new UncheckedIOException(ioe);
-                    } catch (ArchivalStorageException e) {
-                        throw new RuntimeException(e);
+                        successCount.incrementAndGet();
+                    } catch (Exception e) {
+                        log.error("error while reindexing " + iw.getId(), e);
+                        failures.add(iw.getId());
                     }
                 });
-        log.info("successfully recovered ARCLib XML index");
+        log.info("recovered ARCLib XML index, {} succeeded, {} failures: {}", successCount, failures.size(), failures);
     }
 
     private IndexedAipState objectStateToIndexedAipState(ObjectState aipState) {
@@ -171,7 +174,7 @@ public class ReindexService {
     }
 
     @Inject
-    public void setindexedArclibXmlStore(IndexedArclibXmlStore indexedArclibXmlStore) {
+    public void setindexedArclibXmlStore(SolrArclibXmlStore indexedArclibXmlStore) {
         this.indexedArclibXmlStore = indexedArclibXmlStore;
     }
 

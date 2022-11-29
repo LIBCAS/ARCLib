@@ -33,7 +33,7 @@
         <class>cz.cas.lib.core.scheduling.job.Job</class>
         <class>cz.cas.lib.arclib.domain.ingestWorkflow.IngestIssue</class>
         <class>cz.cas.lib.arclib.domain.packages.AipDeletionRequest</class>
-        <class>cz.cas.lib.arclib.domain.ExportRoutine</class>
+        <class>cz.cas.lib.arclib.domain.export.ExportRoutine</class>
         <class>cz.cas.lib.arclib.domain.preservationPlanning.Tool</class>
         <class>cz.cas.lib.arclib.domain.preservationPlanning.FormatOccurrence</class>
         <class>cz.cas.lib.arclib.domain.preservationPlanning.IngestIssueDefinition</class>

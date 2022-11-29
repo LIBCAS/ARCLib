@@ -1,7 +1,7 @@
 package cz.cas.lib.arclib.store;
 
-import cz.cas.lib.arclib.domain.ExportRoutine;
-import cz.cas.lib.arclib.domain.QExportRoutine;
+import cz.cas.lib.arclib.domain.export.ExportRoutine;
+import cz.cas.lib.arclib.domain.export.QExportRoutine;
 import cz.cas.lib.arclib.domainbase.store.DatedStore;
 import org.springframework.stereotype.Repository;
 

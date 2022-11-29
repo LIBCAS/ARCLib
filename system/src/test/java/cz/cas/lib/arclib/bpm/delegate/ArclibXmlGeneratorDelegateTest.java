@@ -18,7 +18,8 @@ import cz.cas.lib.arclib.domain.preservationPlanning.IngestIssueDefinitionCode;
 import cz.cas.lib.arclib.domain.preservationPlanning.Tool;
 import cz.cas.lib.arclib.domain.profiles.ProducerProfile;
 import cz.cas.lib.arclib.domain.profiles.SipProfile;
-import cz.cas.lib.arclib.index.solr.arclibxml.IndexedArclibXmlStore;
+import cz.cas.lib.arclib.index.solr.arclibxml.IndexedArclibXmlDocument;
+import cz.cas.lib.arclib.index.solr.arclibxml.SolrArclibXmlStore;
 import cz.cas.lib.arclib.security.user.UserDetailsImpl;
 import cz.cas.lib.arclib.service.IngestIssueService;
 import cz.cas.lib.arclib.service.IngestWorkflowService;
@@ -99,7 +100,7 @@ public class ArclibXmlGeneratorDelegateTest extends DelegateTest {
     private ProducerStore producerStore;
     private AuthorialPackageStore authorialPackageStore;
     private BatchStore batchStore;
-    private IndexedArclibXmlStore indexedArclibXmlStore;
+    private SolrArclibXmlStore indexedArclibXmlStore;
     private UserStore userStore;
     private AipQueryStore aipQueryStore;
     private IngestIssueStore ingestIssueStore;
@@ -141,8 +142,7 @@ public class ArclibXmlGeneratorDelegateTest extends DelegateTest {
         aipQueryStore = new AipQueryStore();
         sequenceStore = new SequenceStore();
 
-        indexedArclibXmlStore = new IndexedArclibXmlStore();
-        indexedArclibXmlStore.setAipQueryStore(aipQueryStore);
+        indexedArclibXmlStore = new SolrArclibXmlStore();
         indexedArclibXmlStore.setCoreName(arclibXmlCoreName);
         indexedArclibXmlStore.setSolrTemplate(getArclibXmlSolrTemplate());
         indexedArclibXmlStore.setUris("http://www.loc.gov/METS/",
@@ -229,8 +229,6 @@ public class ArclibXmlGeneratorDelegateTest extends DelegateTest {
 
         user = new User();
         userDetailsImpl = new UserDetailsImpl(user);
-
-        indexedArclibXmlStore.setUserDetails(userDetailsImpl);
 
         arclibXmlExtractorDelegate = new ArclibXmlExtractorDelegate();
         arclibXmlExtractorDelegate.setObjectMapper(new ObjectMapper());
@@ -387,7 +385,7 @@ public class ArclibXmlGeneratorDelegateTest extends DelegateTest {
         variables.put(BpmConstants.ProcessVariables.debuggingModeActive, true);
 
         variables.put(BpmConstants.ProcessVariables.sipFileName, SIP_FILE_NAME);
-        variables.put(BpmConstants.ProcessVariables.authorialId, authorialPackage.getAuthorialId());
+        variables.put(BpmConstants.ProcessVariables.extractedAuthorialId, authorialPackage.getAuthorialId());
         variables.put(BpmConstants.ProcessVariables.latestConfig, String.format("{\"%s\":\"%s\"}", ArclibXmlExtractorDelegate.SIP_PROFILE_CONFIG_ENTRY, sipProfile.getExternalId()));
 
         variables.put(BpmConstants.FixityGeneration.preferredFixityGenerationEventId, fixityGenerationEvent.getId());
@@ -459,8 +457,8 @@ public class ArclibXmlGeneratorDelegateTest extends DelegateTest {
         ingestWorkflow = ingestWorkflowStore.find(this.ingestWorkflow.getId());
         assertThat(this.ingestWorkflow.getProcessingState(), is(IngestWorkflowState.PROCESSED));
 
-        Map<String, Object> aclibXmlIndexDocument = indexedArclibXmlStore.findArclibXmlIndexDocument(EXTERNAL_ID);
-        assertThat(aclibXmlIndexDocument, notNullValue());
+        IndexedArclibXmlDocument doc = indexedArclibXmlStore.findArclibXmlIndexDocument(EXTERNAL_ID);
+        assertThat(doc.getFields(), notNullValue());
         byte[] xmlFromTmpStorage = Files.readAllBytes(ArclibUtils.getAipXmlWorkspacePath(ingestWorkflow.getExternalId(), WS.toString()));
         assertThat(xmlFromTmpStorage.length, greaterThan(0));
 

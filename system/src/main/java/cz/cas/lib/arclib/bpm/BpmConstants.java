@@ -1,5 +1,7 @@
 package cz.cas.lib.arclib.bpm;
 
+import cz.cas.lib.arclib.domain.packages.AuthorialPackage;
+
 public class BpmConstants {
 
     public static class ProcessVariables {
@@ -31,7 +33,11 @@ public class BpmConstants {
         public static final String randomPriority = "randomPriority";
 
         public static final String sipFileName = "sipFileName";
-        public static final String authorialId = "authorialId";
+        /**
+         * note that the actual {@link AuthorialPackage#authorialId} in DB may be different (the old one) during the ingest,
+         * if authorial ID is changed during the process.. the change is written to the at the very end of the ingest
+         */
+        public static final String extractedAuthorialId = "extractedAuthorialId";
     }
 
     public static class FixityCheck {

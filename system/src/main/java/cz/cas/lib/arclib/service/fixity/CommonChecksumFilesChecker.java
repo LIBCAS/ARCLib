@@ -2,6 +2,7 @@ package cz.cas.lib.arclib.service.fixity;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import cz.cas.lib.arclib.bpm.IngestTool;
+import cz.cas.lib.arclib.domain.HashType;
 import cz.cas.lib.arclib.exception.bpm.IncidentException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FilenameUtils;
@@ -45,16 +46,16 @@ public class CommonChecksumFilesChecker extends FixityChecker {
             FixityCounter counter;
             switch (FilenameUtils.getExtension(checksumFile.toFile().getName())) {
                 case "md5":
-                    counter = md5Counter;
+                    counter = fixityCounterFacade.getFixityCounters().get(HashType.MD5);
                     break;
                 case "sha1":
-                    counter = sha1Counter;
+                    counter = fixityCounterFacade.getFixityCounters().get(HashType.Sha1);
                     break;
                 case "sha256":
-                    counter = sha256Counter;
+                    counter = fixityCounterFacade.getFixityCounters().get(HashType.Sha256);
                     break;
                 case "sha512":
-                    counter = sha512Counter;
+                    counter = fixityCounterFacade.getFixityCounters().get(HashType.Sha512);
                     break;
                 default:
                     continue;

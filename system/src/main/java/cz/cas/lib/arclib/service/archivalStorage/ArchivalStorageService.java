@@ -1,18 +1,23 @@
 package cz.cas.lib.arclib.service.archivalStorage;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import cz.cas.lib.arclib.domain.Hash;
+import cz.cas.lib.arclib.domain.export.DataReduction;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.InputStreamResource;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.MediaType;
+import org.springframework.http.*;
 import org.springframework.http.client.ClientHttpRequest;
 import org.springframework.http.client.ClientHttpResponse;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
@@ -35,30 +40,57 @@ public class ArchivalStorageService {
     private String baseEndpoint;
     private String readKeypair;
     private String readWriteKeypair;
+    private ObjectMapper objectMapper;
+    private final HttpComponentsClientHttpRequestFactory f = new HttpComponentsClientHttpRequestFactory();
+    private final RestTemplate restTemplate = new RestTemplate();
+
+    public ArchivalStorageService() {
+        f.setBufferRequestBody(false);
+
+        SimpleClientHttpRequestFactory f2 = new SimpleClientHttpRequestFactory();
+        f2.setBufferRequestBody(false);
+        restTemplate.setRequestFactory(f2);
+    }
 
     /**
      * Exports AIP data as a .zip
      *
-     * @param aipId   id of the AIP package to export
-     * @param allXmls true to return all XMLs, otherwise only the latest is returned
-     * @return response response from the archival storage
+     * @param aipId     id of the AIP package to export
+     * @param allXmls   true to return all XMLs, otherwise only the latest is returned
+     * @param reduction optional reduction of AIP data files
+     * @return response stream from the archival storage (zip)
      * @throws ArchivalStorageException in case of any connection error or response with status code other than 2xx
      */
-    public InputStream exportSingleAip(String aipId, boolean allXmls) throws ArchivalStorageException {
+    public InputStream exportSingleAip(String aipId, boolean allXmls, @Nullable DataReduction reduction) throws ArchivalStorageException {
         if (allXmls) log.debug("Exporting AIP: " + aipId + " with all its XML versions.");
         else log.debug("Exporting AIP: " + aipId + " with the latest XML version.");
 
         String queryParam = allXmls ? "?all=true" : "";
-        HttpComponentsClientHttpRequestFactory f = new HttpComponentsClientHttpRequestFactory();
-        f.setBufferRequestBody(false);
-        ClientHttpRequest request;
-        try {
-            request = f.createRequest(toUri(baseEndpoint + "/storage/" + aipId + queryParam), HttpMethod.GET);
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
+        if (reduction == null) {
+            try {
+                ClientHttpRequest request = f.createRequest(toUri(baseEndpoint + "/storage/" + aipId + queryParam), HttpMethod.GET);
+                request.getHeaders().add("Authorization", "Basic " + readWriteKeypair);
+                return executeRequestVerifySuccess(request);
+            } catch (IOException e) {
+                throw new UncheckedIOException(e);
+            }
+        } else {
+            CloseableHttpClient client = HttpClients.createDefault();
+            HttpPost httpPost = new HttpPost(baseEndpoint + "/storage/" + aipId + "/aip-with-files-reduced" + queryParam);
+            httpPost.addHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
+            httpPost.addHeader(HttpHeaders.AUTHORIZATION, "Basic " + readWriteKeypair);
+            try {
+                httpPost.setEntity(new StringEntity(objectMapper.writeValueAsString(reduction)));
+                CloseableHttpResponse response = client.execute(httpPost);
+                ArchivalStorageResponse arcResponseObj = new ArchivalStorageResponse(response.getEntity().getContent(), HttpStatus.valueOf(response.getStatusLine().getStatusCode()));
+                if (arcResponseObj.getStatusCode().is2xxSuccessful()) {
+                    return arcResponseObj.getBody();
+                }
+                throw new ArchivalStorageException(arcResponseObj);
+            } catch (Exception e) {
+                throw new ArchivalStorageException(e);
+            }
         }
-        request.getHeaders().add("Authorization", "Basic " + readWriteKeypair);
-        return executeRequestVerifySuccess(request);
     }
 
     /**
@@ -72,8 +104,6 @@ public class ArchivalStorageService {
     public InputStream exportSingleXml(String aipId, Integer version) throws ArchivalStorageException {
         log.debug("Exporting XML of version: " + version + " of AIP: " + aipId + ".");
         String queryParam = version != null ? "?v=" + version : "";
-        HttpComponentsClientHttpRequestFactory f = new HttpComponentsClientHttpRequestFactory();
-        f.setBufferRequestBody(false);
         ClientHttpRequest request;
         try {
             request = f.createRequest(toUri(baseEndpoint + "/storage/" + aipId + "/xml" + queryParam), HttpMethod.GET);
@@ -109,11 +139,6 @@ public class ArchivalStorageService {
         map.add("aipXmlChecksumValue", xmlChecksum.getHashValue());
         map.add("aipXmlChecksumType", (xmlChecksum.getHashType().toString()).toUpperCase());
         map.add("UUID", sipId);
-
-        RestTemplate restTemplate = new RestTemplate();
-        SimpleClientHttpRequestFactory fact = new SimpleClientHttpRequestFactory();
-        fact.setBufferRequestBody(false);
-        restTemplate.setRequestFactory(fact);
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.MULTIPART_FORM_DATA);
@@ -158,11 +183,6 @@ public class ArchivalStorageService {
         map.add("v", xmlVersion);
         map.add("sync", sync);
 
-        RestTemplate restTemplate = new RestTemplate();
-        SimpleClientHttpRequestFactory fact = new SimpleClientHttpRequestFactory();
-        fact.setBufferRequestBody(false);
-        restTemplate.setRequestFactory(fact);
-
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.MULTIPART_FORM_DATA);
         headers.add("Authorization", "Basic " + readWriteKeypair);
@@ -196,7 +216,7 @@ public class ArchivalStorageService {
     public ObjectState getAipState(String aipId) throws ArchivalStorageException {
         log.debug("Retrieving AIP state of AIP: " + aipId + " at archival storage.");
         try {
-            ClientHttpRequest request = new HttpComponentsClientHttpRequestFactory().createRequest(toUri(baseEndpoint + "/storage/" + aipId + "/state"), HttpMethod.GET);
+            ClientHttpRequest request = f.createRequest(toUri(baseEndpoint + "/storage/" + aipId + "/state"), HttpMethod.GET);
             request.getHeaders().add("Authorization", "Basic " + readKeypair);
             InputStream response = executeRequestVerifySuccess(request);
             String responseString = IOUtils.toString(response, StandardCharsets.UTF_8);
@@ -217,7 +237,7 @@ public class ArchivalStorageService {
     public ObjectState getXmlState(String aipId, int xmlVersion) throws ArchivalStorageException {
         log.debug("Retrieving XML state of XML: " + xmlVersion + " of AIP: " + aipId + " at archival storage.");
         try {
-            ClientHttpRequest request = new HttpComponentsClientHttpRequestFactory().createRequest(toUri(baseEndpoint + "/storage/" + aipId + "/xml/" + xmlVersion + "/state"), HttpMethod.GET);
+            ClientHttpRequest request = f.createRequest(toUri(baseEndpoint + "/storage/" + aipId + "/xml/" + xmlVersion + "/state"), HttpMethod.GET);
             request.getHeaders().add("Authorization", "Basic " + readKeypair);
             InputStream response = executeRequestVerifySuccess(request);
             String responseString = IOUtils.toString(response, StandardCharsets.UTF_8);
@@ -238,7 +258,7 @@ public class ArchivalStorageService {
         log.debug("Deleting aip " + aipId + " from archival storage.");
         ClientHttpRequest request;
         try {
-            request = new HttpComponentsClientHttpRequestFactory().createRequest(toUri(baseEndpoint + "/storage/" + aipId), HttpMethod.DELETE);
+            request = f.createRequest(toUri(baseEndpoint + "/storage/" + aipId), HttpMethod.DELETE);
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
@@ -257,7 +277,7 @@ public class ArchivalStorageService {
         log.debug("Removing aip " + aipId + " from archival storage.");
         ClientHttpRequest request;
         try {
-            request = new HttpComponentsClientHttpRequestFactory().createRequest(toUri(baseEndpoint + "/storage/" + aipId + "/remove"), HttpMethod.PUT);
+            request = f.createRequest(toUri(baseEndpoint + "/storage/" + aipId + "/remove"), HttpMethod.PUT);
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
@@ -276,7 +296,7 @@ public class ArchivalStorageService {
         log.debug("Rolling back AIP " + aipId + " from archival storage.");
         ClientHttpRequest request;
         try {
-            request = new HttpComponentsClientHttpRequestFactory().createRequest(toUri(baseEndpoint + "/storage/" + aipId + "/rollback"), HttpMethod.DELETE);
+            request = f.createRequest(toUri(baseEndpoint + "/storage/" + aipId + "/rollback"), HttpMethod.DELETE);
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
@@ -295,7 +315,7 @@ public class ArchivalStorageService {
         log.debug("Rolling back latest AIP XML of AIP: " + aipId + " from archival storage.");
         ClientHttpRequest request;
         try {
-            request = new HttpComponentsClientHttpRequestFactory().createRequest(toUri(baseEndpoint + "/storage/" + aipId + "/rollbackXml/" + xmlVersion), HttpMethod.DELETE);
+            request = f.createRequest(toUri(baseEndpoint + "/storage/" + aipId + "/rollbackXml/" + xmlVersion), HttpMethod.DELETE);
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
@@ -314,7 +334,7 @@ public class ArchivalStorageService {
         log.debug("Renewing aip " + aipId + " at archival storage.");
         ClientHttpRequest request;
         try {
-            request = new HttpComponentsClientHttpRequestFactory().createRequest(toUri(baseEndpoint + "/storage/" + aipId + "/renew"), HttpMethod.PUT);
+            request = f.createRequest(toUri(baseEndpoint + "/storage/" + aipId + "/renew"), HttpMethod.PUT);
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
@@ -356,5 +376,10 @@ public class ArchivalStorageService {
     @Inject
     public void setReadWriteKeypair(@Value("${archivalStorage.authorization.basic.readWrite}") String readWriteKeypair) {
         this.readWriteKeypair = readWriteKeypair;
+    }
+
+    @Inject
+    public void setObjectMapper(ObjectMapper objectMapper) {
+        this.objectMapper = objectMapper;
     }
 }

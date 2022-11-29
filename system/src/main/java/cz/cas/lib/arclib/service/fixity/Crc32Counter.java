@@ -1,6 +1,8 @@
 package cz.cas.lib.arclib.service.fixity;
 
 
+import cz.cas.lib.arclib.domain.HashType;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.util.encoders.Hex;
 import org.springframework.stereotype.Service;
@@ -14,6 +16,9 @@ import java.util.zip.Checksum;
 @Slf4j
 @Service
 public class Crc32Counter extends FixityCounter {
+
+    @Getter
+    private final HashType hashType = HashType.Crc32;
 
     @Override
     public byte[] computeDigest(InputStream fileStream) throws IOException {

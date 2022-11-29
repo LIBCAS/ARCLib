@@ -38,7 +38,6 @@ public class CommonsFixityCheckerTest {
     @Test
     public void test() throws Exception {
         MockitoAnnotations.initMocks(this);
-        service.setMd5Counter(new Md5Counter());
         service.setIngestWorkflowStore(iwStore);
         service.setToolService(toolService);
         service.setIngestIssueDefinitionStore(ingestIssueDefinitionStore);

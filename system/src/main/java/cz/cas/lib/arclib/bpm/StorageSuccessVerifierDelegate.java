@@ -3,19 +3,26 @@ package cz.cas.lib.arclib.bpm;
 import cz.cas.lib.arclib.domain.*;
 import cz.cas.lib.arclib.domain.ingestWorkflow.IngestWorkflow;
 import cz.cas.lib.arclib.domain.ingestWorkflow.IngestWorkflowState;
-import cz.cas.lib.arclib.index.IndexArclibXmlStore;
+import cz.cas.lib.arclib.domain.packages.AuthorialPackage;
+import cz.cas.lib.arclib.domain.packages.Sip;
+import cz.cas.lib.arclib.domainbase.exception.ConflictException;
+import cz.cas.lib.arclib.index.IndexedArclibXmlStore;
 import cz.cas.lib.arclib.index.solr.arclibxml.IndexedAipState;
 import cz.cas.lib.arclib.index.solr.arclibxml.IndexedArclibXmlDocument;
 import cz.cas.lib.arclib.service.AipService;
+import cz.cas.lib.arclib.service.DeletionRequestService;
 import cz.cas.lib.arclib.service.archivalStorage.ArchivalStorageException;
 import cz.cas.lib.arclib.service.archivalStorage.ArchivalStorageService;
 import cz.cas.lib.arclib.service.archivalStorage.ArchivalStorageServiceDebug;
 import cz.cas.lib.arclib.service.archivalStorage.ObjectState;
+import cz.cas.lib.arclib.store.AuthorialPackageStore;
 import cz.cas.lib.arclib.store.ProducerStore;
 import cz.cas.lib.arclib.store.UserStore;
+import cz.cas.lib.arclib.utils.ArclibUtils;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.camunda.bpm.engine.delegate.DelegateExecution;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -32,13 +39,16 @@ import static cz.cas.lib.arclib.utils.ArclibUtils.*;
 @Slf4j
 @Service
 public class StorageSuccessVerifierDelegate extends ArclibDelegate {
+    private static final String DELETE_PREVIOUS_SIP_VERSION_CONFIG_PATH = "/deletePreviousSipVersion";
     private ArchivalStorageService archivalStorageService;
     private ArchivalStorageServiceDebug archivalStorageServiceDebug;
-    private IndexArclibXmlStore indexArclibXmlStore;
+    private IndexedArclibXmlStore indexArclibXmlStore;
     private Boolean deleteSipFromTransferArea;
     private AipService aipService;
     private ProducerStore producerStore;
     private UserStore userStore;
+    private AuthorialPackageStore authorialPackageStore;
+    private DeletionRequestService deletionRequestService;
     @Getter
     private String toolName = "ARCLib_archival_storage_verification";
 
@@ -143,9 +153,9 @@ public class StorageSuccessVerifierDelegate extends ArclibDelegate {
         }
 
         String producerId = (String) execution.getVariable(BpmConstants.ProcessVariables.producerId);
-        User user = userStore.find(getResponsiblePerson(execution));
+        User personResponsibleForIngest = userStore.find(getResponsiblePerson(execution));
         Producer producer = producerStore.find(producerId);
-        indexArclibXmlStore.createIndex(Files.readAllBytes(getAipXmlWorkspacePath(ingestWorkflowExternalId, workspace)), producerId, producer.getName(), user.getUsername(), IndexedAipState.ARCHIVED, debuggingModeActive, true);
+        indexArclibXmlStore.createIndex(Files.readAllBytes(getAipXmlWorkspacePath(ingestWorkflowExternalId, workspace)), producerId, producer.getName(), personResponsibleForIngest.getUsername(), IndexedAipState.ARCHIVED, debuggingModeActive, true);
         if (relatedWorkflow != null)
             indexArclibXmlStore.setLatestFlag(relatedWorkflow.getExternalId(), false, previousAipXml);
         log.debug("ArclibXml of IngestWorkflow with external id {} has been indexed.", ingestWorkflowExternalId);
@@ -174,7 +184,27 @@ public class StorageSuccessVerifierDelegate extends ArclibDelegate {
             changeFilePrefix(AutoIngestFilePrefix.PROCESSING, AutoIngestFilePrefix.ARCHIVED, ingestWorkflow);
         }
 
-        aipService.deactivateLock(ingestWorkflow.getSip().getAuthorialPackage().getId(), false);
+        AuthorialPackage authorialPackageInDb = ingestWorkflow.getSip().getAuthorialPackage();
+
+        String extractedAuthorialId = getStringVariable(execution, BpmConstants.ProcessVariables.extractedAuthorialId);
+        if (!extractedAuthorialId.equals(authorialPackageInDb.getAuthorialId())) {
+            log.info("changing authorial package id from: {} to: {}", authorialPackageInDb.getAuthorialId(), extractedAuthorialId);
+            authorialPackageInDb.setAuthorialId(extractedAuthorialId);
+            authorialPackageStore.save(authorialPackageInDb);
+        }
+
+        //remove previous SIP version if requested by config
+        Pair<Boolean, String> booleanConfig = ArclibUtils.parseBooleanConfig(getConfigRoot(execution), DELETE_PREVIOUS_SIP_VERSION_CONFIG_PATH);
+        Sip previousSipVersion = ingestWorkflow.getSip().getPreviousVersionSip();
+        if (booleanConfig.getLeft() != null && booleanConfig.getLeft() && previousSipVersion != null) {
+            try {
+                deletionRequestService.createDeletionRequest(previousSipVersion.getId(), personResponsibleForIngest.getId());
+            } catch (ConflictException c) {
+                log.info("skipped creation of deletion request for previous AIP {} as the deletion request already exists", previousSipVersion.getId());
+            }
+        }
+
+        aipService.deactivateLock(authorialPackageInDb.getId(), false);
     }
 
     @Inject
@@ -188,7 +218,7 @@ public class StorageSuccessVerifierDelegate extends ArclibDelegate {
     }
 
     @Inject
-    public void setIndexArclibXmlStore(IndexArclibXmlStore indexArclibXmlStore) {
+    public void setIndexArclibXmlStore(IndexedArclibXmlStore indexArclibXmlStore) {
         this.indexArclibXmlStore = indexArclibXmlStore;
     }
 
@@ -210,5 +240,15 @@ public class StorageSuccessVerifierDelegate extends ArclibDelegate {
     @Inject
     public void setUserStore(UserStore userStore) {
         this.userStore = userStore;
+    }
+
+    @Inject
+    public void setDeletionRequestService(DeletionRequestService deletionRequestService) {
+        this.deletionRequestService = deletionRequestService;
+    }
+
+    @Inject
+    public void setAuthorialPackageStore(AuthorialPackageStore authorialPackageStore) {
+        this.authorialPackageStore = authorialPackageStore;
     }
 }

@@ -17,7 +17,6 @@ import org.dom4j.io.SAXReader;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.scheduling.annotation.Async;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.LinkedMultiValueMap;
@@ -54,7 +53,6 @@ public class FormatLibraryUpdater {
     private FormatDefinitionService formatDefinitionService;
     private FormatDeveloperService formatDeveloperService;
     private FormatIdentifierService formatIdentifierService;
-    private UserDetails userDetails;
     private Optional<FormatLibraryNotifier> formatLibraryNotifier;
 
     /**
@@ -78,7 +76,7 @@ public class FormatLibraryUpdater {
         headers.setContentType(MediaType.MULTIPART_FORM_DATA);
 
         HttpEntity<MultiValueMap<String, Object>> requestEntity = new HttpEntity<>(map, headers);
-        return restTemplate.exchange(formatListUrl, HttpMethod.POST, requestEntity, String.class);
+        return restTemplate.exchange(formatDetailListUrl, HttpMethod.POST, requestEntity, String.class);
     }
 
     /**
@@ -106,7 +104,7 @@ public class FormatLibraryUpdater {
         headers.setContentType(MediaType.MULTIPART_FORM_DATA);
 
         HttpEntity<MultiValueMap<String, Object>> requestEntity = new HttpEntity<>(map, headers);
-        return restTemplate.exchange(formatDetailListUrl, HttpMethod.POST, requestEntity, String.class);
+        return restTemplate.exchange(formatListUrl, HttpMethod.POST, requestEntity, String.class);
     }
 
     /**
@@ -145,13 +143,14 @@ public class FormatLibraryUpdater {
      * Gets format definition entity for the specified format id filled with values retrieved from the PRONOM server,
      * if the respective format entity does not exist yet, it is created and saved to database
      *
+     * @param username username of the user initiating the request, may be null, is used only for notification
      * @param formatId id of the format to retrieve from the PRONOM server
      * @return format definition entity filled with the values from the PRONOM server
      * @throws DocumentException if the input from the PRONOM server could not be parsed
      * @throws ParseException    could not parse date attribute
      */
     @Transactional
-    public FormatDefinition getFormatDefinitionFromExternal(Integer formatId) throws DocumentException, ParseException {
+    public FormatDefinition getFormatDefinitionFromExternal(String username, Integer formatId) throws DocumentException, ParseException {
         SAXReader reader = new SAXReader();
 
         ResponseEntity<String> response = downloadFormatDetail(formatId);
@@ -186,7 +185,7 @@ public class FormatLibraryUpdater {
                 try {
                     formatItem = FormatItem.valueOf(attributeName);
                 } catch (IllegalArgumentException e) {
-                    formatLibraryNotifier.ifPresent(formatLibraryNotifier1 -> formatLibraryNotifier1.sendUnsupportedPronomValueNotification(userDetails.getUsername(), e.getMessage(), Instant.now()));
+                    formatLibraryNotifier.ifPresent(formatLibraryNotifier1 -> formatLibraryNotifier1.sendUnsupportedPronomValueNotification(username, e.getMessage(), Instant.now()));
                     throw e;
                 }
 
@@ -210,7 +209,7 @@ public class FormatLibraryUpdater {
                                             enumLabelToEnumName(formatType));
                                     parsedFormatClassifications.add(formatClassification);
                                 } catch (IllegalArgumentException e) {
-                                    formatLibraryNotifier.ifPresent(formatLibraryNotifier1 -> formatLibraryNotifier1.sendUnsupportedPronomValueNotification(userDetails.getUsername(), e.getMessage(), Instant.now()));
+                                    formatLibraryNotifier.ifPresent(formatLibraryNotifier1 -> formatLibraryNotifier1.sendUnsupportedPronomValueNotification(username, e.getMessage(), Instant.now()));
                                     throw e;
                                 }
                             }
@@ -254,23 +253,7 @@ public class FormatLibraryUpdater {
                         String identifier = identifierElement.getText();
 
                         Element identifierTypeElement = elem.element("IdentifierType");
-                        String identifierTypeText = identifierTypeElement.getText();
-                        FormatIdentifierType identifierType;
-                        switch (identifierTypeText) {
-                            case "4CC":
-                                identifierType = FormatIdentifierType.FOUR_CC;
-                                break;
-                            case "UUID/GUID":
-                                identifierType = FormatIdentifierType.UUID_GUID;
-                                break;
-                            default:
-                                try {
-                                    identifierType = FormatIdentifierType.valueOf(enumLabelToEnumName(identifierTypeText));
-                                } catch (IllegalArgumentException e) {
-                                    formatLibraryNotifier.ifPresent(formatLibraryNotifier1 -> formatLibraryNotifier1.sendUnsupportedPronomValueNotification(userDetails.getUsername(), e.getMessage(), Instant.now()));
-                                    throw e;
-                                }
-                        }
+                        String identifierType = identifierTypeElement.getText();
 
                         FormatIdentifier formatIdentifier = formatIdentifierService.findByIdentifierTypeAndIdentifier(
                                 identifierType, identifier);
@@ -280,7 +263,7 @@ public class FormatLibraryUpdater {
                             formatIdentifier.setIdentifier(identifier);
                         }
 
-                        if (formatIdentifier.getIdentifierType() == FormatIdentifierType.PUID)
+                        if (FormatIdentifier.FORMAT_ID_TYPE_PUID.equals(formatIdentifier.getIdentifierType()))
                             format.setPuid(formatIdentifier.getIdentifier());
 
                         formatDefinition.getIdentifiers().add(formatIdentifier);
@@ -329,7 +312,7 @@ public class FormatLibraryUpdater {
                         try {
                             formatRelationshipType = FormatRelationshipType.valueOf(value);
                         } catch (IllegalArgumentException e) {
-                            formatLibraryNotifier.ifPresent(formatLibraryNotifier1 -> formatLibraryNotifier1.sendUnsupportedPronomValueNotification(userDetails.getUsername(), e.getMessage(), Instant.now()));
+                            formatLibraryNotifier.ifPresent(formatLibraryNotifier1 -> formatLibraryNotifier1.sendUnsupportedPronomValueNotification(username, e.getMessage(), Instant.now()));
                             throw e;
                         }
                         Integer relatedFormatId = Integer.valueOf(relatedFormatIdElement.getText());
@@ -389,6 +372,7 @@ public class FormatLibraryUpdater {
     /**
      * Updates format library with the definitions from the PRONOM server
      *
+     * @param username username of the user initiating the request, may be null, is used only for notification
      * @throws DocumentException if the input from the PRONOM server could not be parsed
      * @throws ParseException    could not parse date attribute
      */
@@ -399,7 +383,7 @@ public class FormatLibraryUpdater {
         StringBuilder report = new StringBuilder();
 
         for (Integer formatId : listOfFormatIds) {
-            Pair<FormatDefinition, String> updatedFormatDefinitionAndMessage = updateFormatFromExternal(formatId);
+            Pair<FormatDefinition, String> updatedFormatDefinitionAndMessage = updateFormatFromExternal(username, formatId);
             String message = updatedFormatDefinitionAndMessage.getRight();
             report.append("Format with format id " + formatId + ": " + message + ".\n");
         }
@@ -420,13 +404,14 @@ public class FormatLibraryUpdater {
      * <p>
      * Attribute preferred is set to <code>true</code> automatically
      *
+     * @param username username of the user initiating the request, may be null, is used only for notification
      * @param formatId format id of the format to update
      * @throws DocumentException if the input from the PRONOM server could not be parsed
      * @throws ParseException    could not parse date attribute
      */
     @Transactional
-    public Pair<FormatDefinition, String> updateFormatFromExternal(Integer formatId) throws DocumentException, ParseException {
-        FormatDefinition formatDefinitionFromExternal = getFormatDefinitionFromExternal(formatId);
+    public Pair<FormatDefinition, String> updateFormatFromExternal(String username, Integer formatId) throws DocumentException, ParseException {
+        FormatDefinition formatDefinitionFromExternal = getFormatDefinitionFromExternal(username, formatId);
         return formatDefinitionService.saveWithVersioning(formatDefinitionFromExternal);
     }
 
@@ -602,11 +587,6 @@ public class FormatLibraryUpdater {
     @Inject
     public void setObjectMapper(ObjectMapper objectMapper) {
         this.objectMapper = objectMapper;
-    }
-
-    @Inject
-    public void setUserDetails(UserDetails userDetails) {
-        this.userDetails = userDetails;
     }
 
     @Inject

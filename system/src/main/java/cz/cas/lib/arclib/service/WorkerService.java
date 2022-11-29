@@ -10,19 +10,17 @@ import cz.cas.lib.arclib.domain.packages.Sip;
 import cz.cas.lib.arclib.domain.profiles.PathToSipId;
 import cz.cas.lib.arclib.domain.profiles.ProducerProfile;
 import cz.cas.lib.arclib.domain.profiles.SipProfile;
+import cz.cas.lib.arclib.domainbase.exception.ConflictException;
 import cz.cas.lib.arclib.domainbase.exception.GeneralException;
 import cz.cas.lib.arclib.domainbase.exception.MissingObject;
 import cz.cas.lib.arclib.dto.IncidentInfoDto;
 import cz.cas.lib.arclib.dto.JmsDto;
+import cz.cas.lib.arclib.dto.SipCopyInWorkspaceDto;
 import cz.cas.lib.arclib.exception.AuthorialPackageLockedException;
 import cz.cas.lib.arclib.exception.InvalidChecksumException;
-import cz.cas.lib.arclib.service.fixity.Crc32Counter;
-import cz.cas.lib.arclib.service.fixity.FixityCounter;
-import cz.cas.lib.arclib.service.fixity.Md5Counter;
-import cz.cas.lib.arclib.service.fixity.Sha512Counter;
+import cz.cas.lib.arclib.service.fixity.FixityCounterFacade;
 import cz.cas.lib.arclib.store.AuthorialPackageStore;
 import cz.cas.lib.arclib.store.SipStore;
-import cz.cas.lib.arclib.utils.ArclibUtils;
 import cz.cas.lib.arclib.utils.XmlUtils;
 import cz.cas.lib.arclib.utils.ZipUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -66,12 +64,11 @@ public class WorkerService {
     private RuntimeService runtimeService;
     private ManagementService managementService;
     private String workspace;
-    private Crc32Counter crc32Counter;
-    private Sha512Counter sha512Counter;
-    private Md5Counter md5Counter;
     private IngestErrorHandler ingestErrorHandler;
     private AipService aipService;
     private TransactionTemplate transactionTemplate;
+    private ExportInfoFileService exportInfoFileService;
+    private FixityCounterFacade fixityCounterFacade;
 
     private int aipSavedCheckAttempts;
     private String aipSavedCheckAttemptsInterval;
@@ -191,19 +188,40 @@ public class WorkerService {
                 ? getSipZipTransferAreaPathPrefixed(ingestWorkflow, AutoIngestFilePrefix.PROCESSING).toAbsolutePath()
                 : getSipZipTransferAreaPath(ingestWorkflow).toAbsolutePath();
         verifyHash(pathToSip, ingestWorkflow);
-        Pair<String, Long> rootDirNameAndSizeInBytes = copySipToWorkspace(ingestWorkflow);
+        SipCopyInWorkspaceDto copiedSipMetadata = copySipToWorkspace(ingestWorkflow);
 
         Path sipFolderWorkspacePath = getIngestWorkflowWorkspacePath(ingestWorkflow.getExternalId(), workspace)
-                .resolve(rootDirNameAndSizeInBytes.getLeft());
+                .resolve(copiedSipMetadata.getRootFolderName());
 
-        List<String> filePaths = ArclibUtils.listFilePaths(sipFolderWorkspacePath);
-        createSipAndAuthorialPackages(ingestWorkflow, sipFolderWorkspacePath, filePaths, userId, rootDirNameAndSizeInBytes.getRight());
+        String providedAuthorialPackageUuid = copiedSipMetadata.getExportInfo().get(ExportInfoFileService.KEY_AUTHORIAL_PACKAGE_UUID);
+        String extractedAuthorialId;
+        if (providedAuthorialPackageUuid != null) {
+            AuthorialPackage existingAuthorialPackage = authorialPackageStore.findByUuidAndProducerId(providedAuthorialPackageUuid, producerProfile.getProducer().getId());
+            if (existingAuthorialPackage == null) {
+                throw new MissingObject(AuthorialPackage.class, providedAuthorialPackageUuid);
+            }
+            extractedAuthorialId = extractAuthorialId(ingestWorkflow, sipFolderWorkspacePath, producerProfile.getSipProfile(), false);
+            if (extractedAuthorialId == null) {
+                extractedAuthorialId = existingAuthorialPackage.getAuthorialId();
+            } else {
+                AuthorialPackage authorialPackageWithExtractedId = authorialPackageStore.findByAuthorialIdAndProducerId(extractedAuthorialId, producerProfile.getProducer().getId());
+                if (authorialPackageWithExtractedId != null && !authorialPackageWithExtractedId.equals(existingAuthorialPackage)) {
+                    throw new ConflictException("tried to link incoming SIP with authorial package: " + providedAuthorialPackageUuid +
+                            "while updating its authorial ID to the extracted ID: " + extractedAuthorialId + " but there already is another" +
+                            "authorial package with that authorial ID: " + authorialPackageWithExtractedId.getId());
+                }
+            }
+            createSipAndAuthorialPackages(ingestWorkflow, userId, existingAuthorialPackage.getAuthorialId(), false);
+        } else {
+            extractedAuthorialId = extractAuthorialId(ingestWorkflow, sipFolderWorkspacePath, producerProfile.getSipProfile(), true);
+            createSipAndAuthorialPackages(ingestWorkflow, userId, extractedAuthorialId, true);
+        }
 
         Map<String, Object> initVars = new HashMap<>();
         initVars.put(ProcessVariables.sipFileName, ingestWorkflow.getFileName());
         initVars.put(ProcessVariables.idlePoint, Instant.now().toEpochMilli());
         initVars.put(ProcessVariables.idleTime, 0);
-        initVars.put(ProcessVariables.authorialId, ingestWorkflow.getSip().getAuthorialPackage().getAuthorialId());
+        initVars.put(ProcessVariables.extractedAuthorialId, extractedAuthorialId);
         initVars.put(ProcessVariables.randomPriority, new Random().nextInt(100));
         initVars.put(ProcessVariables.sipFolderWorkspacePath, sipFolderWorkspacePath.toString());
         initVars.put(ProcessVariables.ingestWorkflowExternalId, ingestWorkflow.getExternalId());
@@ -236,25 +254,22 @@ public class WorkerService {
      * level of versioning. In case the extracted authorial id in combination with the producer profile id matches an existing
      * authorial package in database, the versioning is triggered, otherwise new authorial package is created:
      * <p>
-     * a) The xml versioning is performed if: the SIP with the highest version number from the SIPs belonging
+     * a) The xml versioning is performed if: <i>xmlVersioningAllowed=true</i> AND the SIP with the highest version number from the SIPs belonging
      * the authorial package has the same checksum as the checksum of the incoming SIP.
      * <p>
-     * b) The sip versioning is performed if: the SIP with the highest version number from the SIPs belonging
+     * b) The sip versioning is performed if: <i>xmlVersioningAllowed=false</i> OR the SIP with the highest version number from the SIPs belonging
      * the authorial package has a different checksum as the checksum of the incoming SIP.
      *
-     * @param ingestWorkflow         ingest workflow
-     * @param sipFolderWorkspacePath path to the folder with the content of the SIP in workspace
-     * @param filePaths              file paths of the files of the SIP
-     * @param sizeInBytes            size of the data part in bytes
+     * @param ingestWorkflow       ingest workflow
+     * @param userId               id of related user
+     * @param linkingAuthorialId   new authorial ID extracted from SIP metadata or existing authorial id of related package (extracted from SIP metadata or provided)
+     * @param xmlVersioningAllowed flag indicating whether XML versioning is allowed
      * @throws AuthorialPackageLockedException if the authorial package is locked
      */
-    private void createSipAndAuthorialPackages(IngestWorkflow ingestWorkflow, Path sipFolderWorkspacePath,
-                                               List<String> filePaths, String userId,
-                                               long sizeInBytes) throws IOException {
+    private void createSipAndAuthorialPackages(IngestWorkflow ingestWorkflow, String userId, String linkingAuthorialId, boolean xmlVersioningAllowed) throws IOException {
         ProducerProfile producerProfile = ingestWorkflow.getBatch().getProducerProfile();
-        String extractedAuthorialId = extractAuthorialId(ingestWorkflow, sipFolderWorkspacePath, producerProfile.getSipProfile());
 
-        AuthorialPackage authorialPackage = authorialPackageStore.findByAuthorialIdAndProducerId(extractedAuthorialId, producerProfile.getProducer().getId());
+        AuthorialPackage authorialPackage = authorialPackageStore.findByAuthorialIdAndProducerId(linkingAuthorialId, producerProfile.getProducer().getId());
         if (authorialPackage != null) {
             aipService.activateLock(authorialPackage.getId(), false, userId);
 
@@ -284,34 +299,31 @@ public class WorkerService {
                     );
                 }
 
-                if (highestVersionNumberPersistedSip.get().getHashes().stream()
+                if (xmlVersioningAllowed && highestVersionNumberPersistedSip.get().getHashes().stream()
                         .anyMatch(hash -> hash.getHashValue().equals(ingestWorkflow.getHash().getHashValue()))) {
                     xmlVersioning(ingestWorkflow, highestVersionNumberPersistedSip.get(), highestVersionNumberIngestWorkflow.get());
                 } else {
-                    sipVersioning(ingestWorkflow, filePaths, sipFolderWorkspacePath, authorialPackage, highestVersionNumberPersistedSip.get(), sizeInBytes);
+                    sipVersioning(ingestWorkflow, authorialPackage, highestVersionNumberPersistedSip.get());
                 }
             } else {
-                noVersioning(authorialPackage, ingestWorkflow, filePaths, sipFolderWorkspacePath, sizeInBytes);
+                noVersioning(authorialPackage, ingestWorkflow);
             }
         } else {
             authorialPackage = new AuthorialPackage();
-            authorialPackage.setAuthorialId(extractedAuthorialId);
+            authorialPackage.setAuthorialId(linkingAuthorialId);
             authorialPackage.setProducerProfile(producerProfile);
             authorialPackageStore.save(authorialPackage);
             log.info("New authorial package with id " + authorialPackage.getId() + " created.");
 
             aipService.activateLock(authorialPackage.getId(), false, userId);
-            noVersioning(authorialPackage, ingestWorkflow, filePaths, sipFolderWorkspacePath, sizeInBytes);
+            noVersioning(authorialPackage, ingestWorkflow);
         }
     }
 
-    private void noVersioning(AuthorialPackage authorialPackage, IngestWorkflow ingestWorkflow,
-                              List<String> filePaths, Path sipFolderWorkspacePath, long sizeInBytes) {
+    private void noVersioning(AuthorialPackage authorialPackage, IngestWorkflow ingestWorkflow) {
         Sip sip = new Sip();
-        sip.setSizeInBytes(sizeInBytes);
         sip.setHashes(asSet(ingestWorkflow.getHash()));
         sip.setAuthorialPackage(authorialPackage);
-        sip.setFolderStructure(filePathsToFolderStructure(filePaths, sipFolderWorkspacePath.getFileName().toString()));
         sip.setPreviousVersionSip(null);
         sip.setVersionNumber(1);
         sipStore.save(sip);
@@ -333,15 +345,13 @@ public class WorkerService {
         ingestWorkflowService.save(ingestWorkflow);
     }
 
-    private void sipVersioning(IngestWorkflow ingestWorkflow, List<String> filePaths, Path sipFolderWorkspacePath,
-                               AuthorialPackage authorialPackage, Sip highestVersionNumberSip, long sizeInBytes) {
+    private void sipVersioning(IngestWorkflow ingestWorkflow,
+                               AuthorialPackage authorialPackage, Sip highestVersionNumberSip) {
         log.debug("SIP versioning is performed for ingest worfklow with external id " + ingestWorkflow.getExternalId() + ".");
         Sip sip = new Sip();
-        sip.setSizeInBytes(sizeInBytes);
         sip.setHashes(asSet(ingestWorkflow.getHash()));
         sip.setVersionNumber(highestVersionNumberSip.getVersionNumber() + 1);
         sip.setAuthorialPackage(authorialPackage);
-        sip.setFolderStructure(filePathsToFolderStructure(filePaths, sipFolderWorkspacePath.getFileName().toString()));
         sip.setPreviousVersionSip(highestVersionNumberSip);
         sipStore.save(sip);
         log.info("New SIP package with id " + sip.getId() + " created.");
@@ -381,21 +391,15 @@ public class WorkerService {
         });
         String computedHash;
         try (FileInputStream sipContent = new FileInputStream(pathToSip.toString())) {
-            FixityCounter fixityCounter;
             switch (expectedHash.getHashType()) {
                 case MD5:
-                    fixityCounter = md5Counter;
-                    break;
                 case Crc32:
-                    fixityCounter = crc32Counter;
-                    break;
                 case Sha512:
-                    fixityCounter = sha512Counter;
+                    computedHash = bytesToHexString(fixityCounterFacade.computeDigest(expectedHash.getHashType(), sipContent));
                     break;
                 default:
                     throw new GeneralException("unexpected type of expectedHash");
             }
-            computedHash = bytesToHexString(fixityCounter.computeDigest(sipContent));
         }
 
         if (!expectedHash.getHashValue().equalsIgnoreCase(computedHash)) {
@@ -410,15 +414,14 @@ public class WorkerService {
      * Unzips and copies the content of the SIP belonging the ingest workflow to workspace.
      *
      * @param ingestWorkflow ingest workflow
-     * @return pair where the left value is name of the root folder of the extracted SIP and right value is number of copied bytes
      */
-    private Pair<String, Long> copySipToWorkspace(IngestWorkflow ingestWorkflow) {
+    private SipCopyInWorkspaceDto copySipToWorkspace(IngestWorkflow ingestWorkflow) throws IOException {
         Path sourceSipFilePath = ingestWorkflow.getBatch().getIngestRoutine() != null && ingestWorkflow.getBatch().getIngestRoutine().isAuto()
                 ? getSipZipTransferAreaPathPrefixed(ingestWorkflow, AutoIngestFilePrefix.PROCESSING)
                 : getSipZipTransferAreaPath(ingestWorkflow);
 
         Path destinationIngestWorkflowPath = getIngestWorkflowWorkspacePath(ingestWorkflow.getExternalId(), workspace);
-        Path destinationSipZipPath = destinationIngestWorkflowPath.resolve(ingestWorkflow.getFileName());
+        Path destinationSipZipPath = getSipZipWorkspacePath(ingestWorkflow.getExternalId(), workspace, ingestWorkflow.getFileName());
 
         try {
             Files.createDirectories(destinationIngestWorkflowPath);
@@ -428,9 +431,8 @@ public class WorkerService {
         }
 
         //copy the zip content to workspace
-        long numberOfBytesCopied;
         try (FileInputStream sipContent = new FileInputStream(sourceSipFilePath.toAbsolutePath().toString())) {
-            numberOfBytesCopied = Files.copy(sipContent, destinationSipZipPath);
+            Files.copy(sipContent, destinationSipZipPath);
             verifyHash(getSipZipWorkspacePath(ingestWorkflow.getExternalId(), workspace,
                     ingestWorkflow.getFileName()), ingestWorkflow);
             log.debug("Zip archive with SIP content for ingest workflow external id " + ingestWorkflow.getExternalId() + " has been copied to workspace at path " + destinationSipZipPath + ".");
@@ -440,7 +442,15 @@ public class WorkerService {
 
         //unzip the zip content in workspace
         String rootFolderName = ZipUtils.unzipSip(destinationSipZipPath, destinationIngestWorkflowPath, ingestWorkflow.getExternalId());
-        return Pair.of(rootFolderName, numberOfBytesCopied);
+
+        Map<String, String> parsedInfoFile = new HashMap<>();
+        Path arclibExportInfoFile = destinationIngestWorkflowPath.resolve(rootFolderName).resolve(ExportInfoFileService.EXPORT_INFO_FILE_NAME);
+        if (arclibExportInfoFile.toFile().isFile()) {
+            parsedInfoFile = exportInfoFileService.parse(arclibExportInfoFile);
+            arclibExportInfoFile.toFile().delete();
+        }
+
+        return new SipCopyInWorkspaceDto(rootFolderName, parsedInfoFile);
     }
 
     /**
@@ -449,20 +459,33 @@ public class WorkerService {
      * @param ingestWorkflow         ingest workflow package with the SIP package
      * @param sipFolderWorkspacePath path to the folder with the SIP content in workspace
      * @param profile                SIP profile storing the path to authorial id
+     * @param resultRequired         if false then it is acceptable that no authorial ID is found, if true it must be found or exception is thrown
      * @return authorial id
      * @throws GeneralException file storing the authorial id is inaccessible
      */
-    private String extractAuthorialId(IngestWorkflow ingestWorkflow, Path sipFolderWorkspacePath, SipProfile profile) throws IOException {
+    private String extractAuthorialId(IngestWorkflow ingestWorkflow, Path sipFolderWorkspacePath, SipProfile profile, boolean resultRequired) throws IOException {
         PathToSipId pathToSipId = profile.getPathToSipId();
+        if (pathToSipId == null && !resultRequired) {
+            return null;
+        }
         notNull(pathToSipId, () -> new IllegalArgumentException("null path to sip id of sip profile with id " + profile.getId()));
 
         String pathToXmlRegex = pathToSipId.getPathToXmlRegex();
+        if (pathToXmlRegex == null && !resultRequired) {
+            return null;
+        }
         notNull(pathToXmlRegex, () -> new IllegalArgumentException("null pathToXmlRegex in path to authorial id"));
 
         String xPathToId = pathToSipId.getXPathToId();
+        if (xPathToId == null && !resultRequired) {
+            return null;
+        }
         notNull(xPathToId, () -> new IllegalArgumentException("null path to id in path to authorial id"));
 
         List<File> matchingFiles = listFilesMatchingRegex(new File(sipFolderWorkspacePath.toAbsolutePath().toString()), pathToXmlRegex, true);
+        if (matchingFiles.size() == 0 && !resultRequired) {
+            return null;
+        }
         if (matchingFiles.size() == 0)
             throw new GeneralException(String.format("File with metadata for ingest workflow with external id %s does not exist at path given by regex: %s", ingestWorkflow.getExternalId(), pathToXmlRegex));
 
@@ -503,21 +526,6 @@ public class WorkerService {
     @Inject
     public void setRuntimeService(RuntimeService runtimeService) {
         this.runtimeService = runtimeService;
-    }
-
-    @Inject
-    public void setCrc32Counter(Crc32Counter crc32Counter) {
-        this.crc32Counter = crc32Counter;
-    }
-
-    @Inject
-    public void setSha512Counter(Sha512Counter sha512Counter) {
-        this.sha512Counter = sha512Counter;
-    }
-
-    @Inject
-    public void setMd5Counter(Md5Counter md5Counter) {
-        this.md5Counter = md5Counter;
     }
 
     @Inject
@@ -575,5 +583,15 @@ public class WorkerService {
     @Inject
     public void setTransactionTemplate(TransactionTemplate transactionTemplate) {
         this.transactionTemplate = transactionTemplate;
+    }
+
+    @Inject
+    public void setExportInfoFileService(ExportInfoFileService exportInfoFileService) {
+        this.exportInfoFileService = exportInfoFileService;
+    }
+
+    @Inject
+    public void setFixityCounterFacade(FixityCounterFacade fixityCounterFacade) {
+        this.fixityCounterFacade = fixityCounterFacade;
     }
 }

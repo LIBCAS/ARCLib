@@ -377,6 +377,8 @@ public class IndexQueryUtils {
             case EQ:
             default:
                 return inQuery(field, asSet(value));
+            case IN:
+                return inQuery(field, asSet(value.split(",")));
             case NEQ:
                 return notInQuery(field, asSet(value));
             case STARTWITH:

@@ -53,6 +53,22 @@ public abstract class DatedStore<T extends DatedObject, Q extends EntityPathBase
         }
     }
 
+    /**
+     * Queries for entity of given id, entity can be deleted as well (deleted flag is not null).
+     *
+     * @param id of entity
+     * @return WorkflowDefinition entity, even deleted. Or null if no entity matches provided id.
+     */
+    public T findWithDeletedFilteringOff(String id) {
+        StringPath idPath = propertyPath("id");
+        T entity = query()
+                .select(qObject())
+                .where(idPath.eq(id))
+                .fetchFirst();
+        detachAll();
+        return entity;
+    }
+
     public void hardDelete(T entity) {
         super.delete(entity);
     }

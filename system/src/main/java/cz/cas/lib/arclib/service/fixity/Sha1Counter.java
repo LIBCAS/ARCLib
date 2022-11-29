@@ -1,5 +1,7 @@
 package cz.cas.lib.arclib.service.fixity;
 
+import cz.cas.lib.arclib.domain.HashType;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -7,8 +9,9 @@ import org.springframework.stereotype.Service;
 @Service
 public class Sha1Counter extends CryptoLibraryCounter {
 
-    @Override
-    public String getType() {
-        return "SHA-1";
-    }
+    @Getter
+    private final HashType hashType = HashType.Sha1;
+
+    @Getter
+    public final String messageDigestType = "SHA-1";
 }

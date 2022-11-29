@@ -1,4 +1,4 @@
-package cz.cas.lib.arclib.domain;
+package cz.cas.lib.arclib.domain.export;
 
 /**
  * Typ exportnej rutiny

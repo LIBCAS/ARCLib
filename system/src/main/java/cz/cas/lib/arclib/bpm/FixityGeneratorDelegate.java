@@ -1,12 +1,11 @@
 package cz.cas.lib.arclib.bpm;
 
+import cz.cas.lib.arclib.domain.HashType;
 import cz.cas.lib.arclib.domain.IngestToolFunction;
 import cz.cas.lib.arclib.domain.ingestWorkflow.IngestEvent;
 import cz.cas.lib.arclib.domainbase.exception.GeneralException;
-import cz.cas.lib.arclib.service.fixity.Crc32Counter;
-import cz.cas.lib.arclib.service.fixity.Md5Counter;
+import cz.cas.lib.arclib.service.fixity.FixityCounterFacade;
 import cz.cas.lib.arclib.service.fixity.MetsChecksumType;
-import cz.cas.lib.arclib.service.fixity.Sha512Counter;
 import cz.cas.lib.arclib.utils.ArclibUtils;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -28,11 +27,9 @@ import static cz.cas.lib.core.util.Utils.bytesToHexString;
 @Service
 public class FixityGeneratorDelegate extends ArclibDelegate {
 
-    private Md5Counter md5Counter;
-    private Crc32Counter crc32Counter;
-    private Sha512Counter sha512Counter;
+    private FixityCounterFacade fixityCounterFacade;
     @Getter
-    private String toolName="ARCLib_"+ IngestToolFunction.message_digest_calculation;
+    private String toolName = "ARCLib_" + IngestToolFunction.message_digest_calculation;
 
     /**
      * Computes 3 types of fixity for whole SIP (CRC32,SHA512,MD5) and also fetches file sizes and computes SHA512 checksum of all SIP files
@@ -41,9 +38,9 @@ public class FixityGeneratorDelegate extends ArclibDelegate {
     public void executeArclibDelegate(DelegateExecution execution) {
         Path sipZipPath = getSipZipPath(execution);
         try {
-            String md5 = bytesToHexString(md5Counter.computeDigest(sipZipPath));
-            String sha512 = bytesToHexString(sha512Counter.computeDigest(sipZipPath));
-            String crc32 = bytesToHexString(crc32Counter.computeDigest(sipZipPath));
+            String md5 = bytesToHexString(fixityCounterFacade.computeDigest(HashType.MD5, sipZipPath));
+            String sha512 = bytesToHexString(fixityCounterFacade.computeDigest(HashType.Sha512, sipZipPath));
+            String crc32 = bytesToHexString(fixityCounterFacade.computeDigest(HashType.Crc32, sipZipPath));
 
             IngestEvent fixityGenerationEvent = new IngestEvent(ingestWorkflowService.findByExternalId(ingestWorkflowExternalId),
                     toolService.getByNameAndVersion(getToolName(), getToolVersion()), true, null);
@@ -63,13 +60,13 @@ public class FixityGeneratorDelegate extends ArclibDelegate {
             execution.setVariable(FixityGeneration.mapOfEventIdsToSipCrc32, mapOfEventIdsToCrc32Calculations);
             execution.setVariable(FixityGeneration.mapOfEventIdsToSipSha512, mapOfEventIdsToSha512Calculations);
 
-            Path sipFolderWsPathStr = Paths.get((String) execution.getVariable(BpmConstants.ProcessVariables.sipFolderWorkspacePath));
+            Path sipFolderWsPathStr = getSipFolderWorkspacePath(execution);
             Map<String, Map<String, Triple<Long, String, String>>> mapOfEventIdsToSipContentFixityData = (Map<String, Map<String, Triple<Long, String, String>>>)
                     execution.getVariable(FixityGeneration.mapOfEventIdsToSipContentFixityData);
             Map<String, Triple<Long, String, String>> sipContentFixityData = new HashMap<>();
             for (String filePathStr : ArclibUtils.listFilePaths(sipFolderWsPathStr)) {
                 Path wsFilePath = sipFolderWsPathStr.resolve(filePathStr);
-                Triple<Long, String, String> fileFixity = Triple.of(wsFilePath.toFile().length(), MetsChecksumType.SHA512.toString(), bytesToHexString(sha512Counter.computeDigest(wsFilePath)));
+                Triple<Long, String, String> fileFixity = Triple.of(wsFilePath.toFile().length(), MetsChecksumType.SHA512.toString(), bytesToHexString(fixityCounterFacade.computeDigest(HashType.Sha512, wsFilePath)));
                 sipContentFixityData.put(filePathStr, fileFixity);
             }
             mapOfEventIdsToSipContentFixityData.put(fixityGenerationEvent.getId(), sipContentFixityData);
@@ -84,17 +81,7 @@ public class FixityGeneratorDelegate extends ArclibDelegate {
     }
 
     @Inject
-    public void setMd5Counter(Md5Counter md5Counter) {
-        this.md5Counter = md5Counter;
-    }
-
-    @Inject
-    public void setCrc32Counter(Crc32Counter crc32Counter) {
-        this.crc32Counter = crc32Counter;
-    }
-
-    @Inject
-    public void setSha512Counter(Sha512Counter sha512Counter) {
-        this.sha512Counter = sha512Counter;
+    public void setFixityCounterFacade(FixityCounterFacade fixityCounterFacade) {
+        this.fixityCounterFacade = fixityCounterFacade;
     }
 }

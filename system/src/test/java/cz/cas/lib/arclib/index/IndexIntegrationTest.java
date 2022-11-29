@@ -9,7 +9,6 @@ import cz.cas.lib.arclib.domainbase.exception.BadArgument;
 import cz.cas.lib.arclib.index.solr.IndexQueryUtils;
 import cz.cas.lib.arclib.index.solr.arclibxml.IndexedAipState;
 import cz.cas.lib.arclib.index.solr.arclibxml.IndexedArclibXmlDocument;
-import cz.cas.lib.arclib.index.solr.arclibxml.IndexedArclibXmlStore;
 import cz.cas.lib.arclib.security.authorization.permission.Permissions;
 import cz.cas.lib.arclib.security.authorization.role.UserRole;
 import cz.cas.lib.arclib.security.user.UserDetailsImpl;
@@ -70,7 +69,7 @@ public class IndexIntegrationTest extends TransformerFactoryWorkaroundTest imple
     @Inject
     private AipApi api;
     @Inject
-    private IndexArclibXmlStore indexArclibXmlStore;
+    private IndexedArclibXmlStore indexArclibXmlStore;
     @Inject
     private UserStore userStore;
     @Inject
@@ -106,7 +105,6 @@ public class IndexIntegrationTest extends TransformerFactoryWorkaroundTest imple
         producerStore.save(producer);
         userStore.save(user);
         api.setUserDetails(userDetailsImpl);
-        ((IndexedArclibXmlStore) api.getIndexArclibXmlStore()).setUserDetails(userDetailsImpl);
     }
 
     /**

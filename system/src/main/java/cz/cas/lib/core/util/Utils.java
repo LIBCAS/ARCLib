@@ -11,6 +11,7 @@ import cz.cas.lib.core.index.dto.FilterOperation;
 import cz.cas.lib.core.index.dto.Params;
 import cz.cas.lib.core.index.dto.RootFilterOperation;
 import lombok.AllArgsConstructor;
+import lombok.NonNull;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.aop.framework.Advised;
@@ -555,7 +556,7 @@ public class Utils {
         if (!root.isDirectory()) {
             throw new IllegalArgumentException(root + " is no directory.");
         }
-        String prefix = startRegexWithRootDirName ? "/"+root.getName() : "";
+        String prefix = startRegexWithRootDirName ? "/" + root.getName() : "";
         return Files.walk(root.toPath()).filter(f -> {
             String relativePathWithLinuxSeparators = prefix + f.toAbsolutePath().toString().replace(root.toPath().toAbsolutePath().toString(), "").replace("\\", "/");
             if (relativePathWithLinuxSeparators.length() < 1)
@@ -708,8 +709,8 @@ public class Utils {
      *
      * @param instant instant to convert to CRON expression
      * @return CRON expression of 6 fields in the format `%s %s %s %s %s %s`. From left to right it matches the seconds,
-     *         minutes, hours, day of month and month of the respective instant. The last field that represents
-     *         the day of week is set to `?`.
+     * minutes, hours, day of month and month of the respective instant. The last field that represents
+     * the day of week is set to `?`.
      */
     public static String toCron(Instant instant) {
         LocalDateTime localDateTime = LocalDateTime.ofInstant(instant, ZoneId.systemDefault());
@@ -744,5 +745,10 @@ public class Utils {
         };
         Files.walkFileTree(root.toPath(), visitor);
         return result;
+    }
+
+    public static boolean pathIsNestedInParent(@NonNull String path, @NonNull Collection<String> parentPaths) {
+        Path childPath = Paths.get(path);
+        return parentPaths.stream().anyMatch(parentPath -> childPath.normalize().toAbsolutePath().startsWith(Paths.get(parentPath).normalize().toAbsolutePath()));
     }
 }

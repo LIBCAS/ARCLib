@@ -5,7 +5,7 @@ import cz.cas.lib.arclib.domain.ingestWorkflow.IngestWorkflow;
 import cz.cas.lib.arclib.domain.packages.AuthorialPackage;
 import cz.cas.lib.arclib.domain.packages.Sip;
 import cz.cas.lib.arclib.domainbase.domain.DatedObject;
-import cz.cas.lib.arclib.index.IndexArclibXmlStore;
+import cz.cas.lib.arclib.index.IndexedArclibXmlStore;
 import cz.cas.lib.arclib.service.archivalStorage.ArchivalStorageServiceDebug;
 import cz.cas.lib.arclib.store.AuthorialPackageStore;
 import cz.cas.lib.arclib.store.SipStore;
@@ -24,7 +24,7 @@ public class AuthorialPackageService {
 
     private IngestWorkflowService ingestWorkflowService;
     private BatchService batchService;
-    private IndexArclibXmlStore indexArclibXmlStore;
+    private IndexedArclibXmlStore indexArclibXmlStore;
     private SipStore sipStore;
     private AuthorialPackageStore authorialPackageStore;
     private ArchivalStorageServiceDebug archivalStorageServiceDebug;
@@ -80,7 +80,7 @@ public class AuthorialPackageService {
     }
 
     @Inject
-    public void setIndexArclibXmlStore(IndexArclibXmlStore indexArclibXmlStore) {
+    public void setIndexArclibXmlStore(IndexedArclibXmlStore indexArclibXmlStore) {
         this.indexArclibXmlStore = indexArclibXmlStore;
     }
 

@@ -53,7 +53,7 @@ public class AntivirusDelegate extends ArclibDelegate {
         IngestWorkflow iw = ingestWorkflowService.findByExternalId(ingestWorkflowExternalId);
         JsonNode configRoot = getConfigRoot(execution);
 
-        Path sipPath = ArclibUtils.getIngestWorkflowWorkspacePath(ingestWorkflowExternalId, workspace);
+        Path sipPath = getSipFolderWorkspacePath(execution);
         int antivirusToolCounter = (int) execution.getVariable(BpmConstants.Antivirus.antivirusToolCounter);
 
         Antivirus antivirus = initialize(configRoot, iw, execution, antivirusToolCounter);

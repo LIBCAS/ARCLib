@@ -31,4 +31,20 @@ public class AuthorialPackageStore
         detachAll();
         return authorialPackageFound;
     }
+
+    @Transactional
+    public AuthorialPackage findByUuidAndProducerId(String uuid, String producerId) {
+        QAuthorialPackage authorialPackage = qObject();
+
+        JPAQuery<AuthorialPackage> query = query()
+                .select(authorialPackage)
+                .where(authorialPackage.id.eq(uuid))
+                .where(authorialPackage.producerProfile.producer.id.eq(producerId))
+                .where(authorialPackage.deleted.isNull());
+
+        AuthorialPackage authorialPackageFound = query.fetchFirst();
+
+        detachAll();
+        return authorialPackageFound;
+    }
 }

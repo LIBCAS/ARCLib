@@ -129,6 +129,21 @@
 
   <field name="dublin_core_id" type="string"/>
   <field name="dublin_core_value" type="standard_folding"/>
+  <field name="dublin_core_title" type="keyword_folding" multiValued="true"/>
+  <field name="dublin_core_creator" type="keyword_folding" multiValued="true"/>
+  <field name="dublin_core_subject" type="keyword_folding" multiValued="true"/>
+  <field name="dublin_core_description" type="keyword_folding" multiValued="true"/>
+  <field name="dublin_core_publisher" type="keyword_folding" multiValued="true"/>
+  <field name="dublin_core_contributor" type="keyword_folding" multiValued="true"/>
+  <field name="dublin_core_date" type="keyword_folding" multiValued="true"/>
+  <field name="dublin_core_type" type="keyword_folding" multiValued="true"/>
+  <field name="dublin_core_format" type="keyword_folding" multiValued="true"/>
+  <field name="dublin_core_identifier" type="keyword_folding" multiValued="true"/>
+  <field name="dublin_core_source" type="keyword_folding" multiValued="true"/>
+  <field name="dublin_core_language" type="keyword_folding" multiValued="true"/>
+  <field name="dublin_core_relation" type="keyword_folding" multiValued="true"/>
+  <field name="dublin_core_coverage" type="keyword_folding" multiValued="true"/>
+  <field name="dublin_core_rights" type="keyword_folding" multiValued="true"/>
 
   <field name="img_metadata_date_created" type="pdate"/>
   <field name="img_metadata_image_producer" type="keyword_folding"/>

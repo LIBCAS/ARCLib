@@ -25,6 +25,7 @@ import org.springframework.stereotype.Service;
 import javax.inject.Inject;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.TreeMap;
@@ -183,6 +184,16 @@ public abstract class ArclibDelegate implements VariableMapper, IngestTool, Java
     }
 
     /**
+     * Gets path to the folder unpacked from the zip file with the SIP content stored at the workspace.
+     *
+     * @param execution delegate execution containing BPM variables
+     * @return path to the unpacked folder with the SIP content
+     */
+    public Path getSipFolderWorkspacePath(DelegateExecution execution) {
+        return Paths.get((String) execution.getVariable(BpmConstants.ProcessVariables.sipFolderWorkspacePath));
+    }
+
+    /**
      * Gets path to the AIP XML stored at the workspace.
      *
      * @param execution delegate execution containing BPM variables
@@ -212,6 +223,7 @@ public abstract class ArclibDelegate implements VariableMapper, IngestTool, Java
     public void setObjectMapper(ObjectMapper objectMapper) {
         this.objectMapper = objectMapper;
     }
+
     @Inject
     public void setIngestEventStore(IngestEventStore ingestEventStore) {
         this.ingestEventStore = ingestEventStore;

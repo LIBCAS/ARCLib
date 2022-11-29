@@ -42,8 +42,8 @@ public class DeletionRequestService {
      * @param aipId id of the AIP to delete
      */
     @Transactional
-    public void createDeletionRequest(String aipId) {
-        User requester = new User(userDetails.getId());
+    public void createDeletionRequest(String aipId, String userId) {
+        User requester = new User(userId);
         AipDeletionRequest existingRequestForThisAip = aipDeletionRequestStore.findByAipId(aipId);
         if (existingRequestForThisAip != null) {
             throw new ConflictException(AipDeletionRequest.class, existingRequestForThisAip.getId());
@@ -151,7 +151,7 @@ public class DeletionRequestService {
             log.info("Triggered deletion of AIP " + deletionRequest.getAipId() + ".");
             String result = null;
             try {
-                aipService.changeAipState(deletionRequest.getAipId(), IndexedAipState.DELETED);
+                aipService.changeAipState(deletionRequest.getAipId(), IndexedAipState.DELETED, true);
                 result = "Deletion success.";
                 log.info(result);
             } catch (IOException | AipStateChangeException e) {

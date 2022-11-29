@@ -30,10 +30,7 @@ import java.util.*;
 @Service
 public abstract class FixityChecker {
 
-    Md5Counter md5Counter;
-    Sha512Counter sha512Counter;
-    Sha256Counter sha256Counter;
-    Sha1Counter sha1Counter;
+    FixityCounterFacade fixityCounterFacade;
     private IngestIssueService ingestIssueService;
     private IngestWorkflowStore ingestWorkflowStore;
     private ToolService toolService;
@@ -55,9 +52,9 @@ public abstract class FixityChecker {
      *
      * @param sipWsPath        path to SIP in workspace
      * @param pathToFixityFile Path to a file which contains fixity information of files of the package.
-     * @param externalId      external id of the ingest workflow, used in case of issue
-     * @param configRoot      root node of the ingest workflow JSON config containing configuration of the behaviour
-     *                        for a case of a fixity error
+     * @param externalId       external id of the ingest workflow, used in case of issue
+     * @param configRoot       root node of the ingest workflow JSON config containing configuration of the behaviour
+     *                         for a case of a fixity error
      */
     public abstract void verifySIP(Path sipWsPath, Path pathToFixityFile,
                                    String externalId, JsonNode configRoot,
@@ -184,26 +181,6 @@ public abstract class FixityChecker {
     }
 
     @Inject
-    public void setMd5Counter(Md5Counter md5Counter) {
-        this.md5Counter = md5Counter;
-    }
-
-    @Inject
-    public void setSha512Counter(Sha512Counter sha512Counter) {
-        this.sha512Counter = sha512Counter;
-    }
-
-    @Inject
-    public void setSha256Counter(Sha256Counter sha256Counter) {
-        this.sha256Counter = sha256Counter;
-    }
-
-    @Inject
-    public void setSha1Counter(Sha1Counter sha1Counter) {
-        this.sha1Counter = sha1Counter;
-    }
-
-    @Inject
     public void setIngestIssueService(IngestIssueService ingestIssueService) {
         this.ingestIssueService = ingestIssueService;
     }
@@ -221,5 +198,10 @@ public abstract class FixityChecker {
     @Inject
     public void setIngestIssueDefinitionStore(IngestIssueDefinitionStore ingestIssueDefinitionStore) {
         this.ingestIssueDefinitionStore = ingestIssueDefinitionStore;
+    }
+
+    @Inject
+    public void setFixityCounterFacade(FixityCounterFacade fixityCounterFacade) {
+        this.fixityCounterFacade = fixityCounterFacade;
     }
 }

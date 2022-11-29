@@ -1,12 +1,11 @@
 package cz.cas.lib.arclib.formatlibrary.service;
 
 import cz.cas.lib.arclib.formatlibrary.domain.FormatIdentifier;
-import cz.cas.lib.arclib.formatlibrary.domain.FormatIdentifierType;
 import cz.cas.lib.arclib.formatlibrary.store.FormatIdentifierStore;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.inject.Inject;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class FormatIdentifierService {
@@ -14,7 +13,7 @@ public class FormatIdentifierService {
     private FormatIdentifierStore store;
 
     @Transactional
-    public FormatIdentifier findByIdentifierTypeAndIdentifier(FormatIdentifierType identifierType, String identifier) {
+    public FormatIdentifier findByIdentifierTypeAndIdentifier(String identifierType, String identifier) {
         return store.findByIdentifierTypeAndIdentifier(identifierType, identifier);
     }
 

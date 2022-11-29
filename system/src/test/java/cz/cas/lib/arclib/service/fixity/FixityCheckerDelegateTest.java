@@ -145,10 +145,8 @@ public class FixityCheckerDelegateTest {
         metsProfile.setExternalId("METS");
         when(sipProfileStore.findByExternalId(eq(metsProfile.getExternalId()))).thenReturn(metsProfile);
 
-        metsFixityVerifier.setMd5Counter(new Md5Counter());
         metsFixityVerifier.setIngestWorkflowStore(ingestWorkflowStore);
 
-        bagitPackageFixityVerifier.setSha512Counter(new Sha512Counter());
         bagitPackageFixityVerifier.setIngestWorkflowStore(ingestWorkflowStore);
 
         IngestIssueService iiservice = new IngestIssueService();

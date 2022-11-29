@@ -62,7 +62,7 @@ public class Params {
 
     /**
      * Number of requested instances.
-     *
+     * <p>
      * Minimum is 1 and maximum is configured by {@link IndexQueryUtils#solrMaxRows}
      */
     @NotNull
@@ -106,6 +106,20 @@ public class Params {
 
     public void addSorting(SortSpecification sort) {
         this.sorting.add(sort);
+    }
+
+    public Params copy() {
+        Params params = new Params();
+        params.setPage(getPage());
+        params.setPageSize(getPageSize());
+        params.setFilter(getFilter());
+        params.setSort(getSort());
+        params.setOrder(getOrder());
+        params.setSorting(getSorting());
+        params.setOperation(getOperation());
+        params.setPrefilterAdded(isPrefilterAdded());
+        params.setInternalQuery(getInternalQuery());
+        return params;
     }
 
 }

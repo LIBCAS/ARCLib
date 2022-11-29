@@ -100,21 +100,6 @@ public class ProducerProfileStore extends IndexedNamedStore<ProducerProfile, QPr
         return indexObject;
     }
 
-    /**
-     * Queries for ProducerProfile of given id, entity can be deleted as well (deleted flag is not null).
-     *
-     * @param id of entity
-     * @return ProducerProfile entity, even deleted. Or null if no SipProfile matches provided id.
-     */
-    public ProducerProfile findWithDeletedFilteringOff(String id) {
-        ProducerProfile entity = query()
-                .select(qObject())
-                .where(qObject().id.eq(id))
-                .fetchFirst();
-        detachAll();
-        return entity;
-    }
-
     @Inject
     public void setGenerator(Generator generator) {
         this.generator = generator;

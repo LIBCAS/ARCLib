@@ -12,8 +12,6 @@ import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 
-import java.util.Collections;
-
 import static cz.cas.lib.core.util.Utils.asList;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
@@ -46,8 +44,8 @@ public class AipQueryStoreTest extends DbTest {
         query.setQuery(params);
         Result<IndexedArclibXmlDocument> result = new Result<>();
         IndexedArclibXmlDocument indexedArclibXmlDocument = new IndexedArclibXmlDocument();
-        indexedArclibXmlDocument.setAipState(IndexedAipState.ARCHIVED);
-        indexedArclibXmlDocument.setFields(Collections.singletonMap("key", "value"));
+        indexedArclibXmlDocument.getFields().put(IndexedArclibXmlDocument.AIP_STATE, IndexedAipState.ARCHIVED);
+        indexedArclibXmlDocument.getFields().put("key", "value");
         result.setItems(asList(indexedArclibXmlDocument));
         result.setCount(5L);
         query.setResult(result);

@@ -2,11 +2,13 @@ package cz.cas.lib.arclib.service.fixity;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import cz.cas.lib.arclib.bpm.IngestTool;
+import cz.cas.lib.arclib.domain.HashType;
 import cz.cas.lib.arclib.exception.bpm.IncidentException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.stereotype.Service;
 
+import javax.inject.Inject;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -25,6 +27,7 @@ public class BagitFixityChecker extends FixityChecker {
 
     private static final String FILENAME_PATTERN = "[tag]?manifest-(.+)\\.txt";
     private static final String FILE_LINE_PATTERN = "(\\w+)\\s+\\*?\\s*(\\S+)\\s*";
+    private FixityCounterFacade fixityCounterFacade;
 
     /**
      * Verifies fixity of every file specified in manifest files of the package.
@@ -62,16 +65,16 @@ public class BagitFixityChecker extends FixityChecker {
             String checksumType = matcher.group(1);
             switch (checksumType) {
                 case "md5":
-                    counter = md5Counter;
+                    counter = fixityCounterFacade.getFixityCounters().get(HashType.MD5);
                     break;
                 case "sha1":
-                    counter = sha1Counter;
+                    counter = fixityCounterFacade.getFixityCounters().get(HashType.Sha1);
                     break;
                 case "sha256":
-                    counter = sha256Counter;
+                    counter = fixityCounterFacade.getFixityCounters().get(HashType.Sha256);
                     break;
                 case "sha512":
-                    counter = sha512Counter;
+                    counter = fixityCounterFacade.getFixityCounters().get(HashType.Sha512);
                     break;
                 default:
                     unsupportedChecksumTypes.put(checksumType, pathsToFiles);
@@ -133,5 +136,10 @@ public class BagitFixityChecker extends FixityChecker {
             ;
         }
         return checksumPairs;
+    }
+
+    @Inject
+    public void setFixityCounterFacade(FixityCounterFacade fixityCounterFacade) {
+        this.fixityCounterFacade = fixityCounterFacade;
     }
 }

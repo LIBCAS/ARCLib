@@ -32,7 +32,7 @@ public class ZipUtils {
      * @throws cz.cas.lib.arclib.domainbase.exception.GeneralException if there is not exactly one root folder inside the ZIP
      */
     public static String unzipSip(Path zipInput, Path destDirectory, String ingestWorkflowLogId) {
-            try (ZipFile zipFile = new ZipFile(zipInput.toFile())) {
+        try (ZipFile zipFile = new ZipFile(zipInput.toFile())) {
             Files.createDirectories(destDirectory);
             Enumeration<? extends ZipEntry> entries = zipFile.entries();
             Set<String> rootDirNames = new HashSet<>();
@@ -47,16 +47,16 @@ public class ZipUtils {
                     Files.createDirectories(filePath);
                 }
             }
-                if (rootDirNames.size() != 1) {
-                    throw new GeneralException("Invalid input ZIP format. ZIP has to include exactly one root folder. But " + rootDirNames.size() + " were found (" + Arrays.toString(rootDirNames.toArray()) + ")");
-                }
-                log.debug("SIP content for ingest workflow external id " + ingestWorkflowLogId + " in zip archive has been" +
-                        " extracted to workspace.");
-                return rootDirNames.iterator().next();
-            } catch (Exception e) {
-                throw new GeneralException("Unable to unzip SIP content for ingest workflow external id "
-                        + ingestWorkflowLogId + " to path: " + destDirectory.toAbsolutePath().toString() + ". See log for causing exception stacktrace. If you see errors like ..malformed.. or ..invalid CEN header.. the cause may be that name of some zipped file/folder contains non-standard characters and entries names are not encoded in UTF-8", e);
+            if (rootDirNames.size() != 1) {
+                throw new GeneralException("Invalid input ZIP format. ZIP has to include exactly one root folder. But " + rootDirNames.size() + " were found (" + Arrays.toString(rootDirNames.toArray()) + ")");
             }
+            log.debug("SIP content for ingest workflow external id " + ingestWorkflowLogId + " in zip archive has been" +
+                    " extracted to workspace.");
+            return rootDirNames.iterator().next();
+        } catch (Exception e) {
+            throw new GeneralException("Unable to unzip SIP content for ingest workflow external id "
+                    + ingestWorkflowLogId + " to path: " + destDirectory.toAbsolutePath().toString() + ". See log for causing exception stacktrace. If you see errors like ..malformed.. or ..invalid CEN header.. the cause may be that name of some zipped file/folder contains non-standard characters and entries names are not encoded in UTF-8", e);
+        }
     }
 
     /**
@@ -66,7 +66,7 @@ public class ZipUtils {
      * @param filePath
      * @throws IOException
      */
-    private static void extractFile(InputStream zipIn, Path filePath) throws IOException {
+    public static void extractFile(InputStream zipIn, Path filePath) throws IOException {
         BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(filePath.toFile()));
         byte[] bytesIn = new byte[BUFFER_SIZE];
         int read = 0;
@@ -104,5 +104,31 @@ public class ZipUtils {
             packed = bos.toByteArray();
         }
         return packed;
+    }
+
+    public static void zipFile(File fileToZip, String fileName, ZipOutputStream zipOut) throws IOException {
+        if (fileToZip.isDirectory()) {
+            if (fileName.endsWith("/")) {
+                zipOut.putNextEntry(new ZipEntry(fileName));
+                zipOut.closeEntry();
+            } else {
+                zipOut.putNextEntry(new ZipEntry(fileName + "/"));
+                zipOut.closeEntry();
+            }
+            File[] children = fileToZip.listFiles();
+            for (File childFile : children) {
+                zipFile(childFile, fileName + "/" + childFile.getName(), zipOut);
+            }
+            return;
+        }
+        FileInputStream fis = new FileInputStream(fileToZip);
+        ZipEntry zipEntry = new ZipEntry(fileName);
+        zipOut.putNextEntry(zipEntry);
+        byte[] bytes = new byte[1024];
+        int length;
+        while ((length = fis.read(bytes)) >= 0) {
+            zipOut.write(bytes, 0, length);
+        }
+        fis.close();
     }
 }

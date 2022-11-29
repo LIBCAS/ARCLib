@@ -8,7 +8,6 @@ import cz.cas.lib.arclib.domain.packages.FolderStructure;
 import cz.cas.lib.arclib.domain.packages.Sip;
 import cz.cas.lib.arclib.domain.preservationPlanning.Tool;
 import cz.cas.lib.arclib.exception.validation.MissingNode;
-import cz.cas.lib.arclib.service.SipProfileService;
 import cz.cas.lib.arclib.service.fixity.MetsChecksumType;
 import cz.cas.lib.arclib.store.IngestEventStore;
 import cz.cas.lib.arclib.store.IngestWorkflowStore;
@@ -55,7 +54,6 @@ public class ArclibXmlGenerator {
     private Map<String, String> uris;
     private String arclibVersion;
     private IngestEventStore ingestEventStore;
-    private SipProfileService sipProfileService;
 
     /**
      * Supplements ArclibXml with generated metadata
@@ -135,7 +133,7 @@ public class ArclibXmlGenerator {
 
     private void fillMetsHdr(Element metsHdrElement, IngestWorkflow ingestWorkflow, Map<String, Object> variables) {
         String xmlId = (String) variables.get(ProcessVariables.ingestWorkflowExternalId);
-        String authorialId = (String) variables.get(ProcessVariables.authorialId);
+        String authorialId = (String) variables.get(ProcessVariables.extractedAuthorialId);
 
         metsHdrElement.addAttribute("CREATEDATE", ingestWorkflow.getCreated().truncatedTo(ChronoUnit.SECONDS).toString());
         metsHdrElement.addAttribute("LASTMODDATE", ingestWorkflow.getUpdated().truncatedTo(ChronoUnit.SECONDS).toString());
@@ -384,7 +382,7 @@ public class ArclibXmlGenerator {
                 fileElement.addAttribute("ID", filePathsAndObjIdentifier.getRight());
                 Element fLocatElement = fileElement.addElement("METS:FLocat");
                 fLocatElement.addAttribute("LOCTYPE", "OTHER");
-                fLocatElement.addAttribute(XLINK+":href", filePathsAndObjIdentifier.getLeft());
+                fLocatElement.addAttribute(XLINK + ":href", filePathsAndObjIdentifier.getLeft());
             }
             return;
         }
@@ -396,7 +394,7 @@ public class ArclibXmlGenerator {
             fileElement.addAttribute("ID", filePathsAndObjIdentifier.getRight());
             Element fLocatElement = fileElement.addElement("METS:FLocat");
             fLocatElement.addAttribute("LOCTYPE", "OTHER");
-            fLocatElement.addAttribute(XLINK+":href", filePathsAndObjIdentifier.getLeft());
+            fLocatElement.addAttribute(XLINK + ":href", filePathsAndObjIdentifier.getLeft());
             Triple<Long, String, String> fileFixityData = sipContentFixityData.get(filePathsAndObjIdentifier.getLeft());
             if (fileFixityData != null) {
                 if (fileFixityData.getLeft() != null)
@@ -612,13 +610,13 @@ public class ArclibXmlGenerator {
             Optional<Node> latestModificationEvent = modificationEventNodes.stream().max(Comparator.comparing(Node::getText));
             if (latestModificationEvent.isPresent()) {
                 String latestModificationEventText = latestModificationEvent.get().getText();
-                String latestModEventNumberString = latestModificationEventText.substring(latestModificationEventText.lastIndexOf('_')+1);
+                String latestModEventNumberString = latestModificationEventText.substring(latestModificationEventText.lastIndexOf('_') + 1);
                 nextModEventNumber += Integer.parseInt(latestModEventNumberString);
             }
         }
 
         String eventIdentifier = EVENT + String.format(EVENT_NUMBER_FORMAT, eventNumber);
-        String eventIdValue = XML_UPDATE_PREMIS_EVENT+"_event_" + String.format(EVENT_ID_NUMBER_FORMAT, nextModEventNumber);
+        String eventIdValue = XML_UPDATE_PREMIS_EVENT + "_event_" + String.format(EVENT_ID_NUMBER_FORMAT, nextModEventNumber);
 
         XPath amdSecPath = doc.createXPath("/mets:mets/mets:amdSec[mets:digiprovMD/mets:mdWrap/mets:xmlData/premis:event]");
         amdSecPath.setNamespaceURIs(uris);
@@ -626,7 +624,7 @@ public class ArclibXmlGenerator {
 
         String eventDetail = "XML was modified by user " + username + " from the reason: " + reason;
         addEvent(amdSecForEventsElement, eventIdValue, eventIdentifier, true, AGENT_ARCLIB,
-                eventDetail, XML_UPDATE_PREMIS_EVENT.replace("_"," "), Instant.now().truncatedTo(ChronoUnit.SECONDS).toString());
+                eventDetail, XML_UPDATE_PREMIS_EVENT.replace("_", " "), Instant.now().truncatedTo(ChronoUnit.SECONDS).toString());
 
         log.debug("Ingest Workflow: " + ingestWorkflow.getId() + ": " + eventDetail);
         return prettyPrint(doc);
@@ -668,10 +666,5 @@ public class ArclibXmlGenerator {
     @Inject
     public void setArclibVersion(@Value("${arclib.version}") String arclibVersion) {
         this.arclibVersion = arclibVersion;
-    }
-
-    @Inject
-    public void setSipProfileService(SipProfileService sipProfileService) {
-        this.sipProfileService = sipProfileService;
     }
 }

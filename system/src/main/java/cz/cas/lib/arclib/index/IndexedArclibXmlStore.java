@@ -1,6 +1,8 @@
 package cz.cas.lib.arclib.index;
 
 import cz.cas.lib.arclib.domainbase.exception.BadArgument;
+import cz.cas.lib.arclib.domainbase.exception.ConflictException;
+import cz.cas.lib.arclib.domainbase.exception.MissingObject;
 import cz.cas.lib.arclib.index.solr.arclibxml.IndexedAipState;
 import cz.cas.lib.arclib.index.solr.arclibxml.IndexedArclibXmlDocument;
 import cz.cas.lib.core.index.dto.Params;
@@ -13,9 +15,11 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 
-public interface IndexArclibXmlStore {
+public interface IndexedArclibXmlStore {
 
     /**
      * Creates index. {@link AipXmlNodeValueType#TIME} are stored as count of milliseconds.
@@ -28,19 +32,29 @@ public interface IndexArclibXmlStore {
      * Finds documents.
      *
      * @param params params for filtering sorting etc.
-     * @param queryName if queryName is set, the query is saved to use its result or the query itself later
-     * @return list of IDs of documents
+     * @return search result
      * @throws BadArgument if query contains field undefined in Solr schema.
      */
-    Result<IndexedArclibXmlDocument> findAll(Params params, String queryName);
+    Result<IndexedArclibXmlDocument> findAll(Params params);
 
     /**
-     * Find indexed fields of one document by ingest workflow external id.
+     * Finds all documents and ignores pagination.
      *
-     * @param externalId
-     * @return
+     * @param params params for filtering sorting etc.
+     * @return search result
+     * @throws BadArgument if query contains field undefined in Solr schema.
      */
-    Map<String, Object> findArclibXmlIndexDocument(String externalId);
+    Result<IndexedArclibXmlDocument> findAllIgnorePagination(Params params);
+
+    /**
+     * Finds single ArclibXml index document by the external id, or throws exception if zero or more documents were found
+     *
+     * @param externalId external id of the ArclibXml index document
+     * @return map of indexed attributes and their values
+     * @throws MissingObject
+     * @throws ConflictException
+     */
+    IndexedArclibXmlDocument findArclibXmlIndexDocument(String externalId);
 
     /**
      * changes the aip state of the record
@@ -57,6 +71,8 @@ public interface IndexArclibXmlStore {
     String getMainDocumentIndexType();
 
     Resource getArclibXmlDefinition();
+
+    List<IndexedArclibXmlDocument> findWithChildren(Collection<String> docIds, List<SimpleIndexFilter> additionalFilters);
 
     /**
      * Fills passed attributes with config parsed from arclibXmlDefinition.csv

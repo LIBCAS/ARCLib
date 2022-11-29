@@ -16,7 +16,4 @@ public class AipQueryDto {
     private String name;
     private Instant created;
     private Instant updated;
-    private String exportRoutineId;
-    private Instant exportTime;
-    private String exportLocationPath;
 }

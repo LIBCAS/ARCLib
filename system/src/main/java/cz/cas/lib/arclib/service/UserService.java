@@ -14,9 +14,11 @@ import cz.cas.lib.arclib.security.authorization.business.audit.RoleDelEvent;
 import cz.cas.lib.arclib.security.authorization.permission.Permissions;
 import cz.cas.lib.arclib.security.authorization.role.UserRole;
 import cz.cas.lib.arclib.security.user.UserDetails;
+import cz.cas.lib.arclib.store.ProducerStore;
 import cz.cas.lib.arclib.store.UserStore;
 import cz.cas.lib.core.rest.data.DelegateAdapter;
 import cz.cas.lib.core.store.Transactional;
+import cz.cas.lib.core.util.Utils;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -40,6 +42,7 @@ public class UserService implements DelegateAdapter<User> {
     private UserStore delegate;
     private UserDetails userDetails;
     private AuditLogger logger;
+    private ProducerStore producerStore;
 
 
     @Transactional
@@ -68,6 +71,14 @@ public class UserService implements DelegateAdapter<User> {
             notNull(userDto.getProducer(), () -> new BadRequestException("user has to have producer assigned"));
             userEntity.setProducer(userDto.getProducer());
         }
+
+        Producer producerOfNewUser = producerStore.find(userEntity.getProducer().getId());
+        userDto.getExportFolders().forEach(exportFolderOfUser -> {
+            boolean userCanExportToSelectedFolder = Utils.pathIsNestedInParent(exportFolderOfUser, producerOfNewUser.getExportFolders());
+            Utils.eq(userCanExportToSelectedFolder, true, () -> new ForbiddenException("Users of this producer are not allowed to export to folder: " + exportFolderOfUser
+                    + " allowed export folders for this producer are: " + String.join(",", producerOfNewUser.getExportFolders())));
+        });
+        userEntity.setExportFolders(userDto.getExportFolders());
 
         logRoleSaving(id, userEntity.getRoles(), userDto.getRoles());
         return delegate.save(userEntity);
@@ -108,8 +119,7 @@ public class UserService implements DelegateAdapter<User> {
         List<User> users;
         if (!hasRole(userDetails, Permissions.SUPER_ADMIN_PRIVILEGE)) {
             users = delegate.findAllUsersOrderByName(true, userDetails.getProducerId());
-        }
-        else {
+        } else {
             users = delegate.findAllUsersOrderByName(false, userDetails.getProducerId());
         }
         return users.stream().map(u -> new UserFullnameDto(u.getId(), u.getFullName())).collect(Collectors.toList());
@@ -136,5 +146,10 @@ public class UserService implements DelegateAdapter<User> {
     @Inject
     public void setLogger(AuditLogger logger) {
         this.logger = logger;
+    }
+
+    @Inject
+    public void setProducerStore(ProducerStore producerStore) {
+        this.producerStore = producerStore;
     }
 }

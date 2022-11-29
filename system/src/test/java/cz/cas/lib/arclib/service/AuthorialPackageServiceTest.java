@@ -4,7 +4,7 @@ import cz.cas.lib.arclib.domain.Batch;
 import cz.cas.lib.arclib.domain.ingestWorkflow.IngestWorkflow;
 import cz.cas.lib.arclib.domain.packages.AuthorialPackage;
 import cz.cas.lib.arclib.domain.packages.Sip;
-import cz.cas.lib.arclib.index.IndexArclibXmlStore;
+import cz.cas.lib.arclib.index.IndexedArclibXmlStore;
 import cz.cas.lib.arclib.store.AuthorialPackageStore;
 import cz.cas.lib.arclib.store.BatchStore;
 import cz.cas.lib.arclib.store.IngestWorkflowStore;
@@ -42,7 +42,7 @@ public class AuthorialPackageServiceTest extends DbTest {
     private IngestWorkflowStore ingestWorkflowStore = new IngestWorkflowStore();
 
     @Mock
-    private IndexArclibXmlStore arclibXmlStore;
+    private IndexedArclibXmlStore arclibXmlStore;
     @Mock
     private SolrTemplate solrTemplate;
     @Mock

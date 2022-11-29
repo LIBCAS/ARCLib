@@ -10,7 +10,8 @@ import cz.cas.lib.arclib.domain.packages.AuthorialPackage;
 import cz.cas.lib.arclib.domain.packages.Sip;
 import cz.cas.lib.arclib.domain.profiles.ProducerProfile;
 import cz.cas.lib.arclib.domain.profiles.SipProfile;
-import cz.cas.lib.arclib.index.solr.arclibxml.IndexedArclibXmlStore;
+import cz.cas.lib.arclib.index.solr.arclibxml.IndexedArclibXmlDocument;
+import cz.cas.lib.arclib.index.solr.arclibxml.SolrArclibXmlStore;
 import cz.cas.lib.arclib.security.user.UserDetailsImpl;
 import cz.cas.lib.arclib.service.BatchService;
 import cz.cas.lib.arclib.service.IngestWorkflowService;
@@ -86,7 +87,7 @@ public class ArchivalStorageDelegateTest extends DelegateTest {
     private Sip previousVersionSip;
 
     @Mock
-    private IndexedArclibXmlStore indexedArclibXmlStore;
+    private SolrArclibXmlStore indexedArclibXmlStore;
 
     @Before
     public void before() throws IOException {
@@ -153,8 +154,6 @@ public class ArchivalStorageDelegateTest extends DelegateTest {
         user = new User();
         userDetailsImpl = new UserDetailsImpl(user);
 
-        indexedArclibXmlStore.setUserDetails(userDetailsImpl);
-
         archivalStorageDelegate = new ArchivalStorageDelegate();
         IngestWorkflowService ingestWorkflowService = new IngestWorkflowService();
         ingestWorkflowService.setStore(ingestWorkflowStore);
@@ -214,7 +213,7 @@ public class ArchivalStorageDelegateTest extends DelegateTest {
         ArrayList<Object> documents = new ArrayList<>();
         documents.add("<xml/>");
         Map<String, Object> indexedFields = new HashMap<>();
-        when(indexedArclibXmlStore.findArclibXmlIndexDocument(anyString())).thenReturn(indexedFields);
+        when(indexedArclibXmlStore.findArclibXmlIndexDocument(anyString())).thenReturn(new IndexedArclibXmlDocument(indexedFields, Map.of()));
 
         Mocks.register("archivalStorageDelegate", archivalStorageDelegate);
 

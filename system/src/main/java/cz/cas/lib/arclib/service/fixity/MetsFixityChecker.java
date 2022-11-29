@@ -2,6 +2,7 @@ package cz.cas.lib.arclib.service.fixity;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import cz.cas.lib.arclib.bpm.IngestTool;
+import cz.cas.lib.arclib.domain.HashType;
 import cz.cas.lib.arclib.domainbase.exception.GeneralException;
 import cz.cas.lib.arclib.exception.bpm.IncidentException;
 import lombok.extern.slf4j.Slf4j;
@@ -95,16 +96,16 @@ public class MetsFixityChecker extends FixityChecker {
                 FixityCounter counter;
                 switch (checksumType.toUpperCase()) {
                     case "MD5":
-                        counter = md5Counter;
+                        counter = fixityCounterFacade.getFixityCounters().get(HashType.MD5);
                         break;
                     case "SHA-512":
-                        counter = sha512Counter;
+                        counter = fixityCounterFacade.getFixityCounters().get(HashType.Sha512);
                         break;
                     case "SHA-256":
-                        counter = sha256Counter;
+                        counter = fixityCounterFacade.getFixityCounters().get(HashType.Sha256);
                         break;
                     case "SHA-1":
-                        counter = sha1Counter;
+                        counter = fixityCounterFacade.getFixityCounters().get(HashType.Sha1);
                         break;
                     default:
                         boolean present = unsupportedChecksumTypes.containsKey(checksumType);

@@ -6,38 +6,30 @@ import cz.cas.lib.arclib.domain.ingestWorkflow.IngestWorkflowState;
 import cz.cas.lib.arclib.domain.packages.AuthorialPackage;
 import cz.cas.lib.arclib.domain.packages.AuthorialPackageUpdateLock;
 import cz.cas.lib.arclib.domain.packages.Sip;
-import cz.cas.lib.arclib.domainbase.exception.ForbiddenObject;
-import cz.cas.lib.arclib.domainbase.exception.ForbiddenOperation;
-import cz.cas.lib.arclib.domainbase.exception.GeneralException;
-import cz.cas.lib.arclib.domainbase.exception.MissingObject;
+import cz.cas.lib.arclib.domainbase.exception.*;
 import cz.cas.lib.arclib.dto.AipDetailDto;
 import cz.cas.lib.arclib.exception.AipStateChangeException;
 import cz.cas.lib.arclib.exception.AuthorialPackageLockedException;
 import cz.cas.lib.arclib.exception.AuthorialPackageNotLockedException;
 import cz.cas.lib.arclib.exception.ForbiddenException;
-import cz.cas.lib.arclib.index.IndexArclibXmlStore;
+import cz.cas.lib.arclib.index.IndexedArclibXmlStore;
 import cz.cas.lib.arclib.index.solr.arclibxml.IndexedAipState;
 import cz.cas.lib.arclib.index.solr.arclibxml.IndexedArclibXmlDocument;
-import cz.cas.lib.arclib.index.solr.arclibxml.IndexedArclibXmlStore;
+import cz.cas.lib.arclib.index.solr.arclibxml.SolrArclibXmlStore;
 import cz.cas.lib.arclib.security.authorization.permission.Permissions;
 import cz.cas.lib.arclib.security.user.UserDetails;
 import cz.cas.lib.arclib.service.archivalStorage.ArchivalStorageException;
 import cz.cas.lib.arclib.service.archivalStorage.ArchivalStorageService;
 import cz.cas.lib.arclib.service.arclibxml.ArclibXmlGenerator;
 import cz.cas.lib.arclib.service.arclibxml.ArclibXmlValidator;
-import cz.cas.lib.arclib.service.fixity.Crc32Counter;
-import cz.cas.lib.arclib.service.fixity.FixityCounter;
-import cz.cas.lib.arclib.service.fixity.Md5Counter;
-import cz.cas.lib.arclib.service.fixity.Sha512Counter;
+import cz.cas.lib.arclib.service.fixity.FixityCounterFacade;
 import cz.cas.lib.arclib.store.AuthorialPackageStore;
 import cz.cas.lib.arclib.store.AuthorialPackageUpdateLockStore;
-import cz.cas.lib.arclib.utils.ArclibUtils;
 import cz.cas.lib.core.scheduling.job.Job;
 import cz.cas.lib.core.scheduling.job.JobService;
 import cz.cas.lib.core.script.ScriptType;
 import cz.cas.lib.core.store.Transactional;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.dom4j.DocumentException;
 import org.springframework.beans.factory.annotation.Value;
@@ -50,13 +42,17 @@ import org.xml.sax.SAXException;
 
 import javax.inject.Inject;
 import javax.xml.parsers.ParserConfigurationException;
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Instant;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static cz.cas.lib.arclib.utils.ArclibUtils.hasRole;
 import static cz.cas.lib.core.util.Utils.*;
@@ -66,7 +62,7 @@ import static cz.cas.lib.core.util.Utils.*;
 public class AipService {
     private AuthorialPackageUpdateLockStore authorialPackageUpdateLockStore;
     private AuthorialPackageStore authorialPackageStore;
-    private IndexArclibXmlStore indexedArclibXmlStore;
+    private IndexedArclibXmlStore indexedArclibXmlStore;
     private IngestWorkflowService ingestWorkflowService;
     private Path workspace;
 
@@ -75,9 +71,7 @@ public class AipService {
     private ArchivalStorageService archivalStorageService;
     private ArclibXmlValidator arclibXmlValidator;
 
-    private Crc32Counter crc32Counter;
-    private Sha512Counter sha512Counter;
-    private Md5Counter md5Counter;
+    private FixityCounterFacade fixityCounterFacade;
 
     private Resource keepAliveUpdateScript;
     private int keepAliveUpdateTimeout;
@@ -92,68 +86,29 @@ public class AipService {
      * @return DTO with indexed fields and IW entity
      */
     @Transactional
-    public AipDetailDto get(String xmlId, UserDetails userDetails) throws IOException {
+    public AipDetailDto getMetadata(String xmlId, UserDetails userDetails) throws IOException {
         IngestWorkflow ingestWorkflow = ingestWorkflowService.findByExternalId(xmlId);
         notNull(ingestWorkflow, () -> new MissingObject(IngestWorkflow.class, xmlId));
 
-        Map<String, Object> arclibXmlIndexDocument = indexedArclibXmlStore.findArclibXmlIndexDocument(xmlId);
+        List<IndexedArclibXmlDocument> docs = indexedArclibXmlStore.findWithChildren(List.of(xmlId), null);
+        ne(docs.size(), 0, () -> new MissingObject(IndexedArclibXmlDocument.class, xmlId));
+        eq(docs.size(), 1, () -> new ConflictException("found multiple IndexedArclibXmlDocuments with id: " + xmlId));
 
-        notNull(arclibXmlIndexDocument, () -> new MissingObject(IndexedArclibXmlDocument.class, xmlId));
-        String producerId = (String) ((ArrayList) arclibXmlIndexDocument.get(IndexedArclibXmlDocument.PRODUCER_ID)).get(0);
-        if (!hasRole(userDetails, Permissions.SUPER_ADMIN_PRIVILEGE) && !userDetails.getProducerId().equals(producerId)) {
+        IndexedArclibXmlDocument arclibXmlIndexDocument = docs.get(0);
+
+        if (!hasRole(userDetails, Permissions.SUPER_ADMIN_PRIVILEGE) && !userDetails.getProducerId().equals(arclibXmlIndexDocument.getProducerId())) {
             throw new ForbiddenObject(IngestWorkflow.class, xmlId);
         }
-        return new AipDetailDto(arclibXmlIndexDocument, ingestWorkflow);
-    }
 
-    /**
-     * Exports multiple XMLs to folder
-     *
-     * @param aipIdsAndVersions  map of ids of AIPs as keys and numbers of versions as values
-     * @param exportLocationPath location to export the AIPs to
-     * @throws
-     */
-    @Transactional
-    public void exportMultipleXmls(Map<String, List<Integer>> aipIdsAndVersions, String exportLocationPath)
-            throws IOException {
-        for (Map.Entry<String, List<Integer>> aipAndVersionId : aipIdsAndVersions.entrySet()) {
-            String aipId = aipAndVersionId.getKey();
-            List<Integer> versions = aipAndVersionId.getValue();
-            for (Integer version : versions) {
-                try {
-                    InputStream response = archivalStorageService.exportSingleXml(aipId, version);
-                    String fileName = ArclibUtils.getXmlExportName(aipId, version);
-                    File file = new File(exportLocationPath + "/" + fileName);
-                    FileUtils.copyInputStreamToFile(response, file);
-                    log.info("XML of AIP with ID " + aipId + " has been exported from archival storage.");
-                } catch (ArchivalStorageException e) {
-                    log.error("error during export of XML of AIP with ID" + aipId, e);
-                }
-            }
+        List<Map<String, Collection<Object>>> dublin_core = arclibXmlIndexDocument.getChildren().get("dublin_core");
+        List<Map<String, List<String>>> parsedDc = dublin_core.stream().map(oldMap -> {
+            Map<String, List<String>> newMap = new HashMap<>();
+            oldMap.entrySet().stream().filter(e -> e.getKey().startsWith("dublin_core") && !e.getKey().equals("dublin_core_value")).forEach(e -> newMap.put(e.getKey(),
+                    e.getValue().stream().map(o -> (String) o).collect(Collectors.toList())));
+            return newMap;
+        }).collect(Collectors.toList());
 
-        }
-    }
-
-    /**
-     * Exports multiple AIPs to folder
-     *
-     * @param aipIds             ids of the AIP packages to export
-     * @param all                true to return all XMLs, otherwise only the latest is returned
-     * @param exportLocationPath location to export the AIPs to
-     */
-    @Transactional
-    public void exportMultipleAips(List<String> aipIds, boolean all, String exportLocationPath)
-            throws IOException {
-        for (String aipId : aipIds) {
-            try {
-                InputStream response = archivalStorageService.exportSingleAip(aipId, all);
-                File file = new File(exportLocationPath + "/" + ArclibUtils.getAipExportName(aipId));
-                FileUtils.copyInputStreamToFile(response, file);
-                log.info("AIP " + aipId + " has been exported from archival storage.");
-            } catch (ArchivalStorageException e) {
-                log.error("error during export of AIP: " + aipId, e);
-            }
-        }
+        return new AipDetailDto(arclibXmlIndexDocument.getFields(), ingestWorkflow, parsedDc);
     }
 
     /**
@@ -164,7 +119,7 @@ public class AipService {
      * @throws IOException             in the case of uncontrolled/unexpected IO error probably not related to the ArchivalStorage service
      * @throws AipStateChangeException in the case of any controlled error (e.g. some ingest workflows are unfinished or Archival Storage returns bad return code)
      */
-    public void changeAipState(String aipId, IndexedAipState newState) throws AipStateChangeException, IOException {
+    public void changeAipState(String aipId, IndexedAipState newState, boolean authCheck) throws AipStateChangeException, IOException {
         notNull(newState, () -> new IllegalArgumentException("state can't be null"));
         String logPrefix = "Change state request (new state: " + newState + ") of AIP: " + aipId + ": ";
         log.debug(logPrefix + "STARTED");
@@ -174,7 +129,9 @@ public class AipService {
         for (IngestWorkflow iw : iws) {
             notNull(iw.getProducerProfile(), () -> new IllegalArgumentException("producer profile of IngestWorkflow " + iw.getId() + " is null"));
             notNull(iw.getProducerProfile().getProducer(), () -> new IllegalArgumentException("producer of IngestWorkflow " + iw.getId() + " is null"));
-            verifyProducer(iw.getProducerProfile().getProducer(), "User cannot change AIP state because producer of IngestWorkflow:"+iw.getId()+" does not match user's producer.");
+            if (authCheck) {
+                verifyProducer(iw.getProducerProfile().getProducer(), "User cannot change AIP state because producer of IngestWorkflow:" + iw.getId() + " does not match user's producer.");
+            }
 
             switch (iw.getProcessingState()) {
                 case PERSISTED:
@@ -265,8 +222,10 @@ public class AipService {
      * @throws IllegalStateException if there is no update in progress
      */
     //not @Transactional, transactions are handled programmatically
-    public void finishXmlUpdate(String aipId, String xmlId, String xml, Hash hash, Integer xmlVersion, String reason)
-            throws ParserConfigurationException, SAXException, IOException, DocumentException, AuthorialPackageNotLockedException, ArchivalStorageException {
+    public void finishXmlUpdate(String aipId, String xmlId, String xml, Hash hash, Integer xmlVersion, String
+            reason)
+            throws
+            ParserConfigurationException, SAXException, IOException, DocumentException, AuthorialPackageNotLockedException, ArchivalStorageException {
         String opLogId = "Upload of AIP XML version: " + xmlVersion + " of AIP: " + aipId + " ";
         log.info(opLogId + "started");
 
@@ -310,7 +269,7 @@ public class AipService {
 
                 log.debug(opLogId + "generating metadata update event");
                 String updatedXml = arclibXmlGenerator.addUpdateMetadata(xml, reason, userDetails.getUsername(), newIngestWorkflow);
-                String hashValue = bytesToHexString(sha512Counter.computeDigest(new ByteArrayInputStream(updatedXml.getBytes())));
+                String hashValue = bytesToHexString(fixityCounterFacade.computeDigest(HashType.Sha512, new ByteArrayInputStream(updatedXml.getBytes())));
                 Hash arclibXmlHash = new Hash(hashValue, HashType.Sha512);
 
                 log.debug(opLogId + "sending to Archival Storage");
@@ -509,21 +468,14 @@ public class AipService {
      * @return true if the verification succeeded, false otherwise
      */
     private boolean verifyHash(String xml, Hash expectedHash) throws IOException {
-        FixityCounter fixityCounter;
         switch (expectedHash.getHashType()) {
             case MD5:
-                fixityCounter = md5Counter;
-                break;
             case Crc32:
-                fixityCounter = crc32Counter;
-                break;
             case Sha512:
-                fixityCounter = sha512Counter;
-                break;
+                return fixityCounterFacade.verifyFixity(expectedHash.getHashType(), new ByteArrayInputStream(xml.getBytes()), expectedHash.getHashValue());
             default:
                 throw new GeneralException("unexpected type of expectedHash");
         }
-        return fixityCounter.verifyFixity(new ByteArrayInputStream(xml.getBytes()), expectedHash.getHashValue());
     }
 
     @Inject
@@ -552,22 +504,12 @@ public class AipService {
     }
 
     @Inject
-    public void setCrc32Counter(Crc32Counter crc32Counter) {
-        this.crc32Counter = crc32Counter;
+    public void setFixityCounterFacade(FixityCounterFacade fixityCounterFacade) {
+        this.fixityCounterFacade = fixityCounterFacade;
     }
 
     @Inject
-    public void setSha512Counter(Sha512Counter sha512Counter) {
-        this.sha512Counter = sha512Counter;
-    }
-
-    @Inject
-    public void setMd5Counter(Md5Counter md5Counter) {
-        this.md5Counter = md5Counter;
-    }
-
-    @Inject
-    public void setindexedArclibXmlStore(IndexedArclibXmlStore indexedArclibXmlStore) {
+    public void setindexedArclibXmlStore(SolrArclibXmlStore indexedArclibXmlStore) {
         this.indexedArclibXmlStore = indexedArclibXmlStore;
     }
 

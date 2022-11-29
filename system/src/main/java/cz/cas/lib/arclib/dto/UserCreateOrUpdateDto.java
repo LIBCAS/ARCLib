@@ -12,5 +12,6 @@ public class UserCreateOrUpdateDto {
     private String id;
     private String username;
     private Producer producer;
+    private Set<String> exportFolders = new HashSet<>();
     private Set<UserRole> roles = new HashSet<>();
 }

@@ -1,5 +1,6 @@
 package cz.cas.lib.arclib.service.fixity;
 
+import cz.cas.lib.arclib.domain.HashType;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.FileInputStream;
@@ -23,6 +24,8 @@ public abstract class FixityCounter {
      * @throws IOException
      */
     public abstract byte[] computeDigest(InputStream fileStream) throws IOException;
+
+    public abstract HashType getHashType();
 
     /**
      * Computes digest from a file. The type of digest depends on subclass implementation eg. MD5, SHA-512...

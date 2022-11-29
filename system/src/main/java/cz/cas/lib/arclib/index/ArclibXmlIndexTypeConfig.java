@@ -7,7 +7,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
- * Arclib XML index consists of parent doc {@link IndexArclibXmlStore#getMainDocumentIndexType()} containing fields for the whole
+ * Arclib XML index consists of parent doc {@link IndexedArclibXmlStore#getMainDocumentIndexType()} containing fields for the whole
  * Arclib XML e.g. AIP STATE and also child index types - nested indexes e.g. identified_format.
  * <p>
  * This class contains configuration of parent or one of its child. The configuration is used during indexation so that

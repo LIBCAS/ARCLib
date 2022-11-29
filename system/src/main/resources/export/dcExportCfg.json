@@ -1,0 +1,290 @@
+[
+  {
+    "packageType": "NDK_SINGLE_VOLUME",
+    "metadataKey": "DC_EXPORT_NDK_PUBLICATION_DATE",
+    "dmdSecIdLike": [
+      "DCMD_VOLUME_0001"
+    ],
+    "indexField": "dublin_core_date"
+  },
+  {
+    "packageType": "NDK_SINGLE_VOLUME",
+    "metadataKey": "DC_EXPORT_NDK_AUTHOR",
+    "dmdSecIdLike": [
+      "DCMD_VOLUME_0001"
+    ],
+    "indexField": "dublin_core_creator"
+  },
+  {
+    "packageType": "NDK_SINGLE_VOLUME",
+    "metadataKey": "DC_EXPORT_NDK_ISBN",
+    "dmdSecIdLike": [
+      "DCMD_VOLUME_0001"
+    ],
+    "valueRegex": "isbn:(.+)",
+    "indexField": "dublin_core_identifier"
+  },
+  {
+    "packageType": "NDK_SINGLE_VOLUME",
+    "metadataKey": "DC_EXPORT_NDK_ISMN",
+    "dmdSecIdLike": [
+      "DCMD_VOLUME_0001"
+    ],
+    "valueRegex": "ismn:(.+)",
+    "indexField": "dublin_core_identifier"
+  },
+  {
+    "packageType": "NDK_SINGLE_VOLUME",
+    "metadataKey": "DC_EXPORT_NDK_CNB",
+    "dmdSecIdLike": [
+      "DCMD_VOLUME_0001"
+    ],
+    "valueRegex": "ccnb:(.+)",
+    "indexField": "dublin_core_identifier"
+  },
+  {
+    "packageType": "NDK_SINGLE_VOLUME",
+    "metadataKey": "DC_EXPORT_NDK_URNNBN",
+    "dmdSecIdLike": [
+      "DCMD_VOLUME_0001"
+    ],
+    "valueRegex": "urnnbn:(.+)",
+    "indexField": "dublin_core_identifier"
+  },
+  {
+    "packageType": "NDK_SINGLE_VOLUME",
+    "metadataKey": "DC_EXPORT_NDK_UUID",
+    "dmdSecIdLike": [
+      "DCMD_VOLUME_0001"
+    ],
+    "valueRegex": "uuid:(.+)",
+    "indexField": "dublin_core_identifier"
+  },
+  {
+    "packageType": "NDK_SINGLE_VOLUME",
+    "metadataKey": "DC_EXPORT_NDK_BARCODE",
+    "dmdSecIdLike": [
+      "DCMD_VOLUME_0001"
+    ],
+    "valueRegex": "barcode:(.+)",
+    "indexField": "dublin_core_identifier"
+  },
+  {
+    "packageType": "NDK_SINGLE_VOLUME",
+    "metadataKey": "DC_EXPORT_NDK_SIGNATURE",
+    "dmdSecIdLike": [
+      "DCMD_VOLUME_0001"
+    ],
+    "invalidValueRegex": "[A-Z]{2}[A-G]\\d{3}",
+    "indexField": "dublin_core_source"
+  },
+  {
+    "packageType": "NDK_SINGLE_VOLUME",
+    "metadataKey": "DC_EXPORT_NDK_SIGLA",
+    "dmdSecIdLike": [
+      "DCMD_VOLUME_0001"
+    ],
+    "valueRegex": "([A-Z]{2}[A-G]\\d{3})",
+    "indexField": "dublin_core_source"
+  },
+  {
+    "packageType": "NDK_MULTI_VOLUME",
+    "metadataKey": "DC_EXPORT_NDK_PUBLICATION_DATE",
+    "dmdSecIdLike": [
+      "DCMD_VOLUME_0001"
+    ],
+    "indexField": "dublin_core_date"
+  },
+  {
+    "packageType": "NDK_MULTI_VOLUME",
+    "metadataKey": "DC_EXPORT_NDK_NUMBER",
+    "dmdSecIdLike": [
+      "DCMD_VOLUME_0001"
+    ],
+    "indexField": "dublin_core_description"
+  },
+  {
+    "packageType": "NDK_MULTI_VOLUME",
+    "metadataKey": "DC_EXPORT_NDK_AUTHOR",
+    "dmdSecIdLike": [
+      "DCMD_TITLE_0001",
+      "DCMD_VOLUME_0001"
+    ],
+    "indexField": "dublin_core_creator"
+  },
+  {
+    "packageType": "NDK_MULTI_VOLUME",
+    "metadataKey": "DC_EXPORT_NDK_ISBN",
+    "dmdSecIdLike": [
+      "DCMD_TITLE_0001",
+      "DCMD_VOLUME_0001"
+    ],
+    "valueRegex": "isbn:(.+)",
+    "indexField": "dublin_core_identifier"
+  },
+  {
+    "packageType": "NDK_MULTI_VOLUME",
+    "metadataKey": "DC_EXPORT_NDK_ISMN",
+    "dmdSecIdLike": [
+      "DCMD_TITLE_0001",
+      "DCMD_VOLUME_0001"
+    ],
+    "valueRegex": "ismn:(.+)",
+    "indexField": "dublin_core_identifier"
+  },
+  {
+    "packageType": "NDK_MULTI_VOLUME",
+    "metadataKey": "DC_EXPORT_NDK_CNB",
+    "dmdSecIdLike": [
+      "DCMD_TITLE_0001",
+      "DCMD_VOLUME_0001"
+    ],
+    "valueRegex": "ccnb:(.+)",
+    "indexField": "dublin_core_identifier"
+  },
+  {
+    "packageType": "NDK_MULTI_VOLUME",
+    "metadataKey": "DC_EXPORT_NDK_URNNBN",
+    "dmdSecIdLike": [
+      "DCMD_VOLUME_0001"
+    ],
+    "valueRegex": "urnnbn:(.+)",
+    "indexField": "dublin_core_identifier"
+  },
+  {
+    "packageType": "NDK_MULTI_VOLUME",
+    "metadataKey": "DC_EXPORT_NDK_UUID",
+    "dmdSecIdLike": [
+      "DCMD_TITLE_0001",
+      "DCMD_VOLUME_0001"
+    ],
+    "valueRegex": "uuid:(.+)",
+    "indexField": "dublin_core_identifier"
+  },
+  {
+    "packageType": "NDK_MULTI_VOLUME",
+    "metadataKey": "DC_EXPORT_NDK_BARCODE",
+    "dmdSecIdLike": [
+      "DCMD_VOLUME_0001"
+    ],
+    "valueRegex": "barcode:(.+)",
+    "indexField": "dublin_core_identifier"
+  },
+  {
+    "packageType": "NDK_MULTI_VOLUME",
+    "metadataKey": "DC_EXPORT_NDK_SIGNATURE",
+    "dmdSecIdLike": [
+      "DCMD_VOLUME_0001"
+    ],
+    "invalidValueRegex": "[A-Z]{2}[A-G]\\d{3}",
+    "indexField": "dublin_core_source"
+  },
+  {
+    "packageType": "NDK_MULTI_VOLUME",
+    "metadataKey": "DC_EXPORT_NDK_SIGLA",
+    "dmdSecIdLike": [
+      "DCMD_VOLUME_0001"
+    ],
+    "valueRegex": "([A-Z]{2}[A-G]\\d{3})",
+    "indexField": "dublin_core_source"
+  },
+  {
+    "packageType": "NDK_PERIODICAL",
+    "metadataKey": "DC_EXPORT_NDK_PUBLICATION_DATE",
+    "dmdSecIdLike": [
+      "DCMD_ISSUE_0001"
+    ],
+    "indexField": "dublin_core_date"
+  },
+  {
+    "packageType": "NDK_PERIODICAL",
+    "metadataKey": "DC_EXPORT_NDK_NUMBER",
+    "dmdSecIdLike": [
+      "DCMD_ISSUE_0001"
+    ],
+    "indexField": "dublin_core_description"
+  },
+  {
+    "packageType": "NDK_PERIODICAL",
+    "metadataKey": "DC_EXPORT_NDK_AUTHOR",
+    "dmdSecIdLike": [
+      "DCMD_TITLE_0001"
+    ],
+    "indexField": "dublin_core_creator"
+  },
+  {
+    "packageType": "NDK_PERIODICAL",
+    "metadataKey": "DC_EXPORT_NDK_ISBN",
+    "dmdSecIdLike": [
+      "DCMD_ISSUE_0001",
+      "DCMD_TITLE_0001"
+    ],
+    "valueRegex": "isbn:(.+)",
+    "indexField": "dublin_core_identifier"
+  },
+  {
+    "packageType": "NDK_PERIODICAL",
+    "metadataKey": "DC_EXPORT_NDK_ISSN",
+    "dmdSecIdLike": [
+      "DCMD_TITLE_0001"
+    ],
+    "valueRegex": "issn:(.+)",
+    "indexField": "dublin_core_identifier"
+  },
+  {
+    "packageType": "NDK_PERIODICAL",
+    "metadataKey": "DC_EXPORT_NDK_CNB",
+    "dmdSecIdLike": [
+      "DCMD_TITLE_0001"
+    ],
+    "valueRegex": "ccnb:(.+)",
+    "indexField": "dublin_core_identifier"
+  },
+  {
+    "packageType": "NDK_PERIODICAL",
+    "metadataKey": "DC_EXPORT_NDK_URNNBN",
+    "dmdSecIdLike": [
+      "DCMD_ISSUE_0001"
+    ],
+    "valueRegex": "urnnbn:(.+)",
+    "indexField": "dublin_core_identifier"
+  },
+  {
+    "packageType": "NDK_PERIODICAL",
+    "metadataKey": "DC_EXPORT_NDK_UUID",
+    "dmdSecIdLike": [
+      "DCMD_ISSUE_0001",
+      "DCMD_TITLE_0001",
+      "DCMD_VOLUME_0001"
+    ],
+    "valueRegex": "uuid:(.+)",
+    "indexField": "dublin_core_identifier"
+  },
+  {
+    "packageType": "NDK_PERIODICAL",
+    "metadataKey": "DC_EXPORT_NDK_BARCODE",
+    "dmdSecIdLike": [
+      "DCMD_ISSUE_0001"
+    ],
+    "valueRegex": "barcode:(.+)",
+    "indexField": "dublin_core_identifier"
+  },
+  {
+    "packageType": "NDK_PERIODICAL",
+    "metadataKey": "DC_EXPORT_NDK_SIGNATURE",
+    "dmdSecIdLike": [
+      "DCMD_ISSUE_0001"
+    ],
+    "invalidValueRegex": "[A-Z]{2}[A-G]\\d{3}",
+    "indexField": "dublin_core_source"
+  },
+  {
+    "packageType": "NDK_PERIODICAL",
+    "metadataKey": "DC_EXPORT_NDK_SIGLA",
+    "dmdSecIdLike": [
+      "DCMD_ISSUE_0001"
+    ],
+    "valueRegex": "([A-Z]{2}[A-G]\\d{3})",
+    "indexField": "dublin_core_source"
+  }
+]

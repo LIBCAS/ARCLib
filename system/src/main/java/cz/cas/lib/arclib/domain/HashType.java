@@ -9,5 +9,7 @@ import lombok.Getter;
 public enum HashType {
     MD5,
     Crc32,
-    Sha512
+    Sha512,
+    Sha256,
+    Sha1,
 }

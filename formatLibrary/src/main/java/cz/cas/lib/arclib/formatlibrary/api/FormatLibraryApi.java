@@ -43,7 +43,7 @@ public class FormatLibraryApi {
     @PreAuthorize("hasAuthority('" + Permissions.FORMAT_RECORDS_WRITE + "')")
     public void updateFormatFromExternal(@ApiParam(value = "Format id of the format", required = true)
                                          @PathVariable("formatId") Integer formatId) throws ParseException, DocumentException {
-        formatLibraryUpdater.updateFormatFromExternal(formatId);
+        formatLibraryUpdater.updateFormatFromExternal(userDetails.getUsername(), formatId);
     }
 
     @ApiOperation(value = "Update format with local format definition. [Perm.FORMAT_RECORDS_WRITE]")
@@ -52,7 +52,7 @@ public class FormatLibraryApi {
     @RequestMapping(value = "/update_with_local_definition", method = RequestMethod.POST)
     @PreAuthorize("hasAuthority('" + Permissions.FORMAT_RECORDS_WRITE + "')")
     public Pair<FormatDefinition, String> updateFormatWithLocalDefinition(@ApiParam(value = "Format definition", required = true)
-                                                                                @RequestBody FormatDefinition format) {
+                                                                          @RequestBody FormatDefinition format) {
         return formatLibraryUpdater.updateFormatWithLocalDefinition(format);
     }
 
@@ -136,7 +136,7 @@ public class FormatLibraryApi {
     @RequestMapping(value = "/import_format_definition_json", method = RequestMethod.POST)
     @PreAuthorize("hasAuthority('" + Permissions.FORMAT_RECORDS_WRITE + "')")
     public Pair<FormatDefinition, String> importFormatDefinitionFromJson(@ApiParam(value = "Format definition in JSON", required = true)
-                                                                               @RequestBody String json) throws IOException {
+                                                                         @RequestBody String json) throws IOException {
         return formatLibraryUpdater.importFormatDefinitionFromJson(json);
     }
 
@@ -146,7 +146,7 @@ public class FormatLibraryApi {
     @RequestMapping(value = "/import_format_definition_byte_array", method = RequestMethod.POST)
     @PreAuthorize("hasAuthority('" + Permissions.FORMAT_RECORDS_WRITE + "')")
     public Pair<FormatDefinition, String> importFormatDefinitionFromByteArray(@ApiParam(value = "Format definition in byte array", required = true)
-                                                                                    @RequestBody byte[] bytes) throws IOException {
+                                                                              @RequestBody byte[] bytes) throws IOException {
         return formatLibraryUpdater.importFormatDefinitionFromByteArray(bytes);
     }
 
@@ -156,7 +156,7 @@ public class FormatLibraryApi {
     @RequestMapping(value = "/import_format_definitions_json", method = RequestMethod.POST)
     @PreAuthorize("hasAuthority('" + Permissions.FORMAT_RECORDS_WRITE + "')")
     public List<Pair<FormatDefinition, String>> importFormatDefinitionsFromJson(@ApiParam(value = "Format definitions in JSON", required = true)
-                                                                                      @RequestBody String json) throws IOException {
+                                                                                @RequestBody String json) throws IOException {
         return formatLibraryUpdater.importFormatDefinitionsFromJson(json);
     }
 
@@ -166,7 +166,7 @@ public class FormatLibraryApi {
     @RequestMapping(value = "/import_format_definitions_byte_array", method = RequestMethod.POST)
     @PreAuthorize("hasAuthority('" + Permissions.FORMAT_RECORDS_WRITE + "')")
     public List<Pair<FormatDefinition, String>> importFormatDefinitionsFromByteArray(@ApiParam(value = "Format definitions in byte array", required = true)
-                                                                                           @RequestBody byte[] bytes) throws IOException {
+                                                                                     @RequestBody byte[] bytes) throws IOException {
         return formatLibraryUpdater.importFormatDefinitionsFromByteArray(bytes);
     }
 

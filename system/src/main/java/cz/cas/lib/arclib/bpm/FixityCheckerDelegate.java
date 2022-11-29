@@ -61,7 +61,7 @@ public class FixityCheckerDelegate extends ArclibDelegate {
     @Override
     public void executeArclibDelegate(DelegateExecution execution) throws IOException, IncidentException {
         JsonNode config = getConfigRoot(execution);
-        Path sipFolderWorkspacePath = Paths.get((String) execution.getVariable(ProcessVariables.sipFolderWorkspacePath));
+        Path sipFolderWorkspacePath = getSipFolderWorkspacePath(execution);
         int fixityCheckToolCounter = (int) execution.getVariable(FixityCheck.fixityCheckToolCounter);
 
         String methodsConfigPath = FIXITY_CHECK_TOOL + "/" + fixityCheckToolCounter + CHECK_METHODS;

@@ -1,21 +1,17 @@
 package cz.cas.lib.arclib.service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import cz.cas.lib.arclib.domain.AipQuery;
-import cz.cas.lib.arclib.domain.ExportRoutine;
 import cz.cas.lib.arclib.domain.User;
+import cz.cas.lib.arclib.domain.export.ExportRoutine;
 import cz.cas.lib.arclib.domainbase.exception.ForbiddenOperation;
-import cz.cas.lib.arclib.domainbase.exception.GeneralException;
 import cz.cas.lib.arclib.domainbase.exception.MissingAttribute;
 import cz.cas.lib.arclib.domainbase.exception.MissingObject;
-import cz.cas.lib.arclib.index.solr.arclibxml.IndexedArclibXmlDocument;
+import cz.cas.lib.arclib.exception.ForbiddenException;
 import cz.cas.lib.arclib.security.authorization.permission.Permissions;
 import cz.cas.lib.arclib.security.user.UserDetails;
 import cz.cas.lib.arclib.store.AipQueryStore;
 import cz.cas.lib.arclib.store.ExportRoutineStore;
 import cz.cas.lib.arclib.utils.ArclibUtils;
-import cz.cas.lib.core.index.dto.Result;
 import cz.cas.lib.core.scheduling.job.Job;
 import cz.cas.lib.core.scheduling.job.JobService;
 import cz.cas.lib.core.script.ScriptType;
@@ -32,10 +28,9 @@ import javax.inject.Inject;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.charset.Charset;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 
 import static cz.cas.lib.arclib.utils.ArclibUtils.hasRole;
 import static cz.cas.lib.core.util.Utils.eq;
@@ -44,13 +39,9 @@ import static cz.cas.lib.core.util.Utils.notNull;
 @Slf4j
 @Service
 public class ExportRoutineService {
-    private Resource aipExportScript;
-
-    private Resource xmlExportScript;
+    private Resource exportScript;
 
     private UserDetails userDetails;
-
-    private String workspace;
 
     private ExportRoutineStore store;
 
@@ -69,12 +60,13 @@ public class ExportRoutineService {
      */
     @Transactional
     public ExportRoutine save(ExportRoutine exportRoutine) {
+        User user = userDetails.getUser();
         ExportRoutine oldExportRoutine = store.find(exportRoutine.getId());
         if (oldExportRoutine != null) {
             // if user is not SUPER_ADMIN then change of producer is forbidden
             if (!hasRole(userDetails, Permissions.SUPER_ADMIN_PRIVILEGE)) {
                 if (oldExportRoutine.getCreator() != null && oldExportRoutine.getCreator().getProducer() != null)
-                    eq(oldExportRoutine.getCreator().getProducer().getId(), userDetails.getUser().getProducer().getId(), () -> new ForbiddenOperation("Cannot change ExportRoutine's Producer"));
+                    eq(oldExportRoutine.getCreator().getProducer().getId(), user.getProducer().getId(), () -> new ForbiddenOperation("Cannot change ExportRoutine's Producer"));
             }
         }
 
@@ -82,38 +74,10 @@ public class ExportRoutineService {
         creator.setId(userDetails.getId());
         exportRoutine.setCreator(creator);
 
-        String exportLocationPath = null;
-        try {
-            switch (exportRoutine.getType()) {
-                case XML_EXPORT:
-                    exportLocationPath = scheduleXmlExportRoutineJob(exportRoutine);
-                    break;
-                case AIP_EXPORT_ALL_XMLS:
-                    exportLocationPath = scheduleAipExportRoutineJob(exportRoutine, true);
-                    break;
-                case AIP_EXPORT_SINGLE_XML:
-                    exportLocationPath = scheduleAipExportRoutineJob(exportRoutine, false);
-            }
-        } catch (JsonProcessingException e) {
-            throw new GeneralException(e);
-        }
-        exportRoutine.setExportLocationPath(exportLocationPath);
+        boolean userCanExportToSelectedFolder = Utils.pathIsNestedInParent(exportRoutine.getConfig().getExportFolder(), user.getExportFolders());
+        Utils.eq(userCanExportToSelectedFolder, true, () -> new ForbiddenException("User is not allowed to export to folder: " + exportRoutine.getConfig().getExportFolder()
+                + " allowed export folders for this user: " + String.join(",", user.getExportFolders())));
 
-        return store.save(exportRoutine);
-    }
-
-    /**
-     * Creates and stores a scheduled job that performs the tasks to be executed by the export routine.
-     * The job is performed by the GROOVY script specified in <code>aipExportScript</code>. The script is assigned
-     * parameters according to the values derived from the provided instance of <code>exportRoutine</code>.
-     *
-     * @param exportRoutine
-     * @param all           if <code>true</code> all AIP XMLs of all versions are exported,
-     *                      if <code>false</code> only the most recent version of AIP XMLs are exported
-     * @return export location path
-     */
-    @Transactional
-    private String scheduleAipExportRoutineJob(ExportRoutine exportRoutine, boolean all) throws JsonProcessingException {
         log.debug("Scheduling aip export routine job for export routine: " + exportRoutine.getId());
 
         Job job = new Job();
@@ -121,7 +85,7 @@ public class ExportRoutineService {
         job.setTiming(Utils.toCron(exportRoutine.getExportTime()));
         job.setScriptType(ScriptType.GROOVY);
         try {
-            String script = StreamUtils.copyToString(aipExportScript.getInputStream(), Charset.defaultCharset());
+            String script = StreamUtils.copyToString(exportScript.getInputStream(), Charset.defaultCharset());
             job.setScript(script);
         } catch (IOException e) {
             throw new UncheckedIOException(e);
@@ -134,98 +98,15 @@ public class ExportRoutineService {
         aipQuery = aipQueryStore.find(aipQuery.getId());
         notNull(aipQuery, () -> new MissingObject(AipQuery.class, exportRoutine.getAipQuery().getId()));
 
-        Result<IndexedArclibXmlDocument> result = aipQuery.getResult();
-        List<IndexedArclibXmlDocument> items = result.getItems();
-        List<String> aipIds = items.stream()
-                .map(item -> item.getSipId())
-                .collect(Collectors.toList());
-        ObjectMapper mapper = new ObjectMapper();
-        String jsonAipIds = mapper.writerWithDefaultPrettyPrinter()
-                .writeValueAsString(aipIds);
-
-        String uuid = UUID.randomUUID().toString();
-
-        Path exportLocationPath = Paths.get(workspace, uuid);
-
         Map<String, String> jobParams = new HashMap<>();
-        jobParams.put("aipIdsJson", jsonAipIds);
-        jobParams.put("exportLocationPath", exportLocationPath.toString());
-        jobParams.put("all", String.valueOf(all));
+        jobParams.put("aipQueryId", aipQuery.getId());
         jobParams.put("jobId", job.getId());
         job.setParams(jobParams);
 
         jobService.save(job);
 
         exportRoutine.setJob(job);
-        store.save(exportRoutine);
-
-        return exportLocationPath.toString();
-    }
-
-    /**
-     * Creates and stores a scheduled job that performs the tasks to be executed by the export routine.
-     * The job is performed by the GROOVY script specified in <code>xmlExportScript</code>. The script is assigned
-     * parameters according to the values derived from the provided instance of <code>exportRoutine</code>.
-     *
-     * @return export location path
-     */
-    @Transactional
-    private String scheduleXmlExportRoutineJob(ExportRoutine exportRoutine) throws JsonProcessingException {
-        log.debug("Scheduling XML export routine job for export routine: " + exportRoutine.getId());
-
-        Job job = new Job();
-        job.setActive(true);
-        job.setTiming(Utils.toCron(exportRoutine.getExportTime()));
-        job.setScriptType(ScriptType.GROOVY);
-        try {
-            String script = StreamUtils.copyToString(xmlExportScript.getInputStream(), Charset.defaultCharset());
-            job.setScript(script);
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
-        }
-
-        AipQuery aipQuery = exportRoutine.getAipQuery();
-        notNull(aipQuery, () -> new MissingAttribute(ExportRoutine.class, exportRoutine.getId(),
-                "aipQuery"));
-
-        aipQuery = aipQueryStore.find(aipQuery.getId());
-        notNull(aipQuery, () -> new MissingObject(AipQuery.class, exportRoutine.getAipQuery().getId()));
-
-        Result<IndexedArclibXmlDocument> result = aipQuery.getResult();
-        List<IndexedArclibXmlDocument> items = result.getItems();
-
-        HashMap<String, List<Integer>> aipIdsAndVersions = new HashMap<>();
-        for (IndexedArclibXmlDocument item : items) {
-            String sipId = item.getSipId();
-            Integer xmlVersionNumber = item.getXmlVersionNumber();
-
-            List<Integer> versions = aipIdsAndVersions.get(sipId);
-            if (versions == null) versions = new ArrayList<>();
-
-            versions.add(xmlVersionNumber);
-            aipIdsAndVersions.put(sipId, versions);
-        }
-
-        ObjectMapper mapper = new ObjectMapper();
-        String aipIdsAndVersionsJson = mapper.writerWithDefaultPrettyPrinter()
-                .writeValueAsString(aipIdsAndVersions);
-
-        String uuid = UUID.randomUUID().toString();
-
-        Path exportLocationPath = Paths.get(workspace, uuid);
-
-        Map<String, String> jobParams = new HashMap<>();
-        jobParams.put("aipIdsAndVersionsJson", aipIdsAndVersionsJson);
-        jobParams.put("exportLocationPath", exportLocationPath.toString());
-        jobParams.put("jobId", job.getId());
-        job.setParams(jobParams);
-
-        jobService.save(job);
-
-        exportRoutine.setJob(job);
-        store.save(exportRoutine);
-
-        return exportLocationPath.toString();
+        return store.save(exportRoutine);
     }
 
     /**
@@ -279,7 +160,7 @@ public class ExportRoutineService {
         store.delete(entity);
 
         log.debug("Canceling export routine job for export routine: " + id + ".");
-        jobService.delete(entity.getJob());
+        //TODO jobService.delete(entity.getJob());
     }
 
 
@@ -305,17 +186,7 @@ public class ExportRoutineService {
     }
 
     @Inject
-    public void setWorkspace(@Value("${arclib.path.workspace}") String workspace) {
-        this.workspace = workspace;
-    }
-
-    @Inject
-    public void setAipExportScript(@Value("${arclib.script.exportRoutineAipExport}") Resource aipExportScript) {
-        this.aipExportScript = aipExportScript;
-    }
-
-    @Inject
-    public void setXmlExportScript(@Value("${arclib.script.exportRoutineXmlExport}") Resource xmlExportScript) {
-        this.xmlExportScript = xmlExportScript;
+    public void setExportScript(@Value("${arclib.script.export}") Resource exportScript) {
+        this.exportScript = exportScript;
     }
 }

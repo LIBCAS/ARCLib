@@ -7,8 +7,6 @@ import lombok.Setter;
 import org.hibernate.annotations.BatchSize;
 
 import javax.persistence.Entity;
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
 import javax.persistence.Table;
 import java.util.Objects;
 
@@ -22,11 +20,11 @@ import java.util.Objects;
 @Table(name = "arclib_format_identifier")
 @NoArgsConstructor
 public class FormatIdentifier extends DatedObject {
-    /**
-     * Typ identifikátora formátu
-     */
-    @Enumerated(EnumType.STRING)
-    private FormatIdentifierType identifierType;
+
+    public static final String FORMAT_ID_TYPE_PUID = "PUID";
+    public static final String FORMAT_ID_TYPE_MIME = "MIME";
+
+    private String identifierType;
 
     /**
      * Hodnota identifikátora formátu

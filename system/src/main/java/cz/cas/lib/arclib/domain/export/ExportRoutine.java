@@ -1,5 +1,7 @@
-package cz.cas.lib.arclib.domain;
+package cz.cas.lib.arclib.domain.export;
 
+import cz.cas.lib.arclib.domain.AipQuery;
+import cz.cas.lib.arclib.domain.User;
 import cz.cas.lib.arclib.domainbase.domain.DatedObject;
 import cz.cas.lib.core.scheduling.job.Job;
 import lombok.Getter;
@@ -8,6 +10,8 @@ import lombok.Setter;
 import org.hibernate.annotations.BatchSize;
 
 import javax.persistence.*;
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 import java.time.Instant;
 
 /**
@@ -24,17 +28,14 @@ public class ExportRoutine extends DatedObject {
      * Vyhľadávací dotaz
      */
     @OneToOne
+    @NotNull
     private AipQuery aipQuery;
 
     /**
      * Čas plánovaného spustenia exportu
      */
+    @NotNull
     private Instant exportTime;
-
-    /**
-     * Cesta k exportnej lokácií
-     */
-    private String exportLocationPath;
 
     /**
      * Časový job
@@ -48,9 +49,8 @@ public class ExportRoutine extends DatedObject {
     @ManyToOne
     private User creator;
 
-    /**
-     * Typ exportnej rutiny
-     */
-    @Enumerated(value = EnumType.STRING)
-    private ExportRoutineType type;
+    @Embedded
+    @NotNull
+    @Valid
+    private ExportConfig config;
 }

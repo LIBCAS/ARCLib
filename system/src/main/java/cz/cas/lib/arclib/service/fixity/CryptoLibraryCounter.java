@@ -18,7 +18,7 @@ public abstract class CryptoLibraryCounter extends FixityCounter {
     public byte[] computeDigest(InputStream fileStream) throws IOException {
         try (BufferedInputStream bis = new BufferedInputStream(fileStream)) {
             byte[] buffer = new byte[1024];
-            MessageDigest complete = MessageDigest.getInstance(getType());
+            MessageDigest complete = MessageDigest.getInstance(getMessageDigestType());
             int numRead;
             do {
                 numRead = bis.read(buffer);
@@ -32,5 +32,5 @@ public abstract class CryptoLibraryCounter extends FixityCounter {
         }
     }
 
-    public abstract String getType();
+    public abstract String getMessageDigestType();
 }

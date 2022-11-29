@@ -3,27 +3,18 @@ package cz.cas.lib.arclib.index.solr.arclibxml;
 import cz.cas.lib.arclib.domain.ingestWorkflow.IngestWorkflow;
 import cz.cas.lib.arclib.domain.packages.AuthorialPackage;
 import cz.cas.lib.arclib.index.solr.IndexQueryUtils;
-import cz.cas.lib.core.index.solr.IndexFieldType;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 import org.apache.solr.client.solrj.beans.Field;
 import org.springframework.data.solr.core.mapping.Dynamic;
 import org.springframework.data.solr.core.mapping.Indexed;
-import org.springframework.data.solr.core.mapping.SolrDocument;
 
 import java.io.Serializable;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
-
-import static cz.cas.lib.core.index.solr.IndexField.SORT_SUFFIX;
-import static cz.cas.lib.core.index.solr.IndexField.STRING_SUFFIX;
+import java.util.*;
 
 @NoArgsConstructor
-@Getter
-@Setter
-@SolrDocument
+@AllArgsConstructor
 public class IndexedArclibXmlDocument implements Serializable {
 
     //names of fields in SOLR required for application logic
@@ -44,6 +35,7 @@ public class IndexedArclibXmlDocument implements Serializable {
     public static final String CREATED = "created";
     public static final String AUTHORIAL_ID = "authorial_id";
     public static final String LATEST = "latest";
+    public static final String TYPE = "type";
 
     //special fields of the element nested collection
     public static final String ELEMENT_INDEX_TYPE_VALUE = "element";
@@ -53,118 +45,155 @@ public class IndexedArclibXmlDocument implements Serializable {
     public static final String ELEMENT_ATTRIBUTE_VALUES = "element_attribute_values";
 
     /**
+     * Fields of AIP XML which has to be indexed.
+     */
+    @Field("*")
+    @Indexed
+    @Dynamic
+    @Getter
+    private Map<String, Object> fields = new HashMap<>();
+
+    /**
+     * Children elements
+     * key is the type of child, see <i>Index Child</i> section of <i>arclibXmlDefinition.csv</i>
+     * <p>
+     * <b>Children are not loaded automatically</b> and their loading is expensive so the field should be loaded
+     * and used only when needed.
+     * </p>
+     */
+    @Getter
+    private Map<String, List<Map<String, Collection<Object>>>> children = new HashMap<>();
+
+    /**
      * ID of the document, equal to id {@link IngestWorkflow#externalId}.
      * XPath in document: /METS:mets/METS:metsHdr/@ID
      */
-    @Field(value = ID)
-    @Indexed(type = IndexFieldType.STRING)
-    private String id;
+    public String getId() {
+        return getSingleStringValue(ID);
+    }
 
-    /**
-     * Record creation time in ISO UTC format, equal to {@link IngestWorkflow#created}
-     * XPath in document: /METS:mets/METS:metsHdr/@CREATEDATE
-     */
-    @Field(value = CREATED)
-    @Indexed(type = IndexFieldType.DATE)
-    private Date created;
+    //there were some objectmapper problems with this upon deserialization of saved query result
+//    /**
+//     * Record creation time in ISO UTC format, equal to {@link IngestWorkflow#created}
+//     * XPath in document: /METS:mets/METS:metsHdr/@CREATEDATE
+//     */
+//    public Date getCreated() {
+//        return getSingleDateValue(CREATED);
+//    }
 
     /**
      * ID of the Producer.
      * assigned by application
      */
-    @Field(value = PRODUCER_ID)
-    @Indexed(type = IndexFieldType.STRING)
-    private String producerId;
+    public String getProducerId() {
+        return getSingleStringValue(PRODUCER_ID);
+    }
 
     /**
      * unique name of the Producer.
      * assigned by application
      */
-    @Field(value = PRODUCER_NAME)
-    @Indexed(type = IndexFieldType.STRING, copyTo = {PRODUCER_NAME + SORT_SUFFIX})
-    private String producerName;
+    public String getProducerName() {
+        return getSingleStringValue(PRODUCER_NAME);
+    }
 
     /**
      * unique name of the User.
      * assigned by application
      */
-    @Field(value = USER_NAME)
-    @Indexed(type = IndexFieldType.STRING, copyTo = {USER_NAME + SORT_SUFFIX})
-    private String userName;
+    public String getUserName() {
+        return getSingleStringValue(USER_NAME);
+    }
 
     /**
      * Authorial id of the authorial package, equal to id {@link AuthorialPackage#authorialId}.
      * XPath in document: /METS:mets/METS:metsHdr/METS:altRecordID[@TYPE='original SIP identifier']
      */
-    @Field(value = AUTHORIAL_ID)
-    @Indexed(type = IndexFieldType.FOLDING, copyTo = {AUTHORIAL_ID + SORT_SUFFIX, AUTHORIAL_ID + STRING_SUFFIX})
-    private String authorialId;
+    public String getAuthorialId() {
+        return getSingleStringValue(AUTHORIAL_ID);
+    }
 
     /**
      * ID of the SIP.
      * assigned by application
      * XPath in document: /METS:mets/@OBJID
      */
-    @Field(value = SIP_ID)
-    @Indexed(type = IndexFieldType.STRING)
-    private String sipId;
+    public String getSipId() {
+        return getSingleStringValue(SIP_ID);
+    }
 
     /**
      * SIP version number.
      * assigned by application
      */
-    @Field(value = SIP_VERSION_NUMBER)
-    @Indexed(type = IndexFieldType.INT)
-    private Integer sipVersionNumber;
+    public Integer getSipVersionNumber() {
+        return getSingleIntValue(SIP_VERSION_NUMBER);
+    }
 
     /**
      * XML version number.
      * assigned by application
      */
-    @Field(value = XML_VERSION_NUMBER)
-    @Indexed(type = IndexFieldType.INT)
-    private Integer xmlVersionNumber;
+    public Integer getXmlVersionNumber() {
+        return getSingleIntValue(XML_VERSION_NUMBER);
+    }
 
     /**
      * Identifier of the previous version of SIP .
      */
-    @Field(value = SIP_VERSION_OF)
-    @Indexed(type = IndexFieldType.STRING)
-    private String sipVersionOf;
+    public String getSipVersionOf() {
+        return getSingleStringValue(SIP_VERSION_OF);
+    }
 
     /**
      * Identifier of the previous version of XML.
      */
-    @Field(value = XML_VERSION_OF)
-    @Indexed(type = IndexFieldType.STRING)
-    private String xmlVersionOf;
+    public String getXmlVersionOf() {
+        return getSingleStringValue(XML_VERSION_OF);
+    }
+
+    public Boolean getDebugMode() {
+        return getSingleBooleanValue(DEBUG_MODE);
+    }
 
     /**
      * State of the AIP at archival storage.
      */
-    @Field(value = AIP_STATE)
-    @Indexed(type = IndexFieldType.STRING)
-    private IndexedAipState aipState;
+    public IndexedAipState getAipState() {
+        return IndexedAipState.valueOf(getSingleStringValue(AIP_STATE));
+    }
 
-    @Field(value = LATEST)
-    @Indexed(type = IndexFieldType.BOOLEAN)
-    private Boolean latest;
+    public Boolean getLatest() {
+        return getSingleBooleanValue(LATEST);
+    }
 
-    @Field(value = DEBUG_MODE)
-    @Indexed(defaultValue = "false", type = IndexFieldType.BOOLEAN)
-    private Boolean debugMode;
+    public String getIndexType() {
+        return getSingleStringValue(IndexQueryUtils.TYPE_FIELD);
+    }
 
-    @Field(value = IndexQueryUtils.TYPE_FIELD)
-    @Indexed(type = IndexFieldType.STRING)
-    private String indexType;
+    public String getType() {
+        return getSingleStringValue(TYPE);
+    }
 
-    /**
-     * Other fields of AIP XML which has to be indexed.
-     */
-    @Field("*")
-    @Indexed
-    @Dynamic
-    private Map<String, Object> fields = new HashMap<>();
+    private String getSingleStringValue(String field) {
+        List values = (List) fields.get(field);
+        return values == null ? null : (String) (values).get(0);
+    }
+
+    private Boolean getSingleBooleanValue(String field) {
+        List values = (List) fields.get(field);
+        return values == null ? null : (Boolean) (values).get(0);
+    }
+
+    private Integer getSingleIntValue(String field) {
+        List values = (List) fields.get(field);
+        return values == null ? null : (Integer) (values).get(0);
+    }
+
+    private Date getSingleDateValue(String field) {
+        List values = (List) fields.get(field);
+        return values == null ? null : (Date) (values).get(0);
+    }
 
 //    /**
 //     * Adds field with its value to Solr document. If the field already exists values are stored in list.

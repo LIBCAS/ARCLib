@@ -24,7 +24,7 @@ public class AipQuery extends NamedObject {
     }
 
     public AipQuery(User user, Result<IndexedArclibXmlDocument> result, Params query, String queryName) {
-        this.name=queryName;
+        this.name = queryName;
         this.user = user;
         this.result = result;
         this.query = query;

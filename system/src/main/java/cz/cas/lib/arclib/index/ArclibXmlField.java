@@ -54,6 +54,10 @@ public class ArclibXmlField {
         return getFieldName().equals(that.getFieldName());
     }
 
+    public boolean isInAipXml() {
+        return !"NOT_IN_XML".equals(xpath);
+    }
+
     @Override
     public int hashCode() {
         return getFieldName().hashCode();

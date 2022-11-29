@@ -27,26 +27,40 @@ import java.util.Set;
 @Table(name = "arclib_user")
 public class User extends DatedObject {
 
-    /** Používateľské meno */
+    /**
+     * Používateľské meno
+     */
     private String username;
 
-    /** Krstné meno */
+    /**
+     * Krstné meno
+     */
     private String firstName;
 
-    /** Priezvisko */
+    /**
+     * Priezvisko
+     */
     private String lastName;
 
-    /** Email */
+    /**
+     * Email
+     */
     private String email;
 
-    /** Unikátny identifikátor v rámci LDAPu */
+    /**
+     * Unikátny identifikátor v rámci LDAPu
+     */
     private String ldapDn;
 
-    /** Dodávateľ */
+    /**
+     * Dodávateľ
+     */
     @ManyToOne
     private Producer producer;
 
-    /** Instituce */
+    /**
+     * Instituce
+     */
     private String institution;
 
     /**
@@ -61,6 +75,16 @@ public class User extends DatedObject {
             joinColumns = @JoinColumn(name = "arclib_user_id"),
             inverseJoinColumns = @JoinColumn(name = "arclib_role_id"))
     private Set<UserRole> roles = new HashSet<>();
+
+    /**
+     * Exportní složky
+     */
+    @BatchSize(size = 100)
+    @Fetch(FetchMode.SELECT)
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "arclib_user_export_folders", joinColumns = @JoinColumn(name = "user_id"))
+    @Column(name = "folder")
+    private Set<String> exportFolders = new HashSet<>();
 
 
     public User(String id) {

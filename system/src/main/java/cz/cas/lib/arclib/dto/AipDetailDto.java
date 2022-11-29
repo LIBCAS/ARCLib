@@ -6,6 +6,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.util.List;
 import java.util.Map;
 
 @Getter
@@ -15,4 +16,5 @@ import java.util.Map;
 public class AipDetailDto {
     private Map<String, Object> indexedFields;
     private IngestWorkflow ingestWorkflow;
+    private List<Map<String, List<String>>> dublinCore;
 }

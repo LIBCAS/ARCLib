@@ -10,7 +10,7 @@ import org.apache.solr.client.solrj.beans.Field;
 import org.springframework.data.solr.core.mapping.Indexed;
 
 /**
- * Represents one index object field ES mapping, provides methods for retrieval of field names with proper suffixes
+ * Represents one index object field Solr mapping, provides methods for retrieval of field names with proper suffixes
  * during search query build.
  * This class exists mainly to support and enforce following behavior:
  * <ul>

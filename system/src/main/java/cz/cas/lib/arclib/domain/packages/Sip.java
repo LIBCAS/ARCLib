@@ -30,7 +30,7 @@ public class Sip extends DatedObject {
     private AuthorialPackage authorialPackage;
 
     /**
-     * Zoznam hashov SIP balíku
+     * Zoznam hashov SIP balíku (dodaných Dodavatelem, případně přegenerovaných po obohacení balíčku)
      */
     @OneToMany(fetch = FetchType.EAGER)
     @JoinTable(name = "arclib_sip_h",
@@ -46,7 +46,7 @@ public class Sip extends DatedObject {
     private Sip previousVersionSip;
 
     /**
-     * Stromová štruktúra obsahu balíku
+     * Stromová štruktúra obsahu AIP balíku (vygenerována na konci ingestu)
      */
     @Column(length = 10485760)
     private FolderStructure folderStructure;
@@ -56,5 +56,8 @@ public class Sip extends DatedObject {
      */
     private Integer versionNumber;
 
+    /**
+     * Velikost obsahu AIP balíku (velikost ZIPu, vygenerována na konci ingest)
+     */
     private Long sizeInBytes;
 }

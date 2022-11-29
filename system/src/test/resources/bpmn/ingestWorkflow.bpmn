@@ -2,7 +2,7 @@
 <bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" id="Definitions_1" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="2.0.3">
   <bpmn:process id="ingestWorkflow" isExecutable="true">
     <bpmn:startEvent id="init" name="init">
-      <bpmn:outgoing>SequenceFlow_10xr812</bpmn:outgoing>
+      <bpmn:outgoing>SequenceFlow_1ojxu9y</bpmn:outgoing>
     </bpmn:startEvent>
     <bpmn:serviceTask id="antivirus" name="antivirus" camunda:asyncBefore="true" camunda:delegateExpression="${antivirusDelegate}">
       <bpmn:incoming>SequenceFlow_1qyy2bs</bpmn:incoming>
@@ -28,7 +28,7 @@
       <bpmn:outgoing>SequenceFlow_0ftlkmr</bpmn:outgoing>
     </bpmn:serviceTask>
     <bpmn:serviceTask id="formatIdentification" name="format identifier" camunda:asyncBefore="true" camunda:delegateExpression="${formatIdentificationDelegate}">
-      <bpmn:incoming>SequenceFlow_03u3ynk</bpmn:incoming>
+      <bpmn:incoming>SequenceFlow_1n42hzp</bpmn:incoming>
       <bpmn:outgoing>SequenceFlow_1qyy2bs</bpmn:outgoing>
     </bpmn:serviceTask>
     <bpmn:serviceTask id="fixityCheck" name="fixity check" camunda:asyncBefore="true" camunda:delegateExpression="${fixityCheckerDelegate}">
@@ -170,13 +170,18 @@
       <bpmn:sequenceFlow id="SequenceFlow_1v9rnml" sourceRef="storageErrorHandler" targetRef="storageErrorEndEvent" />
     </bpmn:subProcess>
     <bpmn:sequenceFlow id="SequenceFlow_1qyy2bs" sourceRef="formatIdentification" targetRef="antivirus" />
-    <bpmn:sequenceFlow id="SequenceFlow_10xr812" sourceRef="init" targetRef="duplicateSipCheck" />
-    <bpmn:serviceTask id="duplicateSipCheck" name="duplicate SIP check" camunda:asyncBefore="true" camunda:delegateExpression="${duplicateSipCheckDelegate}">
-      <bpmn:incoming>SequenceFlow_10xr812</bpmn:incoming>
-      <bpmn:outgoing>SequenceFlow_03u3ynk</bpmn:outgoing>
-    </bpmn:serviceTask>
-    <bpmn:sequenceFlow id="SequenceFlow_03u3ynk" sourceRef="duplicateSipCheck" targetRef="formatIdentification" />
     <bpmn:sequenceFlow id="SequenceFlow_0ftlkmr" sourceRef="validator" targetRef="SubProcess_07ljd3i" />
+    <bpmn:serviceTask id="duplicateSipCheck" name="duplicate SIP check" camunda:asyncBefore="true" camunda:delegateExpression="${duplicateSipCheckDelegate}">
+      <bpmn:incoming>SequenceFlow_1ojxu9y</bpmn:incoming>
+      <bpmn:outgoing>SequenceFlow_0he8kl7</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:serviceTask id="sipMerger" name="SIP merger" camunda:asyncBefore="true" camunda:delegateExpression="${sipMergerDelegate}">
+      <bpmn:incoming>SequenceFlow_0he8kl7</bpmn:incoming>
+      <bpmn:outgoing>SequenceFlow_1n42hzp</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:sequenceFlow id="SequenceFlow_1ojxu9y" sourceRef="init" targetRef="duplicateSipCheck" />
+    <bpmn:sequenceFlow id="SequenceFlow_0he8kl7" sourceRef="duplicateSipCheck" targetRef="sipMerger" />
+    <bpmn:sequenceFlow id="SequenceFlow_1n42hzp" sourceRef="sipMerger" targetRef="formatIdentification" />
   </bpmn:process>
   <bpmn:error id="Error_1j240sk" name="runtimeError" errorCode="java.lang.RuntimeException" />
   <bpmn:error id="Error_16v6tah" name="bpmError" errorCode="processFailure" />
@@ -190,7 +195,7 @@
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="ServiceTask_0z6wumr_di" bpmnElement="antivirus">
-        <dc:Bounds x="-89" y="-371" width="100" height="80" />
+        <dc:Bounds x="69" y="-371" width="100" height="80" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="ServiceTask_0nhvpwh_di" bpmnElement="fixityGenerator">
         <dc:Bounds x="-279" y="-215" width="100" height="80" />
@@ -228,24 +233,24 @@
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNShape id="ServiceTask_1y220pq_di" bpmnElement="validator">
-        <dc:Bounds x="170" y="-371" width="100" height="80" />
+        <dc:Bounds x="330" y="-371" width="100" height="80" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="ServiceTask_07dfwlp_di" bpmnElement="formatIdentification">
-        <dc:Bounds x="-216" y="-371" width="100" height="80" />
+        <dc:Bounds x="-58" y="-371" width="100" height="80" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="ServiceTask_1clbu9d_di" bpmnElement="fixityCheck">
-        <dc:Bounds x="37" y="-371" width="100" height="80" />
+        <dc:Bounds x="205" y="-371" width="100" height="80" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNEdge id="SequenceFlow_020l49h_di" bpmnElement="SequenceFlow_020l49h">
-        <di:waypoint x="11" y="-331" />
-        <di:waypoint x="37" y="-331" />
+        <di:waypoint x="169" y="-331" />
+        <di:waypoint x="205" y="-331" />
         <bpmndi:BPMNLabel>
           <dc:Bounds x="-178" y="-352" width="90" height="12" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="SequenceFlow_1lv9rpm_di" bpmnElement="SequenceFlow_1lv9rpm">
-        <di:waypoint x="137" y="-331" />
-        <di:waypoint x="170" y="-331" />
+        <di:waypoint x="305" y="-331" />
+        <di:waypoint x="330" y="-331" />
         <bpmndi:BPMNLabel>
           <dc:Bounds x="-39" y="-352" width="90" height="12" />
         </bpmndi:BPMNLabel>
@@ -362,17 +367,10 @@
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="SequenceFlow_1qyy2bs_di" bpmnElement="SequenceFlow_1qyy2bs">
-        <di:waypoint x="-116" y="-331" />
-        <di:waypoint x="-89" y="-331" />
+        <di:waypoint x="42" y="-331" />
+        <di:waypoint x="69" y="-331" />
         <bpmndi:BPMNLabel>
           <dc:Bounds x="-270" y="-352" width="0" height="12" />
-        </bpmndi:BPMNLabel>
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="SequenceFlow_10xr812_di" bpmnElement="SequenceFlow_10xr812">
-        <di:waypoint x="-372" y="-331" />
-        <di:waypoint x="-333" y="-331" />
-        <bpmndi:BPMNLabel>
-          <dc:Bounds x="-402" y="-352" width="0" height="12" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNShape id="ServiceTask_1snmjbd_di" bpmnElement="archivalStorage">
@@ -428,19 +426,15 @@
         <di:waypoint x="4" y="-175" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNShape id="ServiceTask_0tr54un_di" bpmnElement="duplicateSipCheck">
-        <dc:Bounds x="-333" y="-371" width="100" height="80" />
+        <dc:Bounds x="-327" y="-371" width="100" height="80" />
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNEdge id="SequenceFlow_03u3ynk_di" bpmnElement="SequenceFlow_03u3ynk">
-        <di:waypoint x="-233" y="-331" />
-        <di:waypoint x="-216" y="-331" />
-      </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="SequenceFlow_0l27cd5_di" bpmnElement="SequenceFlow_0l27cd5">
         <di:waypoint x="-179" y="-175" />
         <di:waypoint x="-149" y="-175" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="SequenceFlow_0ftlkmr_di" bpmnElement="SequenceFlow_0ftlkmr">
-        <di:waypoint x="220" y="-291" />
-        <di:waypoint x="220" y="-267" />
+        <di:waypoint x="380" y="-291" />
+        <di:waypoint x="380" y="-267" />
         <di:waypoint x="16" y="-267" />
         <di:waypoint x="16" y="-243" />
       </bpmndi:BPMNEdge>
@@ -510,6 +504,21 @@
       <bpmndi:BPMNEdge id="SequenceFlow_0t0dvxs_di" bpmnElement="SequenceFlow_0t0dvxs">
         <di:waypoint x="183" y="-175" />
         <di:waypoint x="211" y="-175" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="ServiceTask_1jde7hl_di" bpmnElement="sipMerger">
+        <dc:Bounds x="-195" y="-371" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_1ojxu9y_di" bpmnElement="SequenceFlow_1ojxu9y">
+        <di:waypoint x="-372" y="-331" />
+        <di:waypoint x="-327" y="-331" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SequenceFlow_0he8kl7_di" bpmnElement="SequenceFlow_0he8kl7">
+        <di:waypoint x="-227" y="-331" />
+        <di:waypoint x="-195" y="-331" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SequenceFlow_1n42hzp_di" bpmnElement="SequenceFlow_1n42hzp">
+        <di:waypoint x="-95" y="-331" />
+        <di:waypoint x="-58" y="-331" />
       </bpmndi:BPMNEdge>
     </bpmndi:BPMNPlane>
   </bpmndi:BPMNDiagram>

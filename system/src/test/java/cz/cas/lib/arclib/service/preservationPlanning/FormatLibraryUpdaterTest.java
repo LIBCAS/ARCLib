@@ -106,13 +106,12 @@ public class FormatLibraryUpdaterTest extends DbTest {
         formatDeveloperService.setStore(formatDeveloperStore);
 
         formatLibraryUpdater = new FormatLibraryUpdater();
-        formatLibraryUpdater.setFormatListUrl("http://www.nationalarchives.gov.uk/PRONOM/Format/proFormatDetailListAction.aspx");
-        formatLibraryUpdater.setFormatDetailListUrl("http://www.nationalarchives.gov.uk/PRONOM/Format/proFormatListAction.aspx");
+        formatLibraryUpdater.setFormatListUrl("https://www.nationalarchives.gov.uk/PRONOM/Format/proFormatListAction.aspx");
+        formatLibraryUpdater.setFormatDetailListUrl("https://www.nationalarchives.gov.uk/PRONOM/Format/proFormatDetailListAction.aspx");
         formatLibraryUpdater.setFormatService(formatService);
         formatLibraryUpdater.setFormatIdentifierService(formatIdentifierService);
         formatLibraryUpdater.setFormatLibraryNotifier(Optional.of(mailCenter));
         formatLibraryUpdater.setFormatDeveloperService(formatDeveloperService);
-        formatLibraryUpdater.setUserDetails(userDetailsImpl);
 
         DbFormatDefinitionStore dbFormatDefinitionStore = new DbFormatDefinitionStore();
         dbFormatDefinitionStore.setEntityManager(getEm());
@@ -153,7 +152,7 @@ public class FormatLibraryUpdaterTest extends DbTest {
 
     @Test
     public void getFormatFromExternalTest() throws ParseException, DocumentException {
-        FormatDefinition formatDefinitionFromExternal = formatLibraryUpdater.getFormatDefinitionFromExternal(FORMAT_ID);
+        FormatDefinition formatDefinitionFromExternal = formatLibraryUpdater.getFormatDefinitionFromExternal(null, FORMAT_ID);
         assertThat(formatDefinitionFromExternal, is(notNullValue()));
         assertThat(formatDefinitionFromExternal.getFormat().getFormatId(), is(FORMAT_ID));
 
@@ -161,21 +160,21 @@ public class FormatLibraryUpdaterTest extends DbTest {
         assertThat(identifiers, hasSize(3));
 
         List<FormatIdentifier> puidIdentifiers = identifiers.stream()
-                .filter(identifier -> identifier.getIdentifierType() == FormatIdentifierType.PUID)
+                .filter(identifier -> identifier.getIdentifierType().equals("PUID"))
                 .collect(Collectors.toList());
         assertThat(puidIdentifiers, hasSize(1));
         FormatIdentifier puidIdentifier = puidIdentifiers.get(0);
         assertThat(puidIdentifier.getIdentifier(), is("fmt/43"));
 
         List<FormatIdentifier> mimeIdentifiers = identifiers.stream()
-                .filter(identifier -> identifier.getIdentifierType() == FormatIdentifierType.MIME)
+                .filter(identifier -> identifier.getIdentifierType().equals("MIME"))
                 .collect(Collectors.toList());
         assertThat(mimeIdentifiers, hasSize(1));
         FormatIdentifier mimeIdentifier = mimeIdentifiers.get(0);
         assertThat(mimeIdentifier.getIdentifier(), is("image/jpeg"));
 
         List<FormatIdentifier> appleIdentifiers = identifiers.stream()
-                .filter(identifier -> identifier.getIdentifierType() == FormatIdentifierType.APPLE_UNIFORM_TYPE_IDENTIFIER)
+                .filter(identifier -> identifier.getIdentifierType().equals("APPLE_UNIFORM_TYPE_IDENTIFIER"))
                 .collect(Collectors.toList());
         assertThat(appleIdentifiers, hasSize(1));
         FormatIdentifier appleIdentifier = appleIdentifiers.get(0);
@@ -200,11 +199,11 @@ public class FormatLibraryUpdaterTest extends DbTest {
         assertThat(formatDefinitionFromExternal.getFormat().getFormatName(), is("JPEG File Interchange Format"));
         assertThat(formatDefinitionFromExternal.getFormatNote(), is(""));
 
-        FormatDefinition formatDefinition2FromExternal = formatLibraryUpdater.getFormatDefinitionFromExternal(FORMAT_ID_2);
+        FormatDefinition formatDefinition2FromExternal = formatLibraryUpdater.getFormatDefinitionFromExternal(null, FORMAT_ID_2);
         assertThat(formatDefinition2FromExternal.getWithdrawnDate(), is(Instant.parse("2001-06-30T22:00:00Z")));
         assertThat(formatDefinition2FromExternal.getReleaseDate(), is(Instant.parse("1996-12-31T23:00:00Z")));
 
-        FormatDefinition formatDefinition3FromExternal = formatLibraryUpdater.getFormatDefinitionFromExternal(FORMAT_ID_3);
+        FormatDefinition formatDefinition3FromExternal = formatLibraryUpdater.getFormatDefinitionFromExternal(null, FORMAT_ID_3);
         assertThat(formatDefinition3FromExternal.getFormatClassifications(), hasItem(FormatClassification.TEXT_MARKUP));
     }
 
@@ -213,7 +212,7 @@ public class FormatLibraryUpdaterTest extends DbTest {
         List<FormatDefinition> beforeUpdate = formatDefinitionService.findByFormatId(FORMAT_ID, false);
         assertThat(beforeUpdate, hasSize(0));
 
-        Pair<FormatDefinition, String> pair = formatLibraryUpdater.updateFormatFromExternal(FORMAT_ID);
+        Pair<FormatDefinition, String> pair = formatLibraryUpdater.updateFormatFromExternal(null, FORMAT_ID);
 //        assertThat(pair.getRight().contains("new upstream definition created"), is(true));
 
         List<FormatDefinition> afterUpdate = formatDefinitionService.findByFormatId(FORMAT_ID, false);
@@ -226,9 +225,9 @@ public class FormatLibraryUpdaterTest extends DbTest {
 
     @Test
     public void updateFormatFromExternalLocalDefinitionsEmptyTest() throws ParseException, DocumentException {
-        formatLibraryUpdater.updateFormatFromExternal(FORMAT_ID);
+        formatLibraryUpdater.updateFormatFromExternal(null, FORMAT_ID);
         //second call must not create new entity
-        formatLibraryUpdater.updateFormatFromExternal(FORMAT_ID);
+        formatLibraryUpdater.updateFormatFromExternal(null, FORMAT_ID);
 
         List<FormatDefinition> afterFirstUpdate = formatDefinitionService.findByFormatId(FORMAT_ID, false);
         assertThat(afterFirstUpdate, hasSize(1));
@@ -242,7 +241,7 @@ public class FormatLibraryUpdaterTest extends DbTest {
         formatDefinition1.setIdentifiers(asSet());
         formatDefinitionService.update(formatDefinition1);
 
-        Pair<FormatDefinition, String> pair = formatLibraryUpdater.updateFormatFromExternal(FORMAT_ID);
+        Pair<FormatDefinition, String> pair = formatLibraryUpdater.updateFormatFromExternal(null, FORMAT_ID);
         assertThat(pair.getRight().contains("has been updated with the recent upstream definition"), is(true));
 
         List<FormatDefinition> afterSecondUpdate = formatDefinitionService.findByFormatId(FORMAT_ID, false);
@@ -275,12 +274,12 @@ public class FormatLibraryUpdaterTest extends DbTest {
         List<FormatDefinition> localDefinitionCreated = formatDefinitionService.findByFormatId(FORMAT_ID, true);
         assertThat(localDefinitionCreated, hasSize(1));
 
-        Pair<FormatDefinition, String> pair2 = formatLibraryUpdater.updateFormatFromExternal(FORMAT_ID);
+        Pair<FormatDefinition, String> pair2 = formatLibraryUpdater.updateFormatFromExternal(null, FORMAT_ID);
         String message = pair2.getRight();
         assertThat(message.contains("has been updated with the recent upstream definition"), is(true));
 
         //second call must not create new entity
-        formatLibraryUpdater.updateFormatFromExternal(FORMAT_ID);
+        formatLibraryUpdater.updateFormatFromExternal(null, FORMAT_ID);
         List<FormatDefinition> afterUpdate = formatDefinitionService.findByFormatId(FORMAT_ID, false);
         assertThat(afterUpdate, hasSize(1));
 
@@ -308,9 +307,9 @@ public class FormatLibraryUpdaterTest extends DbTest {
         /*
         First update: nothing will happen
          */
-        formatLibraryUpdater.updateFormatFromExternal(FORMAT_ID);
+        formatLibraryUpdater.updateFormatFromExternal(null, FORMAT_ID);
         //second call must not create new entity
-        formatLibraryUpdater.updateFormatFromExternal(FORMAT_ID);
+        formatLibraryUpdater.updateFormatFromExternal(null, FORMAT_ID);
 
         List<FormatDefinition> afterFirstUpdate = formatDefinitionService.findByFormatId(FORMAT_ID, false);
         assertThat(afterFirstUpdate, hasSize(1));
@@ -327,7 +326,7 @@ public class FormatLibraryUpdaterTest extends DbTest {
         /*
         Second update: new version of format definition will be created
          */
-        Pair<FormatDefinition, String> pair = formatLibraryUpdater.updateFormatFromExternal(FORMAT_ID);
+        Pair<FormatDefinition, String> pair = formatLibraryUpdater.updateFormatFromExternal(null, FORMAT_ID);
         assertThat(pair.getRight().contains("has been updated with the recent upstream definition"), is(true));
 
         List<FormatDefinition> afterSecondUpdate = formatDefinitionService.findByFormatId(FORMAT_ID, false);
@@ -357,12 +356,12 @@ public class FormatLibraryUpdaterTest extends DbTest {
         List<FormatDefinition> localDefinitionCreated = formatDefinitionService.findByFormatId(FORMAT_ID, true);
         assertThat(localDefinitionCreated, hasSize(1));
 
-        Pair<FormatDefinition, String> pair2 = formatLibraryUpdater.updateFormatFromExternal(FORMAT_ID);
+        Pair<FormatDefinition, String> pair2 = formatLibraryUpdater.updateFormatFromExternal(null, FORMAT_ID);
         String message = pair2.getRight();
         assertThat(message.contains("has been updated with the recent upstream definition"), is(true));
 
         //second call must not create new entity
-        formatLibraryUpdater.updateFormatFromExternal(FORMAT_ID);
+        formatLibraryUpdater.updateFormatFromExternal(null, FORMAT_ID);
         List<FormatDefinition> afterUpdate = formatDefinitionService.findByFormatId(FORMAT_ID, false);
         assertThat(afterUpdate, hasSize(1));
 
@@ -377,7 +376,7 @@ public class FormatLibraryUpdaterTest extends DbTest {
         formatDefinition1.setIdentifiers(asSet());
         formatDefinitionService.update(formatDefinition1);
 
-        Pair<FormatDefinition, String> pair3 = formatLibraryUpdater.updateFormatFromExternal(FORMAT_ID);
+        Pair<FormatDefinition, String> pair3 = formatLibraryUpdater.updateFormatFromExternal(null, FORMAT_ID);
         String message2 = pair3.getRight();
         assertThat(message2.contains("has been updated with the recent upstream definition"), is(true));
 
@@ -413,10 +412,10 @@ public class FormatLibraryUpdaterTest extends DbTest {
         formatDefinition2.setFormatNote("note 2");
 
         FormatIdentifier i1 = new FormatIdentifier();
-        i1.setIdentifierType(FormatIdentifierType.FOUR_CC);
+        i1.setIdentifierType("4CC");
         i1.setIdentifier("fst");
         FormatIdentifier i2 = new FormatIdentifier();
-        i2.setIdentifierType(FormatIdentifierType.PUID);
+        i2.setIdentifierType("PUID");
         i2.setIdentifier("snd");
         Set<FormatIdentifier> formatIdentifiers = asSet(i1, i2);
         formatIdentifierStore.save(formatIdentifiers);

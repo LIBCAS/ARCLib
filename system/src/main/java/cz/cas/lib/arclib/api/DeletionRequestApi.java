@@ -2,6 +2,7 @@ package cz.cas.lib.arclib.api;
 
 import cz.cas.lib.arclib.dto.AipDeletionRequestDto;
 import cz.cas.lib.arclib.security.authorization.permission.Permissions;
+import cz.cas.lib.arclib.security.user.UserDetails;
 import cz.cas.lib.arclib.service.DeletionRequestService;
 import cz.cas.lib.core.index.dto.Result;
 import io.swagger.annotations.*;
@@ -24,6 +25,7 @@ import static cz.cas.lib.core.util.Utils.checkUUID;
 public class DeletionRequestApi {
 
     private DeletionRequestService deletionRequestService;
+    private UserDetails userDetails;
 
     @ApiOperation(value = "Creates deletion request for deletion of AIP at archival storage. [Perm.DELETION_REQUESTS_WRITE]")
     @ApiResponses(value = {
@@ -36,7 +38,7 @@ public class DeletionRequestApi {
             @ApiParam(value = "AIP id", required = true)
             @PathVariable("aipId") String aipId) {
         checkUUID(aipId);
-        deletionRequestService.createDeletionRequest(aipId);
+        deletionRequestService.createDeletionRequest(aipId,userDetails.getId());
     }
 
     @ApiOperation(value = "Reverts deletion request made by the same user. [Perm.DELETION_REQUESTS_WRITE]")
@@ -92,5 +94,10 @@ public class DeletionRequestApi {
     @Inject
     public void setDeletionRequestService(DeletionRequestService deletionRequestService) {
         this.deletionRequestService = deletionRequestService;
+    }
+
+    @Inject
+    public void setUserDetails(UserDetails userDetails) {
+        this.userDetails = userDetails;
     }
 }

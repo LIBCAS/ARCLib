@@ -20,7 +20,7 @@ public class AipQueryResultDbConverter implements AttributeConverter<Result<Inde
             ObjectMapper objectMapper = ApplicationContextUtils.getApplicationContext().getBean(ObjectMapper.class);
             return objectMapper.writeValueAsString(value);
         } catch (JsonProcessingException e) {
-            throw new RuntimeException("could not convert object to JSON, object:" + value);
+            throw new RuntimeException("could not convert object to JSON, object:" + value, e);
         }
     }
 

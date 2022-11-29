@@ -490,6 +490,14 @@ public class IndexedStoreTest extends SrDbTest {
         result = store.findAll(params);
         assertThat(result.getCount(), is(3L));
         assertThat(result.getItems(), containsInAnyOrder(entities[0], entities[1], entities[2]));
+
+        //IN
+        params = new Params();
+        params.setFilter(asList(new Filter("stringAttribute", FilterOperation.IN, "abrasive,abraka-dabra", null)));
+
+        result = store.findAll(params);
+        assertThat(result.getCount(), is(2L));
+        assertThat(result.getItems(), containsInAnyOrder(entities[0], entities[2]));
     }
 
     @Test
@@ -719,7 +727,7 @@ public class IndexedStoreTest extends SrDbTest {
 
         result = store.findAll(params);
         assertThat(result.getCount(), is(3L));
-        assertThat(result.getItems(), containsInAnyOrder(entities[0], entities[1], entities[2]));
+        assertThat(result.getItems(), containsInAnyOrder(entities[0], entities[2]));
     }
 
     @Test
@@ -1489,10 +1497,10 @@ public class IndexedStoreTest extends SrDbTest {
 
         params = new Params();
         params.setFilter(asList(
-                new Filter(null, FilterOperation.NEGATE, null, asList(
-                        new Filter("stringAttribute", FilterOperation.EQ, "holmes", null),
-                        new Filter("intAttribute", FilterOperation.EQ, "1", null)
-                )), new Filter("intAttribute", FilterOperation.NEQ, "3", null)
+                        new Filter(null, FilterOperation.NEGATE, null, asList(
+                                new Filter("stringAttribute", FilterOperation.EQ, "holmes", null),
+                                new Filter("intAttribute", FilterOperation.EQ, "1", null)
+                        )), new Filter("intAttribute", FilterOperation.NEQ, "3", null)
                 )
 
         );

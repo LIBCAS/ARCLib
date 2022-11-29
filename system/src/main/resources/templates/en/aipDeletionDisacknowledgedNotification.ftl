@@ -1,6 +1,6 @@
 <p>Hello,</p>
 
-<p>in ${createdDate} at ${createdTime} package ${externalId} was disapproved to be removed.</p>
+<p>in ${createdDate} at ${createdTime} package ${externalId} was disapproved to be deleted.</p>
 <p>result: ${result}</p>
 
 <p>

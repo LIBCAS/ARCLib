@@ -20,7 +20,7 @@ import java.util.Objects;
 @Setter
 @BatchSize(size = 100)
 @Entity
-@Table(name = "arclib_related_format")
+@Table(name = "arclib_format_related_format")
 @NoArgsConstructor
 public class RelatedFormat extends DatedObject {
 

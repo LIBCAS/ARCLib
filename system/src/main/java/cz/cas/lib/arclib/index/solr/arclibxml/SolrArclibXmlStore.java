@@ -1,28 +1,26 @@
 package cz.cas.lib.arclib.index.solr.arclibxml;
 
-import cz.cas.lib.arclib.domain.AipQuery;
-import cz.cas.lib.arclib.domain.User;
 import cz.cas.lib.arclib.domainbase.exception.BadArgument;
+import cz.cas.lib.arclib.domainbase.exception.ConflictException;
 import cz.cas.lib.arclib.domainbase.exception.GeneralException;
-import cz.cas.lib.arclib.index.AipXmlNodeValueType;
-import cz.cas.lib.arclib.index.ArclibXmlField;
-import cz.cas.lib.arclib.index.ArclibXmlIndexTypeConfig;
-import cz.cas.lib.arclib.index.IndexArclibXmlStore;
+import cz.cas.lib.arclib.domainbase.exception.MissingObject;
+import cz.cas.lib.arclib.index.*;
 import cz.cas.lib.arclib.index.solr.IndexQueryUtils;
-import cz.cas.lib.arclib.security.user.UserDetails;
-import cz.cas.lib.arclib.store.AipQueryStore;
 import cz.cas.lib.arclib.utils.XmlUtils;
 import cz.cas.lib.core.index.dto.Params;
 import cz.cas.lib.core.index.dto.Result;
 import cz.cas.lib.core.index.solr.IndexField;
 import cz.cas.lib.core.index.solr.IndexFieldType;
-import cz.cas.lib.core.store.Transactional;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.reflect.FieldUtils;
 import org.apache.commons.lang3.tuple.Pair;
+import org.apache.solr.client.solrj.SolrQuery;
+import org.apache.solr.client.solrj.request.QueryRequest;
+import org.apache.solr.common.SolrDocument;
+import org.apache.solr.common.SolrDocumentList;
 import org.apache.solr.common.SolrInputDocument;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -61,12 +59,12 @@ import java.util.stream.Collectors;
 import static cz.cas.lib.arclib.index.solr.IndexQueryUtils.*;
 import static cz.cas.lib.arclib.utils.ArclibUtils.*;
 import static cz.cas.lib.arclib.utils.XmlUtils.createDomAndXpath;
-import static cz.cas.lib.core.util.Utils.asSet;
+import static cz.cas.lib.core.util.Utils.*;
 import static org.w3c.dom.Node.TEXT_NODE;
 
 @Service
 @Slf4j
-public class IndexedArclibXmlStore implements IndexArclibXmlStore {
+public class SolrArclibXmlStore implements IndexedArclibXmlStore {
     /**
      * Configuration of those index fields which are indexed according to arclibXmlDefinition.csv
      * Map contains collection names (main and nested) as keys and their Xpath configurations as values.
@@ -74,8 +72,6 @@ public class IndexedArclibXmlStore implements IndexArclibXmlStore {
     private Map<String, ArclibXmlIndexTypeConfig> arclibXmlXpathIndexConfig = new HashMap<>();
 
     private SolrTemplate solrTemplate;
-    private AipQueryStore aipQueryStore;
-    private UserDetails userDetails;
     private String coreName;
     private Map<String, String> uris = new HashMap<>();
     @Getter
@@ -102,6 +98,9 @@ public class IndexedArclibXmlStore implements IndexArclibXmlStore {
         mainDoc.addField(IndexedArclibXmlDocument.USER_NAME, userName);
         mainDoc.addField(IndexedArclibXmlDocument.DEBUG_MODE, debuggingModeActive);
         for (ArclibXmlField conf : mainDocConfig.getIndexedFieldConfig()) {
+            if (!conf.isInAipXml()) {
+                continue;
+            }
             NodeList nodes = (NodeList) xpath.evaluate(conf.getXpath(), arclibXmlDom, XPathConstants.NODESET);
             addFieldToDocument(mainDoc, conf, nodes);
         }
@@ -159,8 +158,7 @@ public class IndexedArclibXmlStore implements IndexArclibXmlStore {
     }
 
     @Override
-    @Transactional
-    public Result<IndexedArclibXmlDocument> findAll(Params params, String queryName) {
+    public Result<IndexedArclibXmlDocument> findAll(Params params) {
         SimpleQuery query = new SimpleQuery();
         Map<String, IndexField> indexedFields = INDEXED_FIELDS_MAP.get(getMainDocumentIndexType());
         initializeQuery(query, params, indexedFields);
@@ -188,10 +186,25 @@ public class IndexedArclibXmlStore implements IndexArclibXmlStore {
         Result<IndexedArclibXmlDocument> result = new Result<>();
         result.setItems(page.getContent());
         result.setCount(page.getTotalElements());
-        if (queryName != null && !queryName.trim().isEmpty())
-            aipQueryStore.save(new AipQuery(new User(userDetails.getId()), result, params, queryName));
         log.info("Found documents: " + Arrays.toString(result.getItems().stream().map(IndexedArclibXmlDocument::getId).toArray()));
         return result;
+    }
+
+    @Override
+    public Result<IndexedArclibXmlDocument> findAllIgnorePagination(Params passedParams) {
+        int page = 0;
+        Params params = passedParams.copy();
+        params.setPageSize(solrMaxRows);
+        Result<IndexedArclibXmlDocument> allDocsResult = new Result<>(new LinkedList<>(), 0L);
+        Result<IndexedArclibXmlDocument> allDocsSubResult;
+        do {
+            params.setPage(page);
+            allDocsSubResult = findAll(params);
+            allDocsResult.setCount(allDocsResult.getCount() + allDocsSubResult.getItems().size());
+            allDocsResult.getItems().addAll(allDocsSubResult.getItems());
+            page++;
+        } while (allDocsSubResult.getItems().size() < allDocsSubResult.getCount());
+        return allDocsResult;
     }
 
 
@@ -203,19 +216,14 @@ public class IndexedArclibXmlStore implements IndexArclibXmlStore {
      */
     @Override
     public void changeAipState(String arclibXmlDocumentId, IndexedAipState newAipState, byte[] aipXml) {
-        Map<String, Object> aclibXmlIndexDocument = findArclibXmlIndexDocument(arclibXmlDocumentId);
-        String producerId = (String) ((ArrayList) aclibXmlIndexDocument.get(IndexedArclibXmlDocument.PRODUCER_ID)).get(0);
-        String responsiblePerson = (String) ((ArrayList) aclibXmlIndexDocument.get(IndexedArclibXmlDocument.USER_NAME)).get(0);
-        String producer_name = (String) ((ArrayList) aclibXmlIndexDocument.get(IndexedArclibXmlDocument.PRODUCER_NAME)).get(0);
-        boolean debugMode = (Boolean) ((ArrayList) aclibXmlIndexDocument.get(IndexedArclibXmlDocument.DEBUG_MODE)).get(0);
-        boolean latestVersion = (Boolean) ((ArrayList) aclibXmlIndexDocument.get(IndexedArclibXmlDocument.LATEST)).get(0);
+        IndexedArclibXmlDocument doc = findArclibXmlIndexDocument(arclibXmlDocumentId);
         createIndex(aipXml,
-                producerId,
-                producer_name,
-                responsiblePerson,
+                doc.getProducerId(),
+                doc.getProducerName(),
+                doc.getUserName(),
                 newAipState,
-                debugMode,
-                latestVersion);
+                doc.getDebugMode(),
+                doc.getDebugMode());
     }
 
     /**
@@ -226,18 +234,13 @@ public class IndexedArclibXmlStore implements IndexArclibXmlStore {
      */
     @Override
     public void setLatestFlag(String arclibXmlDocumentId, boolean flag, byte[] aipXml) {
-        Map<String, Object> aclibXmlIndexDocument = findArclibXmlIndexDocument(arclibXmlDocumentId);
-        IndexedAipState aipState = IndexedAipState.valueOf((String) ((ArrayList) aclibXmlIndexDocument.get(IndexedArclibXmlDocument.AIP_STATE)).get(0));
-        String producerId = (String) ((ArrayList) aclibXmlIndexDocument.get(IndexedArclibXmlDocument.PRODUCER_ID)).get(0);
-        String responsiblePerson = (String) ((ArrayList) aclibXmlIndexDocument.get(IndexedArclibXmlDocument.USER_NAME)).get(0);
-        String producer_name = (String) ((ArrayList) aclibXmlIndexDocument.get(IndexedArclibXmlDocument.PRODUCER_NAME)).get(0);
-        boolean debugMode = (Boolean) ((ArrayList) aclibXmlIndexDocument.get(IndexedArclibXmlDocument.DEBUG_MODE)).get(0);
+        IndexedArclibXmlDocument doc = findArclibXmlIndexDocument(arclibXmlDocumentId);
         createIndex(aipXml,
-                producerId,
-                producer_name,
-                responsiblePerson,
-                aipState,
-                debugMode,
+                doc.getProducerId(),
+                doc.getProducerName(),
+                doc.getUserName(),
+                doc.getAipState(),
+                doc.getDebugMode(),
                 flag);
     }
 
@@ -254,20 +257,59 @@ public class IndexedArclibXmlStore implements IndexArclibXmlStore {
         return IndexedArclibXmlDocument.MAIN_INDEX_TYPE_VALUE;
     }
 
-    /**
-     * Finds ArclibXml index document by the external id and returns all the indexed attributes of the main document, OMMITING CHILDREN
-     *
-     * @param externalId external id of the ArclibXml index document
-     * @return map of indexed attributes and their values
-     */
-    public Map<String, Object> findArclibXmlIndexDocument(String externalId) {
+    @Override
+    public IndexedArclibXmlDocument findArclibXmlIndexDocument(String externalId) {
         SimpleQuery query = new SimpleQuery();
         query.addCriteria(Criteria.where(IndexedArclibXmlDocument.ID).in(asSet(externalId)));
         log.info("Searching for document with id " + externalId);
         Page<IndexedArclibXmlDocument> page = solrTemplate.query(coreName, query, IndexedArclibXmlDocument.class);
-        if (page.getContent().size() == 0) return null;
-        return page.getContent().get(0).getFields();
+        ne(page.getContent().size(), 0, () -> new MissingObject(IndexedArclibXmlDocument.class, externalId));
+        eq(page.getContent().size(), 1, () -> new ConflictException("found multiple IndexedArclibXmlDocuments with id: " + externalId));
+        return page.getContent().get(0);
     }
+
+    @Override
+    public List<IndexedArclibXmlDocument> findWithChildren(Collection<String> docIds, List<SimpleIndexFilter> additionalFilters) {
+        SolrQuery q = new SolrQuery();
+        q.setParam("collection", coreName);
+        q.setQuery("*:*");
+        if (additionalFilters != null) {
+            q.addFilterQuery(additionalFilters.stream().map(this::parseSimpleFilter).toArray(String[]::new));
+        }
+        List<IndexedArclibXmlDocument> result = new ArrayList<>();
+        for (String docId : docIds) {
+            SolrQuery singleDocQuery = q.getCopy();
+            singleDocQuery.addFilterQuery("id:" + docId);
+            singleDocQuery.setParam("fl", "*", "[child parentFilter=id:" + docId + " childFilter=-index_type:" + IndexedArclibXmlDocument.ELEMENT_INDEX_TYPE_VALUE + " limit=" + solrMaxRows + "]");
+            SolrDocumentList response = null;
+            try {
+                response = (SolrDocumentList) solrTemplate.getSolrClient().request(new QueryRequest(singleDocQuery)).get("response");
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+            switch (response.size()) {
+                case 0:
+                    break;
+                case 1:
+                    if (response.get(0).getChildDocumentCount() == solrMaxRows) {
+                        throw new RuntimeException("found " + solrMaxRows + " children of document " + docId + " which was the limit, there might be more children which were not found");
+                    }
+                    result.add(toIndexedArclibXmlDocument(response.get(0)));
+                    break;
+                default:
+                    throw new IllegalStateException("found more documents with id " + docId);
+            }
+        }
+        return result;
+    }
+
+//this would return only children
+//        SimpleQuery query = new SimpleQuery();
+//        query.addCriteria(Criteria.where(IndexedArclibXmlDocument.ID).in(asSet(externalId)));
+//        log.info("Searching for document with id " + externalId);
+//        //SolrQuery solrQuery = new SolrQuery("id:" + externalId);
+//        solrQuery.setParam("fl", "*", "[child parentFilter=id:" + externalId + "]");
+//        QueryResponse response = solrTemplate.getSolrClient().query(solrQuery);
 
     /**
      * Fills {@link #arclibXmlXpathIndexConfig} (used during indexing) with field definitions from CSV config and
@@ -277,7 +319,6 @@ public class IndexedArclibXmlStore implements IndexArclibXmlStore {
      * If the field (e.g. {@link IndexedArclibXmlDocument#AUTHORIAL_ID})
      * is defined in both, CSV and Java class, the definition from CSV is taken
      * </p>
-     *
      */
     @PostConstruct
     @SneakyThrows
@@ -458,11 +499,6 @@ public class IndexedArclibXmlStore implements IndexArclibXmlStore {
         private List<Pair<String, String>> attributes;
     }
 
-    @Inject
-    public void setAipQueryStore(AipQueryStore aipQueryStore) {
-        this.aipQueryStore = aipQueryStore;
-    }
-
     @Autowired
     @Qualifier("ArclibXmlSolrTemplate")
     public void setSolrTemplate(SolrTemplate solrTemplate) {
@@ -472,11 +508,6 @@ public class IndexedArclibXmlStore implements IndexArclibXmlStore {
     @Inject
     public void setCoreName(@Value("${solr.arclibxml.corename}") String coreName) {
         this.coreName = coreName;
-    }
-
-    @Inject
-    public void setUserDetails(UserDetails userDetails) {
-        this.userDetails = userDetails;
     }
 
     @Inject
@@ -497,8 +528,32 @@ public class IndexedArclibXmlStore implements IndexArclibXmlStore {
         uris.put(XSI, xsi);
         uris.put(OAIS_DC, oai_dc);
         uris.put(DC, dc);
-        uris.put(XLINK,xlink);
+        uris.put(XLINK, xlink);
 
         this.uris = uris;
+    }
+
+    private String parseSimpleFilter(SimpleIndexFilter sf) {
+        switch (sf.getOperation()) {
+            case EQ:
+                return sf.getField() + ":" + sf.getValue();
+            case NEQ:
+                return "-" + sf.getField() + ":" + sf.getValue();
+        }
+        throw new IllegalArgumentException(sf.toString());
+    }
+
+
+    private IndexedArclibXmlDocument toIndexedArclibXmlDocument(SolrDocument d) {
+
+        Map<String, List<Map<String, Collection<Object>>>> childrenGrouped = new HashMap<>();
+        for (SolrDocument childDoc : d.getChildDocuments()) {
+            List<Map<String, Collection<Object>>> childrenOfSameType = childrenGrouped.computeIfAbsent((String) childDoc.getFieldValue(TYPE_FIELD), k -> new ArrayList<>());
+            Map<String, Collection<Object>> childDocTransformed = childDoc.getFieldNames().stream().collect(Collectors.toMap(n -> n, childDoc::getFieldValues));
+            childrenOfSameType.add(childDocTransformed);
+        }
+        Map<String, Object> mainDocTransformed = d.getFieldNames().stream().collect(Collectors.toMap(n -> n, d::getFieldValues));
+
+        return new IndexedArclibXmlDocument(mainDocTransformed, childrenGrouped);
     }
 }

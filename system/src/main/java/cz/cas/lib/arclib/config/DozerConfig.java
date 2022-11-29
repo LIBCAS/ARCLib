@@ -1,7 +1,9 @@
 package cz.cas.lib.arclib.config;
 
+import cz.cas.lib.arclib.domain.AipQuery;
 import cz.cas.lib.arclib.domain.Batch;
 import cz.cas.lib.arclib.domain.IngestRoutine;
+import cz.cas.lib.arclib.domain.export.ExportRoutine;
 import cz.cas.lib.arclib.domain.ingestWorkflow.IngestWorkflow;
 import cz.cas.lib.arclib.domain.ingestWorkflow.WorkflowDefinition;
 import cz.cas.lib.arclib.domain.packages.AipDeletionRequest;
@@ -65,6 +67,19 @@ public class DozerConfig {
                     .fields("confirmer1", "confirmer1", FieldsMappingOptions.copyByReference())
                     .fields("confirmer2", "confirmer2", FieldsMappingOptions.copyByReference())
                     .fields("rejectedBy", "rejectedBy", FieldsMappingOptions.copyByReference());
+            mapping(AipQueryDto.class, AipQuery.class)
+                    .fields("created", "created", FieldsMappingOptions.copyByReference())
+                    .fields("updated", "updated", FieldsMappingOptions.copyByReference());
+            mapping(AipQueryDetailDto.class, AipQuery.class)
+                    .fields("created", "created", FieldsMappingOptions.copyByReference())
+                    .fields("updated", "updated", FieldsMappingOptions.copyByReference())
+                    .fields("query", "query", FieldsMappingOptions.copyByReference())
+                    .fields("result", "result", FieldsMappingOptions.copyByReference());
+            mapping(AipQueryDetailExportRoutineDto.class, ExportRoutine.class)
+                    .fields("created", "created", FieldsMappingOptions.copyByReference())
+                    .fields("updated", "updated", FieldsMappingOptions.copyByReference())
+                    .fields("exportTime", "exportTime", FieldsMappingOptions.copyByReference())
+                    .fields("config", "config", FieldsMappingOptions.copyByReference());
         }
     }
 

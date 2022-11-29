@@ -54,21 +54,6 @@ public class SipProfileStore extends NamedStore<SipProfile, QSipProfile> {
         return entity;
     }
 
-    /**
-     * Queries for SipProfile of given id, entity can be deleted as well (deleted flag is not null).
-     *
-     * @param id of entity
-     * @return SipProfile entity, even deleted. Or null if no SipProfile matches provided id.
-     */
-    public SipProfile findWithDeletedFilteringOff(String id) {
-        SipProfile entity = query()
-                .select(qObject())
-                .where(qObject().id.eq(id))
-                .fetchFirst();
-        detachAll();
-        return entity;
-    }
-
     @Inject
     public void setGenerator(Generator generator) {
         this.generator = generator;

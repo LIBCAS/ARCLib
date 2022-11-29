@@ -167,7 +167,7 @@ public interface IndexedStore<T extends DomainObject, U extends IndexedDomainObj
 
     /**
      * Finds all instances that respect the selected {@link Params} and converts them to autocomplete entries.
-     *
+     * <p>
      * The type {@link T} must implement interface {@link AutoCompleteAware}
      * or override generic AutoComplete logic (more at JavaDoc of {@link #isAutoCompleteSearchAllowed()}),
      * otherwise an exception is thrown.
@@ -176,7 +176,7 @@ public interface IndexedStore<T extends DomainObject, U extends IndexedDomainObj
      * @return autocomplete items wrapped by the {@link Result} class
      * @throws UnsupportedOperationException if {@link #isAutoCompleteSearchAllowed} check fails
      * @implSpec Only index is queried and not database, therefore it is a faster search than {@link
-     *         #findAll(Params)}
+     * #findAll(Params)}
      */
     default Result<AutoCompleteItem> listAutoComplete(@NonNull Params params) throws UnsupportedOperationException {
         if (!isAutoCompleteSearchAllowed()) {
@@ -219,7 +219,7 @@ public interface IndexedStore<T extends DomainObject, U extends IndexedDomainObj
     /**
      * Gets index type of the object.
      * <p>
-     *     One index collection may contain objects of multiple types. The type attribute is used to distinguish between these objects.
+     * One index collection may contain objects of multiple types. The type attribute is used to distinguish between these objects.
      * </p>
      *
      * @return Name of Solr type
@@ -358,7 +358,7 @@ public interface IndexedStore<T extends DomainObject, U extends IndexedDomainObj
 
     /**
      * nested index support
-     *
+     * <p>
      * all child docs are removed during parent removal and also during parent indexation,
      * therefore <b>child objects</b> MUST always be indexed
      * during parent object indexation in custom {@link #index(DomainObject)} method
