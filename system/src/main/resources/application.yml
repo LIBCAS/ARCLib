@@ -63,7 +63,8 @@ arclib:
     quarantine: workspace/quarantine
     fileStorage: fileStorage
     reports: exportedReports
-  arclibXmlDefinition: classpath:index/arclibXmlDefinition.csv
+  arclibXmlIndexConfig: classpath:index/arclibXmlIndexConfig.csv
+  arclibXmlSystemWideValidationConfig: classpath:arclibXmlSystemWideValidationConfig.csv
   arclibXmlSchema: classpath:xmlSchemas/arclibXml.xsd
   metsSchema: classpath:xmlSchemas/mets.xsd
   premisSchema: classpath:xmlSchemas/premis-v2-2.xsd

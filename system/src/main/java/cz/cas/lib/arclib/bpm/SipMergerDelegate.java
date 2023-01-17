@@ -56,7 +56,7 @@ public class SipMergerDelegate extends ArclibDelegate {
             }
 
             InputStream archivalStorageResponse = archivalStorageService.exportSingleAip(previousVersionSip.getId(), false, null);
-            Path previousVersionAipDataDir = archivalStorageResponseExtractor.extractAipAsFolderWithXmlsBySide(new ZipInputStream(archivalStorageResponse), previousVersionSip.getId(), previousVersionAipUnpackedInWorkspace);
+            Path previousVersionAipDataDir = archivalStorageResponseExtractor.extractAipAsFolderWithXmlsBySide(new ZipInputStream(archivalStorageResponse), previousVersionSip.getId(), previousVersionAipUnpackedInWorkspace,sip.getFolderStructure().getCaption());
 
             FileUtils.copyDirectory(sipUnpackedInWorkspace.toFile(), previousVersionAipDataDir.toFile());
 

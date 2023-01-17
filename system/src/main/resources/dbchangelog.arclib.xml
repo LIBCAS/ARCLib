@@ -1789,4 +1789,21 @@
     <changeSet id="40" author="tomasek">
         <dropUniqueConstraint tableName="arclib_authorial_package" constraintName="arclib_authorial_package_authorial_id_producer_profile_id_key"/>
     </changeSet>
+    <changeSet id="41" author="tomasek">
+        <sql>
+            insert into public.arclib_ingest_issue_definition (id, "number",
+            code,name,created,updated,description,solution,reconfigurable) values
+            ('aa46b316-186d-4f6a-b54c-0cb4fd354a20','15','SYSTEM_WIDE_VALIDATION_NODE_MISSING','system wide validation nodes missing',
+            current_timestamp, current_timestamp,'some XML nodes were not found in ARCLib XML during system wide ARCLib XML validation',
+            'This issue may occur during validation after XSLT transformation or during final validation. It is solved according to optional
+            JSON config values at /systemWideValidation//missingNodesAfterXsltAction and /systemWideValidation/missingNodesAfterFinalValidationAction.
+            If no config is provided, incident is created. If config is provided, supported values are: "IGNORE": process
+            continues as if there were no missing nodes, "CANCEL": the Ingest workflow process is cancelled.',true);
+
+            insert into public.arclib_tool_ingest_issue_definition(tool_id,ingest_issue_definition_id)
+            values('e1c83f3a-c03a-4231-8c8c-102a53c0f6ed','aa46b316-186d-4f6a-b54c-0cb4fd354a20');
+            insert into public.arclib_tool_ingest_issue_definition(tool_id,ingest_issue_definition_id)
+            values('c0068cb1-5755-4133-9be9-f49840f19ec3','aa46b316-186d-4f6a-b54c-0cb4fd354a20');
+        </sql>
+    </changeSet>
 </databaseChangeLog>

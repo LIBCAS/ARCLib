@@ -5,6 +5,7 @@ import cz.cas.lib.arclib.domain.export.ExportConfig;
 import cz.cas.lib.arclib.domain.export.ExportScope;
 import cz.cas.lib.arclib.domain.ingestWorkflow.IngestWorkflow;
 import cz.cas.lib.arclib.domain.packages.Sip;
+import cz.cas.lib.arclib.domainbase.domain.DomainObject;
 import cz.cas.lib.arclib.index.IndexedArclibXmlStore;
 import cz.cas.lib.arclib.index.SimpleIndexFilter;
 import cz.cas.lib.arclib.index.SimpleIndexFilterOperation;
@@ -216,6 +217,8 @@ public class AipExportService {
                     case DATA_AND_LAST_XML:
                     case DATA_AND_ALL_XMLS:
                         Files.createDirectories(scopeFolder);
+                        Map<String, Sip> sipsByTheirIds = sipStore.findAllInList(docsFromIndex.stream().map(IndexedArclibXmlDocument::getSipId).distinct().collect(Collectors.toList()))
+                                .stream().collect(Collectors.toMap(DomainObject::getId, s -> s));
                         for (IndexedArclibXmlDocument doc : docsFromIndex) {
                             String aipId = doc.getSipId();
                             if (doc.getAipState() == IndexedAipState.DELETED) {
@@ -226,7 +229,7 @@ public class AipExportService {
                                 InputStream response = archivalStorageService.exportSingleAip(aipId, exportScope == ExportScope.DATA_AND_ALL_XMLS, exportConfig.getDataReduction());
                                 Path aipDataDir;
                                 try (ZipInputStream zis = new ZipInputStream(response)) {
-                                    aipDataDir = archivalStorageResponseExtractor.extractAipAsFolderWithXmlsBySide(zis, aipId, scopeFolder);
+                                    aipDataDir = archivalStorageResponseExtractor.extractAipAsFolderWithXmlsBySide(zis, aipId, scopeFolder, sipsByTheirIds.get(doc.getSipId()).getFolderStructure().getCaption());
                                 }
                                 if (exportConfig.isGenerateInfoFile()) {
                                     Sip sipEntity = sipStore.find(aipId);
@@ -327,6 +330,7 @@ public class AipExportService {
                 f.setValue(d.getValue());
                 params.addFilter(f);
             }
+            params.addFilter(new Filter(IndexedArclibXmlDocument.ID, FilterOperation.IN, String.join(",", ids), List.of()));
             docsFromIndex = indexedArclibXmlStore.findAllIgnorePagination(params).getItems();
         }
         return docsFromIndex;

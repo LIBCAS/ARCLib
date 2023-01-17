@@ -66,7 +66,7 @@ import static org.w3c.dom.Node.TEXT_NODE;
 @Slf4j
 public class SolrArclibXmlStore implements IndexedArclibXmlStore {
     /**
-     * Configuration of those index fields which are indexed according to arclibXmlDefinition.csv
+     * Configuration of those index fields which are indexed according to arclibXmlIndexConfig.csv
      * Map contains collection names (main and nested) as keys and their Xpath configurations as values.
      */
     private Map<String, ArclibXmlIndexTypeConfig> arclibXmlXpathIndexConfig = new HashMap<>();
@@ -75,7 +75,7 @@ public class SolrArclibXmlStore implements IndexedArclibXmlStore {
     private String coreName;
     private Map<String, String> uris = new HashMap<>();
     @Getter
-    private Resource arclibXmlDefinition;
+    private Resource arclibXmlIndexConfig;
 
     @SneakyThrows
     @Override
@@ -203,7 +203,7 @@ public class SolrArclibXmlStore implements IndexedArclibXmlStore {
             allDocsResult.setCount(allDocsResult.getCount() + allDocsSubResult.getItems().size());
             allDocsResult.getItems().addAll(allDocsSubResult.getItems());
             page++;
-        } while (allDocsSubResult.getItems().size() < allDocsSubResult.getCount());
+        } while (allDocsSubResult.getItems().size() == solrMaxRows);
         return allDocsResult;
     }
 
@@ -511,9 +511,9 @@ public class SolrArclibXmlStore implements IndexedArclibXmlStore {
     }
 
     @Inject
-    public void setArclibXmlDefinition(@Value("${arclib.arclibXmlDefinition}")
-                                               Resource arclibXmlDefinition) {
-        this.arclibXmlDefinition = arclibXmlDefinition;
+    public void setArclibXmlIndexConfig(@Value("${arclib.arclibXmlIndexConfig}")
+                                               Resource arclibXmlIndexConfig) {
+        this.arclibXmlIndexConfig = arclibXmlIndexConfig;
     }
 
     @Inject

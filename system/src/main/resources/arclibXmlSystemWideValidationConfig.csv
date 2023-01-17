@@ -1,0 +1,36 @@
+"Xpath root; if also relative xpath is provided then for every found root (0..n), the nodes (1..n) with relative xpath must be present, otherwise it is enough that 1..n) root nodes exists",Xpath (relative to Xpath root) (SYS),Data source (SYS)
+/METS:mets/@LABEL,,SIP profile XSLT
+/METS:mets/@TYPE,,SIP profile XSLT
+/METS:mets/METS:metsHdr/METS:altRecordID[@TYPE='original SIP identifier'],,SIP profile
+/METS:mets/METS:metsHdr/METS:agent,,SIP profile XSLT; system
+/METS:mets/METS:metsHdr/METS:agent,@ROLE,SIP profile XSLT; system
+/METS:mets/METS:metsHdr/METS:agent,@TYPE,SIP profile XSLT; system
+/METS:mets/METS:metsHdr/METS:agent,METS:name,SIP profile XSLT; system
+/METS:mets/METS:dmdSec[METS:mdWrap[@MDTYPE='DC']/METS:xmlData/oai_dc:dc],,SIP profile XSLT
+/METS:mets/METS:dmdSec[METS:mdWrap[@MDTYPE='DC']/METS:xmlData/oai_dc:dc],@ID,SIP profile XSLT
+/METS:mets/METS:dmdSec[METS:mdWrap[@MDTYPE='DC']/METS:xmlData/oai_dc:dc],METS:mdWrap[@MDTYPE='DC']/METS:xmlData/oai_dc:dc,SIP profile XSLT
+/METS:mets/METS:amdSec/METS:techMD/METS:mdWrap[@MDTYPE='PREMIS']/METS:xmlData/premis:object,,fixity generator
+/METS:mets/METS:amdSec/METS:techMD/METS:mdWrap[@MDTYPE='PREMIS']/METS:xmlData/premis:object,premis:objectIdentifier,fixity generator
+/METS:mets/METS:amdSec/METS:techMD/METS:mdWrap[@MDTYPE='PREMIS']/METS:xmlData/premis:object,premis:objectCharacteristics/premis:fixity,fixity generator
+/METS:mets/METS:amdSec/METS:techMD/METS:mdWrap[@MDTYPE='PREMIS']/METS:xmlData/premis:object,premis:objectCharacteristics/premis:size,fixity generator
+/METS:mets/METS:amdSec/METS:techMD/METS:mdWrap[@MDTYPE='PREMIS']/METS:xmlData/premis:object,premis:objectCharacteristics/premis:format,fixity generator
+/METS:mets/METS:amdSec/METS:techMD/METS:mdWrap[@MDTYPE='PREMIS']/METS:xmlData/ARCLib:formats/ARCLib:format,,format identifier
+/METS:mets/METS:amdSec/METS:techMD/METS:mdWrap[@MDTYPE='PREMIS']/METS:xmlData/ARCLib:formats/ARCLib:format,ARCLib:formatRegistryKey,format identifier
+/METS:mets/METS:amdSec/METS:techMD/METS:mdWrap[@MDTYPE='PREMIS']/METS:xmlData/ARCLib:formats/ARCLib:format,ARCLib:formatRegistryName,format identifier
+/METS:mets/METS:amdSec/METS:techMD/METS:mdWrap[@MDTYPE='PREMIS']/METS:xmlData/ARCLib:formats/ARCLib:format,ARCLib:fileCount,format identifier
+/METS:mets/METS:amdSec/METS:techMD/METS:mdWrap[@MDTYPE='PREMIS']/METS:xmlData/ARCLib:formats/ARCLib:format,ARCLib:creatingApplicationName,format identifier
+/METS:mets/METS:amdSec/METS:techMD/METS:mdWrap[@MDTYPE='PREMIS']/METS:xmlData/ARCLib:formats/ARCLib:format,ARCLib:creatingApplicationVersion,format identifier
+/METS:mets/METS:amdSec/METS:techMD/METS:mdWrap[@MDTYPE='PREMIS']/METS:xmlData/ARCLib:formats/ARCLib:format,ARCLib:dateCreatedByApplication,format identifier
+/METS:mets/METS:amdSec/METS:digiprovMD/METS:mdWrap[@MDTYPE='PREMIS']/METS:xmlData/premis:event,,system
+/METS:mets/METS:amdSec/METS:digiprovMD/METS:mdWrap[@MDTYPE='PREMIS']/METS:xmlData/premis:event,premis:eventOutcomeInformation,system
+/METS:mets/METS:amdSec/METS:digiprovMD/METS:mdWrap[@MDTYPE='PREMIS']/METS:xmlData/premis:event/premis:eventOutcomeInformation,premis:eventOutcome,system
+/METS:mets/METS:amdSec/METS:digiprovMD/METS:mdWrap[@MDTYPE='PREMIS']/METS:xmlData/premis:event,premis:linkingAgentIdentifier,system
+/METS:mets/METS:amdSec/METS:digiprovMD/METS:mdWrap[@MDTYPE='PREMIS']/METS:xmlData/premis:event/premis:linkingAgentIdentifier,premis:linkingAgentIdentifierType,system
+/METS:mets/METS:amdSec/METS:digiprovMD/METS:mdWrap[@MDTYPE='PREMIS']/METS:xmlData/premis:event/premis:linkingAgentIdentifier,premis:linkingAgentIdentifierValue,system
+/METS:mets/METS:amdSec/METS:digiprovMD/METS:mdWrap[@MDTYPE='PREMIS']/METS:xmlData/premis:event,premis:eventType,system
+/METS:mets/METS:amdSec/METS:digiprovMD/METS:mdWrap[@MDTYPE='PREMIS']/METS:xmlData/premis:event,premis:eventDateTime,system
+/METS:mets/METS:amdSec/METS:digiprovMD/METS:mdWrap[@MDTYPE='PREMIS']/METS:xmlData/premis:event,premis:eventIdentifier,system
+/METS:mets/METS:amdSec/METS:digiprovMD/METS:mdWrap[@MDTYPE='PREMIS']/METS:xmlData/premis:event/premis:eventIdentifier,premis:eventIdentifierType,system
+/METS:mets/METS:amdSec/METS:digiprovMD/METS:mdWrap[@MDTYPE='PREMIS']/METS:xmlData/premis:event/premis:eventIdentifier,premis:eventIdentifierValue,system
+/METS:mets/METS:fileSec,,system; fixity generator
+/METS:mets/METS:structMap,,system

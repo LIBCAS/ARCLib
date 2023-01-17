@@ -195,6 +195,12 @@
             <ARCLib:sipVersionOf>initial version</ARCLib:sipVersionOf>
             <ARCLib:xmlVersionNumber>1</ARCLib:xmlVersionNumber>
             <ARCLib:xmlVersionOf>initial version</ARCLib:xmlVersionOf>
+            <ARCLib:ingestProfiles>
+              <ARCLib:producerProfile>pp123</ARCLib:producerProfile>
+              <ARCLib:sipProfile>sp123</ARCLib:sipProfile>
+              <ARCLib:validationProfile>vp123</ARCLib:validationProfile>
+              <ARCLib:workflowDefinition>wd123</ARCLib:workflowDefinition>
+            </ARCLib:ingestProfiles>
           </ARCLib:sipInfo>
         </METS:xmlData>
       </METS:mdWrap>
@@ -214,7 +220,6 @@
               <ARCLib:creatingApplicationVersion>2.0.4451.21664</ARCLib:creatingApplicationVersion>
               <ARCLib:dateCreatedByApplication>2014-06-26</ARCLib:dateCreatedByApplication>
               <ARCLib:preservationLevelValue>deleted</ARCLib:preservationLevelValue>
-              <ARCLib:scannerModelSerialNo>2012.04.04</ARCLib:scannerModelSerialNo>
               <ARCLib:fileCount>10</ARCLib:fileCount>
               <ARCLib:size>266061748</ARCLib:size>
             </ARCLib:format>
@@ -297,68 +302,55 @@
             <ARCLib:eventAgent>
               <ARCLib:eventType>capture</ARCLib:eventType>
               <ARCLib:agentName>DL 3003-DL 3003</ARCLib:agentName>
-              <ARCLib:linkingDeviceID>DL 3003-flatData</ARCLib:linkingDeviceID>
               <ARCLib:scannerModelSerialNo>2012.04.04</ARCLib:scannerModelSerialNo>
-              <ARCLib:scanningSoftwareName>Copinet</ARCLib:scanningSoftwareName>
               <ARCLib:eventDate>2014-06-26</ARCLib:eventDate>
-              <ARCLib:eventCount>10</ARCLib:eventCount>
+              <ARCLib:fileCount>20</ARCLib:fileCount>
             </ARCLib:eventAgent>
             <ARCLib:eventAgent>
               <ARCLib:eventType>derivation</ARCLib:eventType>
               <ARCLib:agentName>Scantailor-Aug 12 2012</ARCLib:agentName>
-              <ARCLib:linkingDeviceID>Scantailor-postprocessingData</ARCLib:linkingDeviceID>
               <ARCLib:scannerModelSerialNo>2012.04.04</ARCLib:scannerModelSerialNo>
-              <ARCLib:scanningSoftwareName>Copinet</ARCLib:scanningSoftwareName>
               <ARCLib:eventDate>2014-07-03</ARCLib:eventDate>
-              <ARCLib:eventCount>10</ARCLib:eventCount>
+              <ARCLib:fileCount>20</ARCLib:fileCount>
             </ARCLib:eventAgent>
             <ARCLib:eventAgent>
               <ARCLib:eventType>deletion</ARCLib:eventType>
               <ARCLib:agentName>TM-1.4.1-SNAPSHOT</ARCLib:agentName>
-              <ARCLib:linkingDeviceID>TM-postprocessingData</ARCLib:linkingDeviceID>
               <ARCLib:scannerModelSerialNo>2012.04.04</ARCLib:scannerModelSerialNo>
-              <ARCLib:scanningSoftwareName>Copinet</ARCLib:scanningSoftwareName>
               <ARCLib:eventDate>2014-07-06</ARCLib:eventDate>
-              <ARCLib:eventCount>10</ARCLib:eventCount>
+              <ARCLib:fileCount>20</ARCLib:fileCount>
             </ARCLib:eventAgent>
             <ARCLib:eventAgent>
               <ARCLib:eventType>derivation</ARCLib:eventType>
               <ARCLib:agentName>Scantailor-Aug 12 2012</ARCLib:agentName>
-              <ARCLib:linkingDeviceID>Scantailor-postprocessingData</ARCLib:linkingDeviceID>
               <ARCLib:scannerModelSerialNo>2012.04.04</ARCLib:scannerModelSerialNo>
-              <ARCLib:scanningSoftwareName>Copinet</ARCLib:scanningSoftwareName>
               <ARCLib:eventDate>2014-07-05</ARCLib:eventDate>
-              <ARCLib:eventCount>10</ARCLib:eventCount>
+              <ARCLib:fileCount>20</ARCLib:fileCount>
             </ARCLib:eventAgent>
             <ARCLib:eventAgent>
               <ARCLib:eventType>deletion</ARCLib:eventType>
               <ARCLib:agentName>TM-1.4.1-SNAPSHOT</ARCLib:agentName>
-              <ARCLib:linkingDeviceID>TM-postprocessingData</ARCLib:linkingDeviceID>
               <ARCLib:scannerModelSerialNo>2012.04.04</ARCLib:scannerModelSerialNo>
-              <ARCLib:scanningSoftwareName>Copinet</ARCLib:scanningSoftwareName>
               <ARCLib:eventDate>2014-07-04</ARCLib:eventDate>
-              <ARCLib:eventCount>10</ARCLib:eventCount>
+              <ARCLib:fileCount>20</ARCLib:fileCount>
             </ARCLib:eventAgent>
             <ARCLib:eventAgent>
               <ARCLib:eventType>migration</ARCLib:eventType>
               <ARCLib:agentName>Kakadu-7.0</ARCLib:agentName>
-              <ARCLib:linkingDeviceID>Kakadu-masterCopy</ARCLib:linkingDeviceID>
               <ARCLib:eventDate>2014-07-05</ARCLib:eventDate>
-              <ARCLib:eventCount>6</ARCLib:eventCount>
+              <ARCLib:fileCount>20</ARCLib:fileCount>
             </ARCLib:eventAgent>
             <ARCLib:eventAgent>
               <ARCLib:eventType>capture</ARCLib:eventType>
               <ARCLib:agentName>ABBYY-3.5</ARCLib:agentName>
-              <ARCLib:linkingDeviceID>ABBYY-ALTO</ARCLib:linkingDeviceID>
               <ARCLib:eventDate>2014-07-09</ARCLib:eventDate>
-              <ARCLib:eventCount>10</ARCLib:eventCount>
+              <ARCLib:fileCount>20</ARCLib:fileCount>
             </ARCLib:eventAgent>
             <ARCLib:eventAgent>
               <ARCLib:eventType>migration</ARCLib:eventType>
               <ARCLib:agentName>Kakadu-7.0</ARCLib:agentName>
-              <ARCLib:linkingDeviceID>Kakadu-masterCopy</ARCLib:linkingDeviceID>
               <ARCLib:eventDate>2014-07-03</ARCLib:eventDate>
-              <ARCLib:eventCount>4</ARCLib:eventCount>
+              <ARCLib:fileCount>20</ARCLib:fileCount>
             </ARCLib:eventAgent>
           </ARCLib:eventAgents>
         </METS:xmlData>

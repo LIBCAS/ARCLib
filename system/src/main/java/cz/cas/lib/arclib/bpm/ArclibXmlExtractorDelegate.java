@@ -3,9 +3,15 @@ package cz.cas.lib.arclib.bpm;
 import com.fasterxml.jackson.databind.JsonNode;
 import cz.cas.lib.arclib.domain.IngestToolFunction;
 import cz.cas.lib.arclib.domain.ingestWorkflow.IngestEvent;
+import cz.cas.lib.arclib.domain.ingestWorkflow.IngestWorkflow;
+import cz.cas.lib.arclib.domain.preservationPlanning.Tool;
 import cz.cas.lib.arclib.domain.profiles.ProducerProfile;
+import cz.cas.lib.arclib.exception.bpm.ConfigParserException;
+import cz.cas.lib.arclib.exception.bpm.IncidentException;
 import cz.cas.lib.arclib.service.arclibxml.ArclibXmlValidator;
 import cz.cas.lib.arclib.service.arclibxml.ArclibXmlXsltExtractor;
+import cz.cas.lib.arclib.service.arclibxml.systemWideValidation.SystemWideValidationMissingNodesBpmHandler;
+import cz.cas.lib.arclib.service.arclibxml.systemWideValidation.SystemWideValidationNodeConfig;
 import cz.cas.lib.arclib.store.ProducerProfileStore;
 import cz.cas.lib.arclib.utils.ArclibUtils;
 import cz.cas.lib.arclib.utils.NamespaceChangingVisitor;
@@ -25,10 +31,12 @@ import org.xml.sax.SAXException;
 import javax.inject.Inject;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.TransformerException;
+import javax.xml.xpath.XPathExpressionException;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static cz.cas.lib.arclib.utils.ArclibUtils.*;
@@ -46,9 +54,10 @@ public class ArclibXmlExtractorDelegate extends ArclibDelegate {
     private ProducerProfileStore producerProfileStore;
     private ArclibXmlValidator validator;
     private Map<String, String> uris;
+    private SystemWideValidationMissingNodesBpmHandler systemWideValidationHandler;
 
     @Override
-    public void executeArclibDelegate(DelegateExecution execution) throws TransformerException, IOException, ParserConfigurationException, SAXException, DocumentException {
+    public void executeArclibDelegate(DelegateExecution execution) throws TransformerException, IOException, ParserConfigurationException, SAXException, DocumentException, XPathExpressionException, IncidentException {
         String usedSipProfile = getStringVariable(execution, BpmConstants.MetadataExtraction.usedSipProfile);
         isNull(usedSipProfile, () -> new BpmnError(BpmConstants.ErrorCodes.ProcessFailure, ArclibUtils.trimBpmnErrorMsg(
                 "Attempting to start ArclibXmlExtractor but the usedSipProfile variable is already filled. Workflow definition can contain only one instance of the extractor.")));
@@ -76,9 +85,15 @@ public class ArclibXmlExtractorDelegate extends ArclibDelegate {
         doc.accept(visitor);
         String prettyPrintedExtractedMetadata = prettyPrint(doc);
 
-        validator.validateXsltResult(prettyPrintedExtractedMetadata);
+        IngestWorkflow iw = ingestWorkflowService.findByExternalId(ingestWorkflowExternalId);
+        Tool tool = toolService.getByNameAndVersion(getToolName(), getToolVersion());
 
-        ingestEventStore.save(new IngestEvent(ingestWorkflowService.findByExternalId(ingestWorkflowExternalId), toolService.getByNameAndVersion(getToolName(), getToolVersion()), true, null));
+        List<SystemWideValidationNodeConfig> missingNodes = validator.validateXsltResult(prettyPrintedExtractedMetadata);
+        if (!missingNodes.isEmpty()) {
+            systemWideValidationHandler.handleMissingNodes(configRoot, true, missingNodes, iw, tool);
+        }
+
+        ingestEventStore.save(new IngestEvent(iw, tool, true, null));
         execution.setVariable(BpmConstants.MetadataExtraction.result, prettyPrintedExtractedMetadata.getBytes());
         execution.setVariable(BpmConstants.MetadataExtraction.usedSipProfile, sipProfileExternalId);
     }
@@ -111,5 +126,10 @@ public class ArclibXmlExtractorDelegate extends ArclibDelegate {
         uris.put(XLINK, xlink);
 
         this.uris = uris;
+    }
+
+    @Inject
+    public void setSystemWideValidationHandler(SystemWideValidationMissingNodesBpmHandler systemWideValidationHandler) {
+        this.systemWideValidationHandler = systemWideValidationHandler;
     }
 }

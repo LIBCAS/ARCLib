@@ -169,7 +169,7 @@ public class AntivirusDelegateTest extends DelegateTest {
     @Test
     public void testClamConfigParser() throws IOException, ConfigParserException {
         JsonNode jsonRoot = new ObjectMapper().readTree(INGEST_CONFIG);
-        Antivirus a = antivirusDelegate.initialize(jsonRoot, ingestWorkflow, delegateExecution, 0);
+        Antivirus a = antivirusDelegate.initialize(jsonRoot, delegateExecution, 0);
         assertThat(a, instanceOf(ClamAntivirus.class));
         ClamAntivirus ca = (ClamAntivirus) a;
         assertThat(ca.getCmd(), equalTo(CMD));
@@ -179,6 +179,6 @@ public class AntivirusDelegateTest extends DelegateTest {
     public void testClamConfigParserException() throws Exception {
         String clamConfig = "{\"antivirus\":{\"type\":\"blah\",\"cmd\":[\"clamscan\",\"-r\"],\"infectedSipAction\":\"QUARANTINE\"}}";
         JsonNode jsonRoot = new ObjectMapper().readTree(clamConfig);
-        assertThrown(() -> antivirusDelegate.initialize(jsonRoot, ingestWorkflow, delegateExecution, 0)).isInstanceOf(ConfigParserException.class);
+        assertThrown(() -> antivirusDelegate.initialize(jsonRoot, delegateExecution, 0)).isInstanceOf(ConfigParserException.class);
     }
 }

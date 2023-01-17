@@ -9,13 +9,10 @@ import cz.cas.lib.arclib.domain.preservationPlanning.Tool;
 import cz.cas.lib.arclib.exception.bpm.ConfigParserException;
 import cz.cas.lib.arclib.exception.bpm.IncidentException;
 import cz.cas.lib.arclib.formatlibrary.service.FormatDefinitionService;
-import cz.cas.lib.arclib.service.IngestIssueService;
 import cz.cas.lib.arclib.service.antivirus.Antivirus;
 import cz.cas.lib.arclib.service.antivirus.AntivirusType;
 import cz.cas.lib.arclib.service.antivirus.ClamAntivirus;
 import cz.cas.lib.arclib.service.antivirus.InfectedSipAction;
-import cz.cas.lib.arclib.store.IngestIssueDefinitionStore;
-import cz.cas.lib.arclib.utils.ArclibUtils;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.camunda.bpm.engine.delegate.DelegateExecution;
@@ -56,7 +53,7 @@ public class AntivirusDelegate extends ArclibDelegate {
         Path sipPath = getSipFolderWorkspacePath(execution);
         int antivirusToolCounter = (int) execution.getVariable(BpmConstants.Antivirus.antivirusToolCounter);
 
-        Antivirus antivirus = initialize(configRoot, iw, execution, antivirusToolCounter);
+        Antivirus antivirus = initialize(configRoot, execution, antivirusToolCounter);
         antivirus.scan(sipPath, iw);
 
         ingestEventStore.save(new IngestEvent(new IngestWorkflow(iw.getId()), antivirus.getToolEntity(), true, antivirus.getToolVersion()));
@@ -64,10 +61,10 @@ public class AntivirusDelegate extends ArclibDelegate {
         execution.setVariable(BpmConstants.Antivirus.antivirusToolCounter, antivirusToolCounter + 1);
     }
 
-    public Antivirus initialize(JsonNode root, IngestWorkflow iw, DelegateExecution ex, int antivirusToolCounter) throws ConfigParserException {
+    public Antivirus initialize(JsonNode root, DelegateExecution ex, int antivirusToolCounter) throws ConfigParserException {
         InfectedSipAction infectedSipAction = parseEnumFromConfig(root,
-                ANTIVIRUS_TOOL_EXPR + "/" + antivirusToolCounter + AntivirusDelegate.INFECTED_SIP_ACTION, InfectedSipAction.class,true);
-        AntivirusType avType = parseEnumFromConfig(root, ANTIVIRUS_TOOL_EXPR + "/" + antivirusToolCounter + AntivirusDelegate.ANTIVIRUS_TYPE, AntivirusType.class,true);
+                ANTIVIRUS_TOOL_EXPR + "/" + antivirusToolCounter + AntivirusDelegate.INFECTED_SIP_ACTION, InfectedSipAction.class, true);
+        AntivirusType avType = parseEnumFromConfig(root, ANTIVIRUS_TOOL_EXPR + "/" + antivirusToolCounter + AntivirusDelegate.ANTIVIRUS_TYPE, AntivirusType.class, true);
         Antivirus antivirusToBeUsed;
         switch (avType) {
             case CLAMAV:

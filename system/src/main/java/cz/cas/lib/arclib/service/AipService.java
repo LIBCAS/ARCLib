@@ -1,11 +1,13 @@
 package cz.cas.lib.arclib.service;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import cz.cas.lib.arclib.bpm.BpmConstants;
 import cz.cas.lib.arclib.domain.*;
 import cz.cas.lib.arclib.domain.ingestWorkflow.IngestWorkflow;
 import cz.cas.lib.arclib.domain.ingestWorkflow.IngestWorkflowState;
 import cz.cas.lib.arclib.domain.packages.AuthorialPackage;
 import cz.cas.lib.arclib.domain.packages.AuthorialPackageUpdateLock;
-import cz.cas.lib.arclib.domain.packages.Sip;
 import cz.cas.lib.arclib.domainbase.exception.*;
 import cz.cas.lib.arclib.dto.AipDetailDto;
 import cz.cas.lib.arclib.exception.AipStateChangeException;
@@ -22,6 +24,7 @@ import cz.cas.lib.arclib.service.archivalStorage.ArchivalStorageException;
 import cz.cas.lib.arclib.service.archivalStorage.ArchivalStorageService;
 import cz.cas.lib.arclib.service.arclibxml.ArclibXmlGenerator;
 import cz.cas.lib.arclib.service.arclibxml.ArclibXmlValidator;
+import cz.cas.lib.arclib.service.arclibxml.systemWideValidation.SystemWideValidationNodeMissingAction;
 import cz.cas.lib.arclib.service.fixity.FixityCounterFacade;
 import cz.cas.lib.arclib.store.AuthorialPackageStore;
 import cz.cas.lib.arclib.store.AuthorialPackageUpdateLockStore;
@@ -31,17 +34,14 @@ import cz.cas.lib.core.script.ScriptType;
 import cz.cas.lib.core.store.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
-import org.dom4j.DocumentException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.util.FileSystemUtils;
 import org.springframework.util.StreamUtils;
-import org.xml.sax.SAXException;
 
 import javax.inject.Inject;
-import javax.xml.parsers.ParserConfigurationException;
 import java.io.ByteArrayInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -54,7 +54,9 @@ import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static cz.cas.lib.arclib.service.arclibxml.systemWideValidation.SystemWideValidationMissingNodesBpmHandler.*;
 import static cz.cas.lib.arclib.utils.ArclibUtils.hasRole;
+import static cz.cas.lib.arclib.utils.ArclibUtils.parseEnumFromConfig;
 import static cz.cas.lib.core.util.Utils.*;
 
 @Slf4j
@@ -78,6 +80,7 @@ public class AipService {
     private int keepAliveNetworkDelay;
     private UserDetails userDetails;
     private TransactionTemplate transactionTemplate;
+    private ObjectMapper objectMapper;
 
     /**
      * Gets all fields of ARCLib XML index record together with corresponding IW entity containing SIPs folder structure.
@@ -100,13 +103,18 @@ public class AipService {
             throw new ForbiddenObject(IngestWorkflow.class, xmlId);
         }
 
-        List<Map<String, Collection<Object>>> dublin_core = arclibXmlIndexDocument.getChildren().get("dublin_core");
-        List<Map<String, List<String>>> parsedDc = dublin_core.stream().map(oldMap -> {
-            Map<String, List<String>> newMap = new HashMap<>();
-            oldMap.entrySet().stream().filter(e -> e.getKey().startsWith("dublin_core") && !e.getKey().equals("dublin_core_value")).forEach(e -> newMap.put(e.getKey(),
-                    e.getValue().stream().map(o -> (String) o).collect(Collectors.toList())));
-            return newMap;
-        }).collect(Collectors.toList());
+        List<Map<String, Collection<Object>>> dublinCore = arclibXmlIndexDocument.getChildren().get("dublin_core");
+        List<Map<String, List<String>>> parsedDc;
+        if (dublinCore != null) {
+            parsedDc = dublinCore.stream().map(oldMap -> {
+                Map<String, List<String>> newMap = new HashMap<>();
+                oldMap.entrySet().stream().filter(e -> e.getKey().startsWith("dublin_core") && !e.getKey().equals("dublin_core_value")).forEach(e -> newMap.put(e.getKey(),
+                        e.getValue().stream().map(o -> (String) o).collect(Collectors.toList())));
+                return newMap;
+            }).collect(Collectors.toList());
+        } else {
+            parsedDc = List.of();
+        }
 
         return new AipDetailDto(arclibXmlIndexDocument.getFields(), ingestWorkflow, parsedDc);
     }
@@ -224,8 +232,7 @@ public class AipService {
     //not @Transactional, transactions are handled programmatically
     public void finishXmlUpdate(String aipId, String xmlId, String xml, Hash hash, Integer xmlVersion, String
             reason)
-            throws
-            ParserConfigurationException, SAXException, IOException, DocumentException, AuthorialPackageNotLockedException, ArchivalStorageException {
+            throws IOException, AuthorialPackageNotLockedException, ArchivalStorageException {
         String opLogId = "Upload of AIP XML version: " + xmlVersion + " of AIP: " + aipId + " ";
         log.info(opLogId + "started");
 
@@ -236,6 +243,9 @@ public class AipService {
         if (!lock.isLocked()) {
             throw new AuthorialPackageNotLockedException(authorialPackage.getId());
         }
+
+        final Map<String, Object> bpmVariables = ingestWorkflowService.getVariables(xmlId);
+
         InputStream previousAipXmlStream = archivalStorageService.exportSingleXml(aipId, null);
         byte[] previousAipXml = IOUtils.toByteArray(previousAipXmlStream);
         transactionTemplate.execute(t -> {
@@ -243,10 +253,6 @@ public class AipService {
             return null;
         });
         Producer producer = originalIngestWorkflow.getProducerProfile().getProducer();
-        Integer sipVersionNumber = originalIngestWorkflow.getSip().getVersionNumber();
-        Sip previousVersionSip = originalIngestWorkflow.getSip().getPreviousVersionSip();
-        String sipVersionOf = previousVersionSip == null ? ArclibXmlGenerator.INITIAL_VERSION : previousVersionSip.getId();
-        String authorialId = originalIngestWorkflow.getSip().getAuthorialPackage().getAuthorialId();
         IngestWorkflow newIngestWorkflow = new IngestWorkflow();
         newIngestWorkflow.setXmlVersionNumber(xmlVersion);
         newIngestWorkflow.setRelatedWorkflow(originalIngestWorkflow);
@@ -265,7 +271,17 @@ public class AipService {
                 verifyHash(xml, hash);
 
                 log.debug(opLogId + "validating AIP XML");
-                arclibXmlValidator.validateFinalXml(xml, aipId, authorialId, sipVersionNumber, sipVersionOf);
+
+                JsonNode latestJsonConfig = objectMapper.readTree((String) bpmVariables.get(BpmConstants.ProcessVariables.latestConfig));
+                boolean xsltValidationSkipped = SystemWideValidationNodeMissingAction.IGNORE == parseEnumFromConfig(latestJsonConfig,
+                        SYSTEM_WIDE_VALIDATION_EXPR + SYSTEM_WIDE_VALIDATION_NODES_MISSING_AFTER_XSLT_CFG, SystemWideValidationNodeMissingAction.class, false);
+                boolean finalValidationSkipped = SystemWideValidationNodeMissingAction.IGNORE == parseEnumFromConfig(latestJsonConfig,
+                        SYSTEM_WIDE_VALIDATION_EXPR + SYSTEM_WIDE_VALIDATION_NODES_MISSING_AT_FINAL_VALIDATION_CFG, SystemWideValidationNodeMissingAction.class, false);
+
+                arclibXmlValidator.validateFinalXml(xml, originalIngestWorkflow,
+                        (String) bpmVariables.get(BpmConstants.MetadataExtraction.usedSipProfile),
+                        (String) bpmVariables.get(BpmConstants.Validation.usedValidationProfile),
+                        !xsltValidationSkipped, !finalValidationSkipped);
 
                 log.debug(opLogId + "generating metadata update event");
                 String updatedXml = arclibXmlGenerator.addUpdateMetadata(xml, reason, userDetails.getUsername(), newIngestWorkflow);
@@ -551,5 +567,10 @@ public class AipService {
     @Inject
     public void setTransactionTemplate(TransactionTemplate transactionTemplate) {
         this.transactionTemplate = transactionTemplate;
+    }
+
+    @Inject
+    public void setObjectMapper(ObjectMapper objectMapper) {
+        this.objectMapper = objectMapper;
     }
 }

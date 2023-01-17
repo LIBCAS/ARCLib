@@ -187,7 +187,10 @@ public class ArclibXmlGenerator {
         Element ingestProfilesEl = arclibSipInfoEl.addElement("ARCLib:ingestProfiles");
         ingestProfilesEl.addElement("ARCLib:producerProfile").addText(ingestWorkflow.getProducerProfile().getExternalId());
         ingestProfilesEl.addElement("ARCLib:sipProfile").addText((String) variables.get(MetadataExtraction.usedSipProfile));
-        ingestProfilesEl.addElement("ARCLib:validationProfile").addText((String) variables.get(Validation.usedValidationProfile));
+        String usedValidationProfile = (String) variables.get(Validation.usedValidationProfile);
+        if (usedValidationProfile != null) {
+            ingestProfilesEl.addElement("ARCLib:validationProfile").addText(usedValidationProfile);
+        }
         ingestProfilesEl.addElement("ARCLib:workflowDefinition").addText(ingestWorkflow.getProducerProfile().getWorkflowDefinition().getExternalId());
     }
 

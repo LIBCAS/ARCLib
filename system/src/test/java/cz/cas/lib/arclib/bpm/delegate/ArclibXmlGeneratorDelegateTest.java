@@ -130,7 +130,7 @@ public class ArclibXmlGeneratorDelegateTest extends DelegateTest {
     private Sip sip;
     private Sip previousVersionSip;
     private AuthorialPackage authorialPackage;
-    private static final String ARCLIB_XML_DEFINITION = "index/arclibXmlDefinition.csv";
+    private static final String ARCLIB_XML_INDEX_CONFIG = "index/arclibXmlIndexConfig.csv";
 
 
     @Before
@@ -152,7 +152,7 @@ public class ArclibXmlGeneratorDelegateTest extends DelegateTest {
                 "http://www.openarchives.org/OAI/2.0/oai_dc/",
                 "http://purl.org/dc/elements/1.1/",
                 "http://www.w3.org/1999/xlink");
-        indexedArclibXmlStore.setArclibXmlDefinition(new ClassPathResource(ARCLIB_XML_DEFINITION));
+        indexedArclibXmlStore.setArclibXmlIndexConfig(new ClassPathResource(ARCLIB_XML_INDEX_CONFIG));
         indexedArclibXmlStore.init();
 
         userStore = new UserStore();

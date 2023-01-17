@@ -70,44 +70,50 @@ public interface IndexedArclibXmlStore {
 
     String getMainDocumentIndexType();
 
-    Resource getArclibXmlDefinition();
+    Resource getArclibXmlIndexConfig();
 
     List<IndexedArclibXmlDocument> findWithChildren(Collection<String> docIds, List<SimpleIndexFilter> additionalFilters);
 
     /**
-     * Fills passed attributes with config parsed from arclibXmlDefinition.csv
+     * Fills passed attributes with config parsed from arclibXmlIndexConfig.csv
      *
      * @param mainCollection       config of the main collection
      * @param indexTypeToConfigMap map containing collection names (main and nested) as keys and their configurations as values
      * @throws IOException
      */
     default void parseCsvConfig(ArclibXmlIndexTypeConfig mainCollection, Map<String, ArclibXmlIndexTypeConfig> indexTypeToConfigMap) throws IOException {
-        BufferedReader br = new BufferedReader(new InputStreamReader(getArclibXmlDefinition().getInputStream(), StandardCharsets.UTF_8));
+        BufferedReader br = new BufferedReader(new InputStreamReader(getArclibXmlIndexConfig().getInputStream(), StandardCharsets.UTF_8));
         Iterable<CSVRecord> records = CSVFormat.EXCEL.withDelimiter(',').withHeader().withSkipHeaderRecord(true).parse(br);
 
         for (CSVRecord record : records) {
+            String xpath = record.get(1);
+            boolean indexSimple = "N".equals(record.get(3));
+            String indexFieldName = record.get(4);
+            String indexType = record.get(5);
+            String indexParentName = record.get(6);
+
             //configuration of fields of main collection (i.e. not nested fields)
-            if (!record.get(6).isEmpty() && record.get(8).isEmpty()) {
-                mainCollection.getIndexedFieldConfig().add(new ArclibXmlField(record.get(6), record.get(7), record.get(1), !"N".equals(record.get(5))));
+            if (!indexFieldName.isEmpty() && indexParentName.isEmpty()) {
+                mainCollection.getIndexedFieldConfig().add(new ArclibXmlField(indexFieldName, indexType, xpath, !indexSimple));
                 continue;
             }
             //declaration of nested collection, configuration of its fields follows
-            if (record.get(6).isEmpty() && !record.get(8).isEmpty() && "N".equals(record.get(5))) {
-                indexTypeToConfigMap.put(record.get(8), new ArclibXmlIndexTypeConfig(record.get(1), record.get(8)));
+            if (indexFieldName.isEmpty() && !indexParentName.isEmpty() && indexSimple) {
+                indexTypeToConfigMap.put(indexParentName, new ArclibXmlIndexTypeConfig(xpath, indexParentName));
                 continue;
             }
             //configuration of fields of particular nested collection
-            if (!record.get(6).isEmpty() && !record.get(8).isEmpty()) {
-                ArclibXmlIndexTypeConfig childConfig = indexTypeToConfigMap.get(record.get(8));
+            if (!indexFieldName.isEmpty() && !indexParentName.isEmpty()) {
+                ArclibXmlIndexTypeConfig childConfig = indexTypeToConfigMap.get(indexParentName);
                 if (childConfig == null)
-                    throw new IllegalArgumentException("Found config line for field: " + record.get(6) + " of child: " + record.get(8) + " but the child was not defined yet. There must be a child defining line preceeding this one with: 1) xpath set to the root of the child, 2) multiplicity set to N, 3) empty field name and field type, 4) child name set to: " + record.get(8));
-                if (!record.get(1).startsWith(childConfig.getRootXpath()))
-                    throw new IllegalArgumentException("Found config line for field: " + record.get(6) + " of child: " + record.get(8) + " which xpath: " + record.get(1) + " does not have the prefix equal to the root xpath: " + childConfig.getRootXpath());
-                String childRelativeXpath = record.get(1).replace(childConfig.getRootXpath(), "");
+                    throw new IllegalArgumentException("Found config line for field: " + indexFieldName + " of child: " + indexParentName + " but the child was not defined yet. There must be a child defining line preceeding this one with: 1) xpath set to the root of the child, 2) multiplicity set to N, 3) empty field name and field type, 4) child name set to: " + indexParentName);
+                if (!xpath.startsWith(childConfig.getRootXpath()))
+                    throw new IllegalArgumentException("Found config line for field: " + indexFieldName + " of child: " + indexParentName + " which xpath: " + xpath + " does not have the prefix equal to the root xpath: " + childConfig.getRootXpath());
+                String childRelativeXpath = xpath.replace(childConfig.getRootXpath(), "");
                 if (childRelativeXpath.charAt(0) == '/' && childRelativeXpath.charAt(1) != '/') {
                     childRelativeXpath = childRelativeXpath.substring(1);
                 }
-                childConfig.getIndexedFieldConfig().add(new ArclibXmlField(record.get(6), record.get(7), childRelativeXpath, !"N".equals(record.get(5))));
+                childConfig.getIndexedFieldConfig().add(new ArclibXmlField(indexFieldName, indexType, childRelativeXpath, !indexSimple));
             }
         }
     }

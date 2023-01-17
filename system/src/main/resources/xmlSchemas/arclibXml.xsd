@@ -16,7 +16,7 @@
                     <xsd:all>
                         <xsd:element name="producerProfile" type="xsd:string"/>
                         <xsd:element name="sipProfile" type="xsd:string"/>
-                        <xsd:element name="validationProfile" type="xsd:string"/>
+                        <xsd:element name="validationProfile" type="xsd:string" minOccurs="0"/>
                         <xsd:element name="workflowDefinition" type="xsd:string"/>
                     </xsd:all>
                     </xsd:complexType>

@@ -55,7 +55,7 @@ public class IndexedArclibXmlDocument implements Serializable {
 
     /**
      * Children elements
-     * key is the type of child, see <i>Index Child</i> section of <i>arclibXmlDefinition.csv</i>
+     * key is the type of child, see <i>Index Child</i> section of <i>arclibXmlIndexConfig.csv</i>
      * <p>
      * <b>Children are not loaded automatically</b> and their loading is expensive so the field should be loaded
      * and used only when needed.

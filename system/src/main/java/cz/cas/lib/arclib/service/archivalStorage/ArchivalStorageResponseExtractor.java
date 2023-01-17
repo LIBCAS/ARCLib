@@ -25,7 +25,7 @@ public class ArchivalStorageResponseExtractor {
      * <p>
      * Example input:
      *     <ul>
-     *         <li>outerZipStream: ZIP inputstream with entries [7f7a3394-4a45-474c-9356-3aef3bbba7c8.zip, 7f7a3394-4a45-474c-9356-3aef3bbba7c8_xml_1.xml, 7f7a3394-4a45-474c-9356-3aef3bbba7c8_xml_2.xml] where 7f7a3394-4a45-474c-9356-3aef3bbba7c8.zip contains entry [7f7a3394-4a45-474c-9356-3aef3bbba7c8/aipDir]</li>
+     *         <li>outerZipStream: ZIP inputstream with entries [7f7a3394-4a45-474c-9356-3aef3bbba7c8.zip, 7f7a3394-4a45-474c-9356-3aef3bbba7c8_xml_1.xml, 7f7a3394-4a45-474c-9356-3aef3bbba7c8_xml_2.xml] where 7f7a3394-4a45-474c-9356-3aef3bbba7c8.zip contains entry [aipDir]</li>
      *         <li>aipId: </li> 7f7a3394-4a45-474c-9356-3aef3bbba7c8
      *         <li>targetFolder: /some</li>
      *     </ul>
@@ -44,7 +44,7 @@ public class ArchivalStorageResponseExtractor {
      * @return path to the unpacked root AIP data directory
      * @throws IOException
      */
-    public Path extractAipAsFolderWithXmlsBySide(ZipInputStream outerZipStream, String aipId, Path targetFolder) throws IOException {
+    public Path extractAipAsFolderWithXmlsBySide(ZipInputStream outerZipStream, String aipId, Path targetFolder, String sipRootFolderName) throws IOException {
         Path aipExportFolder = targetFolder.resolve(aipId);
         ZipEntry outerZipEntry = outerZipStream.getNextEntry();
         while (outerZipEntry != null) {
@@ -67,6 +67,7 @@ public class ArchivalStorageResponseExtractor {
                 if (outerZipEntry.isDirectory()) {
                     throw new IllegalStateException("expected only files (zip + xmls) packed in the archival storage response, but there was: " + someUzippedFile);
                 } else {
+                    Files.createDirectories(someUzippedFile.getParent());
                     ZipUtils.extractFile(outerZipStream, someUzippedFile);
                 }
             }
@@ -74,9 +75,18 @@ public class ArchivalStorageResponseExtractor {
             outerZipEntry = outerZipStream.getNextEntry();
         }
         Set<File> unpackedAipDataDirs = Arrays.stream(Objects.requireNonNull(aipExportFolder.toFile().listFiles())).filter(File::isDirectory).collect(Collectors.toSet());
-        if (unpackedAipDataDirs.size() != 1) {
-            throw new IllegalStateException("expected exactly one AIP DATA dir at path: " + targetFolder + " but there was: " + unpackedAipDataDirs);
+        if (unpackedAipDataDirs.size() > 1) {
+            throw new IllegalStateException("expected no more than one AIP DATA dir at path: " + targetFolder + " but there was: " + unpackedAipDataDirs);
         }
-        return unpackedAipDataDirs.iterator().next().toPath();
+
+        Path rootSipDirPath;
+        if (unpackedAipDataDirs.isEmpty()) {
+            //no files exported (mby data reduction regex filtered them all),, creating the empty SIP dir
+            rootSipDirPath = aipExportFolder.resolve(sipRootFolderName);
+            Files.createDirectory(rootSipDirPath);
+        } else {
+            rootSipDirPath = unpackedAipDataDirs.iterator().next().toPath();
+        }
+        return rootSipDirPath;
     }
 }

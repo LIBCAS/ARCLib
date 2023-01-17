@@ -12,9 +12,12 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.Objects;
 import java.util.zip.ZipInputStream;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.hamcrest.Matchers.is;
 
 public class ArchivalStorageExtractorTest {
     private static final Path TEST_WORKSPACE = Paths.get("testWorkspace");
@@ -36,10 +39,10 @@ public class ArchivalStorageExtractorTest {
     @Test
     public void testExtractAipAsFolderWithXmlsBySide() throws IOException {
         String aipId = "7f7a3394-4a45-474c-9356-3aef3bbba7c8";
-        Path targetFolder = TEST_WORKSPACE.resolve(aipId);
         try (FileInputStream stream = new FileInputStream(RESOURCES.resolve("7f7a3394-4a45-474c-9356-3aef3bbba7c8.zip").toFile())) {
-            extractor.extractAipAsFolderWithXmlsBySide(new ZipInputStream(stream), aipId, targetFolder);
+            Path sipRootDirPath = extractor.extractAipAsFolderWithXmlsBySide(new ZipInputStream(stream), aipId, TEST_WORKSPACE, "7033d800-0935-11e4-beed-5ef3fc9ae867");
+            assertThat(sipRootDirPath.getFileName().toString(), is("7033d800-0935-11e4-beed-5ef3fc9ae867"));
         }
-        Assert.assertThat(Arrays.asList(targetFolder.toFile().list()), containsInAnyOrder("7f7a3394-4a45-474c-9356-3aef3bbba7c8_xml_2.xml", "7033d800-0935-11e4-beed-5ef3fc9ae867"));
+        Assert.assertThat(Arrays.asList(Objects.requireNonNull(TEST_WORKSPACE.resolve(aipId).toFile().list())), containsInAnyOrder("7f7a3394-4a45-474c-9356-3aef3bbba7c8_xml_2.xml", "7033d800-0935-11e4-beed-5ef3fc9ae867"));
     }
 }
