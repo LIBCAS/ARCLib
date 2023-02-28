@@ -33,7 +33,7 @@
         <jxls.version>2.4.2</jxls.version>
         <jxls.poi.version>1.0.13</jxls.poi.version>
         <xdocreport.version>1.0.6</xdocreport.version>
-        <tika.version>1.14</tika.version>
+        <tika.version>1.18</tika.version>
         <jempbox.version>1.8.12</jempbox.version>
 
         <!-- override defaults -->
