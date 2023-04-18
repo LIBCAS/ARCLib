@@ -260,6 +260,8 @@ public class CoordinatorService {
         notNull(batch, () -> new MissingObject(Batch.class, batchId));
         //should be called before the transaction which sets batch to CANCELLED, otherwise ingest error handler hangs
         batch.getIngestWorkflows().stream()
+                //not cancelling those in PROCESSED state as BPM engine itself will move those to final state, i.e.
+                //PERSISTED or FAILED depending on the Archival Storage success or fail
                 .filter(iw -> iw.getProcessingState().equals(IngestWorkflowState.PROCESSING))
                 .forEach(iw -> {
                     ProcessInstance processInstance =

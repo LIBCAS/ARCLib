@@ -1,6 +1,7 @@
 package helper;
 
 
+import cz.cas.lib.arclib.service.ExternalProcessRunner;
 import liquibase.util.SystemUtils;
 import org.hamcrest.Description;
 import org.hamcrest.Factory;
@@ -9,23 +10,27 @@ import org.hamcrest.TypeSafeMatcher;
 
 import java.time.Instant;
 
-import static cz.cas.lib.core.util.Utils.executeProcessDefaultResultHandle;
-
 public class TestUtils {
 
     public static class Solr {
         private static final String CMD = SystemUtils.IS_OS_WINDOWS ? "solr.cmd" : "solr";
         private static final String[] START_CMD = {CMD, "start"};
         private static final String[] KILL_CMD = {CMD, "stop", "-all"};
+        private static final ExternalProcessRunner externalProcessRunner = new ExternalProcessRunner();
+
+        public Solr() {
+            externalProcessRunner.setTimeoutSigterm(60);
+            externalProcessRunner.setTimeoutSigkill(30);
+        }
 
         public static void start() throws Exception {
-            executeProcessDefaultResultHandle(KILL_CMD);
-            executeProcessDefaultResultHandle(START_CMD);
+            externalProcessRunner.executeProcessDefaultResultHandle(KILL_CMD);
+            externalProcessRunner.executeProcessDefaultResultHandle(START_CMD);
             Thread.sleep(7000);
         }
 
         public static void stopAll() throws Exception {
-            executeProcessDefaultResultHandle(KILL_CMD);
+            externalProcessRunner.executeProcessDefaultResultHandle(KILL_CMD);
         }
     }
 

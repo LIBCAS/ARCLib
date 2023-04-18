@@ -1,5 +1,6 @@
 package cz.cas.lib.arclib.service.formatIdentification;
 
+import cz.cas.lib.arclib.service.ExternalProcessRunner;
 import cz.cas.lib.arclib.service.formatIdentification.droid.DroidFormatIdentificationTool;
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.Before;
@@ -25,7 +26,10 @@ public class DroidFormatIdentificationToolTest {
 
     @Before
     public void setUp() {
-        formatIdentificationTool = new DroidFormatIdentificationTool();
+        ExternalProcessRunner r = new ExternalProcessRunner();
+        r.setTimeoutSigkill(60);
+        r.setTimeoutSigterm(60);
+        formatIdentificationTool = new DroidFormatIdentificationTool(r);
     }
 
     @Test

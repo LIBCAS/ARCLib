@@ -586,60 +586,6 @@ public class Utils {
         return value == null || value.trim().isEmpty();
     }
 
-    public static void executeProcessDefaultResultHandle(String... cmd) {
-        File tmp = null;
-        try {
-            tmp = File.createTempFile("out", null);
-            tmp.deleteOnExit();
-            final ProcessBuilder processBuilder = new ProcessBuilder(cmd);
-            processBuilder.redirectErrorStream(true).redirectOutput(tmp);
-            final Process process = processBuilder.start();
-            final int exitCode = process.waitFor();
-            if (exitCode != 0)
-                throw new IllegalStateException("Process: " + Arrays.toString(cmd) + " has failed " + Files.readAllLines(tmp.toPath()));
-        } catch (InterruptedException | IOException ex) {
-            throw new GeneralException("unexpected error while executing process", ex);
-        } finally {
-            if (tmp != null)
-                tmp.delete();
-        }
-    }
-
-    /**
-     * @param mergeOutputs merge stdout and stderr outputs
-     * @param cmd          cmd to execute
-     * @return Pair with return code as key and output (list of lines) as value
-     */
-    public static Pair<Integer, List<String>> executeProcessCustomResultHandle(boolean mergeOutputs, String... cmd) {
-        File stdFile = null;
-        File errFile = null;
-        try {
-            stdFile = File.createTempFile("std.out", null);
-            errFile = File.createTempFile("err.out", null);
-            final ProcessBuilder processBuilder = new ProcessBuilder(cmd);
-            if (mergeOutputs)
-                processBuilder.redirectErrorStream(true);
-            else
-                processBuilder.redirectError(errFile);
-            processBuilder.redirectOutput(stdFile);
-            final Process process = processBuilder.start();
-            final int exitCode = process.waitFor();
-            List<String> output;
-            if (mergeOutputs || exitCode == 0)
-                output = Files.readAllLines(stdFile.toPath());
-            else
-                output = Files.readAllLines(errFile.toPath());
-            return Pair.of(exitCode, output);
-        } catch (InterruptedException | IOException ex) {
-            throw new GeneralException("unexpected error while executing process", ex);
-        } finally {
-            if (stdFile != null)
-                stdFile.delete();
-            if (errFile != null)
-                errFile.delete();
-        }
-    }
-
     public static boolean isIsoDateTimeFormat(String input) {
         if (input == null)
             return false;

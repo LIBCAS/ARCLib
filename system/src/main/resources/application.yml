@@ -57,6 +57,10 @@ camunda:
       enabled: false
       db-reporter-activate: false
 arclib:
+  externalProcess:
+    timeout:
+      sigterm: 7200
+      sigkill: 1800
   version: 1.0
   path:
     workspace: workspace

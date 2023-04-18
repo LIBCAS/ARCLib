@@ -1,6 +1,7 @@
 package cz.cas.lib.arclib.service.formatIdentification.droid;
 
 import cz.cas.lib.arclib.domainbase.exception.GeneralException;
+import cz.cas.lib.arclib.service.ExternalProcessRunner;
 import cz.cas.lib.arclib.service.formatIdentification.FormatIdentificationTool;
 import cz.cas.lib.arclib.service.formatIdentification.FormatIdentificationToolType;
 import lombok.extern.slf4j.Slf4j;
@@ -23,7 +24,8 @@ import java.util.Map;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import static cz.cas.lib.core.util.Utils.*;
+import static cz.cas.lib.core.util.Utils.asList;
+import static cz.cas.lib.core.util.Utils.notNull;
 
 @Slf4j
 public class DroidFormatIdentificationTool extends FormatIdentificationTool {
@@ -31,12 +33,19 @@ public class DroidFormatIdentificationTool extends FormatIdentificationTool {
     private static final String FILTER = "type any FILE CONTAINER";
     private static final String CMD;
     public static final String FORMAT_IDENTIFIER_NAME = FormatIdentificationToolType.DROID.toString();
+
+    private ExternalProcessRunner externalProcessRunner;
+
     static {
         if (SystemUtils.IS_OS_WINDOWS) {
             CMD = "droid.bat";
         } else {
             CMD = "droid";
         }
+    }
+
+    public DroidFormatIdentificationTool(ExternalProcessRunner externalProcessRunner) {
+        this.externalProcessRunner = externalProcessRunner;
     }
 
     public Map<String, List<Pair<String, String>>> analyze(Path pathToSip) throws IOException {
@@ -69,7 +78,7 @@ public class DroidFormatIdentificationTool extends FormatIdentificationTool {
      * @param pathToResult path to the <i>.DROID</i> file with the result of the profile
      */
     protected void runProfile(Path pathToSIP, Path pathToResult) {
-        executeProcessDefaultResultHandle(CMD, "-R", "-a", pathToSIP.toAbsolutePath().toString(), "-p",
+        externalProcessRunner.executeProcessDefaultResultHandle(CMD, "-R", "-a", pathToSIP.toAbsolutePath().toString(), "-p",
                 pathToResult.toAbsolutePath().toString());
         log.debug("File with DROID profile result created at " + pathToResult + ".");
     }
@@ -86,7 +95,7 @@ public class DroidFormatIdentificationTool extends FormatIdentificationTool {
             throw new FileNotFoundException("File with the profile of the DROID format identification" +
                     " does not exist at the path : " + pathToProfile);
         }
-        executeProcessDefaultResultHandle(CMD, "-p", pathToProfile.toAbsolutePath().toString(), "-f", FILTER, "-E",
+        externalProcessRunner.executeProcessDefaultResultHandle(CMD, "-p", pathToProfile.toAbsolutePath().toString(), "-f", FILTER, "-E",
                 pathToResult.toAbsolutePath().toString());
         log.debug("File with DROID export result created at " + pathToResult + ".");
     }
@@ -178,7 +187,7 @@ public class DroidFormatIdentificationTool extends FormatIdentificationTool {
      * @return names of signature file and container signature
      */
     protected List<String> getDroidSignatureFilesVersions() {
-        Pair<Integer, List<String>> result = executeProcessCustomResultHandle(false, CMD, "-x");
+        Pair<Integer, List<String>> result = externalProcessRunner.executeProcessCustomResultHandle(false, CMD, "-x");
         if (result.getLeft() != 0)
             throw new IllegalStateException("Droid cmd: " + CMD + " -x" + " has failed: " + result.getRight());
         return result.getRight().stream().filter(s -> !s.contains("Starting DROID")).collect(Collectors.toList());
@@ -190,7 +199,7 @@ public class DroidFormatIdentificationTool extends FormatIdentificationTool {
      * @return name of the current DROID version
      */
     protected List<String> getDroidVersion() {
-        Pair<Integer, List<String>> result = executeProcessCustomResultHandle(false, CMD, "-v");
+        Pair<Integer, List<String>> result = externalProcessRunner.executeProcessCustomResultHandle(false, CMD, "-v");
         if (result.getLeft() != 0)
             throw new IllegalStateException("Droid cmd: " + CMD + " -v" + " has failed: " + result.getRight());
         return result.getRight().stream().filter(s -> !s.contains("Starting DROID")).collect(Collectors.toList());

@@ -10,6 +10,7 @@ import cz.cas.lib.arclib.domain.preservationPlanning.IngestIssueDefinition;
 import cz.cas.lib.arclib.domain.preservationPlanning.IngestIssueDefinitionCode;
 import cz.cas.lib.arclib.domain.preservationPlanning.Tool;
 import cz.cas.lib.arclib.formatlibrary.service.FormatDefinitionService;
+import cz.cas.lib.arclib.service.ExternalProcessRunner;
 import cz.cas.lib.arclib.service.IngestIssueService;
 import cz.cas.lib.arclib.store.*;
 import cz.cas.lib.core.sequence.Generator;
@@ -116,7 +117,10 @@ public class AntivirusTests extends SrDbTest {
         def.setName("virus");
         ingestIssueDefinitionStore.save(def);
 
-        antivirus = new ClamAntivirus(CMD);
+        ExternalProcessRunner r = new ExternalProcessRunner();
+        r.setTimeoutSigkill(60);
+        r.setTimeoutSigkill(60);
+        antivirus = new ClamAntivirus(r, CMD);
         antivirus.inject(formatDefinitionService, ingestIssueService, t, ingestIssueDefinitionStore, null, InfectedSipAction.IGNORE, droidResult);
 
         mapper = new ObjectMapper();

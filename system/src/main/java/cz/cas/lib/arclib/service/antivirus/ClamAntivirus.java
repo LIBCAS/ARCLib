@@ -3,6 +3,7 @@ package cz.cas.lib.arclib.service.antivirus;
 import cz.cas.lib.arclib.domain.ingestWorkflow.IngestWorkflow;
 import cz.cas.lib.arclib.exception.bpm.CommandLineProcessException;
 import cz.cas.lib.arclib.exception.bpm.IncidentException;
+import cz.cas.lib.arclib.service.ExternalProcessRunner;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
@@ -16,7 +17,6 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static cz.cas.lib.core.util.Utils.executeProcessCustomResultHandle;
 import static cz.cas.lib.core.util.Utils.notNull;
 
 @Slf4j
@@ -30,16 +30,18 @@ public class ClamAntivirus extends Antivirus {
      */
     @Getter
     private String[] cmd;
+    private ExternalProcessRunner externalProcessRunner;
 
-    public ClamAntivirus(String[] cmd) {
+    public ClamAntivirus(ExternalProcessRunner externalProcessRunner, String[] cmd) {
+        this.externalProcessRunner = externalProcessRunner;
         this.cmd = cmd;
     }
 
     /**
      * Scans SIP package for viruses.
      *
-     * @param pathToSIP  absoulte path to SIP
-     * @param iw external ingest workflow
+     * @param pathToSIP absoulte path to SIP
+     * @param iw        external ingest workflow
      * @throws FileNotFoundException       if the SIP is not found
      * @throws CommandLineProcessException
      */
@@ -56,7 +58,7 @@ public class ClamAntivirus extends Antivirus {
 
         log.info("running '" + String.join(" ", fullCmd) + "' process");
         List<Path> infectedFiles = new ArrayList<>();
-        Pair<Integer, List<String>> result = executeProcessCustomResultHandle(true, fullCmd);
+        Pair<Integer, List<String>> result = externalProcessRunner.executeProcessCustomResultHandle(true, fullCmd);
         switch (result.getLeft()) {
             case 0:
                 log.info("no infected file found");
@@ -85,7 +87,7 @@ public class ClamAntivirus extends Antivirus {
     }
 
     public String getToolVersion() {
-        Pair<Integer, List<String>> result = executeProcessCustomResultHandle(false, cmd[0], "-V");
+        Pair<Integer, List<String>> result = externalProcessRunner.executeProcessCustomResultHandle(false, cmd[0], "-V");
         if (result.getLeft() != 0)
             throw new IllegalStateException("CLAMAV version CMD has failed: " + result.getRight());
         return "" + result.getRight();

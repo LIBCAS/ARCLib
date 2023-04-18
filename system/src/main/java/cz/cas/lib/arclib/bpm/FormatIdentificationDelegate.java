@@ -11,6 +11,7 @@ import cz.cas.lib.arclib.exception.bpm.ConfigParserException;
 import cz.cas.lib.arclib.exception.bpm.IncidentException;
 import cz.cas.lib.arclib.formatlibrary.domain.FormatDefinition;
 import cz.cas.lib.arclib.formatlibrary.service.FormatDefinitionService;
+import cz.cas.lib.arclib.service.ExternalProcessRunner;
 import cz.cas.lib.arclib.service.ProducerProfileService;
 import cz.cas.lib.arclib.service.formatIdentification.FormatIdentificationTool;
 import cz.cas.lib.arclib.service.formatIdentification.FormatIdentificationToolType;
@@ -24,7 +25,6 @@ import org.springframework.stereotype.Service;
 
 import javax.inject.Inject;
 import java.io.IOException;
-import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -40,10 +40,12 @@ import static cz.cas.lib.arclib.utils.ArclibUtils.parseEnumFromConfig;
 public class FormatIdentificationDelegate extends ArclibDelegate {
 
     @Getter
-    private String toolName="ARCLib_"+ IngestToolFunction.format_identification;
+    private String toolName = "ARCLib_" + IngestToolFunction.format_identification;
     private FormatOccurrenceStore formatOccurrenceStore;
     private ProducerProfileService producerProfileService;
     private FormatDefinitionService formatDefinitionService;
+    private ExternalProcessRunner externalProcessRunner;
+
     /**
      * Performs the format analysis of files in SIP.
      *
@@ -90,12 +92,12 @@ public class FormatIdentificationDelegate extends ArclibDelegate {
     public FormatIdentificationTool initialize(JsonNode root, IngestWorkflow iw, int formatIdentificationToolCounter) throws ConfigParserException {
         FormatIdentificationToolType formatIdentificationToolType = parseEnumFromConfig(root,
                 FORMAT_IDENTIFICATON_TOOL_EXPR + "/" + formatIdentificationToolCounter + IDENTIFIER_TYPE_EXPR,
-                FormatIdentificationToolType.class,true);
+                FormatIdentificationToolType.class, true);
         FormatIdentificationTool tool;
         switch (formatIdentificationToolType) {
             case DROID:
                 log.debug("Format identification tool initialized with DROID.");
-                tool = new DroidFormatIdentificationTool();
+                tool = new DroidFormatIdentificationTool(externalProcessRunner);
                 break;
             default:
                 throw new ConfigParserException(FORMAT_IDENTIFICATON_TOOL_EXPR + "/" + formatIdentificationToolCounter + IDENTIFIER_TYPE_EXPR, "not supported", FormatIdentificationToolType.class);
@@ -116,7 +118,7 @@ public class FormatIdentificationDelegate extends ArclibDelegate {
             FormatOccurrence formatOccurrence = formatOccurrenceStore.findByFormatDefinitionAndProducerProfile(
                     formatDefinition.getId(), producerProfile.getId());
             if (formatOccurrence == null)
-                formatOccurrence = new FormatOccurrence(formatDefinition,0,producerProfile);
+                formatOccurrence = new FormatOccurrence(formatDefinition, 0, producerProfile);
             formatOccurrence.setOccurrences(formatOccurrence.getOccurrences() + puidOccurrenceMap.get(puid));
             formatOccurrenceStore.save(formatOccurrence);
         }
@@ -135,5 +137,10 @@ public class FormatIdentificationDelegate extends ArclibDelegate {
     @Inject
     public void setProducerProfileService(ProducerProfileService producerProfileService) {
         this.producerProfileService = producerProfileService;
+    }
+
+    @Inject
+    public void setExternalProcessRunner(ExternalProcessRunner externalProcessRunner) {
+        this.externalProcessRunner = externalProcessRunner;
     }
 }

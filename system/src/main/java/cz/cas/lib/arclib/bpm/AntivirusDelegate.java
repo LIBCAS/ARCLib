@@ -9,6 +9,7 @@ import cz.cas.lib.arclib.domain.preservationPlanning.Tool;
 import cz.cas.lib.arclib.exception.bpm.ConfigParserException;
 import cz.cas.lib.arclib.exception.bpm.IncidentException;
 import cz.cas.lib.arclib.formatlibrary.service.FormatDefinitionService;
+import cz.cas.lib.arclib.service.ExternalProcessRunner;
 import cz.cas.lib.arclib.service.antivirus.Antivirus;
 import cz.cas.lib.arclib.service.antivirus.AntivirusType;
 import cz.cas.lib.arclib.service.antivirus.ClamAntivirus;
@@ -37,6 +38,7 @@ public class AntivirusDelegate extends ArclibDelegate {
     public static final String ANTIVIRUS_CMD = "/cmd";
     private Path quarantinePath;
     private FormatDefinitionService formatDefinitionService;
+    private ExternalProcessRunner externalProcessRunner;
     @Getter
     private String toolName = "ARCLib_" + IngestToolFunction.virus_check;
 
@@ -74,7 +76,7 @@ public class AntivirusDelegate extends ArclibDelegate {
                     throw new ConfigParserException(cmdExpr, cmdNode.toString(), "Antivirus executable, with full path if not in $PATH variable, with switches");
                 Map<String, String> list = objectMapper.convertValue(cmdNode, Map.class);
                 String[] cmd = list.values().toArray(new String[0]);
-                antivirusToBeUsed = new ClamAntivirus(cmd);
+                antivirusToBeUsed = new ClamAntivirus(externalProcessRunner,cmd);
                 break;
             default:
                 throw new ConfigParserException(ANTIVIRUS_TOOL_EXPR + "/" + antivirusToolCounter + AntivirusDelegate.ANTIVIRUS_TYPE,
@@ -98,5 +100,10 @@ public class AntivirusDelegate extends ArclibDelegate {
     @Inject
     public void setQuarantinePath(@Value("${arclib.path.quarantine}") String quarantinePath) {
         this.quarantinePath = Paths.get(quarantinePath);
+    }
+
+    @Inject
+    public void setExternalProcessRunner(ExternalProcessRunner externalProcessRunner) {
+        this.externalProcessRunner = externalProcessRunner;
     }
 }

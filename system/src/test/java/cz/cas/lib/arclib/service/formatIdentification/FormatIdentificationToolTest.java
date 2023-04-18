@@ -13,6 +13,7 @@ import cz.cas.lib.arclib.exception.bpm.IncidentException;
 import cz.cas.lib.arclib.formatlibrary.service.FormatDefinitionService;
 import cz.cas.lib.arclib.formatlibrary.store.DbFormatDefinitionStore;
 import cz.cas.lib.arclib.mail.ArclibMailCenter;
+import cz.cas.lib.arclib.service.ExternalProcessRunner;
 import cz.cas.lib.arclib.service.IngestIssueService;
 import cz.cas.lib.arclib.service.IngestWorkflowService;
 import cz.cas.lib.arclib.service.formatIdentification.droid.DroidFormatIdentificationTool;
@@ -50,6 +51,7 @@ public class FormatIdentificationToolTest extends SrDbTest {
     private ToolService toolService = new ToolService();
     private IngestIssueDefinitionStore ingestIssueDefinitionStore;
     private ToolStore toolStore;
+    private ExternalProcessRunner externalProcessRunner;
     @Mock
     private ArclibMailCenter arclibMailCenter;
 
@@ -121,7 +123,10 @@ public class FormatIdentificationToolTest extends SrDbTest {
         objectMapper = new ObjectMapper();
         INGEST_CONFIG_JSON_NODE = objectMapper.readTree(INGEST_CONFIG);
 
-        formatIdentificationTool = new DroidFormatIdentificationTool();
+        ExternalProcessRunner r = new ExternalProcessRunner();
+        r.setTimeoutSigterm(60);
+        r.setTimeoutSigkill(60);
+        formatIdentificationTool = new DroidFormatIdentificationTool(r);
         formatIdentificationTool.inject(formatDefinitionService, ingestIssueService, ingestIssueDefinitionStore, ingestWorkflow, t, 0);
 
         formatIdentificationDelegate = new FormatIdentificationDelegate();

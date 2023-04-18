@@ -92,7 +92,7 @@ public class ArchivalStorageDelegate extends ArclibDelegate {
         }
         //not setting SUCCESS - SUCCESS should be set by success verifier delegate
         execution.setVariable(BpmConstants.ArchivalStorage.aipStoreAttempts, remainingStoreAttemptRetries);
-        log.info("{} has been stored to archival storage.", objectLogId);
+        log.info("{} has been sent to Archival Storage workspace.", objectLogId);
     }
 
 
