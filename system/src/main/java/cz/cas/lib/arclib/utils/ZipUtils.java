@@ -39,11 +39,14 @@ public class ZipUtils {
             while (entries.hasMoreElements()) {
                 ZipEntry entry = entries.nextElement();
                 Path filePath = destDirectory.resolve(entry.getName());
+                int rootDirSeparatorIdx = entry.getName().indexOf('/');
+                if (rootDirSeparatorIdx != -1) {
+                    rootDirNames.add(entry.getName().substring(0, rootDirSeparatorIdx));
+                }
                 if (!entry.isDirectory()) {
                     Files.createDirectories(filePath.getParent());
                     extractFile(zipFile.getInputStream(entry), filePath);
                 } else {
-                    rootDirNames.add(entry.getName().substring(0, entry.getName().indexOf('/')));
                     Files.createDirectories(filePath);
                 }
             }
@@ -89,9 +92,12 @@ public class ZipUtils {
             String rootPath = sourceDirPath.getFileName().toString() + "/";
             zs.putNextEntry(new ZipEntry(rootPath));
             Files.walk(sourceDirPath)
-                    .filter(path -> !Files.isDirectory(path))
                     .forEach(path -> {
-                        ZipEntry zipEntry = new ZipEntry(rootPath + sourceDirPath.relativize(path).toString());
+                        String entryName = rootPath + sourceDirPath.relativize(path);
+                        if (Files.isDirectory(path)) {
+                            entryName = entryName + "/";
+                        }
+                        ZipEntry zipEntry = new ZipEntry(entryName);
                         try {
                             zs.putNextEntry(zipEntry);
                             Files.copy(path, zs);

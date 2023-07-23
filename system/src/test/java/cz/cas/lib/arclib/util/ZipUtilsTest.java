@@ -7,10 +7,13 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 import static helper.ThrowableAssertion.assertThrown;
 import static org.hamcrest.Matchers.is;
@@ -82,9 +85,41 @@ public class ZipUtilsTest {
     }
 
     @Test
+    public void testZipThanUnzipWithoutDirEntries() throws IOException {
+        byte[] bytes = zipWithoutRootDirEntryToByteArray(SIP_FOLDER);
+        Path write = Files.write(TEST_WORKSPACE.resolve("zipToByteArrayTest.zip"), bytes);
+        ZipUtils.unzipSip(write, TEST_WORKSPACE, "dummyIwId");
+        assertThat(TEST_WORKSPACE.resolve(SIP_FOLDER_STR).toFile().isDirectory(), is(true));
+        assertThat(TEST_WORKSPACE.resolve(SIP_FOLDER_STR).resolve(SIP_FILE_STR).toFile().isFile(), is(true));
+    }
+
+    @Test
     public void testUnZip() throws IOException {
         ZipUtils.unzipSip(SIP_ZIP, TEST_WORKSPACE, "dummyIwId");
         assertThat(TEST_WORKSPACE.resolve(SIP_FOLDER_STR).toFile().isDirectory(), is(true));
         assertThat(TEST_WORKSPACE.resolve(SIP_FOLDER_STR).resolve(SIP_FILE_STR).toFile().isFile(), is(true));
+    }
+
+    private static byte[] zipWithoutRootDirEntryToByteArray(Path sourceDirPath) throws IOException {
+        byte[] packed;
+        try (ByteArrayOutputStream bos = new ByteArrayOutputStream(); ZipOutputStream zs = new ZipOutputStream(bos)) {
+            String rootPath = sourceDirPath.getFileName().toString() + "/";
+            zs.putNextEntry(new ZipEntry("empty.txt"));
+            Files.walk(sourceDirPath)
+                    .filter(path -> !Files.isDirectory(path))
+                    .forEach(path -> {
+                        ZipEntry zipEntry = new ZipEntry(rootPath + sourceDirPath.relativize(path).toString());
+                        try {
+                            zs.putNextEntry(zipEntry);
+                            Files.copy(path, zs);
+                            zs.closeEntry();
+                        } catch (IOException e) {
+                            System.err.println(e);
+                        }
+                    });
+            zs.close();
+            packed = bos.toByteArray();
+        }
+        return packed;
     }
 }
