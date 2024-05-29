@@ -14,7 +14,9 @@ import cz.cas.lib.arclib.exception.AipStateChangeException;
 import cz.cas.lib.arclib.exception.AuthorialPackageLockedException;
 import cz.cas.lib.arclib.exception.AuthorialPackageNotLockedException;
 import cz.cas.lib.arclib.exception.ForbiddenException;
+import cz.cas.lib.arclib.index.CreateIndexRecordDto;
 import cz.cas.lib.arclib.index.IndexedArclibXmlStore;
+import cz.cas.lib.arclib.index.SetLatestFlagsDto;
 import cz.cas.lib.arclib.index.solr.arclibxml.IndexedAipState;
 import cz.cas.lib.arclib.index.solr.arclibxml.IndexedArclibXmlDocument;
 import cz.cas.lib.arclib.index.solr.arclibxml.SolrArclibXmlStore;
@@ -299,15 +301,16 @@ public class AipService {
                 ingestWorkflowService.save(originalIngestWorkflow);
                 ingestWorkflowService.save(newIngestWorkflow);
                 log.debug(opLogId + "creating index record");
-                indexedArclibXmlStore.createIndex(
+                indexedArclibXmlStore.createIndex(new CreateIndexRecordDto(
                         updatedXml.getBytes(),
                         producer.getId(),
                         producer.getName(),
                         userDetails.getUsername(),
                         IndexedAipState.ARCHIVED,
                         false,
-                        true);
-                indexedArclibXmlStore.setLatestFlag(xmlId, false, previousAipXml);
+                        true,
+                        newIngestWorkflow.getSip().isLatestVersion()));
+                indexedArclibXmlStore.setLatestFlags(new SetLatestFlagsDto(xmlId, false, originalIngestWorkflow.getSip().isLatestVersion(), previousAipXml));
                 log.info(opLogId + "successfully finished");
             } catch (Exception e) {
                 t.setRollbackOnly();
@@ -470,7 +473,7 @@ public class AipService {
         indexedArclibXmlStore.removeIndex(externalId);
     }
 
-    public void verifyProducer(Producer producer, String exceptionMessage) {
+    private void verifyProducer(Producer producer, String exceptionMessage) {
         if (!hasRole(userDetails, Permissions.SUPER_ADMIN_PRIVILEGE)) {
             eq(producer.getId(), userDetails.getUser().getProducer().getId(), () -> new ForbiddenOperation(exceptionMessage));
         }

@@ -22,7 +22,7 @@ public class DuplicateSipCheckDelegate extends ArclibDelegate {
 
     @Override
     public void executeArclibDelegate(DelegateExecution execution) throws IncidentException {
-        IngestWorkflow iw = ingestWorkflowService.findByExternalId(ingestWorkflowExternalId);
+        IngestWorkflow iw = ingestWorkflowService.findByExternalId(getIngestWorkflowExternalId(execution));
         if (iw.getVersioningLevel() == ARCLIB_XML_VERSIONING) {
             Pair<Boolean, String> booleanConfig = ArclibUtils.parseBooleanConfig(getConfigRoot(execution), CONFIG_PATH);
             if (booleanConfig.getLeft() == null)

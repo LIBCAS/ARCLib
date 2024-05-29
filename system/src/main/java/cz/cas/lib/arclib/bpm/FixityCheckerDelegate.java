@@ -23,7 +23,6 @@ import javax.inject.Inject;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -32,7 +31,6 @@ import java.util.stream.Collectors;
 
 import static cz.cas.lib.arclib.bpm.ArclibXmlExtractorDelegate.SIP_PROFILE_CONFIG_ENTRY;
 import static cz.cas.lib.arclib.bpm.BpmConstants.FixityCheck;
-import static cz.cas.lib.arclib.bpm.BpmConstants.ProcessVariables;
 import static cz.cas.lib.core.util.Utils.listFilesMatchingRegex;
 
 @Slf4j
@@ -80,6 +78,7 @@ public class FixityCheckerDelegate extends ArclibDelegate {
         if (requestedCheckMethods.isEmpty())
             throw new ConfigParserException(methodsConfigPath, checkMethodsListFromConfig, FixityCheckMethod.class);
 
+        String ingestWorkflowExternalId = getIngestWorkflowExternalId(execution);
         for (FixityCheckMethod requestedCheckMethod : requestedCheckMethods) {
             switch (requestedCheckMethod) {
                 case METS:

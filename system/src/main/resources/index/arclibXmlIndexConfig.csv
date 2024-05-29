@@ -81,3 +81,4 @@ Responsible person,NOT_IN_XML,system,1,user_name,other,,Jméno zodpovědné osob
 AIP State,NOT_IN_XML,system,1,aip_state,other,,Stav AIP,
 Latest version,NOT_IN_XML,system,1,latest,other,,Poslední verze,
 Producer ID,NOT_IN_XML,system,1,producer_id,other,,ID dodavatele,
+Latest data version,NOT_IN_XML,system,1,latest_data,other,,Poslední datová verze,

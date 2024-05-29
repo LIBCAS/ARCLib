@@ -5,6 +5,7 @@ import cz.cas.lib.arclib.domain.Producer;
 import cz.cas.lib.arclib.domain.User;
 import cz.cas.lib.arclib.domain.ingestWorkflow.IngestWorkflowState;
 import cz.cas.lib.arclib.domainbase.exception.GeneralException;
+import cz.cas.lib.arclib.index.CreateIndexRecordDto;
 import cz.cas.lib.arclib.index.solr.arclibxml.IndexedAipState;
 import cz.cas.lib.arclib.index.solr.arclibxml.SolrArclibXmlStore;
 import cz.cas.lib.arclib.report.ReportStore;
@@ -96,7 +97,7 @@ public class ReindexService {
                             ObjectState aipState = archivalStorageService.getAipState(iw.getSip().getId());
                             stateAtArchivalStorage = objectStateToIndexedAipState(aipState);
                         }
-                        indexedArclibXmlStore.createIndex(xml.getBytes(), p.getId(), p.getName(), username, stateAtArchivalStorage, iw.wasIngestedInDebugMode(), iw.isLatestVersion());
+                        indexedArclibXmlStore.createIndex(new CreateIndexRecordDto(xml.getBytes(), p.getId(), p.getName(), username, stateAtArchivalStorage, iw.wasIngestedInDebugMode(), iw.isLatestVersion(),iw.getSip().isLatestVersion()));
                         successCount.incrementAndGet();
                     } catch (Exception e) {
                         log.error("error while reindexing " + iw.getId(), e);

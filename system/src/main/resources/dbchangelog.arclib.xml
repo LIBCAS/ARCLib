@@ -1793,11 +1793,16 @@
         <sql>
             insert into public.arclib_ingest_issue_definition (id, "number",
             code,name,created,updated,description,solution,reconfigurable) values
-            ('aa46b316-186d-4f6a-b54c-0cb4fd354a20','15','SYSTEM_WIDE_VALIDATION_NODE_MISSING','system wide validation nodes missing',
-            current_timestamp, current_timestamp,'some XML nodes were not found in ARCLib XML during system wide ARCLib XML validation',
-            'This issue may occur during validation after XSLT transformation or during final validation. It is solved according to optional
-            JSON config values at /systemWideValidation//missingNodesAfterXsltAction and /systemWideValidation/missingNodesAfterFinalValidationAction.
-            If no config is provided, incident is created. If config is provided, supported values are: "IGNORE": process
+            ('aa46b316-186d-4f6a-b54c-0cb4fd354a20','15','SYSTEM_WIDE_VALIDATION_NODE_MISSING','system wide validation
+            nodes missing',
+            current_timestamp, current_timestamp,'some XML nodes were not found in ARCLib XML during system wide ARCLib
+            XML validation',
+            'This issue may occur during validation after XSLT transformation or during final validation. It is solved
+            according to optional
+            JSON config values at /systemWideValidation//missingNodesAfterXsltAction and
+            /systemWideValidation/missingNodesAfterFinalValidationAction.
+            If no config is provided, incident is created. If config is provided, supported values are: "IGNORE":
+            process
             continues as if there were no missing nodes, "CANCEL": the Ingest workflow process is cancelled.',true);
 
             insert into public.arclib_tool_ingest_issue_definition(tool_id,ingest_issue_definition_id)
@@ -1805,5 +1810,61 @@
             insert into public.arclib_tool_ingest_issue_definition(tool_id,ingest_issue_definition_id)
             values('c0068cb1-5755-4133-9be9-f49840f19ec3','aa46b316-186d-4f6a-b54c-0cb4fd354a20');
         </sql>
+    </changeSet>
+    <changeSet id="42" author="tomasek">
+        <addColumn tableName="arclib_sip">
+            <column name="is_latest_version" type="boolean" value="false"/>
+        </addColumn>
+        <sql>
+            update arclib_sip set is_latest_version = true where id in (
+            select distinct on (a.id) s.id from arclib_ingest_workflow iw
+            inner join arclib_sip s on iw.sip_id = s.id
+            inner join arclib_authorial_package a on a.id = s.authorial_package_id
+            where iw.processing_state = 'PERSISTED'
+            order by a.id, iw.created desc
+            );
+            -- SUPER_ADMIN
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('b7a43ad5-883f-4741-948b-08678fa38604',
+            'AIP_BULK_DELETIONS_WRITE');
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('b7a43ad5-883f-4741-948b-08678fa38604',
+            'AIP_BULK_DELETIONS_READ');
+            -- ADMIN
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('7354de69-e7b6-4276-96e1-6be55aa096d0',
+            'AIP_BULK_DELETIONS_WRITE');
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('7354de69-e7b6-4276-96e1-6be55aa096d0',
+            'AIP_BULK_DELETIONS_READ');
+        </sql>
+        <createTable tableName="arclib_aip_bulk_deletion">
+            <column name="id" type="varchar(255)">
+                <constraints primaryKey="true" primaryKeyName="arclib_aip_bulk_deletion_pkey" nullable="false"/>
+            </column>
+            <column name="created" type="datetime"/>
+            <column name="updated" type="datetime"/>
+            <column name="deleted" type="datetime"/>
+            <column name="producer_id" type="varchar(255)">
+                <constraints foreignKeyName="arclib_aip_bulk_deletion_producer_fk"
+                             referencedTableName="arclib_producer" referencedColumnNames="id"/>
+            </column>
+            <column name="creator_id" type="varchar(255)">
+                <constraints foreignKeyName="aip_query_creator_fk"
+                             referencedTableName="arclib_user" referencedColumnNames="id" nullable="false"/>
+            </column>
+            <column name="deleted_count" type="int"/>
+            <column name="state" type="varchar(255)"/>
+            <column name="skip_if_newer_version_not_exists" type="boolean"/>
+        </createTable>
+        <createTable tableName="arclib_aip_bulk_deletion_ids">
+            <column name="aip_bulk_deletion_id" type="varchar(255)">
+                <constraints nullable="false" primaryKey="true" foreignKeyName="arclib_aip_bulk_deletion_deletion_fk"
+                             referencedTableName="arclib_aip_bulk_deletion" referencedColumnNames="id"/>
+            </column>
+            <column name="aip_id" type="varchar(255)">
+                <constraints nullable="false" primaryKey="true" foreignKeyName="arclib_aip_bulk_deletion_aip_fk"
+                             referencedTableName="arclib_sip" referencedColumnNames="id"/>
+            </column>
+        </createTable>
+    </changeSet>
+    <changeSet id="43" author="tomasek">
+        <renameColumn tableName="arclib_aip_bulk_deletion" oldColumnName="skip_if_newer_version_not_exists" newColumnName="delete_if_newer_versions_deleted"/>
     </changeSet>
 </databaseChangeLog>

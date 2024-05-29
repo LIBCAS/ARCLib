@@ -12,6 +12,7 @@ import cz.cas.lib.arclib.security.authorization.role.UserRoleService;
 import cz.cas.lib.arclib.service.BatchService;
 import cz.cas.lib.arclib.service.IngestErrorHandler;
 import cz.cas.lib.arclib.service.incident.CustomIncidentHandler;
+import cz.cas.lib.arclib.store.AipBulkDeletionStore;
 import cz.cas.lib.arclib.store.ProducerStore;
 import cz.cas.lib.core.scheduling.job.Job;
 import cz.cas.lib.core.scheduling.job.JobService;
@@ -73,6 +74,8 @@ public class PostInitializer implements ApplicationListener<ContextRefreshedEven
     private String temporaryMultipartFilesLocation;
     @Value("${solr.maxRows}")
     private Integer solrMaxRows;
+    @Inject
+    private AipBulkDeletionStore aipBulkDeletionStore;
 
     @Override
     public void onApplicationEvent(ContextRefreshedEvent event) {
@@ -95,6 +98,8 @@ public class PostInitializer implements ApplicationListener<ContextRefreshedEven
         createTemporaryMultipartFilesDirectory();
         if (solrMaxRows != null)
             IndexQueryUtils.solrMaxRows = solrMaxRows;
+
+        setBulkDeletionRequestsToFail();
         log.debug("Arclib instance started successfully.");
     }
 
@@ -142,6 +147,11 @@ public class PostInitializer implements ApplicationListener<ContextRefreshedEven
         job.setActive(true);
         transactionTemplate.execute(status -> jobService.save(job));
     }
+
+    public void setBulkDeletionRequestsToFail() {
+        transactionTemplate.execute(t -> aipBulkDeletionStore.setAllRunningToFail());
+    }
+
 
     /**
      * Create folder for temporary multipart files obtained from requests.

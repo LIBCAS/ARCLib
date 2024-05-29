@@ -45,7 +45,6 @@ public abstract class ArclibDelegate implements VariableMapper, IngestTool, Java
     protected IngestWorkflowService ingestWorkflowService;
     protected IngestIssueService ingestIssueService;
     protected IngestIssueDefinitionStore ingestIssueDefinitionStore;
-    protected String ingestWorkflowExternalId;
     @Getter
     private String toolVersion = null;
 
@@ -81,7 +80,7 @@ public abstract class ArclibDelegate implements VariableMapper, IngestTool, Java
                 execution.setVariable(BpmConstants.ProcessVariables.idleTime, (NOW.toEpochMilli() - idlePoint));
                 execution.setVariable(BpmConstants.ProcessVariables.idlePoint, null);
             }
-            ingestWorkflowExternalId = getIngestWorkflowExternalId(execution);
+            String ingestWorkflowExternalId = getIngestWorkflowExternalId(execution);
             log.debug("Execution of {} started for ingest workflow {}", getClass().getSimpleName(), ingestWorkflowExternalId);
             executeArclibDelegate(execution);
             log.debug("Execution of {} ended for ingest workflow {}", getClass().getSimpleName(), ingestWorkflowExternalId);

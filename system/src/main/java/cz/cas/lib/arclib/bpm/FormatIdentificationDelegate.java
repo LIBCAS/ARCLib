@@ -55,7 +55,7 @@ public class FormatIdentificationDelegate extends ArclibDelegate {
      */
     @Override
     public void executeArclibDelegate(DelegateExecution execution) throws IncidentException, IOException {
-        IngestWorkflow iw = ingestWorkflowService.findByExternalId(ingestWorkflowExternalId);
+        IngestWorkflow iw = ingestWorkflowService.findByExternalId(getIngestWorkflowExternalId(execution));
         JsonNode configRoot = getConfigRoot(execution);
 
         //map that captures format identification events and the respective format identification results

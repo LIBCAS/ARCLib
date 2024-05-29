@@ -45,7 +45,7 @@ public class ArchivalStorageDelegate extends ArclibDelegate {
         execution.setVariable(BpmConstants.ArchivalStorage.archivalStorageResult, null);
         execution.setVariable(BpmConstants.ArchivalStorage.aipSavedCheckAttempts, initialAipSaveCheckRetries);
 
-        IngestWorkflow ingestWorkflow = ingestWorkflowService.findByExternalId(ingestWorkflowExternalId);
+        IngestWorkflow ingestWorkflow = ingestWorkflowService.findByExternalId(getIngestWorkflowExternalId(execution));
 
         String preferredFixityGenerationEventId = (String) execution.getVariable(FixityGeneration.preferredFixityGenerationEventId);
         Utils.notNull(preferredFixityGenerationEventId, () -> new GeneralException("Failed to retrieve SIP hash because message digest calculation has not been performed."));

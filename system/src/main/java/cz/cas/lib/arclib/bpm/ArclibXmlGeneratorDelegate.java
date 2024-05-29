@@ -68,6 +68,7 @@ public class ArclibXmlGeneratorDelegate extends ArclibDelegate {
         sip.setFolderStructure(folderStructure);
         sipStore.save(sip);
 
+        String ingestWorkflowExternalId = getIngestWorkflowExternalId(execution);
         IngestWorkflow ingestWorkflow = ingestWorkflowService.findByExternalId(ingestWorkflowExternalId);
         Tool tool = toolService.getByNameAndVersion(getToolName(), getToolVersion());
 

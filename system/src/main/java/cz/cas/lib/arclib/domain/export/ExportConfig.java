@@ -32,7 +32,7 @@ public class ExportConfig {
     private List<String> metadataSelection;
 
     @JsonIgnore
-    public List<String> getListOfMetadataToExport() {
+    public List<String> getMetadataSelectionNullSafe() {
         return metadataSelection == null ? ALL_METADATA : metadataSelection;
     }
 

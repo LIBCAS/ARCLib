@@ -16,12 +16,12 @@
         <repository>
             <id>jasper-3rd-party</id>
             <name>Jasper3rdParty</name>
-            <url>http://jaspersoft.jfrog.io/jaspersoft/third-party-ce-artifacts/</url>
+            <url>https://jaspersoft.jfrog.io/jaspersoft/third-party-ce-artifacts/</url>
         </repository>
         <!--for jasperreports-functions-->
         <repository>
             <id>jr-ce-releases</id>
-            <url>http://jaspersoft.artifactoryonline.com/jaspersoft/jr-ce-releases</url>
+            <url>https://jaspersoft.jfrog.io/artifactory/jr-ce-releases/</url>
         </repository>
     </repositories>
 

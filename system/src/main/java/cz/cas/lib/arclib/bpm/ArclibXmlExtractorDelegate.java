@@ -85,7 +85,7 @@ public class ArclibXmlExtractorDelegate extends ArclibDelegate {
         doc.accept(visitor);
         String prettyPrintedExtractedMetadata = prettyPrint(doc);
 
-        IngestWorkflow iw = ingestWorkflowService.findByExternalId(ingestWorkflowExternalId);
+        IngestWorkflow iw = ingestWorkflowService.findByExternalId(getIngestWorkflowExternalId(execution));
         Tool tool = toolService.getByNameAndVersion(getToolName(), getToolVersion());
 
         List<SystemWideValidationNodeConfig> missingNodes = validator.validateXsltResult(prettyPrintedExtractedMetadata);

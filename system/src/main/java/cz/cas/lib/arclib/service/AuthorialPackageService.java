@@ -2,6 +2,7 @@ package cz.cas.lib.arclib.service;
 
 import cz.cas.lib.arclib.domain.Batch;
 import cz.cas.lib.arclib.domain.ingestWorkflow.IngestWorkflow;
+import cz.cas.lib.arclib.domain.ingestWorkflow.IngestWorkflowState;
 import cz.cas.lib.arclib.domain.packages.AuthorialPackage;
 import cz.cas.lib.arclib.domain.packages.Sip;
 import cz.cas.lib.arclib.domainbase.domain.DatedObject;
@@ -35,9 +36,14 @@ public class AuthorialPackageService {
         List<IngestWorkflow> byAuthorialPackageId = ingestWorkflowService.findByAuthorialPackageId(authorialPackageId);
         byAuthorialPackageId.sort(Comparator.comparing(DatedObject::getCreated));
         Collections.reverse(byAuthorialPackageId);
+        boolean keepAuthorialPackage = false;
         for (IngestWorkflow ingestWorkflow : byAuthorialPackageId) {
             if (!ingestWorkflow.wasIngestedInDebugMode()) {
-                throw new IllegalArgumentException("Cannot forget ingest workflow that has not been processed in the debugging mode. " + "Ingest workflow: " + ingestWorkflow.getExternalId() + " batch: " + ingestWorkflow.getBatch().getId());
+                if (ingestWorkflow.getProcessingState() == IngestWorkflowState.FAILED) {
+                    keepAuthorialPackage = true;
+                } else {
+                    throw new IllegalArgumentException("Cannot forget ingest workflow that has not been processed in the debugging mode. " + "Ingest workflow: " + ingestWorkflow.getExternalId() + " batch: " + ingestWorkflow.getBatch().getId());
+                }
             }
         }
         Set<Sip> sips = new HashSet<>();
@@ -56,9 +62,11 @@ public class AuthorialPackageService {
             sipStore.hardDelete(sip);
             log.info("SIP " + sip.getId() + " has been deleted.");
         }
-        AuthorialPackage authorialPackageToBeDeleted = new AuthorialPackage();
-        authorialPackageToBeDeleted.setId(authorialPackageId);
-        authorialPackageStore.hardDelete(authorialPackageToBeDeleted);
+        if (!keepAuthorialPackage) {
+            AuthorialPackage authorialPackageToBeDeleted = new AuthorialPackage();
+            authorialPackageToBeDeleted.setId(authorialPackageId);
+            authorialPackageStore.hardDelete(authorialPackageToBeDeleted);
+        }
         try {
             for (Sip sip : sips) {
                 archivalStorageServiceDebug.deleteSipAndItsXmlsFromWorkspace(sip.getId());

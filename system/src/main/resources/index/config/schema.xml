@@ -96,6 +96,7 @@
   <field name="validation_profile" type="string"/>
   <field name="workflow_definition" type="string"/>
   <field name="latest" type="boolean"/>
+  <field name="latest_data" type="boolean"/>
 
   <field name="element_name" type="string"/>
   <field name="element_content" type="standard_folding"/>

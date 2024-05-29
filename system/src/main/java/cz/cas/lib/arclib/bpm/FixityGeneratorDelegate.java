@@ -16,7 +16,6 @@ import org.springframework.stereotype.Service;
 import javax.inject.Inject;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -42,7 +41,7 @@ public class FixityGeneratorDelegate extends ArclibDelegate {
             String sha512 = bytesToHexString(fixityCounterFacade.computeDigest(HashType.Sha512, sipZipPath));
             String crc32 = bytesToHexString(fixityCounterFacade.computeDigest(HashType.Crc32, sipZipPath));
 
-            IngestEvent fixityGenerationEvent = new IngestEvent(ingestWorkflowService.findByExternalId(ingestWorkflowExternalId),
+            IngestEvent fixityGenerationEvent = new IngestEvent(ingestWorkflowService.findByExternalId(getIngestWorkflowExternalId(execution)),
                     toolService.getByNameAndVersion(getToolName(), getToolVersion()), true, null);
             ingestEventStore.save(fixityGenerationEvent);
 

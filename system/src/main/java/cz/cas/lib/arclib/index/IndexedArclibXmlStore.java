@@ -26,7 +26,7 @@ public interface IndexedArclibXmlStore {
      *
      * @throws BadArgument if the value of {@link AipXmlNodeValueType#TIME}, {@link AipXmlNodeValueType#DATE} or {@link AipXmlNodeValueType#DATETIME} field can't be parsed.
      */
-    void createIndex(byte[] arclibXml, String producerId, String producerName, String userName, IndexedAipState aipState, boolean debuggingModeActive, boolean latestVersion);
+    void createIndex(CreateIndexRecordDto createIndexRecordDto);
 
     /**
      * Finds documents.
@@ -62,9 +62,9 @@ public interface IndexedArclibXmlStore {
     void changeAipState(String arclibXmlDocumentId, IndexedAipState newState, byte[] aipXml);
 
     /**
-     * updates the <i>latest</i> flag of the ARCLib XML record
+     * updates the <i>latest</i> and <i>latestData</i> flags of the ARCLib XML record
      */
-    void setLatestFlag(String arclibXmlDocumentId, boolean flag, byte[] aipXml);
+    void setLatestFlags(SetLatestFlagsDto setLatestFlagsDto);
 
     void removeIndex(String id);
 

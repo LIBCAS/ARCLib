@@ -79,8 +79,8 @@ public class SolrArclibXmlStore implements IndexedArclibXmlStore {
 
     @SneakyThrows
     @Override
-    public void createIndex(byte[] arclibXml, String producerId, String producerName, String userName, IndexedAipState aipState, boolean debuggingModeActive, boolean latestVersion) {
-        Pair<Document, XPath> domAndXpath = createDomAndXpath(new ByteArrayInputStream(arclibXml), uris);
+    public void createIndex(CreateIndexRecordDto r) {
+        Pair<Document, XPath> domAndXpath = createDomAndXpath(new ByteArrayInputStream(r.getArclibXml()), uris);
         Document arclibXmlDom = domAndXpath.getKey();
         XPath xpath = domAndXpath.getValue();
 
@@ -90,13 +90,14 @@ public class SolrArclibXmlStore implements IndexedArclibXmlStore {
         ArclibXmlIndexTypeConfig mainDocConfig = collectionsConfig.get(getMainDocumentIndexType());
         SolrInputDocument mainDoc = new SolrInputDocument();
         mainDoc.addField(IndexQueryUtils.TYPE_FIELD, mainDocConfig.getIndexType());
-        mainDoc.addField(IndexedArclibXmlDocument.PRODUCER_NAME, producerName);
-        mainDoc.addField(IndexedArclibXmlDocument.PRODUCER_ID, producerId);
-        mainDoc.addField(IndexedArclibXmlDocument.LATEST, latestVersion);
-        if (aipState != null)
-            mainDoc.addField(IndexedArclibXmlDocument.AIP_STATE, aipState.toString());
-        mainDoc.addField(IndexedArclibXmlDocument.USER_NAME, userName);
-        mainDoc.addField(IndexedArclibXmlDocument.DEBUG_MODE, debuggingModeActive);
+        mainDoc.addField(IndexedArclibXmlDocument.PRODUCER_NAME, r.getProducerName());
+        mainDoc.addField(IndexedArclibXmlDocument.PRODUCER_ID, r.getProducerId());
+        mainDoc.addField(IndexedArclibXmlDocument.LATEST, r.isLatestVersion());
+        mainDoc.addField(IndexedArclibXmlDocument.LATEST_DATA, r.isLatestDataVersion());
+        if (r.getAipState() != null)
+            mainDoc.addField(IndexedArclibXmlDocument.AIP_STATE, r.getAipState().toString());
+        mainDoc.addField(IndexedArclibXmlDocument.USER_NAME, r.getUserName());
+        mainDoc.addField(IndexedArclibXmlDocument.DEBUG_MODE, r.isDebuggingModeActive());
         for (ArclibXmlField conf : mainDocConfig.getIndexedFieldConfig()) {
             if (!conf.isInAipXml()) {
                 continue;
@@ -217,31 +218,34 @@ public class SolrArclibXmlStore implements IndexedArclibXmlStore {
     @Override
     public void changeAipState(String arclibXmlDocumentId, IndexedAipState newAipState, byte[] aipXml) {
         IndexedArclibXmlDocument doc = findArclibXmlIndexDocument(arclibXmlDocumentId);
-        createIndex(aipXml,
+        createIndex(new CreateIndexRecordDto(
+                aipXml,
                 doc.getProducerId(),
                 doc.getProducerName(),
                 doc.getUserName(),
                 newAipState,
                 doc.getDebugMode(),
-                doc.getDebugMode());
+                doc.getLatest(),
+                doc.getLatestData())
+        );
     }
 
     /**
-     * changes {@link IndexedArclibXmlDocument#LATEST} flag of the document.. this can't be done via partial update as it breaks parent-children relationship
-     *
-     * @param arclibXmlDocumentId
-     * @param flag
+     * changes {@link IndexedArclibXmlDocument#LATEST} and {@link IndexedArclibXmlDocument#LATEST_DATA} flags of the document.. this can't be done via partial update as it breaks parent-children relationship
      */
     @Override
-    public void setLatestFlag(String arclibXmlDocumentId, boolean flag, byte[] aipXml) {
-        IndexedArclibXmlDocument doc = findArclibXmlIndexDocument(arclibXmlDocumentId);
-        createIndex(aipXml,
+    public void setLatestFlags(SetLatestFlagsDto dto) {
+        IndexedArclibXmlDocument doc = findArclibXmlIndexDocument(dto.getArclibXmlDocumentId());
+        createIndex(new CreateIndexRecordDto(
+                dto.getAipXml(),
                 doc.getProducerId(),
                 doc.getProducerName(),
                 doc.getUserName(),
                 doc.getAipState(),
                 doc.getDebugMode(),
-                flag);
+                dto.isLatest(),
+                dto.isLatestData())
+        );
     }
 
 
@@ -280,7 +284,8 @@ public class SolrArclibXmlStore implements IndexedArclibXmlStore {
         for (String docId : docIds) {
             SolrQuery singleDocQuery = q.getCopy();
             singleDocQuery.addFilterQuery("id:" + docId);
-            singleDocQuery.setParam("fl", "*", "[child parentFilter=id:" + docId + " childFilter=-index_type:" + IndexedArclibXmlDocument.ELEMENT_INDEX_TYPE_VALUE + " limit=" + solrMaxRows + "]");
+            String childTransformerString = String.format("[child parentFilter=%s:%s childFilter=-%s:%s limit=%d]", TYPE_FIELD, IndexedArclibXmlDocument.MAIN_INDEX_TYPE_VALUE, TYPE_FIELD, IndexedArclibXmlDocument.ELEMENT_INDEX_TYPE_VALUE, solrMaxRows);
+            singleDocQuery.setParam("fl", "*", childTransformerString);
             SolrDocumentList response = null;
             try {
                 response = (SolrDocumentList) solrTemplate.getSolrClient().request(new QueryRequest(singleDocQuery)).get("response");
@@ -512,7 +517,7 @@ public class SolrArclibXmlStore implements IndexedArclibXmlStore {
 
     @Inject
     public void setArclibXmlIndexConfig(@Value("${arclib.arclibXmlIndexConfig}")
-                                               Resource arclibXmlIndexConfig) {
+                                                Resource arclibXmlIndexConfig) {
         this.arclibXmlIndexConfig = arclibXmlIndexConfig;
     }
 

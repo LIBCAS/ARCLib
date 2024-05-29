@@ -1,20 +1,25 @@
 package cz.cas.lib.arclib.bpm;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import cz.cas.lib.arclib.domain.Hash;
 import cz.cas.lib.arclib.domain.ingestWorkflow.IngestEvent;
 import cz.cas.lib.arclib.domain.packages.Sip;
+import cz.cas.lib.arclib.exception.bpm.ConfigParserException;
 import cz.cas.lib.arclib.service.archivalStorage.ArchivalStorageException;
 import cz.cas.lib.arclib.service.archivalStorage.ArchivalStorageResponseExtractor;
 import cz.cas.lib.arclib.service.archivalStorage.ArchivalStorageService;
 import cz.cas.lib.arclib.service.fixity.FixityCounterFacade;
 import cz.cas.lib.arclib.store.SipStore;
 import cz.cas.lib.arclib.utils.ZipUtils;
+import cz.cas.lib.core.util.SetUtils;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.camunda.bpm.engine.delegate.DelegateExecution;
 import org.dom4j.DocumentException;
 import org.springframework.stereotype.Service;
+import org.springframework.util.FileSystemUtils;
 import org.xml.sax.SAXException;
 
 import javax.inject.Inject;
@@ -26,6 +31,9 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
@@ -37,6 +45,8 @@ public class SipMergerDelegate extends ArclibDelegate {
 
     @Getter
     private String toolName = "ARCLib_SIP_merger";
+    public static final String MOVE_JSON_EXPR = "/sipmerger/move";
+    public static final String REDUCE_JSON_EXPR = "/sipmerger/reduce";
 
     private SipStore sipStore;
     private ArchivalStorageService archivalStorageService;
@@ -44,7 +54,7 @@ public class SipMergerDelegate extends ArclibDelegate {
     private ArchivalStorageResponseExtractor archivalStorageResponseExtractor;
 
     @Override
-    public void executeArclibDelegate(DelegateExecution execution) throws TransformerException, IOException, ParserConfigurationException, SAXException, DocumentException, ArchivalStorageException {
+    public void executeArclibDelegate(DelegateExecution execution) throws TransformerException, IOException, ParserConfigurationException, SAXException, DocumentException, ArchivalStorageException, ConfigParserException {
         String sipId = getStringVariable(execution, BpmConstants.ProcessVariables.sipId);
         Sip sip = sipStore.find(sipId);
         Sip previousVersionSip = sip.getPreviousVersionSip();
@@ -56,8 +66,88 @@ public class SipMergerDelegate extends ArclibDelegate {
             }
 
             InputStream archivalStorageResponse = archivalStorageService.exportSingleAip(previousVersionSip.getId(), false, null);
-            Path previousVersionAipDataDir = archivalStorageResponseExtractor.extractAipAsFolderWithXmlsBySide(new ZipInputStream(archivalStorageResponse), previousVersionSip.getId(), previousVersionAipUnpackedInWorkspace,sip.getFolderStructure().getCaption());
+            Path previousVersionAipDataDir = archivalStorageResponseExtractor.extractAipAsFolderWithXmlsBySide(new ZipInputStream(archivalStorageResponse), previousVersionSip.getId(), previousVersionAipUnpackedInWorkspace, sipUnpackedInWorkspace.getFileName().toString());
+            JsonNode configRoot = getConfigRoot(execution);
 
+            //move
+            JsonNode moveConfig = configRoot.at(MOVE_JSON_EXPR);
+            MoveSpec[] moveSpecList = null;
+            if (!moveConfig.isMissingNode()) {
+                try {
+                    moveSpecList = objectMapper.treeToValue(moveConfig, MoveSpec[].class);
+                } catch (JsonProcessingException e) {
+                    throw new ConfigParserException(MOVE_JSON_EXPR, moveConfig.toString(), "list of string pairs [{regex,replacement},{...}]");
+                }
+            }
+            if (moveSpecList != null) {
+                Map<String, String> oldToNewPathMap = new HashMap<>();
+                MoveSpec[] finalMoveSpecList = moveSpecList;
+                Files.walk(previousVersionAipDataDir).skip(1).filter(f -> f.toFile().isFile()).forEach(f -> {
+                    String oldRelativePath = previousVersionAipDataDir.relativize(f).toString();
+                    for (MoveSpec moveSpec : finalMoveSpecList) {
+                        Matcher matcher = moveSpec.getCompiledRegex().matcher(oldRelativePath);
+                        if (matcher.matches()) {
+                            String newRelativePath = matcher.replaceAll(moveSpec.getReplacement());
+                            oldToNewPathMap.put(oldRelativePath, newRelativePath);
+                            break;
+                        }
+                    }
+                });
+                for (Map.Entry<String, String> mv : oldToNewPathMap.entrySet()) {
+                    Path newPath = previousVersionAipDataDir.resolve(mv.getValue());
+                    Files.createDirectories(newPath.getParent());
+                    Files.move(previousVersionAipDataDir.resolve(mv.getKey()), newPath);
+                }
+            }
+
+            //reduce
+            JsonNode reductionConfig = configRoot.at(REDUCE_JSON_EXPR);
+            ReductionSpec reductionSpec = null;
+            if (!reductionConfig.isMissingNode()) {
+                try {
+                    reductionSpec = objectMapper.treeToValue(reductionConfig, ReductionSpec.class);
+                } catch (JsonProcessingException e) {
+                    throw new ConfigParserException(REDUCE_JSON_EXPR, reductionConfig.toString(), "regexes and reduction mode {regexes:[...],mode:DELETE/KEEP}");
+                }
+            }
+            if (reductionSpec != null) {
+                Set<String> allNodes = new HashSet<>();
+                Set<String> matchedNodes = new HashSet<>();
+                Set<String> nodesToDelete;
+                for (String regex : reductionSpec.getRegexes()) {
+                    Pattern compiledRegex = Pattern.compile(regex);
+                    ReductionSpec finalReductionSpec = reductionSpec;
+                    Files.walk(previousVersionAipDataDir).skip(1).forEach(fileOrDir -> {
+                        Path relativePath = previousVersionAipDataDir.relativize(fileOrDir);
+                        allNodes.add(relativePath.toString());
+                        if (compiledRegex.matcher(relativePath.toString()).matches()) {
+                            matchedNodes.add(relativePath.toString());
+                            if (finalReductionSpec.getMode() == ReductionMode.KEEP) {
+                                Path parentPath = relativePath.getParent();
+                                while (parentPath != null) {
+                                    matchedNodes.add(parentPath.toString());
+                                    parentPath = parentPath.getParent();
+                                }
+                            }
+                        }
+                    });
+                }
+                switch (reductionSpec.getMode()) {
+                    case DELETE:
+                        nodesToDelete = matchedNodes;
+                        break;
+                    case KEEP:
+                        nodesToDelete = SetUtils.difference(allNodes, matchedNodes);
+                        break;
+                    default:
+                        throw new IllegalArgumentException("unsupported deletion mode");
+                }
+                for (String nodeToDelete : nodesToDelete) {
+                    FileSystemUtils.deleteRecursively(previousVersionAipDataDir.resolve(nodeToDelete));
+                }
+            }
+
+            //write
             FileUtils.copyDirectory(sipUnpackedInWorkspace.toFile(), previousVersionAipDataDir.toFile());
 
 
@@ -80,7 +170,33 @@ public class SipMergerDelegate extends ArclibDelegate {
             log.info("there is no previous version of this ({}) SIP, nothing to merge, finishing with no action", sip.getId());
         }
 
-        ingestEventStore.save(new IngestEvent(ingestWorkflowService.findByExternalId(ingestWorkflowExternalId), toolService.getByNameAndVersion(getToolName(), getToolVersion()), true, null));
+        ingestEventStore.save(new IngestEvent(ingestWorkflowService.findByExternalId(getIngestWorkflowExternalId(execution)), toolService.getByNameAndVersion(getToolName(), getToolVersion()), true, null));
+    }
+
+    private static class MoveSpec {
+        @Getter
+        private String regex;
+        @Getter
+        private String replacement;
+        private Pattern compiledRegex;
+
+        public Pattern getCompiledRegex() {
+            if (compiledRegex == null) {
+                compiledRegex = Pattern.compile(regex);
+            }
+            return compiledRegex;
+        }
+    }
+
+    private static class ReductionSpec {
+        @Getter
+        private List<String> regexes = new ArrayList<>();
+        @Getter
+        private ReductionMode mode;
+    }
+
+    public enum ReductionMode {
+        DELETE, KEEP
     }
 
     @Inject

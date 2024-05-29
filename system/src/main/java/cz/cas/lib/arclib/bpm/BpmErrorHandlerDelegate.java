@@ -31,7 +31,7 @@ public class BpmErrorHandlerDelegate extends ArclibDelegate {
                 errorCode + " : " + errorMessage, null, IngestWorkflowFailureType.BPM_ERROR
         );
         String responsiblePerson = getStringVariable(execution, BpmConstants.ProcessVariables.responsiblePerson);
-        ingestErrorHandler.handleError(ingestWorkflowExternalId, failureInfo, execution.getProcessInstanceId(), responsiblePerson);
+        ingestErrorHandler.handleError(getIngestWorkflowExternalId(execution), failureInfo, execution.getProcessInstanceId(), responsiblePerson);
     }
 
     @Inject

@@ -35,6 +35,7 @@ public class IndexedArclibXmlDocument implements Serializable {
     public static final String CREATED = "created";
     public static final String AUTHORIAL_ID = "authorial_id";
     public static final String LATEST = "latest";
+    public static final String LATEST_DATA = "latest_data";
     public static final String TYPE = "type";
 
     //special fields of the element nested collection
@@ -165,6 +166,10 @@ public class IndexedArclibXmlDocument implements Serializable {
 
     public Boolean getLatest() {
         return getSingleBooleanValue(LATEST);
+    }
+
+    public Boolean getLatestData() {
+        return getSingleBooleanValue(LATEST_DATA);
     }
 
     public String getIndexType() {

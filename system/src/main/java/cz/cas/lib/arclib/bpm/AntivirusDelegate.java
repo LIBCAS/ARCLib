@@ -49,7 +49,7 @@ public class AntivirusDelegate extends ArclibDelegate {
      */
     @Override
     public void executeArclibDelegate(DelegateExecution execution) throws IncidentException, FileNotFoundException {
-        IngestWorkflow iw = ingestWorkflowService.findByExternalId(ingestWorkflowExternalId);
+        IngestWorkflow iw = ingestWorkflowService.findByExternalId(getIngestWorkflowExternalId(execution));
         JsonNode configRoot = getConfigRoot(execution);
 
         Path sipPath = getSipFolderWorkspacePath(execution);

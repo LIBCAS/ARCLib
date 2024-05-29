@@ -6,6 +6,7 @@ import cz.cas.lib.arclib.domain.IngestRoutine;
 import cz.cas.lib.arclib.domain.export.ExportRoutine;
 import cz.cas.lib.arclib.domain.ingestWorkflow.IngestWorkflow;
 import cz.cas.lib.arclib.domain.ingestWorkflow.WorkflowDefinition;
+import cz.cas.lib.arclib.domain.packages.AipBulkDeletion;
 import cz.cas.lib.arclib.domain.packages.AipDeletionRequest;
 import cz.cas.lib.arclib.domain.profiles.ProducerProfile;
 import cz.cas.lib.arclib.domain.profiles.SipProfile;
@@ -80,6 +81,11 @@ public class DozerConfig {
                     .fields("updated", "updated", FieldsMappingOptions.copyByReference())
                     .fields("exportTime", "exportTime", FieldsMappingOptions.copyByReference())
                     .fields("config", "config", FieldsMappingOptions.copyByReference());
+            mapping(AipBulkDeletionDto.class, AipBulkDeletion.class)
+                    .fields("created", "created", FieldsMappingOptions.copyByReference())
+                    .fields("updated", "updated", FieldsMappingOptions.copyByReference())
+                    .fields("producer", "producer", FieldsMappingOptions.copyByReference())
+                    .fields("creator", "creator", FieldsMappingOptions.copyByReference());
         }
     }
 

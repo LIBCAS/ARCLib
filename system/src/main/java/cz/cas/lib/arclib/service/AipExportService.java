@@ -179,7 +179,7 @@ public class AipExportService {
                         Files.writeString(exportFolder.resolve(exportScope.getFsName()), String.join(",", ids));
                         break;
                     case METADATA:
-                        List<String> selectedMetadata = exportConfig.getListOfMetadataToExport();
+                        List<String> selectedMetadata = exportConfig.getMetadataSelectionNullSafe();
                         if (selectedMetadata.isEmpty()) {
                             break;
                         }
@@ -257,7 +257,7 @@ public class AipExportService {
     }
 
     private void exportMetadata(CSVPrinter csvPrinter, ExportConfig exportConfig, List<IndexedArclibXmlDocument> docsFromIndex) throws IOException {
-        List<String> selectedMetadata = exportConfig.getMetadataSelection();
+        List<String> selectedMetadata = exportConfig.getMetadataSelectionNullSafe();
         Map<IndexedArclibXmlDocument, Map<DcExportMetadataKey, List<String>>> dcExport = dcExportService.exportDcItems(docsFromIndex, selectedMetadata);
 
         ArrayList<String> header = new ArrayList<>();

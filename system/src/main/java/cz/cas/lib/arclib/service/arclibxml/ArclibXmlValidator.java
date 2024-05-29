@@ -150,7 +150,8 @@ public class ArclibXmlValidator {
         validateSysGenNode(is, WORKFLOW_DEFINITION, iw.getProducerProfile().getWorkflowDefinition().getExternalId());
         String previousVersionSipId = iw.getSip().getPreviousVersionSip() != null ? iw.getSip().getPreviousVersionSip().getId() : ArclibXmlGenerator.INITIAL_VERSION;
         validateSysGenNode(is, SIP_VERSION_OF, previousVersionSipId);
-        String previousVersionXmlId = iw.getRelatedWorkflow() != null ? iw.getRelatedWorkflow().getExternalId() : ArclibXmlGenerator.INITIAL_VERSION;
+        String previousVersionXmlId = iw.getRelatedWorkflow() != null && iw.getXmlVersionNumber() > 1
+                ? iw.getRelatedWorkflow().getExternalId() : ArclibXmlGenerator.INITIAL_VERSION;
         validateSysGenNode(is, XML_VERSION_OF, previousVersionXmlId);
     }
 

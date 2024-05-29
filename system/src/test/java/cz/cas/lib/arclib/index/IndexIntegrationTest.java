@@ -113,9 +113,9 @@ public class IndexIntegrationTest extends TransformerFactoryWorkaroundTest imple
     @Test
     public void testQueryUndefinedField() throws Exception {
         mvc(api).perform(get("/api/aip/list")
-                .param("filter[0].field", "blah")
-                .param("filter[0].operation", "STARTWITH")
-                .param("filter[0].value", "someid"))
+                        .param("filter[0].field", "blah")
+                        .param("filter[0].operation", "STARTWITH")
+                        .param("filter[0].value", "someid"))
                 .andExpect(status().isBadRequest());
     }
 
@@ -125,9 +125,9 @@ public class IndexIntegrationTest extends TransformerFactoryWorkaroundTest imple
     @Test
     public void testQueryUndefinedOperation() throws Exception {
         mvc(api).perform(get("/api/aip/list")
-                .param("filter[0].field", "id")
-                .param("filter[0].operation", "blah")
-                .param("filter[0].value", "someid"))
+                        .param("filter[0].field", "id")
+                        .param("filter[0].operation", "blah")
+                        .param("filter[0].value", "someid"))
                 .andExpect(status().isBadRequest());
     }
 
@@ -138,13 +138,13 @@ public class IndexIntegrationTest extends TransformerFactoryWorkaroundTest imple
     @Test
     public void testCreateIndexInvalidFieldValue() throws Exception {
         String arclibXml = new String(Files.readAllBytes(Paths.get("src/test/resources/arclibXmls/invalidValue.xml")), StandardCharsets.UTF_8);
-        assertThrown(() -> indexArclibXmlStore.createIndex(arclibXml.getBytes(), PRODUCER_ID, "", "", null, false, true)).isInstanceOf(BadArgument.class);
+        assertThrown(() -> indexArclibXmlStore.createIndex(new CreateIndexRecordDto(arclibXml.getBytes(), PRODUCER_ID, "", "", null, false, true, true))).isInstanceOf(BadArgument.class);
     }
 
     @Test
     public void testCreateIndex() throws Exception {
         String arclibXml = new String(Files.readAllBytes(Paths.get("src/test/resources/arclibXmls/arclibXml.xml")), StandardCharsets.UTF_8);
-        indexArclibXmlStore.createIndex(arclibXml.getBytes(), "otherproducer", "", "", null, false, true);
+        indexArclibXmlStore.createIndex(new CreateIndexRecordDto(arclibXml.getBytes(), "otherproducer", "", "", null, false, true, true));
         SimpleQuery q = new SimpleQuery();
         q.addCriteria(Criteria.where(IndexedArclibXmlDocument.PRODUCER_ID).in("otherproducer").and("type").in("Periodical"));
         List<IndexedArclibXmlDocument> content = solrTemplate.query(coreName, q, IndexedArclibXmlDocument.class).getContent();
@@ -157,10 +157,10 @@ public class IndexIntegrationTest extends TransformerFactoryWorkaroundTest imple
     @Test
     public void testQueryNoResult() throws Exception {
         mvc(api).perform(get("/api/aip/list")
-                .param("filter[0].field", "id")
-                .param("filter[0].operation", "EQ")
-                .param("filter[0].value", "blah")
-        )
+                        .param("filter[0].field", "id")
+                        .param("filter[0].operation", "EQ")
+                        .param("filter[0].value", "blah")
+                )
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.items", hasSize(0)));
     }
@@ -168,11 +168,11 @@ public class IndexIntegrationTest extends TransformerFactoryWorkaroundTest imple
     @Test
     public void testQuerySaveResult() throws Exception {
         mvc(api).perform(get("/api/aip/list")
-                .param("filter[0].field", "id")
-                .param("filter[0].operation", "NEQ")
-                .param("filter[0].value", "blah")
-                .param("save", "true")
-                .param("queryName", "test query"))
+                        .param("filter[0].field", "id")
+                        .param("filter[0].operation", "NEQ")
+                        .param("filter[0].value", "blah")
+                        .param("save", "true")
+                        .param("queryName", "test query"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.items", hasSize(5)));
         List<AipQuery> all = aipQueryStore.findQueriesOfUser(USER_ID);
@@ -194,15 +194,15 @@ public class IndexIntegrationTest extends TransformerFactoryWorkaroundTest imple
     @Test
     public void testQueryMultiValues() throws Exception {
         String arclibXml = new String(Files.readAllBytes(Paths.get("system/src/main/resources/arclibXmls/arclibXml.xml")), StandardCharsets.UTF_8);
-        indexArclibXmlStore.createIndex(arclibXml.getBytes(), PRODUCER_ID, "", "", null, false, false);
+        indexArclibXmlStore.createIndex(new CreateIndexRecordDto(arclibXml.getBytes(), PRODUCER_ID, "", "", null, false, false, true));
         mvc(api).perform(get("/api/aip/list")
-                .param("filter[0].field", "dublin_core")
-                .param("filter[0].operation", "CONTAINS")
-                .param("filter[0].value", "model:periodicalvolume")
-                .param("filter[1].field", "dublin_core")
-                .param("filter[1].operation", "CONTAINS")
-                .param("filter[1].value", "model:periodicalitem")
-        )
+                        .param("filter[0].field", "dublin_core")
+                        .param("filter[0].operation", "CONTAINS")
+                        .param("filter[0].value", "model:periodicalvolume")
+                        .param("filter[1].field", "dublin_core")
+                        .param("filter[1].operation", "CONTAINS")
+                        .param("filter[1].value", "model:periodicalitem")
+                )
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.items", hasSize(1)));
     }
@@ -213,38 +213,38 @@ public class IndexIntegrationTest extends TransformerFactoryWorkaroundTest imple
     @Test
     public void nestedQuery() throws Exception {
         String arclibXml = new String(Files.readAllBytes(Paths.get("src/test/resources/arclibXmls/validSimple.xml")), StandardCharsets.UTF_8);
-        indexArclibXmlStore.createIndex(arclibXml.getBytes(), PRODUCER_ID, "", "", null, false, false);
+        indexArclibXmlStore.createIndex(new CreateIndexRecordDto(arclibXml.getBytes(), PRODUCER_ID, "", "", null, false, false, true));
         mvc(api).perform(get("/api/aip/list")
-                .param("filter[0].field", "premis_event")
-                .param("filter[0].operation", "NESTED")
-                .param("filter[0].filter[0].field", "premis_event_type")
-                .param("filter[0].filter[0].operation", "EQ")
-                .param("filter[0].filter[0].value", "transfer")
-                .param("filter[0].filter[1].field", "premis_event_detail")
-                .param("filter[0].filter[1].operation", "EQ")
-                .param("filter[0].filter[1].value", "validation detail")
-        )
+                        .param("filter[0].field", "premis_event")
+                        .param("filter[0].operation", "NESTED")
+                        .param("filter[0].filter[0].field", "premis_event_type")
+                        .param("filter[0].filter[0].operation", "EQ")
+                        .param("filter[0].filter[0].value", "transfer")
+                        .param("filter[0].filter[1].field", "premis_event_detail")
+                        .param("filter[0].filter[1].operation", "EQ")
+                        .param("filter[0].filter[1].value", "validation detail")
+                )
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.items", hasSize(0)));
 
         mvc(api).perform(get("/api/aip/list")
-                .param("filter[0].field", "premis_event")
-                .param("filter[0].operation", "NESTED")
-                .param("filter[0].filter[0].field", "premis_event_type")
-                .param("filter[0].filter[0].operation", "EQ")
-                .param("filter[0].filter[0].value", "transfer")
-                .param("filter[0].filter[1].field", "premis_event_detail")
-                .param("filter[0].filter[1].operation", "EQ")
-                .param("filter[0].filter[1].value", "transfer detail")
-                .param("filter[1].field", "premis_event")
-                .param("filter[1].operation", "NESTED")
-                .param("filter[1].filter[0].field", "premis_event_type")
-                .param("filter[1].filter[0].operation", "EQ")
-                .param("filter[1].filter[0].value", "validation")
-                .param("filter[1].filter[1].field", "premis_event_detail")
-                .param("filter[1].filter[1].operation", "EQ")
-                .param("filter[1].filter[1].value", "validation detail")
-        )
+                        .param("filter[0].field", "premis_event")
+                        .param("filter[0].operation", "NESTED")
+                        .param("filter[0].filter[0].field", "premis_event_type")
+                        .param("filter[0].filter[0].operation", "EQ")
+                        .param("filter[0].filter[0].value", "transfer")
+                        .param("filter[0].filter[1].field", "premis_event_detail")
+                        .param("filter[0].filter[1].operation", "EQ")
+                        .param("filter[0].filter[1].value", "transfer detail")
+                        .param("filter[1].field", "premis_event")
+                        .param("filter[1].operation", "NESTED")
+                        .param("filter[1].filter[0].field", "premis_event_type")
+                        .param("filter[1].filter[0].operation", "EQ")
+                        .param("filter[1].filter[0].value", "validation")
+                        .param("filter[1].filter[1].field", "premis_event_detail")
+                        .param("filter[1].filter[1].operation", "EQ")
+                        .param("filter[1].filter[1].value", "validation detail")
+                )
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.items", hasSize(1)));
     }
@@ -286,24 +286,24 @@ public class IndexIntegrationTest extends TransformerFactoryWorkaroundTest imple
     @Test
     public void testQueryDateTimeField() throws Exception {
         mvc(api).perform(get("/api/aip/list")
-                .param("sort", IndexedArclibXmlDocument.CREATED)
-                .param("order", Order.DESC.toString())
+                        .param("sort", IndexedArclibXmlDocument.CREATED)
+                        .param("order", Order.DESC.toString())
 
-                .param("filter[0].field", IndexedArclibXmlDocument.CREATED)
-                .param("filter[0].operation", "GT")
-                .param("filter[0].value", "2018-03-08T10:59:00Z")
-        )
+                        .param("filter[0].field", IndexedArclibXmlDocument.CREATED)
+                        .param("filter[0].operation", "GT")
+                        .param("filter[0].value", "2018-03-08T10:59:00Z")
+                )
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.items", hasSize(5)));
 
         mvc(api).perform(get("/api/aip/list")
-                .param("sort", IndexedArclibXmlDocument.CREATED)
-                .param("order", Order.DESC.toString())
+                        .param("sort", IndexedArclibXmlDocument.CREATED)
+                        .param("order", Order.DESC.toString())
 
-                .param("filter[0].field", IndexedArclibXmlDocument.CREATED)
-                .param("filter[0].operation", "LT")
-                .param("filter[0].value", "2018-03-08T10:59:00Z")
-        )
+                        .param("filter[0].field", IndexedArclibXmlDocument.CREATED)
+                        .param("filter[0].operation", "LT")
+                        .param("filter[0].value", "2018-03-08T10:59:00Z")
+                )
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.items", empty()));
     }
@@ -314,31 +314,31 @@ public class IndexIntegrationTest extends TransformerFactoryWorkaroundTest imple
     @Test
     public void testQueryInternal() throws Exception {
         mvc(api).perform(get("/api/aip/list")
-                .param("filter[0].operation", "AND")
+                        .param("filter[0].operation", "AND")
 
-                .param("filter[0].filter[0].field", "id")
-                .param("filter[0].filter[0].operation", "ENDWITH")
-                .param("filter[0].filter[0].value", XML1_ID.substring(8))
+                        .param("filter[0].filter[0].field", "id")
+                        .param("filter[0].filter[0].operation", "ENDWITH")
+                        .param("filter[0].filter[0].value", XML1_ID.substring(8))
 
-                .param("filter[0].filter[1].field", "id")
-                .param("filter[0].filter[1].operation", "STARTWITH")
-                .param("filter[0].filter[1].value", XML1_ID.substring(0, 5))
-        )
+                        .param("filter[0].filter[1].field", "id")
+                        .param("filter[0].filter[1].operation", "STARTWITH")
+                        .param("filter[0].filter[1].value", XML1_ID.substring(0, 5))
+                )
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.items", hasSize(1)))
                 .andExpect(jsonPath("$.items[0].id").value(XML1_ID));
 
         mvc(api).perform(get("/api/aip/list")
-                .param("filter[0].operation", "OR")
+                        .param("filter[0].operation", "OR")
 
-                .param("filter[0].filter[0].field", "id")
-                .param("filter[0].filter[0].operation", "EQ")
-                .param("filter[0].filter[0].value", XML1_ID)
+                        .param("filter[0].filter[0].field", "id")
+                        .param("filter[0].filter[0].operation", "EQ")
+                        .param("filter[0].filter[0].value", XML1_ID)
 
-                .param("filter[0].filter[1].field", "id")
-                .param("filter[0].filter[1].operation", "EQ")
-                .param("filter[0].filter[1].value", XML2_ID)
-        )
+                        .param("filter[0].filter[1].field", "id")
+                        .param("filter[0].filter[1].operation", "EQ")
+                        .param("filter[0].filter[1].value", XML2_ID)
+                )
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.items", hasSize(2)));
     }
@@ -346,22 +346,22 @@ public class IndexIntegrationTest extends TransformerFactoryWorkaroundTest imple
     @Test
     public void testUuidSearch() throws Exception {
         mvc(api).perform(get("/api/aip/list")
-                .param("filter[0].field", ELEMENT_INDEX_TYPE_VALUE)
-                .param("filter[0].operation", FilterOperation.NESTED.toString())
-                .param("filter[0].filter[0].field", ELEMENT_CONTENT)
-                .param("filter[0].filter[0].operation", FilterOperation.CONTAINS.toString())
-                .param("filter[0].filter[0].value", "7033d800-0935-11e4-beed-5ef3fc9ae860")
-        )
+                        .param("filter[0].field", ELEMENT_INDEX_TYPE_VALUE)
+                        .param("filter[0].operation", FilterOperation.NESTED.toString())
+                        .param("filter[0].filter[0].field", ELEMENT_CONTENT)
+                        .param("filter[0].filter[0].operation", FilterOperation.CONTAINS.toString())
+                        .param("filter[0].filter[0].value", "7033d800-0935-11e4-beed-5ef3fc9ae860")
+                )
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.items", empty()));
 
         mvc(api).perform(get("/api/aip/list")
-                .param("filter[0].field", ELEMENT_INDEX_TYPE_VALUE)
-                .param("filter[0].operation", FilterOperation.NESTED.toString())
-                .param("filter[0].filter[0].field", ELEMENT_CONTENT)
-                .param("filter[0].filter[0].operation", FilterOperation.CONTAINS.toString())
-                .param("filter[0].filter[0].value", "7033d800-0935-11e4-beed-5ef3fc9ae867")
-        )
+                        .param("filter[0].field", ELEMENT_INDEX_TYPE_VALUE)
+                        .param("filter[0].operation", FilterOperation.NESTED.toString())
+                        .param("filter[0].filter[0].field", ELEMENT_CONTENT)
+                        .param("filter[0].filter[0].operation", FilterOperation.CONTAINS.toString())
+                        .param("filter[0].filter[0].value", "7033d800-0935-11e4-beed-5ef3fc9ae867")
+                )
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.items", not(empty())));
     }
@@ -369,22 +369,22 @@ public class IndexIntegrationTest extends TransformerFactoryWorkaroundTest imple
     @Test
     public void testUrnSearch() throws Exception {
         mvc(api).perform(get("/api/aip/list")
-                .param("filter[0].field", ELEMENT_INDEX_TYPE_VALUE)
-                .param("filter[0].operation", FilterOperation.NESTED.toString())
-                .param("filter[0].filter[0].field", ELEMENT_CONTENT)
-                .param("filter[0].filter[0].operation", FilterOperation.CONTAINS.toString())
-                .param("filter[0].filter[0].value", "urn:nbn:cz:nk-nonono")
-        )
+                        .param("filter[0].field", ELEMENT_INDEX_TYPE_VALUE)
+                        .param("filter[0].operation", FilterOperation.NESTED.toString())
+                        .param("filter[0].filter[0].field", ELEMENT_CONTENT)
+                        .param("filter[0].filter[0].operation", FilterOperation.CONTAINS.toString())
+                        .param("filter[0].filter[0].value", "urn:nbn:cz:nk-nonono")
+                )
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.items", empty()));
 
         mvc(api).perform(get("/api/aip/list")
-                .param("filter[0].field", ELEMENT_INDEX_TYPE_VALUE)
-                .param("filter[0].operation", FilterOperation.NESTED.toString())
-                .param("filter[0].filter[0].field", ELEMENT_CONTENT)
-                .param("filter[0].filter[0].operation", FilterOperation.CONTAINS.toString())
-                .param("filter[0].filter[0].value", "urn:nbn:cz:nk-0016ke")
-        )
+                        .param("filter[0].field", ELEMENT_INDEX_TYPE_VALUE)
+                        .param("filter[0].operation", FilterOperation.NESTED.toString())
+                        .param("filter[0].filter[0].field", ELEMENT_CONTENT)
+                        .param("filter[0].filter[0].operation", FilterOperation.CONTAINS.toString())
+                        .param("filter[0].filter[0].value", "urn:nbn:cz:nk-0016ke")
+                )
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.items", not(empty())));
     }
@@ -392,22 +392,22 @@ public class IndexIntegrationTest extends TransformerFactoryWorkaroundTest imple
     @Test
     public void testTrailingCommaSearch() throws Exception {
         mvc(api).perform(get("/api/aip/list")
-                .param("filter[0].field", ELEMENT_INDEX_TYPE_VALUE)
-                .param("filter[0].operation", FilterOperation.NESTED.toString())
-                .param("filter[0].filter[0].field", ELEMENT_CONTENT)
-                .param("filter[0].filter[0].operation", FilterOperation.CONTAINS.toString())
-                .param("filter[0].filter[0].value", "richard novak,")
-        )
+                        .param("filter[0].field", ELEMENT_INDEX_TYPE_VALUE)
+                        .param("filter[0].operation", FilterOperation.NESTED.toString())
+                        .param("filter[0].filter[0].field", ELEMENT_CONTENT)
+                        .param("filter[0].filter[0].operation", FilterOperation.CONTAINS.toString())
+                        .param("filter[0].filter[0].value", "richard novak,")
+                )
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.items", not(empty())));
 
         mvc(api).perform(get("/api/aip/list")
-                .param("filter[0].field", ELEMENT_INDEX_TYPE_VALUE)
-                .param("filter[0].operation", FilterOperation.NESTED.toString())
-                .param("filter[0].filter[0].field", ELEMENT_CONTENT)
-                .param("filter[0].filter[0].operation", FilterOperation.CONTAINS.toString())
-                .param("filter[0].filter[0].value", "richard novak")
-        )
+                        .param("filter[0].field", ELEMENT_INDEX_TYPE_VALUE)
+                        .param("filter[0].operation", FilterOperation.NESTED.toString())
+                        .param("filter[0].filter[0].field", ELEMENT_CONTENT)
+                        .param("filter[0].filter[0].operation", FilterOperation.CONTAINS.toString())
+                        .param("filter[0].filter[0].value", "richard novak")
+                )
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.items", not(empty())));
     }

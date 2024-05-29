@@ -6,7 +6,9 @@ import cz.cas.lib.arclib.domain.ingestWorkflow.IngestWorkflowState;
 import cz.cas.lib.arclib.domain.packages.AuthorialPackage;
 import cz.cas.lib.arclib.domain.packages.Sip;
 import cz.cas.lib.arclib.domainbase.exception.ConflictException;
+import cz.cas.lib.arclib.index.CreateIndexRecordDto;
 import cz.cas.lib.arclib.index.IndexedArclibXmlStore;
+import cz.cas.lib.arclib.index.SetLatestFlagsDto;
 import cz.cas.lib.arclib.index.solr.arclibxml.IndexedAipState;
 import cz.cas.lib.arclib.index.solr.arclibxml.IndexedArclibXmlDocument;
 import cz.cas.lib.arclib.service.AipService;
@@ -17,6 +19,7 @@ import cz.cas.lib.arclib.service.archivalStorage.ArchivalStorageServiceDebug;
 import cz.cas.lib.arclib.service.archivalStorage.ObjectState;
 import cz.cas.lib.arclib.store.AuthorialPackageStore;
 import cz.cas.lib.arclib.store.ProducerStore;
+import cz.cas.lib.arclib.store.SipStore;
 import cz.cas.lib.arclib.store.UserStore;
 import cz.cas.lib.arclib.utils.ArclibUtils;
 import lombok.Getter;
@@ -33,7 +36,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.time.Instant;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.stream.Collectors;
 
+import static cz.cas.lib.arclib.domain.VersioningLevel.*;
 import static cz.cas.lib.arclib.utils.ArclibUtils.*;
 
 @Slf4j
@@ -49,6 +56,7 @@ public class StorageSuccessVerifierDelegate extends ArclibDelegate {
     private UserStore userStore;
     private AuthorialPackageStore authorialPackageStore;
     private DeletionRequestService deletionRequestService;
+    private SipStore sipStore;
     @Getter
     private String toolName = "ARCLib_archival_storage_verification";
 
@@ -75,8 +83,9 @@ public class StorageSuccessVerifierDelegate extends ArclibDelegate {
     public void executeArclibDelegate(DelegateExecution execution) throws ArchivalStorageException, IOException {
         execution.setVariable(BpmConstants.ArchivalStorage.archivalStorageResult, null);
 
+        String ingestWorkflowExternalId = getIngestWorkflowExternalId(execution);
         IngestWorkflow ingestWorkflow = ingestWorkflowService.findByExternalId(ingestWorkflowExternalId);
-        boolean xmlVersioning = ingestWorkflow.getVersioningLevel() == VersioningLevel.ARCLIB_XML_VERSIONING;
+        boolean xmlVersioning = ingestWorkflow.getVersioningLevel() == ARCLIB_XML_VERSIONING;
         String aipId = ingestWorkflow.getSip().getId();
         boolean debuggingModeActive = isInDebugMode(execution);
         String objectLogId = xmlVersioning
@@ -134,6 +143,7 @@ public class StorageSuccessVerifierDelegate extends ArclibDelegate {
     }
 
     private void success(IngestWorkflow ingestWorkflow, boolean debuggingModeActive, DelegateExecution execution) throws IOException, ArchivalStorageException {
+        String ingestWorkflowExternalId = ingestWorkflow.getExternalId();
         Instant NOW = Instant.now();
         ingestWorkflow.setProcessingState(IngestWorkflowState.PERSISTED);
         ingestWorkflow.setLatestVersion(true);
@@ -141,34 +151,88 @@ public class StorageSuccessVerifierDelegate extends ArclibDelegate {
         Long idleTimeSum = getLongVariable(execution, BpmConstants.ProcessVariables.idleTime);
         ingestWorkflow.setProcessingTime((NOW.toEpochMilli() - ingestWorkflow.getCreated().toEpochMilli() - idleTimeSum) / 1000);
 
-        IngestWorkflow relatedWorkflow = ingestWorkflow.getRelatedWorkflow();
-        byte[] previousAipXml = null;
-        if (relatedWorkflow != null) {
-            InputStream previousAipXmlStream = debuggingModeActive
-                    ? archivalStorageServiceDebug.exportSingleXml(relatedWorkflow.getSip().getId(), relatedWorkflow.getXmlVersionNumber())
-                    : archivalStorageService.exportSingleXml(relatedWorkflow.getSip().getId(), relatedWorkflow.getXmlVersionNumber());
-            previousAipXml = IOUtils.toByteArray(previousAipXmlStream);
-            relatedWorkflow.setLatestVersion(false);
-            ingestWorkflowService.save(relatedWorkflow);
-        }
-
         String producerId = (String) execution.getVariable(BpmConstants.ProcessVariables.producerId);
         User personResponsibleForIngest = userStore.find(getResponsiblePerson(execution));
         Producer producer = producerStore.find(producerId);
-        indexArclibXmlStore.createIndex(Files.readAllBytes(getAipXmlWorkspacePath(ingestWorkflowExternalId, workspace)), producerId, producer.getName(), personResponsibleForIngest.getUsername(), IndexedAipState.ARCHIVED, debuggingModeActive, true);
-        if (relatedWorkflow != null)
-            indexArclibXmlStore.setLatestFlag(relatedWorkflow.getExternalId(), false, previousAipXml);
-        log.debug("ArclibXml of IngestWorkflow with external id {} has been indexed.", ingestWorkflowExternalId);
+        VersioningLevel versioningLevel = ingestWorkflow.getVersioningLevel();
+        Sip sip = ingestWorkflow.getSip();
+        Sip previousVersionSip = sip.getPreviousVersionSip();
+        boolean newWorkflowIsLatestData = versioningLevel == NO_VERSIONING || versioningLevel == SIP_PACKAGE_VERSIONING && previousVersionSip.isLatestVersion() || versioningLevel == ARCLIB_XML_VERSIONING && sip.isLatestVersion();
+
+        //update latest flags of related entities in DB and create index DTOs
+        CreateIndexRecordDto newIndexRecordDto = new CreateIndexRecordDto(Files.readAllBytes(getAipXmlWorkspacePath(ingestWorkflowExternalId, workspace)), producerId, producer.getName(), personResponsibleForIngest.getUsername(), IndexedAipState.ARCHIVED, debuggingModeActive, true, newWorkflowIsLatestData);
+        Map<IngestWorkflow, SetLatestFlagsDto> relatedIndexUpdates = new HashMap<>();
+        if (newWorkflowIsLatestData && !sip.isLatestVersion()) {
+            sip.setLatestVersion(true);
+            sipStore.save(sip);
+            if (versioningLevel == SIP_PACKAGE_VERSIONING) {
+                for (IngestWorkflow iwOfPreviousSip : ingestWorkflowService.findBySipId(previousVersionSip.getId()).stream().filter(iw -> iw.getProcessingState() == IngestWorkflowState.PERSISTED).collect(Collectors.toList())) {
+                    relatedIndexUpdates.put(iwOfPreviousSip, new SetLatestFlagsDto(iwOfPreviousSip.getExternalId(), false, false, null));
+                }
+                previousVersionSip.setLatestVersion(false);
+                sipStore.save(previousVersionSip);
+            }
+        }
+        if (ingestWorkflow.getRelatedWorkflow() != null) {
+            IngestWorkflow relatedWorkflow = ingestWorkflow.getRelatedWorkflow();
+            relatedWorkflow.setLatestVersion(false);
+            ingestWorkflowService.save(relatedWorkflow);
+            if (!relatedIndexUpdates.containsKey(relatedWorkflow)) {
+                relatedIndexUpdates.put(relatedWorkflow, new SetLatestFlagsDto(relatedWorkflow.getExternalId(), false, versioningLevel == ARCLIB_XML_VERSIONING && sip.isLatestVersion(), null));
+            }
+        }
 
         ingestWorkflowService.save(ingestWorkflow);
         log.info("Processing of ingest workflow with external id {} has finished. The ingest workflow state changed to {}.", ingestWorkflowExternalId, IngestWorkflowState.PERSISTED);
 
+        AuthorialPackage authorialPackageInDb = sip.getAuthorialPackage();
+
+        //update authorial ID
+        String extractedAuthorialId = getStringVariable(execution, BpmConstants.ProcessVariables.extractedAuthorialId);
+        if (!extractedAuthorialId.equals(authorialPackageInDb.getAuthorialId())) {
+            log.info("changing authorial package id from: {} to: {}", authorialPackageInDb.getAuthorialId(), extractedAuthorialId);
+            authorialPackageInDb.setAuthorialId(extractedAuthorialId);
+            authorialPackageStore.save(authorialPackageInDb);
+        }
+
+        //remove previous SIP version if requested by config
+        Pair<Boolean, String> booleanConfig = ArclibUtils.parseBooleanConfig(getConfigRoot(execution), DELETE_PREVIOUS_SIP_VERSION_CONFIG_PATH);
+        Sip previousSipVersion = previousVersionSip;
+        if (booleanConfig.getLeft() != null && booleanConfig.getLeft() && previousSipVersion != null) {
+            try {
+                deletionRequestService.createDeletionRequest(previousSipVersion.getId(), personResponsibleForIngest.getId());
+            } catch (ConflictException c) {
+                log.info("skipped creation of deletion request for previous AIP {} as the deletion request already exists", previousSipVersion.getId());
+            }
+        }
+
+        aipService.deactivateLock(authorialPackageInDb.getId(), false);
+
+        markChangesInIndex(ingestWorkflowExternalId, newIndexRecordDto, relatedIndexUpdates, debuggingModeActive);
+        finishAtWorkspace(ingestWorkflow);
+    }
+
+    private void markChangesInIndex(String ingestWorkflowExternalId, CreateIndexRecordDto newIndexRecord,
+                                    Map<IngestWorkflow, SetLatestFlagsDto> setLatestFlagsDtos,
+                                    boolean debuggingModeActive) throws ArchivalStorageException, IOException {
+        indexArclibXmlStore.createIndex(newIndexRecord);
+        for (Map.Entry<IngestWorkflow, SetLatestFlagsDto> e : setLatestFlagsDtos.entrySet()) {
+            e.getValue().setAipXml(IOUtils.toByteArray(getXmlFromStorage(debuggingModeActive, e.getKey())));
+            indexArclibXmlStore.setLatestFlags(e.getValue());
+            //free RAM
+            e.getValue().setAipXml(null);
+        }
+        log.debug("ArclibXml of IngestWorkflow with external id {} has been indexed.", ingestWorkflowExternalId);
+    }
+
+    private void finishAtWorkspace(IngestWorkflow ingestWorkflow) throws IOException {
         //delete data from workspace
+        String ingestWorkflowExternalId = ingestWorkflow.getExternalId();
         FileSystemUtils.deleteRecursively(getIngestWorkflowWorkspacePath(ingestWorkflowExternalId, workspace).toAbsolutePath().toFile());
         log.debug("Data of ingest workflow with external id {} has been deleted from workspace.", ingestWorkflowExternalId);
 
+        //delete SIP from transfer area or change prefix of batch
         Batch workflowBatch = ingestWorkflow.getBatch();
-        //delete SIP from transfer area
         if (deleteSipFromTransferArea) {
             // automatic processing
             if (workflowBatch.getIngestRoutine() != null && workflowBatch.getIngestRoutine().isAuto()) {
@@ -183,28 +247,12 @@ public class StorageSuccessVerifierDelegate extends ArclibDelegate {
             log.debug(String.format("Changing prefix of file:'%s' from:'%s' to:'%s'.", ingestWorkflow.getFileName(), AutoIngestFilePrefix.PROCESSING.getPrefix(), AutoIngestFilePrefix.ARCHIVED.getPrefix()));
             changeFilePrefix(AutoIngestFilePrefix.PROCESSING, AutoIngestFilePrefix.ARCHIVED, ingestWorkflow);
         }
+    }
 
-        AuthorialPackage authorialPackageInDb = ingestWorkflow.getSip().getAuthorialPackage();
-
-        String extractedAuthorialId = getStringVariable(execution, BpmConstants.ProcessVariables.extractedAuthorialId);
-        if (!extractedAuthorialId.equals(authorialPackageInDb.getAuthorialId())) {
-            log.info("changing authorial package id from: {} to: {}", authorialPackageInDb.getAuthorialId(), extractedAuthorialId);
-            authorialPackageInDb.setAuthorialId(extractedAuthorialId);
-            authorialPackageStore.save(authorialPackageInDb);
-        }
-
-        //remove previous SIP version if requested by config
-        Pair<Boolean, String> booleanConfig = ArclibUtils.parseBooleanConfig(getConfigRoot(execution), DELETE_PREVIOUS_SIP_VERSION_CONFIG_PATH);
-        Sip previousSipVersion = ingestWorkflow.getSip().getPreviousVersionSip();
-        if (booleanConfig.getLeft() != null && booleanConfig.getLeft() && previousSipVersion != null) {
-            try {
-                deletionRequestService.createDeletionRequest(previousSipVersion.getId(), personResponsibleForIngest.getId());
-            } catch (ConflictException c) {
-                log.info("skipped creation of deletion request for previous AIP {} as the deletion request already exists", previousSipVersion.getId());
-            }
-        }
-
-        aipService.deactivateLock(authorialPackageInDb.getId(), false);
+    private InputStream getXmlFromStorage(boolean debuggingModeActive, IngestWorkflow iw) throws IOException, ArchivalStorageException {
+        return debuggingModeActive
+                ? archivalStorageServiceDebug.exportSingleXml(iw.getSip().getId(), iw.getXmlVersionNumber())
+                : archivalStorageService.exportSingleXml(iw.getSip().getId(), iw.getXmlVersionNumber());
     }
 
     @Inject
@@ -250,5 +298,10 @@ public class StorageSuccessVerifierDelegate extends ArclibDelegate {
     @Inject
     public void setAuthorialPackageStore(AuthorialPackageStore authorialPackageStore) {
         this.authorialPackageStore = authorialPackageStore;
+    }
+
+    @Inject
+    public void setSipStore(SipStore sipStore) {
+        this.sipStore = sipStore;
     }
 }

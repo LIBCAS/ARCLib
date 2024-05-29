@@ -1,6 +1,7 @@
 package cz.cas.lib.arclib.domain.packages;
 
 import cz.cas.lib.arclib.domain.Hash;
+import cz.cas.lib.arclib.domain.ingestWorkflow.IngestWorkflowState;
 import cz.cas.lib.arclib.domainbase.domain.DatedObject;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -60,4 +61,9 @@ public class Sip extends DatedObject {
      * Velikost obsahu AIP balíku (velikost ZIPu, vygenerována na konci ingest)
      */
     private Long sizeInBytes;
+
+    /**
+     * Jedná sa o najnovšiu verziu SIP, flag je nastaven až po úspešném přepnutí do stavu {@link IngestWorkflowState#PERSISTED}
+     */
+    private boolean isLatestVersion;
 }
