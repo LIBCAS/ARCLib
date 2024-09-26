@@ -11,11 +11,11 @@ import cz.cas.lib.arclib.store.IngestWorkflowStore;
 import cz.cas.lib.arclib.store.SipStore;
 import cz.cas.lib.core.sequence.Generator;
 import helper.DbTest;
+import org.apache.solr.client.solrj.SolrClient;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.springframework.data.solr.core.SolrTemplate;
 
 import java.util.Collection;
 
@@ -44,7 +44,7 @@ public class AuthorialPackageServiceTest extends DbTest {
     @Mock
     private IndexedArclibXmlStore arclibXmlStore;
     @Mock
-    private SolrTemplate solrTemplate;
+    private SolrClient solrClient;
     @Mock
     private Generator generator;
 
@@ -60,7 +60,7 @@ public class AuthorialPackageServiceTest extends DbTest {
         service.setAuthorialPackageStore(authorialPackageStore);
         service.setBatchService(batchService);
         batchService.setDelegate(batchStore);
-        batchStore.setTemplate(solrTemplate);
+        batchStore.setSolrClient(solrClient);
         service.setIngestWorkflowService(ingestWorkflowService);
         ingestWorkflowService.setStore(ingestWorkflowStore);
         ingestWorkflowStore.setGenerator(generator);

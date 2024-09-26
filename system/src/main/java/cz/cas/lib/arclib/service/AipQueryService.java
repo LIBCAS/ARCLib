@@ -18,11 +18,12 @@ import cz.cas.lib.core.index.dto.Params;
 import cz.cas.lib.core.index.dto.Result;
 import cz.cas.lib.core.store.Transactional;
 import lombok.NonNull;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
-import javax.inject.Inject;
-import javax.servlet.http.HttpServletResponse;
+
+import jakarta.servlet.http.HttpServletResponse;
 import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -126,37 +127,37 @@ public class AipQueryService {
         store.hardDelete(entity);
     }
 
-    @Inject
+    @Autowired
     public void setExportRoutineStore(ExportRoutineStore exportRoutineStore) {
         this.exportRoutineStore = exportRoutineStore;
     }
 
-    @Inject
+    @Autowired
     public void setIndexArclibXmlStore(IndexedArclibXmlStore indexArclibXmlStore) {
         this.indexArclibXmlStore = indexArclibXmlStore;
     }
 
-    @Inject
+    @Autowired
     public void setStore(AipQueryStore store) {
         this.store = store;
     }
 
-    @Inject
+    @Autowired
     public void setBeanMappingService(BeanMappingService beanMappingService) {
         this.beanMappingService = beanMappingService;
     }
 
-    @Inject
+    @Autowired
     public void setUserDetails(UserDetails userDetails) {
         this.userDetails = userDetails;
     }
 
-    @Inject
+    @Autowired
     public void setFavoritesBucketService(FavoritesBucketService favoritesBucketService) {
         this.favoritesBucketService = favoritesBucketService;
     }
 
-    @Inject
+    @Autowired
     public void setAipExportService(AipExportService aipExportService) {
         this.aipExportService = aipExportService;
     }

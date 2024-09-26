@@ -7,45 +7,39 @@ import cz.cas.lib.arclib.domainbase.exception.MissingObject;
 import cz.cas.lib.arclib.index.*;
 import cz.cas.lib.arclib.index.solr.IndexQueryUtils;
 import cz.cas.lib.arclib.utils.XmlUtils;
+import cz.cas.lib.core.index.Indexed;
 import cz.cas.lib.core.index.dto.Params;
 import cz.cas.lib.core.index.dto.Result;
 import cz.cas.lib.core.index.solr.IndexField;
 import cz.cas.lib.core.index.solr.IndexFieldType;
+import jakarta.annotation.PostConstruct;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.reflect.FieldUtils;
 import org.apache.commons.lang3.tuple.Pair;
+import org.apache.solr.client.solrj.SolrClient;
 import org.apache.solr.client.solrj.SolrQuery;
+import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.request.QueryRequest;
+import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.common.SolrDocument;
 import org.apache.solr.common.SolrDocumentList;
 import org.apache.solr.common.SolrInputDocument;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.dao.DataAccessResourceFailureException;
-import org.springframework.data.domain.Page;
-import org.springframework.data.solr.UncategorizedSolrException;
-import org.springframework.data.solr.core.SolrTemplate;
-import org.springframework.data.solr.core.mapping.Dynamic;
-import org.springframework.data.solr.core.mapping.Indexed;
-import org.springframework.data.solr.core.query.Criteria;
-import org.springframework.data.solr.core.query.SimpleFilterQuery;
-import org.springframework.data.solr.core.query.SimpleQuery;
-import org.springframework.data.solr.core.query.SolrDataQuery;
 import org.springframework.stereotype.Service;
 import org.w3c.dom.*;
 
-import javax.annotation.PostConstruct;
-import javax.inject.Inject;
 import javax.xml.bind.DatatypeConverter;
 import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpressionException;
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
@@ -59,7 +53,8 @@ import java.util.stream.Collectors;
 import static cz.cas.lib.arclib.index.solr.IndexQueryUtils.*;
 import static cz.cas.lib.arclib.utils.ArclibUtils.*;
 import static cz.cas.lib.arclib.utils.XmlUtils.createDomAndXpath;
-import static cz.cas.lib.core.util.Utils.*;
+import static cz.cas.lib.core.util.Utils.eq;
+import static cz.cas.lib.core.util.Utils.ne;
 import static org.w3c.dom.Node.TEXT_NODE;
 
 @Service
@@ -71,7 +66,7 @@ public class SolrArclibXmlStore implements IndexedArclibXmlStore {
      */
     private Map<String, ArclibXmlIndexTypeConfig> arclibXmlXpathIndexConfig = new HashMap<>();
 
-    private SolrTemplate solrTemplate;
+    private SolrClient solrClient;
     private String coreName;
     private Map<String, String> uris = new HashMap<>();
     @Getter
@@ -148,31 +143,25 @@ public class SolrArclibXmlStore implements IndexedArclibXmlStore {
             mainDoc.addChildDocument(doc);
         }
 
-        try {
-            removeIndex(mainDocIdString);
-            solrTemplate.saveDocument(coreName, mainDoc);
-            solrTemplate.commit(coreName);
-        } catch (UncategorizedSolrException ex) {
-            log.error(ex.getMessage());
-            throw ex;
-        }
+        removeIndex(mainDocIdString);
+        solrClient.add(coreName, mainDoc);
+        solrClient.commit(coreName);
     }
 
     @Override
     public Result<IndexedArclibXmlDocument> findAll(Params params) {
-        SimpleQuery query = new SimpleQuery();
+        SolrQuery solrQuery = new SolrQuery("*:*");
         Map<String, IndexField> indexedFields = INDEXED_FIELDS_MAP.get(getMainDocumentIndexType());
-        initializeQuery(query, params, indexedFields);
+        initializeQuery(solrQuery, params, indexedFields);
 
-        query.addCriteria(Criteria.where(IndexQueryUtils.TYPE_FIELD).in(getMainDocumentIndexType()));
-        if (params.getInternalQuery() != null)
-            query.addCriteria(params.getInternalQuery());
-        query.addFilterQuery(new SimpleFilterQuery(buildFilters(params, getMainDocumentIndexType(), indexedFields)));
+        solrQuery.addFilterQuery(IndexQueryUtils.TYPE_FIELD + ":" + getMainDocumentIndexType());
+        solrQuery.addFilterQuery(buildFilters(params, getMainDocumentIndexType(), indexedFields));
+
         log.info("Searching for documents");
-        Page<IndexedArclibXmlDocument> page;
+        QueryResponse queryResponse;
         try {
-            page = solrTemplate.query(coreName, query, IndexedArclibXmlDocument.class);
-        } catch (UncategorizedSolrException ex) {
+            queryResponse = solrClient.query(coreName, solrQuery);
+        } catch (SolrServerException ex) {
             if (ex.getMessage() != null) {
                 Matcher matcher = Pattern.compile(".+ undefined field (.+)").matcher(ex.getMessage());
                 if (matcher.find()) {
@@ -180,13 +169,15 @@ public class SolrArclibXmlStore implements IndexedArclibXmlStore {
                     throw new BadArgument(msg);
                 }
             }
-            throw ex;
+            throw new RuntimeException(ex);
         } catch (DataAccessResourceFailureException ex) {
             throw new BadArgument(ex.getMessage());
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
         Result<IndexedArclibXmlDocument> result = new Result<>();
-        result.setItems(page.getContent());
-        result.setCount(page.getTotalElements());
+        result.setItems(queryResponse.getBeans(IndexedArclibXmlDocument.class));
+        result.setCount(queryResponse.getResults().getNumFound());
         log.info("Found documents: " + Arrays.toString(result.getItems().stream().map(IndexedArclibXmlDocument::getId).toArray()));
         return result;
     }
@@ -210,7 +201,7 @@ public class SolrArclibXmlStore implements IndexedArclibXmlStore {
 
 
     /**
-     * changes state of the document.. this can't be done via partial update as it breaks parent-children relationship
+     * changes state of the document. this can't be done via partial update as it breaks parent-children relationship
      *
      * @param arclibXmlDocumentId
      * @param newAipState
@@ -231,7 +222,7 @@ public class SolrArclibXmlStore implements IndexedArclibXmlStore {
     }
 
     /**
-     * changes {@link IndexedArclibXmlDocument#LATEST} and {@link IndexedArclibXmlDocument#LATEST_DATA} flags of the document.. this can't be done via partial update as it breaks parent-children relationship
+     * changes {@link IndexedArclibXmlDocument#LATEST} and {@link IndexedArclibXmlDocument#LATEST_DATA} flags of the document. this can't be done via partial update as it breaks parent-children relationship
      */
     @Override
     public void setLatestFlags(SetLatestFlagsDto dto) {
@@ -251,9 +242,12 @@ public class SolrArclibXmlStore implements IndexedArclibXmlStore {
 
     @Override
     public void removeIndex(String id) {
-        SolrDataQuery deleteQuery = new SimpleQuery("id:" + id + "*");
-        solrTemplate.delete(coreName, deleteQuery);
-        solrTemplate.commit(coreName);
+        try {
+            solrClient.deleteById(coreName, id);
+            solrClient.commit(coreName);
+        } catch (SolrServerException | IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
@@ -263,20 +257,25 @@ public class SolrArclibXmlStore implements IndexedArclibXmlStore {
 
     @Override
     public IndexedArclibXmlDocument findArclibXmlIndexDocument(String externalId) {
-        SimpleQuery query = new SimpleQuery();
-        query.addCriteria(Criteria.where(IndexedArclibXmlDocument.ID).in(asSet(externalId)));
+        SolrQuery query = new SolrQuery("*:*");
+        query.addFilterQuery(IndexedArclibXmlDocument.ID + ":" + externalId);
         log.info("Searching for document with id " + externalId);
-        Page<IndexedArclibXmlDocument> page = solrTemplate.query(coreName, query, IndexedArclibXmlDocument.class);
-        ne(page.getContent().size(), 0, () -> new MissingObject(IndexedArclibXmlDocument.class, externalId));
-        eq(page.getContent().size(), 1, () -> new ConflictException("found multiple IndexedArclibXmlDocuments with id: " + externalId));
-        return page.getContent().get(0);
+        QueryResponse queryResponse;
+        try {
+            queryResponse = solrClient.query(coreName, query);
+        } catch (SolrServerException | IOException e) {
+            throw new RuntimeException(e);
+        }
+        List<IndexedArclibXmlDocument> responseObjects = queryResponse.getBeans(IndexedArclibXmlDocument.class);
+        ne(responseObjects.size(), 0, () -> new MissingObject(IndexedArclibXmlDocument.class, externalId));
+        eq(responseObjects.size(), 1, () -> new ConflictException("found multiple IndexedArclibXmlDocuments with id: " + externalId));
+        return responseObjects.get(0);
     }
 
     @Override
     public List<IndexedArclibXmlDocument> findWithChildren(Collection<String> docIds, List<SimpleIndexFilter> additionalFilters) {
-        SolrQuery q = new SolrQuery();
+        SolrQuery q = new SolrQuery("*:*");
         q.setParam("collection", coreName);
-        q.setQuery("*:*");
         if (additionalFilters != null) {
             q.addFilterQuery(additionalFilters.stream().map(this::parseSimpleFilter).toArray(String[]::new));
         }
@@ -288,7 +287,7 @@ public class SolrArclibXmlStore implements IndexedArclibXmlStore {
             singleDocQuery.setParam("fl", "*", childTransformerString);
             SolrDocumentList response = null;
             try {
-                response = (SolrDocumentList) solrTemplate.getSolrClient().request(new QueryRequest(singleDocQuery)).get("response");
+                response = (SolrDocumentList) solrClient.request(new QueryRequest(singleDocQuery)).get("response");
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
@@ -330,7 +329,7 @@ public class SolrArclibXmlStore implements IndexedArclibXmlStore {
     public void init() {
         //prepare
         Pair<Document, XPath> domAndXpath;
-        try (InputStream is = getClass().getResourceAsStream("/index/config/schema.xml")) {
+        try (InputStream is = getClass().getResourceAsStream("/index/config/arclib-arclibXmlC-schema/conf/schema.xml")) {
             domAndXpath = createDomAndXpath(is, null);
         }
         Document schemaXmlDom = domAndXpath.getKey();
@@ -356,8 +355,6 @@ public class SolrArclibXmlStore implements IndexedArclibXmlStore {
         //fill INDEXED_FIELDS_MAP with those fields which are not configured in CSV but are declared via annotations
         Map<String, IndexField> parentIndexFields = INDEXED_FIELDS_MAP.get(IndexedArclibXmlDocument.MAIN_INDEX_TYPE_VALUE);
         for (java.lang.reflect.Field field : FieldUtils.getFieldsWithAnnotation(IndexedArclibXmlDocument.class, Indexed.class)) {
-            if (field.isAnnotationPresent(Dynamic.class))
-                continue;
             IndexField solrField = new IndexField(field);
             if (parentIndexFields.containsKey(solrField.getFieldName()))
                 continue;
@@ -505,23 +502,22 @@ public class SolrArclibXmlStore implements IndexedArclibXmlStore {
     }
 
     @Autowired
-    @Qualifier("ArclibXmlSolrTemplate")
-    public void setSolrTemplate(SolrTemplate solrTemplate) {
-        this.solrTemplate = solrTemplate;
+    public void setSolrClient(SolrClient solrClient) {
+        this.solrClient = solrClient;
     }
 
-    @Inject
+    @Autowired
     public void setCoreName(@Value("${solr.arclibxml.corename}") String coreName) {
         this.coreName = coreName;
     }
 
-    @Inject
+    @Autowired
     public void setArclibXmlIndexConfig(@Value("${arclib.arclibXmlIndexConfig}")
-                                                Resource arclibXmlIndexConfig) {
+                                        Resource arclibXmlIndexConfig) {
         this.arclibXmlIndexConfig = arclibXmlIndexConfig;
     }
 
-    @Inject
+    @Autowired
     public void setUris(@Value("${namespaces.mets}") String mets, @Value("${namespaces.xsi}") String
             xsi, @Value("${namespaces.arclib}") String arclib, @Value("${namespaces" +
             ".premis}") String premis, @Value("${namespaces.oai_dc}") String

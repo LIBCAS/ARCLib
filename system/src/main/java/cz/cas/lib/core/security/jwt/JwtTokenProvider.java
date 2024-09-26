@@ -6,6 +6,9 @@ import io.jsonwebtoken.ClaimJwtException;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.io.Decoders;
+import io.jsonwebtoken.security.Keys;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -13,7 +16,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.stereotype.Service;
 
-import javax.inject.Inject;
 import java.time.Instant;
 import java.util.Date;
 import java.util.Map;
@@ -43,10 +45,11 @@ public class JwtTokenProvider implements AuthenticationProvider {
         if (token.getPrincipal() instanceof String) {
 
             try {
-                Claims claims = Jwts.parser()
-                        .setSigningKey(secret)
-                        .parseClaimsJws((String) token.getPrincipal())
-                        .getBody();
+                Claims claims = (Claims) Jwts.parser()
+                        .verifyWith(Keys.hmacShaKeyFor(Decoders.BASE64.decode(secret)))
+                        .build()
+                        .parse((String) token.getPrincipal())
+                        .getPayload();
 
                 UserDetails user = handler.parseClaims(claims); // fully load user with roles and permissions from DB
 
@@ -107,7 +110,7 @@ public class JwtTokenProvider implements AuthenticationProvider {
      *
      * @param secret Provided secret
      */
-    @Inject
+    @Autowired
     public void setSecret(@Value("${security.jwt.secret}") String secret) {
         this.secret = secret;
     }
@@ -117,7 +120,7 @@ public class JwtTokenProvider implements AuthenticationProvider {
      *
      * @param expiration Provided validity in seconds
      */
-    @Inject
+    @Autowired
     public void setExpiration(@Value("${security.jwt.expiration:300}") Long expiration) {
         this.expiration = expiration;
     }
@@ -127,12 +130,12 @@ public class JwtTokenProvider implements AuthenticationProvider {
      *
      * @param refresh Provided fresh in seconds
      */
-    @Inject
+    @Autowired
     public void setRefresh(@Value("${security.jwt.refresh:30}") Long refresh) {
         this.refresh = refresh;
     }
 
-    @Inject
+    @Autowired
     public void setHandler(JwtHandler handler) {
         this.handler = handler;
     }

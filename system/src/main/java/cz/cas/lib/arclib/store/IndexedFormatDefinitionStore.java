@@ -7,10 +7,11 @@ import cz.cas.lib.arclib.formatlibrary.store.FormatDefinitionStore;
 import cz.cas.lib.arclib.index.solr.entity.IndexedFormatDefinition;
 import cz.cas.lib.core.index.solr.IndexedDatedStore;
 import lombok.Getter;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Repository;
 
-import javax.inject.Inject;
+
 import java.util.List;
 
 @Repository
@@ -78,7 +79,7 @@ public class IndexedFormatDefinitionStore
         return indexObject;
     }
 
-    @Inject
+    @Autowired
     public void setDbFormatDefinitionStore(DbFormatDefinitionStore dbFormatDefinitionStore) {
         this.dbFormatDefinitionStore = dbFormatDefinitionStore;
     }

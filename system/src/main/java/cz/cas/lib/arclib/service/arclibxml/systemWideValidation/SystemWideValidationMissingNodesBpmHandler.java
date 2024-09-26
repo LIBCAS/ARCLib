@@ -11,9 +11,10 @@ import cz.cas.lib.arclib.service.IngestIssueService;
 import cz.cas.lib.arclib.store.IngestIssueDefinitionStore;
 import cz.cas.lib.arclib.utils.ArclibUtils;
 import org.camunda.bpm.engine.delegate.BpmnError;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import javax.inject.Inject;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -67,12 +68,12 @@ public class SystemWideValidationMissingNodesBpmHandler {
         }
     }
 
-    @Inject
+    @Autowired
     public void setIngestIssueDefinitionStore(IngestIssueDefinitionStore ingestIssueDefinitionStore) {
         this.ingestIssueDefinitionStore = ingestIssueDefinitionStore;
     }
 
-    @Inject
+    @Autowired
     public void setIngestIssueService(IngestIssueService ingestIssueService) {
         this.ingestIssueService = ingestIssueService;
     }

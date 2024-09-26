@@ -10,9 +10,10 @@ import cz.cas.lib.core.store.Transactional;
 import cz.cas.lib.core.store.TransactionalNew;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import javax.inject.Inject;
+
 import java.util.Collection;
 
 import static cz.cas.lib.core.util.Utils.notNull;
@@ -37,12 +38,20 @@ public class ToolService {
 
     @TransactionalNew
     public Tool createNewToolVersionIfNeeded(String toolName, String newVersion, IngestToolFunction function) {
+        String versionTrimmed = newVersion.trim();
+
         Tool latestToolVersion = store.findLatestToolByName(toolName);
-        if (latestToolVersion != null && newVersion.trim().equalsIgnoreCase(latestToolVersion.getVersion()))
+        if (latestToolVersion != null && versionTrimmed.equalsIgnoreCase(latestToolVersion.getVersion()))
             return latestToolVersion;
+
+        Tool toolWithSameNameAndVersion = store.findByNameAndVersion(toolName, versionTrimmed);
+        if(toolWithSameNameAndVersion!=null){
+            return store.save(toolWithSameNameAndVersion);
+        }
+
         Tool newToolVersion = new Tool();
         newToolVersion.setName(toolName);
-        newToolVersion.setVersion(newVersion.trim());
+        newToolVersion.setVersion(versionTrimmed);
         newToolVersion.setToolFunction(function);
         if (latestToolVersion != null) {
             newToolVersion.setInternal(latestToolVersion.isInternal());
@@ -86,12 +95,12 @@ public class ToolService {
         return store.findByNameAndVersion(name, version);
     }
 
-    @Inject
+    @Autowired
     public void setToolStore(ToolStore toolStore) {
         this.store = toolStore;
     }
 
-    @Inject
+    @Autowired
     public void setArclibMailCenter(ArclibMailCenter arclibMailCenter) {
         this.arclibMailCenter = arclibMailCenter;
     }

@@ -2,16 +2,22 @@ package cz.cas.lib.core.file;
 
 import cz.cas.lib.arclib.domainbase.exception.BadArgument;
 import cz.cas.lib.arclib.domainbase.exception.MissingObject;
-import io.swagger.annotations.*;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FilenameUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import javax.inject.Inject;
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -22,7 +28,7 @@ import static cz.cas.lib.core.util.Utils.notNull;
  */
 @Slf4j
 @RestController
-@Api(value = "file", description = "Api for accessing and storing files")
+@Tag(name = "file", description = "Api for accessing and storing files")
 @RequestMapping("/api/files")
 public class FileRefApi {
 
@@ -39,14 +45,13 @@ public class FileRefApi {
      * @return Content of a file in input stream
      * @throws MissingObject if the file was not found
      */
-    @ApiOperation(value = "Gets the content of a file with specified id.",
-            notes = "Returns content of a file in input stream.",
-            response = ResponseEntity.class)
+    @Operation(summary = "Gets the content of a file with specified id.",
+            description = "Returns content of a file in input stream.")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successful response", response = ResponseEntity.class),
-            @ApiResponse(code = 404, message = "The file was not found")})
+            @ApiResponse(responseCode = "200", description = "Successful response", content = @Content(schema = @Schema(implementation = ResponseEntity.class))),
+            @ApiResponse(responseCode = "404", description = "The file was not found")})
     @RequestMapping(value = "/{id}", method = RequestMethod.GET)
-    public ResponseEntity<InputStreamResource> download(@ApiParam(value = "Id of file to retrieve", required = true) @PathVariable("id") String id) {
+    public ResponseEntity<InputStreamResource> download(@Parameter(description = "Id of file to retrieve", required = true) @PathVariable("id") String id) {
 
         FileRef file = service.get(id);
         notNull(file, () -> new MissingObject(FileRef.class, id));
@@ -70,14 +75,13 @@ public class FileRefApi {
      * @param index      Should be the content of file indexed
      * @return Reference to a stored file
      */
-    @ApiOperation(value = "Uploads a file and returns the reference to the stored file.",
-            notes = "File should be uploaded as multipart/form-data.",
-            response = FileRef.class)
+    @Operation(summary = "Uploads a file and returns the reference to the stored file.",
+            description = "File should be uploaded as multipart/form-data.")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successful response", response = FileRef.class)})
+            @ApiResponse(responseCode = "200", description = "Successful response", content = @Content(schema = @Schema(implementation = FileRef.class)))})
     @RequestMapping(value = "/", method = RequestMethod.POST)
-    public FileRef upload(@ApiParam(value = "Provided file with metadata", required = true) @RequestParam("file") MultipartFile uploadFile,
-                          @ApiParam(value = "Should be the content of file indexed") @RequestParam(name = "index", defaultValue = "false") Boolean index) {
+    public FileRef upload(@Parameter(description = "Provided file with metadata", required = true) @RequestParam("file") MultipartFile uploadFile,
+                          @Parameter(description = "Should be the content of file indexed") @RequestParam(name = "index", defaultValue = "false") Boolean index) {
 
         try (InputStream stream = uploadFile.getInputStream()) {
             String filename = uploadFile.getOriginalFilename();
@@ -95,7 +99,7 @@ public class FileRefApi {
         }
     }
 
-    @Inject
+    @Autowired
     public void setService(FileRefService service) {
         this.service = service;
     }

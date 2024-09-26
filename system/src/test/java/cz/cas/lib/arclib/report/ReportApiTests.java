@@ -12,12 +12,13 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestName;
 import org.junit.runner.RunWith;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.annotation.Rollback;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import javax.inject.Inject;
+
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -40,9 +41,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @WithMockCustomUser(permissions = {Permissions.REPORT_TEMPLATE_RECORDS_READ, Permissions.REPORT_TEMPLATE_RECORDS_WRITE})
 public class ReportApiTests extends TransformerFactoryWorkaroundTest implements ApiTest {
 
-    @Inject
+    @Autowired
     private ReportApi api;
-    @Inject
+    @Autowired
     private ReportStore reportStore;
     @Rule
     public TestName name = new TestName();

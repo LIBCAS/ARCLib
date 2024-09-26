@@ -12,9 +12,10 @@ import cz.cas.lib.arclib.store.AuthorialPackageStore;
 import cz.cas.lib.arclib.store.SipStore;
 import cz.cas.lib.core.store.Transactional;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import javax.inject.Inject;
+
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.*;
@@ -77,32 +78,32 @@ public class AuthorialPackageService {
         log.info("authorial package with database id: " + authorialPackageId + " successfully forgot");
     }
 
-    @Inject
+    @Autowired
     public void setIngestWorkflowService(IngestWorkflowService ingestWorkflowService) {
         this.ingestWorkflowService = ingestWorkflowService;
     }
 
-    @Inject
+    @Autowired
     public void setBatchService(BatchService batchService) {
         this.batchService = batchService;
     }
 
-    @Inject
+    @Autowired
     public void setIndexArclibXmlStore(IndexedArclibXmlStore indexArclibXmlStore) {
         this.indexArclibXmlStore = indexArclibXmlStore;
     }
 
-    @Inject
+    @Autowired
     public void setSipStore(SipStore sipStore) {
         this.sipStore = sipStore;
     }
 
-    @Inject
+    @Autowired
     public void setAuthorialPackageStore(AuthorialPackageStore authorialPackageStore) {
         this.authorialPackageStore = authorialPackageStore;
     }
 
-    @Inject
+    @Autowired
     public void setArchivalStorageServiceDebug(ArchivalStorageServiceDebug archivalStorageServiceDebug) {
         this.archivalStorageServiceDebug = archivalStorageServiceDebug;
     }

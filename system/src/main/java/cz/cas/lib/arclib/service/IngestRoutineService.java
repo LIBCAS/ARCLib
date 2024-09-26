@@ -4,7 +4,6 @@ import cz.cas.lib.arclib.domain.IngestRoutine;
 import cz.cas.lib.arclib.domain.User;
 import cz.cas.lib.arclib.domain.profiles.ProducerProfile;
 import cz.cas.lib.arclib.domainbase.exception.BadArgument;
-import cz.cas.lib.arclib.domainbase.exception.ForbiddenOperation;
 import cz.cas.lib.arclib.domainbase.exception.MissingAttribute;
 import cz.cas.lib.arclib.domainbase.exception.MissingObject;
 import cz.cas.lib.arclib.dto.IngestRoutineDto;
@@ -19,12 +18,12 @@ import cz.cas.lib.core.scheduling.job.JobService;
 import cz.cas.lib.core.script.ScriptType;
 import cz.cas.lib.core.store.Transactional;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StreamUtils;
 
-import javax.inject.Inject;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.charset.Charset;
@@ -161,32 +160,32 @@ public class IngestRoutineService {
     }
 
 
-    @Inject
+    @Autowired
     public void setBeanMappingService(BeanMappingService beanMappingService) {
         this.beanMappingService = beanMappingService;
     }
 
-    @Inject
+    @Autowired
     public void setStore(IngestRoutineStore store) {
         this.store = store;
     }
 
-    @Inject
+    @Autowired
     public void setJobService(JobService jobService) {
         this.jobService = jobService;
     }
 
-    @Inject
+    @Autowired
     public void setUserDetails(UserDetails userDetails) {
         this.userDetails = userDetails;
     }
 
-    @Inject
+    @Autowired
     public void setProducerProfileStore(ProducerProfileStore producerProfileStore) {
         this.producerProfileStore = producerProfileStore;
     }
 
-    @Inject
+    @Autowired
     public void setBatchStartScript(@Value("${arclib.script.ingestRoutineBatchStart}") Resource batchStartScript) {
         this.batchStartScript = batchStartScript;
     }

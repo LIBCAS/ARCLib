@@ -5,9 +5,16 @@ import cz.cas.lib.arclib.domainbase.exception.MissingObject;
 import cz.cas.lib.arclib.formatlibrary.Permissions;
 import cz.cas.lib.arclib.formatlibrary.domain.PreservationPlanFileRef;
 import cz.cas.lib.arclib.formatlibrary.service.PreservationPlanFileRefService;
-import io.swagger.annotations.*;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FilenameUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -15,7 +22,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import javax.inject.Inject;
+
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -28,7 +35,7 @@ import static cz.cas.lib.arclib.domainbase.util.DomainBaseUtils.notNull;
  */
 @Slf4j
 @RestController
-@Api(value = "file", description = "Api for accessing and storing format files. [Mirror of /api/files]")
+@Tag(name = "file", description = "Api for accessing and storing format files. [Mirror of /api/files]")
 @RequestMapping("/api/format_files/")
 public class PreservationPlanFileRefApi {
 
@@ -43,16 +50,15 @@ public class PreservationPlanFileRefApi {
      * @return Content of a file in input stream
      * @throws MissingObject if the file was not found
      */
-    @ApiOperation(value = "Gets the content of a file with specified id.",
-            notes = "Returns content of a file in input stream.",
-            response = ResponseEntity.class)
+    @Operation(summary = "Gets the content of a file with specified id.",
+            description = "Returns content of a file in input stream.")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successful response", response = ResponseEntity.class),
-            @ApiResponse(code = 404, message = "The file was not found")
+            @ApiResponse(responseCode = "200", description = "Successful response", content = @Content(schema = @Schema(implementation = ResponseEntity.class))),
+            @ApiResponse(responseCode = "404", description = "The file was not found")
     })
     @GetMapping(value = "/{id}")
     @PreAuthorize("hasAuthority('" + Permissions.FORMAT_RECORDS_READ + "')")
-    public ResponseEntity<InputStreamResource> download(@ApiParam(value = "File ID", required = true) @PathVariable("id") String id) {
+    public ResponseEntity<InputStreamResource> download(@Parameter(description = "File ID", required = true) @PathVariable("id") String id) {
 
         PreservationPlanFileRef file = service.get(id);
         notNull(file, () -> new MissingObject(PreservationPlanFileRef.class, id));
@@ -73,14 +79,14 @@ public class PreservationPlanFileRefApi {
      * @param uploadFile Provided file with metadata
      * @return Reference to a stored file
      */
-    @ApiOperation(value = "Uploads a file and returns the reference to the stored file.",
-            notes = "File should be uploaded as multipart/form-data.", response = PreservationPlanFileRef.class)
+    @Operation(summary = "Uploads a file and returns the reference to the stored file.",
+            description = "File should be uploaded as multipart/form-data.")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successful response", response = PreservationPlanFileRef.class)
+            @ApiResponse(responseCode = "200", description = "Successful response", content = @Content(schema = @Schema(implementation = PreservationPlanFileRef.class)))
     })
     @PostMapping(value = "/")
     @PreAuthorize("hasAuthority('" + Permissions.FORMAT_RECORDS_WRITE + "')")
-    public PreservationPlanFileRef upload(@ApiParam(value = "Provided file with metadata", required = true) @RequestParam("file") MultipartFile uploadFile) {
+    public PreservationPlanFileRef upload(@Parameter(description = "Provided file with metadata", required = true) @RequestParam("file") MultipartFile uploadFile) {
 
         try (InputStream stream = uploadFile.getInputStream()) {
             String filename = uploadFile.getOriginalFilename();
@@ -98,7 +104,7 @@ public class PreservationPlanFileRefApi {
         }
     }
 
-    @Inject
+    @Autowired
     public void setService(PreservationPlanFileRefService service) {
         this.service = service;
     }

@@ -10,6 +10,7 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.*;
@@ -23,7 +24,7 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 
-import javax.inject.Inject;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
@@ -149,7 +150,7 @@ public class ArchivalStorageService {
             response = restTemplate.execute(baseEndpoint + "/storage/save",
                     HttpMethod.POST,
                     restTemplate.httpEntityCallback(requestEntity),
-                    res -> new ArchivalStorageResponse(res.getBody(), res.getStatusCode()));
+                    res -> new ArchivalStorageResponse(res.getBody(), HttpStatus.resolve(res.getStatusCode().value())));
             if (response != null && response.getStatusCode().is2xxSuccessful())
                 return response.getBody();
         } catch (Exception e) {
@@ -196,7 +197,7 @@ public class ArchivalStorageService {
             response = restTemplate.execute(baseEndpoint + "/storage/{aipId}/update",
                     HttpMethod.POST,
                     restTemplate.httpEntityCallback(requestEntity),
-                    res -> new ArchivalStorageResponse(res.getBody(), res.getStatusCode()),
+                    res -> new ArchivalStorageResponse(res.getBody(), HttpStatus.resolve(res.getStatusCode().value())),
                     vars);
             if (response != null && response.getStatusCode().is2xxSuccessful())
                 return response.getBody();
@@ -346,7 +347,7 @@ public class ArchivalStorageService {
         ArchivalStorageResponse response;
         try {
             ClientHttpResponse res = req.execute();
-            response = new ArchivalStorageResponse(res.getBody(), res.getStatusCode());
+            response = new ArchivalStorageResponse(res.getBody(), HttpStatus.resolve(res.getStatusCode().value()));
             if (response.getStatusCode().is2xxSuccessful())
                 return response.getBody();
         } catch (Exception e) {
@@ -363,22 +364,22 @@ public class ArchivalStorageService {
         }
     }
 
-    @Inject
+    @Autowired
     public void setBaseEndpoint(@Value("${archivalStorage.api}") String baseEndpoint) {
         this.baseEndpoint = baseEndpoint;
     }
 
-    @Inject
+    @Autowired
     public void setReadKeypair(@Value("${archivalStorage.authorization.basic.read}") String readKeypair) {
         this.readKeypair = readKeypair;
     }
 
-    @Inject
+    @Autowired
     public void setReadWriteKeypair(@Value("${archivalStorage.authorization.basic.readWrite}") String readWriteKeypair) {
         this.readWriteKeypair = readWriteKeypair;
     }
 
-    @Inject
+    @Autowired
     public void setObjectMapper(ObjectMapper objectMapper) {
         this.objectMapper = objectMapper;
     }

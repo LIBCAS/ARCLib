@@ -9,9 +9,10 @@ import cz.cas.lib.arclib.security.authorization.permission.Permissions;
 import cz.cas.lib.arclib.security.user.UserDetails;
 import cz.cas.lib.arclib.store.WorkflowDefinitionStore;
 import cz.cas.lib.core.store.Transactional;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import javax.inject.Inject;
+
 import java.util.Collection;
 
 import static cz.cas.lib.arclib.utils.ArclibUtils.hasRole;
@@ -87,17 +88,17 @@ public class WorkflowDefinitionService {
     }
 
 
-    @Inject
+    @Autowired
     public void setBeanMappingService(BeanMappingService beanMappingService) {
         this.beanMappingService = beanMappingService;
     }
 
-    @Inject
+    @Autowired
     public void setStore(WorkflowDefinitionStore store) {
         this.store = store;
     }
 
-    @Inject
+    @Autowired
     public void setUserDetails(UserDetails userDetails) {
         this.userDetails = userDetails;
     }

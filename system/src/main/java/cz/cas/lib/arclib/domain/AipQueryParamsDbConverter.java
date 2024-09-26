@@ -5,8 +5,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import cz.cas.lib.core.index.dto.Params;
 import cz.cas.lib.core.util.ApplicationContextUtils;
 
-import javax.persistence.AttributeConverter;
-import javax.persistence.Converter;
+import jakarta.persistence.AttributeConverter;
+import jakarta.persistence.Converter;
 import java.io.IOException;
 
 @Converter

@@ -31,11 +31,12 @@ import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang.exception.ExceptionUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.lang3.EnumUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import javax.inject.Inject;
+
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -336,37 +337,37 @@ public class AipExportService {
         return docsFromIndex;
     }
 
-    @Inject
+    @Autowired
     public void setArchivalStorageService(ArchivalStorageService archivalStorageService) {
         this.archivalStorageService = archivalStorageService;
     }
 
-    @Inject
-    public void setindexedArclibXmlStore(SolrArclibXmlStore indexedArclibXmlStore) {
+    @Autowired
+    public void setIndexedArclibXmlStore(SolrArclibXmlStore indexedArclibXmlStore) {
         this.indexedArclibXmlStore = indexedArclibXmlStore;
     }
 
-    @Inject
+    @Autowired
     public void setUserDetails(UserDetails userDetails) {
         this.userDetails = userDetails;
     }
 
-    @Inject
+    @Autowired
     public void setExportInfoFileService(ExportInfoFileService exportInfoFileService) {
         this.exportInfoFileService = exportInfoFileService;
     }
 
-    @Inject
+    @Autowired
     public void setArchivalStorageResponseExtractor(ArchivalStorageResponseExtractor archivalStorageResponseExtractor) {
         this.archivalStorageResponseExtractor = archivalStorageResponseExtractor;
     }
 
-    @Inject
+    @Autowired
     public void setSipStore(SipStore sipStore) {
         this.sipStore = sipStore;
     }
 
-    @Inject
+    @Autowired
     public void setDcExportService(DcExportService dcExportService) {
         this.dcExportService = dcExportService;
     }

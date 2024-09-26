@@ -2,12 +2,17 @@ package cz.cas.lib.core.index.solr;
 
 import cz.cas.lib.arclib.domainbase.exception.GeneralException;
 import cz.cas.lib.arclib.index.solr.IndexQueryUtils;
+import cz.cas.lib.core.index.Indexed;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.apache.solr.client.solrj.beans.DocumentObjectBinder;
 import org.apache.solr.client.solrj.beans.Field;
-import org.springframework.data.solr.core.mapping.Indexed;
+
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Represents one index object field Solr mapping, provides methods for retrieval of field names with proper suffixes
@@ -47,6 +52,8 @@ public class IndexField {
      */
     private String keywordField;
 
+    private Set<String> managedSchemaCopyTo = new HashSet<>();
+
     public IndexField(java.lang.reflect.Field field) {
         Field fieldA = field.getAnnotation(Field.class);
         Indexed indexedA = field.getAnnotation(Indexed.class);
@@ -58,7 +65,8 @@ public class IndexField {
             keywordField = fieldName;
             sortField = fieldName;
         }
-        for (String s : indexedA.copyTo()) {
+        managedSchemaCopyTo = Arrays.stream(indexedA.copyTo()).collect(Collectors.toSet());
+        for (String s : managedSchemaCopyTo) {
             if (s.endsWith(STRING_SUFFIX)) {
                 keywordField = s;
             }
@@ -79,8 +87,6 @@ public class IndexField {
     private String parseFieldName(Indexed indexedA, Field fieldA, String javaFieldName) {
         if (!"".equals(indexedA.name()))
             return indexedA.name();
-        if (!"".equals(indexedA.value()))
-            return indexedA.value();
         if (!DocumentObjectBinder.DEFAULT.equals(fieldA.value()))
             return fieldA.value();
         return javaFieldName;

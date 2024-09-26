@@ -36,6 +36,8 @@ import cz.cas.lib.core.script.ScriptType;
 import cz.cas.lib.core.store.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
+import org.apache.solr.client.solrj.SolrServerException;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
@@ -43,7 +45,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.util.FileSystemUtils;
 import org.springframework.util.StreamUtils;
 
-import javax.inject.Inject;
+
 import java.io.ByteArrayInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -497,82 +499,82 @@ public class AipService {
         }
     }
 
-    @Inject
+    @Autowired
     public void setAuthorialPackageUpdateLockStore(AuthorialPackageUpdateLockStore authorialPackageUpdateLockStore) {
         this.authorialPackageUpdateLockStore = authorialPackageUpdateLockStore;
     }
 
-    @Inject
+    @Autowired
     public void setJobService(JobService jobService) {
         this.jobService = jobService;
     }
 
-    @Inject
+    @Autowired
     public void setArclibXmlGenerator(ArclibXmlGenerator arclibXmlGenerator) {
         this.arclibXmlGenerator = arclibXmlGenerator;
     }
 
-    @Inject
+    @Autowired
     public void setArchivalStorageService(ArchivalStorageService archivalStorageService) {
         this.archivalStorageService = archivalStorageService;
     }
 
-    @Inject
+    @Autowired
     public void setArclibXmlValidator(ArclibXmlValidator arclibXmlValidator) {
         this.arclibXmlValidator = arclibXmlValidator;
     }
 
-    @Inject
+    @Autowired
     public void setFixityCounterFacade(FixityCounterFacade fixityCounterFacade) {
         this.fixityCounterFacade = fixityCounterFacade;
     }
 
-    @Inject
-    public void setindexedArclibXmlStore(SolrArclibXmlStore indexedArclibXmlStore) {
+    @Autowired
+    public void setIndexedArclibXmlStore(SolrArclibXmlStore indexedArclibXmlStore) {
         this.indexedArclibXmlStore = indexedArclibXmlStore;
     }
 
-    @Inject
+    @Autowired
     public void setIngestWorkflowService(IngestWorkflowService ingestWorkflowService) {
         this.ingestWorkflowService = ingestWorkflowService;
     }
 
-    @Inject
+    @Autowired
     public void setAuthorialPackageStore(AuthorialPackageStore authorialPackageStore) {
         this.authorialPackageStore = authorialPackageStore;
     }
 
-    @Inject
+    @Autowired
     public void setUserDetails(UserDetails userDetails) {
         this.userDetails = userDetails;
     }
 
-    @Inject
+    @Autowired
     public void setKeepAliveUpdateScript(@Value("${arclib.script.keepAliveUpdate}") Resource keepAliveUpdateScript) {
         this.keepAliveUpdateScript = keepAliveUpdateScript;
     }
 
-    @Inject
+    @Autowired
     public void setKeepAliveUpdateTimeout(@Value("${arclib.keepAliveUpdateTimeout}") int keepAliveUpdateTimeout) {
         this.keepAliveUpdateTimeout = keepAliveUpdateTimeout;
     }
 
-    @Inject
+    @Autowired
     public void setKeepAliveNetworkDelay(@Value("${arclib.keepAliveNetworkDelay}") int keepAliveNetworkDelay) {
         this.keepAliveNetworkDelay = keepAliveNetworkDelay;
     }
 
-    @Inject
+    @Autowired
     public void setWorkspace(@Value("${arclib.path.workspace}") String workspace) {
         this.workspace = Paths.get(workspace);
     }
 
-    @Inject
+    @Autowired
     public void setTransactionTemplate(TransactionTemplate transactionTemplate) {
         this.transactionTemplate = transactionTemplate;
     }
 
-    @Inject
+    @Autowired
     public void setObjectMapper(ObjectMapper objectMapper) {
         this.objectMapper = objectMapper;
     }

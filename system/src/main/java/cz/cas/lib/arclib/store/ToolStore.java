@@ -34,7 +34,7 @@ public class ToolStore
 
     public Tool findLatestToolByName(String toolName) {
         QTool qTool = qObject();
-        Tool entity = query().select(qTool).where(qTool.name.eq(toolName)).orderBy(qTool.created.desc()).fetchFirst();
+        Tool entity = query().select(qTool).where(qTool.name.eq(toolName)).orderBy(qTool.updated.desc()).fetchFirst();
         detachAll();
         return entity;
     }

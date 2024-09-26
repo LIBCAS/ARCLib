@@ -17,9 +17,10 @@ import cz.cas.lib.arclib.store.ProducerProfileStore;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.camunda.bpm.engine.delegate.DelegateExecution;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import javax.inject.Inject;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -123,27 +124,27 @@ public class FixityCheckerDelegate extends ArclibDelegate {
         execution.setVariable(FixityCheck.fixityCheckToolCounter, fixityCheckToolCounter + 1);
     }
 
-    @Inject
+    @Autowired
     public void setSipProfileService(SipProfileService sipProfileService) {
         this.sipProfileService = sipProfileService;
     }
 
-    @Inject
+    @Autowired
     public void setMetsFixityVerifier(MetsFixityChecker metsFixityVerifier) {
         this.metsFixityVerifier = metsFixityVerifier;
     }
 
-    @Inject
+    @Autowired
     public void setBagitFixityVerifier(BagitFixityChecker bagitFixityVerifier) {
         this.bagitFixityVerifier = bagitFixityVerifier;
     }
 
-    @Inject
+    @Autowired
     public void setCommonChecksumFilesChecker(CommonChecksumFilesChecker commonChecksumFilesChecker) {
         this.commonChecksumFilesChecker = commonChecksumFilesChecker;
     }
 
-    @Inject
+    @Autowired
     public void setProducerProfileStore(ProducerProfileStore producerProfileStore) {
         this.producerProfileStore = producerProfileStore;
     }

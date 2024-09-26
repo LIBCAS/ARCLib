@@ -6,10 +6,11 @@ import cz.cas.lib.arclib.domainbase.store.NamedStore;
 import cz.cas.lib.core.sequence.Generator;
 import lombok.Getter;
 import lombok.NonNull;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
-import javax.inject.Inject;
-import javax.transaction.Transactional;
+
+import jakarta.transaction.Transactional;
 import java.util.List;
 
 @Repository
@@ -52,7 +53,7 @@ public class WorkflowDefinitionStore extends NamedStore<WorkflowDefinition, QWor
         return fetch;
     }
 
-    @Inject
+    @Autowired
     public void setGenerator(Generator generator) {
         this.generator = generator;
     }

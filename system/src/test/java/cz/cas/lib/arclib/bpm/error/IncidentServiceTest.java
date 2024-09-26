@@ -29,11 +29,12 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jms.core.JmsTemplate;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import javax.inject.Inject;
+
 import javax.sql.DataSource;
 import java.io.ByteArrayInputStream;
 import java.nio.file.Files;
@@ -49,7 +50,7 @@ import static cz.cas.lib.core.util.Utils.asSet;
 import static helper.ThrowableAssertion.assertThrown;
 import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.assertThat;
-import static org.mockito.Matchers.anyString;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
 @RunWith(SpringRunner.class)
@@ -69,22 +70,22 @@ public class IncidentServiceTest extends TransformerFactoryWorkaroundTest {
     private static final String ACTIVITY_ID_SND = "process2";
     private static final User user = new User("user");
 
-    @Inject
+    @Autowired
     private RepositoryService repositoryService;
 
-    @Inject
+    @Autowired
     private RuntimeService runtimeService;
 
-    @Inject
+    @Autowired
     private IncidentService incidentService;
 
-    @Inject
+    @Autowired
     private CustomIncidentHandler customIncidentHandler;
 
-    @Inject
+    @Autowired
     private HistoryService historyService;
 
-    @Inject
+    @Autowired
     private DataSource dataSource;
 
     @Mock

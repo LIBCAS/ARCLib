@@ -22,9 +22,10 @@ import cz.cas.lib.core.index.dto.Result;
 import cz.cas.lib.core.rest.data.DelegateAdapter;
 import cz.cas.lib.core.store.Transactional;
 import lombok.Getter;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import javax.inject.Inject;
+
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -177,37 +178,37 @@ public class ProducerProfileService implements DelegateAdapter<ProducerProfile> 
         return delegate.findWithDeletedFilteringOff(id);
     }
 
-    @Inject
+    @Autowired
     public void setBeanMappingService(BeanMappingService beanMappingService) {
         this.beanMappingService = beanMappingService;
     }
 
-    @Inject
+    @Autowired
     public void setSipProfileStore(SipProfileStore sipProfileStore) {
         this.sipProfileStore = sipProfileStore;
     }
 
-    @Inject
+    @Autowired
     public void setDelegate(ProducerProfileStore delegate) {
         this.delegate = delegate;
     }
 
-    @Inject
+    @Autowired
     public void setValidationProfileStore(ValidationProfileStore validationProfileStore) {
         this.validationProfileStore = validationProfileStore;
     }
 
-    @Inject
+    @Autowired
     public void setWorkflowDefinitionStore(WorkflowDefinitionStore workflowDefinitionStore) {
         this.workflowDefinitionStore = workflowDefinitionStore;
     }
 
-    @Inject
+    @Autowired
     public void setUserDetails(UserDetails userDetails) {
         this.userDetails = userDetails;
     }
 
-    @Inject
+    @Autowired
     public void setIngestWorkflowStore(IngestWorkflowStore ingestWorkflowStore) {
         this.ingestWorkflowStore = ingestWorkflowStore;
     }

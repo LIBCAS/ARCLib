@@ -10,13 +10,13 @@ import cz.cas.lib.core.index.nested.ParentEntityStore;
 import cz.cas.lib.core.index.solr.IndexField;
 import cz.cas.lib.core.index.solr.IndexFieldType;
 import helper.SrDbTest;
+import org.apache.solr.client.solrj.SolrQuery;
+import org.apache.solr.client.solrj.SolrServerException;
+import org.apache.solr.client.solrj.response.QueryResponse;
 import org.junit.Before;
 import org.junit.Test;
-import org.springframework.data.domain.Page;
-import org.springframework.data.solr.core.query.AnyCriteria;
-import org.springframework.data.solr.core.query.SimpleFilterQuery;
-import org.springframework.data.solr.core.query.SimpleQuery;
 
+import java.io.IOException;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -1263,19 +1263,26 @@ public class IndexedStoreTest extends SrDbTest {
         indexedField.setFieldName("id");
         indexedField.setKeywordField("id");
         indexedField.setFieldType(IndexFieldType.STRING);
-        SimpleQuery q = new SimpleQuery();
-        q.addProjectionOnField("id");
-        q.addCriteria(AnyCriteria.any());
-        q.addFilterQuery(new SimpleFilterQuery(IndexQueryUtils.inQuery(indexedField, asSet())));
-        Page<IndexedTestEntity> res = getTemplate().query(store.getIndexCollection(), q, store.getUType());
-        assertThat(res.getTotalElements(), is(0L));
+        SolrQuery q = new SolrQuery("*:*");
+        q.addField("id");
+        q.addFilterQuery(IndexQueryUtils.inQuery(indexedField, asSet()));
+        QueryResponse queryResponse;
+        try {
+            queryResponse = getClient().query(store.getIndexCollection(), q);
+        } catch (SolrServerException | IOException e) {
+            throw new RuntimeException(e);
+        }
+        assertThat(queryResponse.getResults().getNumFound(), is(0L));
 
-        q = new SimpleQuery();
-        q.addCriteria(AnyCriteria.any());
-        q.addProjectionOnField("id");
-        q.addFilterQuery(new SimpleFilterQuery(IndexQueryUtils.notInQuery(indexedField, asSet())));
-        res = getTemplate().query(store.getIndexCollection(), q, store.getUType());
-        assertThat(res.getTotalElements(), is(3L));
+        q = new SolrQuery("*:*");
+        q.addField("id");
+        q.addFilterQuery(IndexQueryUtils.notInQuery(indexedField, asSet()));
+        try {
+            queryResponse = getClient().query(store.getIndexCollection(), q);
+        } catch (SolrServerException | IOException e) {
+            throw new RuntimeException(e);
+        }
+        assertThat(queryResponse.getResults().getNumFound(), is(3L));
     }
 
     @Test

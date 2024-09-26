@@ -3,9 +3,10 @@ package cz.cas.lib.arclib.store;
 import cz.cas.lib.arclib.domain.packages.QSip;
 import cz.cas.lib.arclib.domain.packages.Sip;
 import cz.cas.lib.arclib.domainbase.store.DatedStore;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
-import javax.inject.Inject;
+
 
 @Repository
 public class SipStore
@@ -24,7 +25,7 @@ public class SipStore
         super.hardDelete(entity);
     }
 
-    @Inject
+    @Autowired
     public void setHashStore(HashStore hashStore) {
         this.hashStore = hashStore;
     }

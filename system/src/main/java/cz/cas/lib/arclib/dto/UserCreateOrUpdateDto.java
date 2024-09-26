@@ -14,4 +14,10 @@ public class UserCreateOrUpdateDto {
     private Producer producer;
     private Set<String> exportFolders = new HashSet<>();
     private Set<UserRole> roles = new HashSet<>();
+
+    private String firstName;
+    private String lastName;
+    private String institution;
+    private String email;
+    private String newPassword;
 }

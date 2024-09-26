@@ -6,7 +6,7 @@ import cz.cas.lib.arclib.domain.packages.QAipBulkDeletion;
 import cz.cas.lib.arclib.domainbase.store.DatedStore;
 import org.springframework.stereotype.Repository;
 
-import javax.transaction.Transactional;
+import jakarta.transaction.Transactional;
 import java.util.List;
 
 @Repository

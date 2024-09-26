@@ -17,10 +17,11 @@ import cz.cas.lib.arclib.service.antivirus.InfectedSipAction;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.camunda.bpm.engine.delegate.DelegateExecution;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import javax.inject.Inject;
+
 import java.io.FileNotFoundException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -92,17 +93,17 @@ public class AntivirusDelegate extends ArclibDelegate {
         return antivirusToBeUsed;
     }
 
-    @Inject
+    @Autowired
     public void setFormatDefinitionService(FormatDefinitionService formatDefinitionService) {
         this.formatDefinitionService = formatDefinitionService;
     }
 
-    @Inject
+    @Autowired
     public void setQuarantinePath(@Value("${arclib.path.quarantine}") String quarantinePath) {
         this.quarantinePath = Paths.get(quarantinePath);
     }
 
-    @Inject
+    @Autowired
     public void setExternalProcessRunner(ExternalProcessRunner externalProcessRunner) {
         this.externalProcessRunner = externalProcessRunner;
     }

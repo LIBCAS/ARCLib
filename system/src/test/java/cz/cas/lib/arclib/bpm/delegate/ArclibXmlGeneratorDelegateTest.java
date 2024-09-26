@@ -63,7 +63,7 @@ import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsNull.notNullValue;
 import static org.junit.Assert.assertThat;
-import static org.mockito.Matchers.any;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 @Deployment(resources = {"bpmn/arclibXmlExtractor.bpmn", "bpmn/arclibXmlGenerator.bpmn"})
@@ -144,7 +144,7 @@ public class ArclibXmlGeneratorDelegateTest extends DelegateTest {
 
         indexedArclibXmlStore = new SolrArclibXmlStore();
         indexedArclibXmlStore.setCoreName(arclibXmlCoreName);
-        indexedArclibXmlStore.setSolrTemplate(getArclibXmlSolrTemplate());
+        indexedArclibXmlStore.setSolrClient(getClient());
         indexedArclibXmlStore.setUris("http://www.loc.gov/METS/",
                 "http://www.w3.org/2001/XMLSchema-instance",
                 "http://arclib.lib.cas.cz/ARCLIB_XSD",

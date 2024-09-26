@@ -1,47 +1,39 @@
 package cz.cas.lib.arclib.config;
 
+import io.swagger.v3.oas.models.Components;
+import io.swagger.v3.oas.models.OpenAPI;
+import io.swagger.v3.oas.models.info.Info;
+import io.swagger.v3.oas.models.security.SecurityScheme;
+import org.springdoc.core.models.GroupedOpenApi;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import springfox.documentation.builders.ParameterBuilder;
-import springfox.documentation.builders.PathSelectors;
-import springfox.documentation.builders.RequestHandlerSelectors;
-import springfox.documentation.schema.ModelRef;
-import springfox.documentation.service.ApiInfo;
-import springfox.documentation.service.Contact;
-import springfox.documentation.spi.DocumentationType;
-import springfox.documentation.spring.web.plugins.Docket;
-import springfox.documentation.swagger2.annotations.EnableSwagger2;
 
-import java.util.ArrayList;
-
-@EnableSwagger2
 @Configuration
 public class SwaggerConfig {
 
     @Bean
-    public Docket api() {
-        return new Docket(DocumentationType.SWAGGER_2)
-                .globalOperationParameters(
-                        cz.cas.lib.core.util.Utils.asList(new ParameterBuilder()
-                                .name("Authorization")
-                                .modelRef(new ModelRef("string"))
-                                .parameterType("header")
-                                .defaultValue("Bearer ")
-                                .build()))
-                .select()
-                .apis(RequestHandlerSelectors.basePackage("cz.cas.lib"))
-                .paths(PathSelectors.any())
-                .build()
-                .apiInfo(apiInfo());
+    public GroupedOpenApi publicApi() {
+        return GroupedOpenApi.builder()
+                .packagesToScan("cz.cas.lib")
+                .pathsToMatch("/**")
+                .group("springshop-public")
+                .build();
     }
 
-    private ApiInfo apiInfo() {
-        return new ApiInfo(
-                "ARCLib API",
-                "",
-                "v1",
-                null,
-                new Contact("", "", ""),
-                null, null, new ArrayList<>());
+    @Bean
+    public OpenAPI springShopOpenAPI() {
+        return new OpenAPI()
+                .info(new Info()
+                        .title("ARCLib API")
+                        .version("v1")
+                )
+                .components(new Components()
+                        .addSecuritySchemes("bearer", new SecurityScheme()
+                                .type(SecurityScheme.Type.HTTP)
+                                .in(SecurityScheme.In.HEADER)
+                                .name("Authorization")
+                                .bearerFormat("Bearer ")
+                        )
+                );
     }
 }

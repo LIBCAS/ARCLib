@@ -11,10 +11,10 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.camunda.bpm.engine.delegate.BpmnError;
 import org.camunda.bpm.engine.delegate.DelegateExecution;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.xml.sax.SAXException;
 
-import javax.inject.Inject;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.xpath.XPathExpressionException;
 import java.io.IOException;
@@ -77,12 +77,12 @@ public class ValidatorDelegate extends ArclibDelegate {
         execution.setVariable(BpmConstants.Validation.usedValidationProfile, validationProfileExternalId);
     }
 
-    @Inject
+    @Autowired
     public void setProducerProfileStore(ProducerProfileStore producerProfileStore) {
         this.producerProfileStore = producerProfileStore;
     }
 
-    @Inject
+    @Autowired
     public void setService(Validator service) {
         this.service = service;
     }

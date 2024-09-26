@@ -8,8 +8,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.InjectMocks;
 import org.mockito.MockitoAnnotations;
-import org.springframework.data.solr.core.query.Criteria;
-import org.springframework.data.solr.core.query.SimpleStringCriteria;
 
 import java.time.Instant;
 
@@ -44,7 +42,6 @@ public class ArclibMailCenterTest {
 
     @Test
     public void sendIngestResultNotificationTest() {
-        Criteria name = Criteria.where("name").expression(":*: -");
         mailCenter.sendIngestResultNotification("test@test.cz", "456", "Ingest has been successfully performed.",
                 Instant.now());
 

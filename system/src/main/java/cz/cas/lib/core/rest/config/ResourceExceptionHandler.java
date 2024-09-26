@@ -7,6 +7,7 @@ import cz.cas.lib.arclib.exception.ForbiddenException;
 import cz.cas.lib.arclib.security.authorization.business.CustomAccessDeniedHandler;
 import cz.cas.lib.arclib.service.archivalStorage.ArchivalStorageException;
 import cz.cas.lib.core.index.UnsupportedSearchParameterException;
+import cz.cas.lib.core.security.jwt.BadJwtException;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.exception.ConstraintViolationException;
 import org.postgresql.util.PSQLException;
@@ -72,7 +73,8 @@ public class ResourceExceptionHandler {
     @ExceptionHandler({
             ForbiddenException.class,
             ForbiddenOperation.class,
-            ForbiddenObject.class
+            ForbiddenObject.class,
+            BadJwtException.class,
     })
     public ResponseEntity forbidden(Exception e) {
         return errorResponse(e, HttpStatus.FORBIDDEN);

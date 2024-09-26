@@ -11,10 +11,10 @@ import cz.cas.lib.core.util.Utils;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.camunda.bpm.engine.delegate.DelegateExecution;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import javax.inject.Inject;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.time.Instant;
@@ -96,17 +96,17 @@ public class ArchivalStorageDelegate extends ArclibDelegate {
     }
 
 
-    @Inject
+    @Autowired
     public void setArchivalStorageService(ArchivalStorageService archivalStorageService) {
         this.archivalStorageService = archivalStorageService;
     }
 
-    @Inject
+    @Autowired
     public void setArchivalStorageServiceDebug(ArchivalStorageServiceDebug archivalStorageServiceDebug) {
         this.archivalStorageServiceDebug = archivalStorageServiceDebug;
     }
 
-    @Inject
+    @Autowired
     public void setInitialAipSaveCheckRetries(@Value("${arclib.aipSavedCheckAttempts}") int initialAipSaveCheckRetries) {
         this.initialAipSaveCheckRetries = initialAipSaveCheckRetries;
     }

@@ -6,17 +6,24 @@ import cz.cas.lib.arclib.report.ExporterService;
 import cz.cas.lib.arclib.report.Report;
 import cz.cas.lib.arclib.security.authorization.permission.Permissions;
 import cz.cas.lib.arclib.service.ReportService;
-import io.swagger.annotations.*;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import javax.inject.Inject;
-import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -30,22 +37,22 @@ import static cz.cas.lib.core.util.Utils.eq;
 
 @Slf4j
 @RestController
-@Api(value = "report", description = "Api for interaction with reports")
+@Tag(name = "report", description = "Api for interaction with reports")
 @RequestMapping("/api/report")
 public class ReportApi {
 
     private ReportService reportService;
     private ExporterService exporter;
 
-    @ApiOperation(value = "Finds report template by ID and exports it to specified format. [Perm.REPORT_TEMPLATE_RECORDS_READ]")
+    @Operation(summary = "Finds report template by ID and exports it to specified format. [Perm.REPORT_TEMPLATE_RECORDS_READ]")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successful response"),
-            @ApiResponse(code = 400, message = "Given parameter is not defined within template or the value can not be parsed")})
+            @ApiResponse(responseCode = "200", description = "Successful response"),
+            @ApiResponse(responseCode = "400", description = "Given parameter is not defined within template or the value can not be parsed")})
     @PreAuthorize("hasAuthority('" + Permissions.REPORT_TEMPLATE_RECORDS_READ + "')")
     @RequestMapping(value = "/{reportId}/{format}", method = RequestMethod.GET)
-    public void getReport(@ApiParam(value = "Id of the report", required = true) @PathVariable("reportId") String reportId,
-                          @ApiParam(value = "Output format, one of CSV, XLSX, HTML, PDF", required = true) @PathVariable("format") String format,
-                          @ApiParam(value = "Query string with parameters used to override default parameters values" +
+    public void getReport(@Parameter(description = "Id of the report", required = true) @PathVariable("reportId") String reportId,
+                          @Parameter(description = "Output format, one of CSV, XLSX, HTML, PDF", required = true) @PathVariable("format") String format,
+                          @Parameter(description = "Query string with parameters used to override default parameters values" +
                                   " which are specified inside template itself. Boolean parameter value should be in" +
                                   " string form i.e. true/false") @RequestParam(required = false) Map<String, String> params,
                           HttpServletResponse response) throws IOException {
@@ -74,7 +81,7 @@ public class ReportApi {
         exporter.export(r, ExportFormat.valueOf(format.toUpperCase()), params, response.getOutputStream());
     }
 
-    @ApiOperation(value = "Compiles and stores report template. [Perm.REPORT_TEMPLATE_RECORDS_WRITE]", notes = "If the arclibXmlDs query param is set to true, " +
+    @Operation(summary = "Compiles and stores report template. [Perm.REPORT_TEMPLATE_RECORDS_WRITE]", description = "If the arclibXmlDs query param is set to true, " +
             "report will use JDBC collection to ARCLib XML SOLR collection, otherwise report uses JDBC connection to the ARCLib system database. " +
             "<p>Validate type of template custom parameters " +
             "and their default values if there are any.</p>" +
@@ -87,43 +94,42 @@ public class ReportApi {
             "<li>java.lang.Float</li>" +
             "<li>java.lang.Double</li>" +
             "<li>java.lang.Boolean</li>" +
-            "</ul>",
-            response = Report.class)
+            "</ul>")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successful response", response = Report.class),
-            @ApiResponse(code = 400, message = "Parameters validation failed.")})
+            @ApiResponse(responseCode = "200", description = "Successful response", content = @Content(schema = @Schema(implementation = Report.class))),
+            @ApiResponse(responseCode = "400", description = "Parameters validation failed.")})
     @PreAuthorize("hasAuthority('" + Permissions.REPORT_TEMPLATE_RECORDS_WRITE + "')")
     @RequestMapping(value = "/{id}", method = RequestMethod.PUT)
-    public Report save(@ApiParam(value = "Id of the instance", required = true) @PathVariable("id") String id,
-                       @ApiParam(value = "Single instance", required = true) @RequestBody Report request) throws IOException {
+    public Report save(@Parameter(description = "Id of the instance", required = true) @PathVariable("id") String id,
+                       @Parameter(description = "Single instance", required = true) @RequestBody Report request) throws IOException {
         eq(id, request.getId(), () -> new BadArgument("id"));
         return reportService.saveReport(request);
     }
 
-    @ApiOperation(value = "Deletes an instance. [Perm.REPORT_TEMPLATE_RECORDS_WRITE]")
+    @Operation(summary = "Deletes an instance. [Perm.REPORT_TEMPLATE_RECORDS_WRITE]")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successful response"),
-            @ApiResponse(code = 404, message = "Instance does not exist")})
+            @ApiResponse(responseCode = "200", description = "Successful response"),
+            @ApiResponse(responseCode = "404", description = "Instance does not exist")})
     @PreAuthorize("hasAuthority('" + Permissions.REPORT_TEMPLATE_RECORDS_WRITE + "')")
     @RequestMapping(value = "/{id}", method = RequestMethod.DELETE)
-    public void delete(@ApiParam(value = "Id of the instance", required = true)
+    public void delete(@Parameter(description = "Id of the instance", required = true)
                        @PathVariable("id") String id) {
         reportService.delete(id);
     }
 
-    @ApiOperation(value = "Gets one instance specified by id. [Perm.REPORT_TEMPLATE_RECORDS_READ]", response = Report.class)
+    @Operation(summary = "Gets one instance specified by id. [Perm.REPORT_TEMPLATE_RECORDS_READ]", responses = {@ApiResponse(content = @Content(schema = @Schema(implementation = Report.class)))})
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successful response"),
-            @ApiResponse(code = 404, message = "Instance does not exist")})
+            @ApiResponse(responseCode = "200", description = "Successful response"),
+            @ApiResponse(responseCode = "404", description = "Instance does not exist")})
     @PreAuthorize("hasAuthority('" + Permissions.REPORT_TEMPLATE_RECORDS_READ + "')")
     @RequestMapping(value = "/{id}", method = RequestMethod.GET)
-    public Report get(@ApiParam(value = "Id of the instance", required = true)
+    public Report get(@Parameter(description = "Id of the instance", required = true)
                       @PathVariable("id") String id) {
         return reportService.find(id);
     }
 
-    @ApiOperation(value = "Gets all instances. [Perm.REPORT_TEMPLATE_RECORDS_READ]", response = ReportListDto.class, responseContainer = "list")
-    @ApiResponses({@ApiResponse(code = 200, message = "Successful response")})
+    @Operation(summary = "Gets all instances. [Perm.REPORT_TEMPLATE_RECORDS_READ]")
+    @ApiResponses({@ApiResponse(responseCode = "200", description = "Successful response", content = @Content(array = @ArraySchema(schema = @Schema(implementation = ReportListDto.class))))})
     @PreAuthorize("hasAuthority('" + Permissions.REPORT_TEMPLATE_RECORDS_READ + "')")
     @RequestMapping(method = RequestMethod.GET)
     public Collection<ReportListDto> listAll() {
@@ -144,12 +150,12 @@ public class ReportApi {
         private boolean arclibXmlDs;
     }
 
-    @Inject
+    @Autowired
     public void setReportService(ReportService reportService) {
         this.reportService = reportService;
     }
 
-    @Inject
+    @Autowired
     public void setExporter(ExporterService exporter) {
         this.exporter = exporter;
     }

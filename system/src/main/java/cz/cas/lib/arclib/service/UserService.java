@@ -1,10 +1,12 @@
 package cz.cas.lib.arclib.service;
 
 import com.google.common.collect.Sets;
+import com.querydsl.core.util.StringUtils;
 import cz.cas.lib.arclib.domain.Producer;
 import cz.cas.lib.arclib.domain.User;
 import cz.cas.lib.arclib.domainbase.audit.AuditLogger;
 import cz.cas.lib.arclib.domainbase.exception.BadArgument;
+import cz.cas.lib.arclib.dto.AccountUpdateDto;
 import cz.cas.lib.arclib.dto.UserCreateOrUpdateDto;
 import cz.cas.lib.arclib.dto.UserFullnameDto;
 import cz.cas.lib.arclib.exception.BadRequestException;
@@ -21,9 +23,11 @@ import cz.cas.lib.core.store.Transactional;
 import cz.cas.lib.core.util.Utils;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import javax.inject.Inject;
 import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
@@ -43,7 +47,20 @@ public class UserService implements DelegateAdapter<User> {
     private UserDetails userDetails;
     private AuditLogger logger;
     private ProducerStore producerStore;
+    private PasswordEncoder passwordEncoder;
 
+    @Value("${security.local.enabled}")
+    private boolean localAuth;
+
+    @Transactional
+    public User updateAccount(AccountUpdateDto updateDto) {
+        User user = find(userDetails.getId());
+        user.setEmail(updateDto.getEmail());
+        if (!StringUtils.isNullOrEmpty(updateDto.getNewPassword())) {
+            user.setPassword(passwordEncoder.encode(updateDto.getNewPassword()));
+        }
+        return save(user);
+    }
 
     @Transactional
     public User createOrUpdate(String id, UserCreateOrUpdateDto userDto) {
@@ -79,6 +96,17 @@ public class UserService implements DelegateAdapter<User> {
                     + " allowed export folders for this producer are: " + String.join(",", producerOfNewUser.getExportFolders())));
         });
         userEntity.setExportFolders(userDto.getExportFolders());
+
+        if(localAuth){
+            userEntity.setFirstName(userDto.getFirstName());
+            userEntity.setLastName(userDto.getLastName());
+            userEntity.setInstitution(userDto.getInstitution());
+            userEntity.setEmail(userDto.getEmail());
+            userEntity.setUsername(userDto.getUsername());
+            if (!StringUtils.isNullOrEmpty(userDto.getNewPassword())) {
+                userEntity.setPassword(passwordEncoder.encode(userDto.getNewPassword()));
+            }
+        }
 
         logRoleSaving(id, userEntity.getRoles(), userDto.getRoles());
         return delegate.save(userEntity);
@@ -133,23 +161,28 @@ public class UserService implements DelegateAdapter<User> {
         addedRoles.forEach(role -> logger.logEvent(new RoleAddEvent(Instant.now(), userId, role.getId(), role.getName())));
     }
 
-    @Inject
+    @Autowired
     public void setUserDetails(UserDetails userDetails) {
         this.userDetails = userDetails;
     }
 
-    @Inject
+    @Autowired
     public void setDelegate(UserStore delegate) {
         this.delegate = delegate;
     }
 
-    @Inject
+    @Autowired
     public void setLogger(AuditLogger logger) {
         this.logger = logger;
     }
 
-    @Inject
+    @Autowired
     public void setProducerStore(ProducerStore producerStore) {
         this.producerStore = producerStore;
+    }
+
+    @Autowired
+    public void setPasswordEncoder(PasswordEncoder passwordEncoder) {
+        this.passwordEncoder = passwordEncoder;
     }
 }

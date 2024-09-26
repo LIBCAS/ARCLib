@@ -19,11 +19,12 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import javax.inject.Inject;
+
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -35,7 +36,7 @@ import java.util.Map;
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.assertThat;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.fileUpload;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @RunWith(SpringRunner.class)
@@ -72,16 +73,16 @@ public class IngestIntegrationTest extends TransformerFactoryWorkaroundTest impl
         Files.deleteIfExists(SIP_FOLDER.resolve(CORRUPTED_FILE_NAME));
     }
 
-    @Inject
+    @Autowired
     private ProducerProfileStore producerProfileStore;
 
-    @Inject
+    @Autowired
     private BatchApi api;
 
-    @Inject
+    @Autowired
     private HistoryService historyService;
 
-    @Inject
+    @Autowired
     private ObjectMapper objectMapper;
 
     @Test
@@ -106,7 +107,7 @@ public class IngestIntegrationTest extends TransformerFactoryWorkaroundTest impl
         Files.createDirectories(QUARANTINE);
         MockMultipartFile sip = new MockMultipartFile("sipContent", "sipContent", "application/zip", ZipUtils.zipToByteArray(SIP_FOLDER));
         mvc(api).perform(
-                fileUpload("/api/coordinator/one")
+                multipart("/api/coordinator/one")
                         .file(sip)
                         .requestAttr("sipHash", sipHash)
                         .param("workflowConfig", INGEST_CONFIG_WRONG)

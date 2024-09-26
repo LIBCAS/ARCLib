@@ -2,11 +2,11 @@ package cz.cas.lib.core.index.solr;
 
 import cz.cas.lib.arclib.domainbase.domain.DomainObject;
 import cz.cas.lib.arclib.index.solr.IndexQueryUtils;
+import cz.cas.lib.core.index.Indexed;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.apache.solr.client.solrj.beans.Field;
-import org.springframework.data.solr.core.mapping.Indexed;
 
 /**
  * Basic building block for every Solr entity.

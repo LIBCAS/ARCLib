@@ -4,10 +4,9 @@ import cz.cas.lib.arclib.dto.JmsDto;
 import lombok.extern.slf4j.Slf4j;
 import org.camunda.bpm.engine.delegate.DelegateExecution;
 import org.camunda.bpm.engine.delegate.JavaDelegate;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jms.core.JmsTemplate;
 import org.springframework.stereotype.Service;
-
-import javax.inject.Inject;
 
 @Service
 @Slf4j
@@ -21,7 +20,7 @@ public class IngestSuccessEventDelegate implements JavaDelegate {
         template.convertAndSend("finish", new JmsDto(batchId, responsiblePersonId));
     }
 
-    @Inject
+    @Autowired
     public void setTemplate(JmsTemplate template) {
         this.template = template;
     }

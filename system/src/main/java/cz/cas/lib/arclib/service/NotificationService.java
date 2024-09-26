@@ -26,12 +26,13 @@ import cz.cas.lib.core.script.ScriptType;
 import cz.cas.lib.core.store.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StreamUtils;
 
-import javax.inject.Inject;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -266,62 +267,62 @@ public class NotificationService {
         return indexedFormatStore.listAutoComplete(params);
     }
 
-    @Inject
+    @Autowired
     public void setStore(NotificationStore store) {
         this.store = store;
     }
 
-    @Inject
+    @Autowired
     public void setJobService(JobService jobService) {
         this.jobService = jobService;
     }
 
-    @Inject
+    @Autowired
     public void setUserDetails(UserDetails userDetails) {
         this.userDetails = userDetails;
     }
 
-    @Inject
+    @Autowired
     public void setArclibMailCenter(ArclibMailCenter arclibMailCenter) {
         this.arclibMailCenter = arclibMailCenter;
     }
 
-    @Inject
+    @Autowired
     public void setAssignedRoleService(UserRoleService assignedRoleService) {
         this.assignedRoleService = assignedRoleService;
     }
 
-    @Inject
+    @Autowired
     public void setFormatService(FormatService formatService) {
         this.formatService = formatService;
     }
 
-    @Inject
+    @Autowired
     public void setReportService(ReportService reportService) {
         this.reportService = reportService;
     }
 
-    @Inject
+    @Autowired
     public void setExporterService(ExporterService exporterService) {
         this.exporterService = exporterService;
     }
 
-    @Inject
+    @Autowired
     public void setIndexedFormatStore(IndexedFormatStore indexedFormatStore) {
         this.indexedFormatStore = indexedFormatStore;
     }
 
-    @Inject
+    @Autowired
     public void setFormatsRevisionNotificationScript(@Value("${arclib.script.formatsRevisionNotification}") Resource formatsRevisionNotificationScript) {
         this.formatsRevisionNotificationScript = formatsRevisionNotificationScript;
     }
 
-    @Inject
+    @Autowired
     public void setReportNotificationScript(@Value("${arclib.script.reportNotification}") Resource reportNotificationScript) {
         this.reportNotificationScript = reportNotificationScript;
     }
 
-    @Inject
+    @Autowired
     public void setObjectMapper(ObjectMapper objectMapper) {
         this.objectMapper = objectMapper;
     }

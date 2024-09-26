@@ -7,7 +7,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
 
-import javax.validation.Valid;
+import jakarta.validation.Valid;
 import java.io.IOException;
 import java.util.*;
 import java.util.regex.Matcher;
@@ -31,7 +31,6 @@ public class DcExportService {
         }
         Map<IndexedArclibXmlDocument, Map<DcExportMetadataKey, List<String>>> resultMap = new HashMap<>();
         for (IndexedArclibXmlDocument doc : docs) {
-            System.out.println(doc.getFields());
             Set<DcExportPackageType> typesMatchedWithTheDoc = new HashSet<>();
             //generalization of the following block would be useful
             switch (doc.getType()) {

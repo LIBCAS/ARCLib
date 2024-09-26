@@ -2,17 +2,16 @@ package cz.cas.lib.arclib.report;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import cz.cas.lib.arclib.domainbase.domain.DomainObject;
-import cz.cas.lib.arclib.domainbase.store.InstantGenerator;
 import cz.cas.lib.arclib.index.autocomplete.AutoCompleteAware;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.Setter;
-import org.apache.commons.lang.SerializationUtils;
-import org.hibernate.annotations.GenerationTime;
-import org.hibernate.annotations.GeneratorType;
+import org.apache.commons.lang3.SerializationUtils;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Table;
 import java.io.Serializable;
 import java.time.Instant;
 
@@ -23,10 +22,10 @@ import java.time.Instant;
 public class Report extends DomainObject implements Serializable, AutoCompleteAware {
 
     @Column(updatable = false)
-    @GeneratorType(type = InstantGenerator.class, when = GenerationTime.INSERT)
+    @CreationTimestamp
     protected Instant created;
 
-    @GeneratorType(type = InstantGenerator.class, when = GenerationTime.ALWAYS)
+    @UpdateTimestamp
     protected Instant updated;
 
     @Column(unique = true)

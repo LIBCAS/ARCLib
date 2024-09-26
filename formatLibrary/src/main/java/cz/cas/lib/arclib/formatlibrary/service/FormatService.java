@@ -3,10 +3,11 @@ package cz.cas.lib.arclib.formatlibrary.service;
 import cz.cas.lib.arclib.formatlibrary.domain.Format;
 import cz.cas.lib.arclib.formatlibrary.store.FormatStore;
 import lombok.Getter;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.inject.Inject;
+
 import java.util.List;
 
 @Service
@@ -42,7 +43,7 @@ public class FormatService {
         return store.findAllInList(ids);
     }
 
-    @Inject
+    @Autowired
     public void setFormatStore(FormatStore formatStore) {
         this.store = formatStore;
     }

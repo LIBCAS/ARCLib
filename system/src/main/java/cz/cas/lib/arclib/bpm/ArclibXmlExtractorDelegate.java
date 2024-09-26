@@ -24,11 +24,12 @@ import org.dom4j.DocumentException;
 import org.dom4j.Namespace;
 import org.dom4j.Visitor;
 import org.dom4j.io.SAXReader;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.xml.sax.SAXException;
 
-import javax.inject.Inject;
+
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.TransformerException;
 import javax.xml.xpath.XPathExpressionException;
@@ -98,22 +99,22 @@ public class ArclibXmlExtractorDelegate extends ArclibDelegate {
         execution.setVariable(BpmConstants.MetadataExtraction.usedSipProfile, sipProfileExternalId);
     }
 
-    @Inject
+    @Autowired
     public void setProducerProfileStore(ProducerProfileStore producerProfileStore) {
         this.producerProfileStore = producerProfileStore;
     }
 
-    @Inject
+    @Autowired
     public void setArclibXmlXsltExtractor(ArclibXmlXsltExtractor arclibXmlXsltExtractor) {
         this.arclibXmlXsltExtractor = arclibXmlXsltExtractor;
     }
 
-    @Inject
+    @Autowired
     public void setValidator(ArclibXmlValidator validator) {
         this.validator = validator;
     }
 
-    @Inject
+    @Autowired
     public void setUris(@Value("${namespaces.mets}") String mets, @Value("${namespaces.xsi}") String xsi, @Value("${namespaces.arclib}") String arclib, @Value("${namespaces" +
             ".premis}") String premis, @Value("${namespaces.oai_dc}") String oai_dc, @Value("${namespaces.dc}") String dc, @Value("${namespaces.xlink}") String xlink) {
         Map<String, String> uris = new HashMap<>();
@@ -128,7 +129,7 @@ public class ArclibXmlExtractorDelegate extends ArclibDelegate {
         this.uris = uris;
     }
 
-    @Inject
+    @Autowired
     public void setSystemWideValidationHandler(SystemWideValidationMissingNodesBpmHandler systemWideValidationHandler) {
         this.systemWideValidationHandler = systemWideValidationHandler;
     }

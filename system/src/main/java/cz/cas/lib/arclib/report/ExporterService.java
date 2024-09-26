@@ -11,11 +11,12 @@ import net.sf.jasperreports.engine.export.JRCsvExporter;
 import net.sf.jasperreports.engine.export.JRPdfExporter;
 import net.sf.jasperreports.engine.export.ooxml.JRXlsxExporter;
 import net.sf.jasperreports.export.*;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.Resource;
-import javax.inject.Inject;
+import jakarta.annotation.Resource;
+
 import javax.sql.DataSource;
 import java.io.*;
 import java.nio.file.Files;
@@ -251,12 +252,12 @@ public class ExporterService {
         }
     }
 
-    @Inject
+    @Autowired
     public ExporterService(DataSource arclibSystemDbDs) {
         this.arclibSystemDbDs = arclibSystemDbDs;
     }
 
-    @Inject
+    @Autowired
     public void setReportsDirectory(@Value("${arclib.path.reports}") Path reportsDirectory) {
         this.reportsDirectory = reportsDirectory;
     }

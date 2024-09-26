@@ -7,12 +7,12 @@ import cz.cas.lib.core.index.solr.IndexedDomainObject;
 import cz.cas.lib.core.index.solr.IndexField;
 import cz.cas.lib.core.index.solr.util.TemporalConverters;
 import lombok.Getter;
-import org.springframework.data.domain.Page;
-import org.springframework.data.solr.core.query.AnyCriteria;
-import org.springframework.data.solr.core.query.SimpleFilterQuery;
-import org.springframework.data.solr.core.query.SimpleQuery;
+import org.apache.solr.client.solrj.SolrQuery;
+import org.apache.solr.client.solrj.SolrServerException;
+import org.apache.solr.client.solrj.response.QueryResponse;
 import org.springframework.stereotype.Repository;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -49,16 +49,21 @@ public class IndexedStoreImpl extends IndexedDatedStore<TestEntity, QTestEntity,
 
     public List<String> findEmptyInFilter() {
 
-        SimpleQuery query = new SimpleQuery();
+        SolrQuery query = new SolrQuery("*:*");
         IndexField field = new IndexField();
         field.setFieldType(IndexFieldType.STRING);
         field.setFieldName("customSortStringAttribute");
         field.setKeywordField(field.getFieldName());
-        query.addFilterQuery(new SimpleFilterQuery(inQuery(field, emptySet())));
-        query.addProjectionOnField("id");
-        query.addCriteria(AnyCriteria.any());
-        Page<IndexedTestEntity> page = template.query(getIndexCollection(), query, getUType());
-        return page.getContent().stream().map(IndexedDomainObject::getId).collect(Collectors.toList());
+        query.addFilterQuery(inQuery(field, emptySet()));
+        query.addField("id");
+        QueryResponse queryResponse;
+        try {
+            queryResponse = solrClient.query(getIndexCollection(), query);
+        } catch (SolrServerException | IOException e) {
+            throw new RuntimeException(e);
+        }
+        List<IndexedTestEntity> beans = queryResponse.getBeans(getUType());
+        return beans.stream().map(IndexedDomainObject::getId).collect(Collectors.toList());
     }
 
     public List<String> findEmptyNotInFilter() {
@@ -66,11 +71,16 @@ public class IndexedStoreImpl extends IndexedDatedStore<TestEntity, QTestEntity,
         field.setFieldType(IndexFieldType.STRING);
         field.setFieldName("customSortStringAttribute");
         field.setKeywordField(field.getFieldName());
-        SimpleQuery query = new SimpleQuery();
-        query.addFilterQuery(new SimpleFilterQuery(notInQuery(field, emptySet())));
-        query.addProjectionOnField("id");
-        query.addCriteria(AnyCriteria.any());
-        Page<IndexedTestEntity> page = template.query(getIndexCollection(), query, getUType());
-        return page.getContent().stream().map(IndexedDomainObject::getId).collect(Collectors.toList());
+        SolrQuery query = new SolrQuery("*:*");
+        query.addFilterQuery(notInQuery(field, emptySet()));
+        query.addField("id");
+        QueryResponse queryResponse;
+        try {
+            queryResponse = solrClient.query(getIndexCollection(), query);
+        } catch (SolrServerException | IOException e) {
+            throw new RuntimeException(e);
+        }
+        List<IndexedTestEntity> beans = queryResponse.getBeans(getUType());
+        return beans.stream().map(IndexedDomainObject::getId).collect(Collectors.toList());
     }
 }

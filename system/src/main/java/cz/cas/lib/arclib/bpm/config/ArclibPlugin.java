@@ -5,10 +5,11 @@ import org.camunda.bpm.engine.ProcessEngine;
 import org.camunda.bpm.engine.impl.cfg.ProcessEngineConfigurationImpl;
 import org.camunda.bpm.engine.impl.cfg.ProcessEnginePlugin;
 import org.camunda.bpm.engine.impl.history.HistoryLevel;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
-import javax.inject.Inject;
+
 
 import static cz.cas.lib.core.util.Utils.asList;
 
@@ -16,7 +17,7 @@ import static cz.cas.lib.core.util.Utils.asList;
 @Component
 public class ArclibPlugin implements ProcessEnginePlugin {
 
-    @Inject
+    @Autowired
     private CustomIncidentHandler customIncidentHandler;
 
     @Override

@@ -24,12 +24,13 @@ import cz.cas.lib.arclib.store.SipStore;
 import cz.cas.lib.arclib.utils.XmlUtils;
 import cz.cas.lib.arclib.utils.ZipUtils;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang.exception.ExceptionUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
 import org.camunda.bpm.engine.ManagementService;
 import org.camunda.bpm.engine.RuntimeService;
 import org.camunda.bpm.engine.runtime.Incident;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jms.annotation.JmsListener;
 import org.springframework.jms.core.JmsTemplate;
@@ -37,7 +38,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
 import org.xml.sax.SAXException;
 
-import javax.inject.Inject;
 import javax.xml.parsers.ParserConfigurationException;
 import java.io.File;
 import java.io.FileInputStream;
@@ -508,89 +508,89 @@ public class WorkerService {
         return authorialId;
     }
 
-    @Inject
+    @Autowired
     public void setManagementService(ManagementService managementService) {
         this.managementService = managementService;
     }
 
-    @Inject
+    @Autowired
     public void setBatchService(BatchService batchService) {
         this.batchService = batchService;
     }
 
-    @Inject
+    @Autowired
     public void setTemplate(JmsTemplate template) {
         this.template = template;
     }
 
-    @Inject
+    @Autowired
     public void setRuntimeService(RuntimeService runtimeService) {
         this.runtimeService = runtimeService;
     }
 
-    @Inject
+    @Autowired
     public void setAuthorialPackageStore(AuthorialPackageStore authorialPackageStore) {
         this.authorialPackageStore = authorialPackageStore;
     }
 
-    @Inject
+    @Autowired
     public void setSipStore(SipStore sipStore) {
         this.sipStore = sipStore;
     }
 
-    @Inject
+    @Autowired
     public void setIngestErrorHandler(IngestErrorHandler ingestErrorHandler) {
         this.ingestErrorHandler = ingestErrorHandler;
     }
 
 
-    @Inject
+    @Autowired
     public void setAipService(AipService aipService) {
         this.aipService = aipService;
     }
 
-    @Inject
+    @Autowired
     public void setWorkspace(@Value("${arclib.path.workspace}") String workspace) {
         this.workspace = workspace;
     }
 
-    @Inject
+    @Autowired
     public void setaipSavedCheckAttempts(@Value("${arclib.aipSavedCheckAttempts}")
                                                  int aipSavedCheckAttempts) {
         this.aipSavedCheckAttempts = aipSavedCheckAttempts;
     }
 
-    @Inject
+    @Autowired
     public void setaipStoreAttempts(@Value("${arclib.aipStoreAttempts}") int aipStoreAttempts) {
         this.aipStoreAttempts = aipStoreAttempts;
     }
 
-    @Inject
+    @Autowired
     public void setaipStoreAttemptsInterval(@Value("${arclib.aipStoreAttemptsInterval}") String aipStoreAttemptsInterval) {
         this.aipStoreAttemptsInterval = aipStoreAttemptsInterval;
     }
 
-    @Inject
+    @Autowired
     public void setaipSavedCheckAttemptsInterval(@Value("${arclib.aipSavedCheckAttemptsInterval}") String aipSavedCheckAttemptsInterval) {
         this.aipSavedCheckAttemptsInterval = aipSavedCheckAttemptsInterval;
     }
 
-    @Inject
+    @Autowired
     public void setIngestWorkflowService(IngestWorkflowService ingestWorkflowService) {
         this.ingestWorkflowService = ingestWorkflowService;
     }
 
-    @Inject
+    @Autowired
     public void setTransactionTemplate(TransactionTemplate transactionTemplate) {
         this.transactionTemplate = transactionTemplate;
     }
 
-    @Inject
+    @Autowired
     public void setExportInfoFileService(ExportInfoFileService exportInfoFileService) {
         this.exportInfoFileService = exportInfoFileService;
     }
 
-    @Inject
+    @Autowired
     public void setFixityCounterFacade(FixityCounterFacade fixityCounterFacade) {
         this.fixityCounterFacade = fixityCounterFacade;
     }

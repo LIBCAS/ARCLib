@@ -1,11 +1,14 @@
 package cz.cas.lib.core.script;
 
+import com.oracle.truffle.js.scriptengine.GraalJSScriptEngine;
 import cz.cas.lib.arclib.domainbase.exception.GeneralException;
-import jdk.nashorn.api.scripting.NashornScriptEngineFactory;
+import org.graalvm.polyglot.Context;
+import org.graalvm.polyglot.HostAccess;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Service;
 
-import javax.inject.Inject;
+
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
@@ -58,14 +61,16 @@ public class ScriptExecutor {
             case GROOVY:
                 return new ScriptEngineManager().getEngineByName("groovy");
             case JAVASCRIPT:
-                NashornScriptEngineFactory factory = new NashornScriptEngineFactory();
-                return factory.getScriptEngine("-scripting");
+                return GraalJSScriptEngine.create(null, Context.newBuilder("js")
+                        .allowHostAccess(HostAccess.ALL)
+                        .allowHostClassLookup(s -> true)
+                        .option("js.ecmascript-version", "2021"));
             default:
                 throw new UnsupportedOperationException("invalid script engine '" + type + "'");
         }
     }
 
-    @Inject
+    @Autowired
     public void setContext(ApplicationContext context) {
         this.context = context;
     }

@@ -42,12 +42,12 @@ public class IngestRoutineServiceTest extends SrDbTest {
     @Before
     public void setUp() {
         producerProfileStore = new ProducerProfileStore();
-        producerProfileStore.setTemplate(getTemplate());
+        producerProfileStore.setSolrClient(getClient());
 
         jobStore = new JobStore();
 
         userStore = new UserStore();
-        userStore.setTemplate(getTemplate());
+        userStore.setSolrClient(getClient());
 
         ingestRoutineStore = new IngestRoutineStore();
 

@@ -22,10 +22,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.camunda.bpm.engine.delegate.DelegateExecution;
 import org.dom4j.Document;
 import org.dom4j.DocumentException;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.xml.sax.SAXException;
 
-import javax.inject.Inject;
+
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.xpath.XPathExpressionException;
 import java.io.ByteArrayInputStream;
@@ -105,27 +106,27 @@ public class ArclibXmlGeneratorDelegate extends ArclibDelegate {
                 IngestWorkflowState.PROCESSED.toString() + ".");
     }
 
-    @Inject
+    @Autowired
     public void setSipStore(SipStore sipStore) {
         this.sipStore = sipStore;
     }
 
-    @Inject
+    @Autowired
     public void setValidator(ArclibXmlValidator validator) {
         this.validator = validator;
     }
 
-    @Inject
+    @Autowired
     public void setArclibXmlGenerator(ArclibXmlGenerator arclibXmlGenerator) {
         this.arclibXmlGenerator = arclibXmlGenerator;
     }
 
-    @Inject
+    @Autowired
     public void setSha512Counter(Sha512Counter sha512Counter) {
         this.sha512Counter = sha512Counter;
     }
 
-    @Inject
+    @Autowired
     public void setSystemWideValidationHandler(SystemWideValidationMissingNodesBpmHandler systemWideValidationHandler) {
         this.systemWideValidationHandler = systemWideValidationHandler;
     }

@@ -9,6 +9,7 @@ import cz.cas.lib.core.index.dto.Params;
 import cz.cas.lib.core.index.dto.Result;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
+import org.apache.solr.client.solrj.SolrServerException;
 import org.springframework.core.io.Resource;
 
 import java.io.BufferedReader;

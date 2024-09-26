@@ -11,9 +11,9 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Triple;
 import org.camunda.bpm.engine.delegate.DelegateExecution;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import javax.inject.Inject;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.HashMap;
@@ -79,7 +79,7 @@ public class FixityGeneratorDelegate extends ArclibDelegate {
         }
     }
 
-    @Inject
+    @Autowired
     public void setFixityCounterFacade(FixityCounterFacade fixityCounterFacade) {
         this.fixityCounterFacade = fixityCounterFacade;
     }

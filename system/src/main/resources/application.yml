@@ -1,7 +1,7 @@
 spring.application.name: arclib
 spring:
   datasource:
-    url: jdbc:postgresql://localhost:5432/arclib
+    jdbcUrl: jdbc:postgresql://localhost:5432/arclib
     driver-class-name: org.postgresql.Driver
     name: mainPool
     username: changeme
@@ -11,7 +11,7 @@ spring:
     url: jdbc:solr://localhost:9983/?collection=arclibXmlC
   jpa:
     show-sql: false
-    database-platform: org.hibernate.dialect.PostgreSQL9Dialect
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
     hibernate:
       ddl-auto: validate
       naming-strategy: org.hibernate.cfg.ImprovedNamingStrategy
@@ -26,8 +26,8 @@ spring:
       write-dates-as-timestamps: false
   liquibase:
     enabled: true
+#    enabled: false
     changeLog: classpath:/dbchangelog.arclib.xml
-    url: jdbc:postgresql://localhost:5432/arclib
   mail:
     host: changeme
     port: 465
@@ -36,6 +36,9 @@ spring:
     protocol: smtp
 camunda:
   bpm:
+    generic-properties:
+      properties:
+        historyTimeToLive: 73048
     application:
       isDeleteUponUndeploy: false
       isScanForProcessDefinitions: false
@@ -111,11 +114,15 @@ mail:
 security:
   basic:
     authQuery: "/api/user/login"
+  jwt:
+    secret: "JmhBfXGwZgNPjIuySx5CtZfbYE+Hb2CY/FlzbQhPmGKCE5DroLbVaxhSaIIB+uSPh4mJ3j34VhYW0Rqn1X4bvg=="
   roles:
     internal:
       enabled: true
-  ldap:
+  local:
     enabled: true
+  ldap:
+    enabled: false
     server: changeme
     bind:
       dn: changeme
@@ -132,7 +139,13 @@ solr:
     corename: arclibXmlC
   maxRows: 1000 # was Integer max but some Solr instances were not able to handle it
 archivalStorage:
+  api: http://localhost:8081/api
   debugLocation: arcStorageData
+  authorization:
+    basic:
+      admin: blah
+      read: blah
+      readWrite: blah
 formatLibrary:
   scheduleUpdate: false
   updateCron: "0 0 0 1 * ?"

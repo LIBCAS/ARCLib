@@ -8,15 +8,7 @@ import cz.cas.lib.core.index.solr.IndexField;
 import cz.cas.lib.core.index.solr.IndexFieldType;
 import cz.cas.lib.core.index.solr.IndexedDomainObject;
 import cz.cas.lib.core.index.solr.IndexedStore;
-import cz.cas.lib.core.index.solr.util.NestedCriteria;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
-import org.springframework.data.solr.core.DefaultQueryParser;
-import org.springframework.data.solr.core.mapping.SimpleSolrMappingContext;
-import org.springframework.data.solr.core.query.AnyCriteria;
-import org.springframework.data.solr.core.query.Criteria;
-import org.springframework.data.solr.core.query.SimpleQuery;
-import org.springframework.data.solr.core.query.SimpleStringCriteria;
+import org.apache.solr.client.solrj.SolrQuery;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -25,7 +17,6 @@ import static cz.cas.lib.core.util.Utils.*;
 
 public class IndexQueryUtils {
 
-    public static final DefaultQueryParser queryParser = new DefaultQueryParser(new SimpleSolrMappingContext());
     public static final String TYPE_FIELD = "index_type";
 
     /**
@@ -63,14 +54,32 @@ public class IndexQueryUtils {
      *
      * @param indexedField field to check
      * @param values       {@link Set} of valid values
-     * @return Solr query builder
+     * @return Solr query
      */
-    public static Criteria inQuery(IndexField indexedField, Set<?> values) {
+
+    public static String inQuery(IndexField indexedField, Set<?> values) {
         if (values.isEmpty())
-            return new SimpleStringCriteria("(-*:*)");
+            return "(-*:*)";
         if (indexedField.getKeywordField() == null)
             throw new UnsupportedSearchParameterException("equality check not supported for field: " + indexedField.getFieldName());
-        return Criteria.where(indexedField.getKeywordField()).in(values);
+        String result = indexedField.getKeywordField() + ":(" + extractValues(values) + ")";
+        return result;
+    }
+
+    private static String extractValues(Collection<?> values) {
+        StringBuilder valuesStr = new StringBuilder();
+        boolean first = true;
+        for (Object value : values) {
+            if (!first) {
+                valuesStr.append(" ");
+            }
+            if (value instanceof Collection) {
+                valuesStr.append(extractValues((Collection<?>) value));
+            } else {
+                valuesStr.append(value);
+            }
+        }
+        return valuesStr.toString();
     }
 
     /**
@@ -82,16 +91,16 @@ public class IndexQueryUtils {
      *
      * @param indexedField field to check
      * @param values       {@link Set} of invalid values
-     * @return Solr query builder
+     * @return Solr query
      */
-    public static Criteria notInQuery(IndexField indexedField, Set<?> values) {
-        String join = String.join(" ", values.stream().map(o -> "\"" + o + "\"").collect(Collectors.toList()));
+    public static String notInQuery(IndexField indexedField, Set<?> values) {
+        String join = values.stream().map(o -> "\"" + o + "\"").collect(Collectors.joining(" "));
         if (!values.isEmpty()) {
             if (indexedField.getKeywordField() == null)
                 throw new UnsupportedSearchParameterException("equality check not supported for field: " + indexedField.getFieldName());
-            return new SimpleStringCriteria("(*:* -" + indexedField.getKeywordField() + ":(" + join + "))");
+            return "(*:* -" + indexedField.getKeywordField() + ":(" + join + "))";
         }
-        return new SimpleStringCriteria("(*:*)");
+        return "(*:*)";
     }
 
     /**
@@ -102,12 +111,12 @@ public class IndexQueryUtils {
      *
      * @param indexedField field to check
      * @param value        Value to test against
-     * @return Solr query builder
+     * @return Solr query
      */
-    public static Criteria prefixQuery(IndexField indexedField, String value) {
+    public static String prefixQuery(IndexField indexedField, String value) {
         if (indexedField.getKeywordField() == null)
             throw new UnsupportedSearchParameterException("prefix query not supported for field: " + indexedField.getFieldName());
-        return new SimpleStringCriteria(indexedField.getKeywordField() + ":" + value.replace(" ", "\\ ") + "*");
+        return indexedField.getKeywordField() + ":" + value.replace(" ", "\\ ") + "*";
     }
 
     /**
@@ -118,12 +127,12 @@ public class IndexQueryUtils {
      *
      * @param indexedField field to check
      * @param value        Value to test against
-     * @return Solr query builder
+     * @return Solr query
      */
-    public static Criteria suffixQuery(IndexField indexedField, String value) {
+    public static String suffixQuery(IndexField indexedField, String value) {
         if (indexedField.getKeywordField() == null)
             throw new UnsupportedSearchParameterException("suffix query not supported for field: " + indexedField.getFieldName());
-        return new SimpleStringCriteria(indexedField.getKeywordField() + ":*" + value.replace(" ", "\\ "));
+        return indexedField.getKeywordField() + ":*" + value.replace(" ", "\\ ");
     }
 
 
@@ -135,79 +144,19 @@ public class IndexQueryUtils {
      *
      * @param indexedField field to check
      * @param value        Value to test against
-     * @return Solr query builder
+     * @return Solr query
      */
-    public static Criteria containsQuery(IndexField indexedField, String value) {
+    public static String containsQuery(IndexField indexedField, String value) {
         String fieldName = indexedField.getFieldName();
         switch (indexedField.getFieldType()) {
             case IndexFieldType.FOLDING:
             case IndexFieldType.STRING:
-                return new SimpleStringCriteria(fieldName + ":*" + value.replace(" ", "\\ ") + "*");
+                return fieldName + ":*" + value.replace(" ", "\\ ") + "*";
             case IndexFieldType.TEXT:
-                return new SimpleStringCriteria(fieldName + ":\"" + value + "\"");
+                return fieldName + ":\"" + value + "\"";
             default:
                 throw new UnsupportedSearchParameterException();
         }
-    }
-
-    /**
-     * Builds a greater than query.
-     * <p>
-     * Tests if the attribute of an instance is greater than the specified value. Applicable to number and date
-     * fields.
-     * </p>
-     *
-     * @param name  Name of the attribute to check
-     * @param value Value to test against
-     * @return Solr query builder
-     */
-    public static Criteria gtQuery(String name, String value) {
-        return Criteria.where(name).greaterThan(value);
-    }
-
-    /**
-     * Builds a less than query.
-     * <p>
-     * Tests if the attribute of an instance is less than the specified value. Applicable to number and date
-     * fields.
-     * </p>
-     *
-     * @param name  Name of the attribute to check
-     * @param value Value to test against
-     * @return Solr query builder
-     */
-    public static Criteria ltQuery(String name, String value) {
-        return Criteria.where(name).lessThan(value);
-    }
-
-    /**
-     * Builds a greater than or equal query.
-     * <p>
-     * Tests if the attribute of an instance is greater than or equal to the specified value. Applicable to number
-     * and date fields.
-     * </p>
-     *
-     * @param name  Name of the attribute to check
-     * @param value Value to test against
-     * @return Solr query builder
-     */
-    public static Criteria gteQuery(String name, String value) {
-        return Criteria.where(name).greaterThanEqual(value);
-    }
-
-    /**
-     * Builds a less than or equal query.
-     * <p>
-     * Tests if the attribute of an instance is less than or equal to the specified value. Applicable to number
-     * and date fields.
-     * </p>
-     *
-     * @param name  Name of the attribute to check
-     * @param value Value to test against
-     * @return Solr query builder
-     */
-    public static Criteria lteQuery(String name, String value) {
-        return Criteria.where(name).lessThanEqual(value);
     }
 
     /**
@@ -217,10 +166,10 @@ public class IndexQueryUtils {
      * </p>
      *
      * @param name Name of the attribute to check
-     * @return Solr query builder
+     * @return Solr query
      */
-    public static Criteria notNullQuery(String name) {
-        return Criteria.where(name).isNotNull();
+    public static String notNullQuery(String name) {
+        return name + ":[* TO *])";
     }
 
     /**
@@ -230,10 +179,10 @@ public class IndexQueryUtils {
      * </p>
      *
      * @param name Name of the attribute to check
-     * @return Solr query builder
+     * @return Solr query
      */
-    public static Criteria isNullQuery(String name) {
-        return new SimpleStringCriteria("(*:* -" + name + ":[* TO *])");
+    public static String isNullQuery(String name) {
+        return "(*:* -" + name + ":[* TO *])";
     }
 
     /**
@@ -243,19 +192,26 @@ public class IndexQueryUtils {
      * </p>
      *
      * @param filters {@link List} of {@link Filter}
-     * @return Solr query builder
+     * @return Solr query
      */
-    public static Criteria orQuery(List<Filter> filters, String indexType, Map<String, IndexField> indexedFields) {
-        List<Criteria> builders = filters.stream()
+    public static String orQuery(List<Filter> filters, String indexType, Map<String, IndexField> indexedFields) {
+        List<String> filterStrings = filters.stream()
                 .map(f -> IndexQueryUtils.buildFilter(f, indexType, indexedFields))
                 .collect(Collectors.toList());
-        return orQueryInternal(builders);
+        return orQueryInternal(filterStrings);
     }
 
-    public static Criteria orQueryInternal(List<Criteria> filters) {
+    public static String orQueryInternal(List<String> filters) {
         if (filters.isEmpty())
-            return AnyCriteria.any();
-        return filters.stream().skip(1).reduce(filters.get(0), Criteria::or).connect();
+            return "*:*";
+        if (filters.size() == 1) {
+            return filters.get(0);
+        }
+        String compound = filters.get(0) + " OR " + andQueryInternal(filters.subList(1, filters.size()));
+//        if (isRoot) {
+//            return compound;
+//        }
+        return "(" + compound + ")";
     }
 
     /**
@@ -265,44 +221,49 @@ public class IndexQueryUtils {
      * </p>
      *
      * @param filters {@link List} of {@link Filter}
-     * @return Solr query builder
+     * @return Solr query
      */
-    public static Criteria andQuery(List<Filter> filters, String indexType, Map<String, IndexField> indexedFields) {
-        List<Criteria> builders = filters.stream()
+    public static String andQuery(List<Filter> filters, String indexType, Map<String, IndexField> indexedFields) {
+        List<String> filterStrings = filters.stream()
                 .map(f -> IndexQueryUtils.buildFilter(f, indexType, indexedFields))
                 .collect(Collectors.toList());
-        return andQueryInternal(builders);
+        return andQueryInternal(filterStrings);
     }
 
-    public static Criteria andQueryInternal(List<Criteria> filters) {
+    public static String andQueryInternal(List<String> filters) {
         if (filters.isEmpty())
-            return AnyCriteria.any();
-        return filters.stream().skip(1).reduce(filters.get(0), Criteria::and).connect();
+            return "*:*";
+        if (filters.size() == 1) {
+            return filters.get(0);
+        }
+        String compound = filters.get(0) + " AND " + andQueryInternal(filters.subList(1, filters.size()));
+//        if (isRoot) {
+//            return compound;
+//        }
+        return "(" + compound + ")";
     }
 
-    public static Criteria negateQuery(List<Filter> filters, String indexType, Map<String, IndexField> indexedFields) {
-        String queryTobeNegated = queryParser.createQueryStringFromNode(andQuery(filters, indexType, indexedFields).notOperator(), null);
-        return new SimpleStringCriteria("*:* " + queryTobeNegated);
+    public static String negateQuery(List<Filter> filters, String indexType, Map<String, IndexField> indexedFields) {
+        return "*:* -" + andQuery(filters, indexType, indexedFields);
     }
 
     /**
      * @param childIndexType type of the children collection, i.e. value identical to result of calling {@link IndexedDomainObject#getType()} on the
      *                       child object
-     * @param filters        filters applied to the the child collection
+     * @param filters        filters applied to the child collection
      * @param indexType      type of the parent object
      */
-    public static Criteria nestedQuery(String childIndexType, List<Filter> filters, String indexType) {
-        Criteria parentCriteria = Criteria.where(IndexQueryUtils.TYPE_FIELD).is(indexType);
+    public static String nestedQuery(String childIndexType, List<Filter> filters, String indexType) {
+        String parentCriteria = IndexQueryUtils.TYPE_FIELD + ":" + indexType;
         Map<String, IndexField> childIndexedFields = INDEXED_FIELDS_MAP.get(childIndexType);
         if (childIndexedFields == null)
             throw new UnsupportedSearchParameterException("unknown child index type: " + childIndexType);
-        Criteria childrenCriteria = andQuery(filters, indexType, childIndexedFields).and(Criteria.where(IndexQueryUtils.TYPE_FIELD).is(childIndexType));
-        return new NestedCriteria(parentCriteria, childrenCriteria);
+        String childrenCriteria = "(" + andQuery(filters, indexType, childIndexedFields) + " AND " + IndexQueryUtils.TYPE_FIELD + ":" + childIndexType + ")";
+        return "({!parent which=" + parentCriteria + " score=max v='" + childrenCriteria + "'})";
     }
 
-    public static void initializeQuery(SimpleQuery query, Params params, Map<String, IndexField> indexedFields) {
+    public static void initializeQuery(SolrQuery query, Params params, Map<String, IndexField> indexedFields) {
         if (params.getSorting() != null && !params.getSorting().isEmpty()) {
-            Sort s = Sort.unsorted();
             for (int i = 0; i < params.getSorting().size(); i++) {
                 String sortField;
                 SortSpecification sortSpecification = params.getSorting().get(i);
@@ -314,9 +275,12 @@ public class IndexQueryUtils {
                     sortField = field.getSortField();
                     notNull(sortField, () -> new UnsupportedSearchParameterException("sort is not supported on field type: " + field.getFieldType() + " consider adding " + IndexField.STRING_SUFFIX + " copy field"));
                 }
-                s = s.and(Sort.by(Sort.Direction.valueOf(sortSpecification.getOrder().toString()), sortField));
+                if (sortSpecification.getOrder() == Order.ASC) {
+                    query.addSort(SolrQuery.SortClause.asc(sortField));
+                } else {
+                    query.addSort(SolrQuery.SortClause.desc(sortField));
+                }
             }
-            query.addSort(s);
         } else {
             notNull(params.getSort(), () -> new BadArgument("sort"));
             notNull(params.getOrder(), () -> new BadArgument("order"));
@@ -329,23 +293,31 @@ public class IndexQueryUtils {
                 sortField = field.getSortField();
                 notNull(sortField, () -> new UnsupportedSearchParameterException("sort is not supported on field type: " + field.getFieldType() + " consider adding " + IndexField.STRING_SUFFIX + " copy field"));
             }
-            query.addSort(Sort.by(Sort.Direction.valueOf(params.getOrder().toString()), sortField));
+            if (params.getOrder() == Order.ASC) {
+                query.addSort(SolrQuery.SortClause.asc(sortField));
+            } else {
+                query.addSort(SolrQuery.SortClause.desc(sortField));
+            }
         }
         notNull(params.getPageSize(), () -> new BadArgument("pageSize can't be null"));
         gte(params.getPageSize(), 1, () -> new BadArgument("pageSize must be >= 1"));
         lte(params.getPageSize(), solrMaxRows, () -> new BadArgument("pageSize must be lesser than solrMaxRows config property: " + solrMaxRows));
         notNull(params.getPage(), () -> new BadArgument("page can't be null"));
         gte(params.getPage(), 0, () -> new BadArgument("page must be >= 0"));
-        query.setPageRequest(PageRequest.of(params.getPage(), params.getPageSize()));
+        query.setRows(params.getPageSize());
+        query.setStart(params.getPage() * params.getPageSize());
     }
 
-    public static Criteria buildFilters(Params params, String indexType, Map<String, IndexField> indexedFields) {
+    public static String buildFilters(Params params, String indexType, Map<String, IndexField> indexedFields) {
         if (params.getFilter() == null || params.getFilter().isEmpty())
-            return AnyCriteria.any();
-        List<Criteria> queries = params.getFilter().stream()
-                .map(f -> IndexQueryUtils.buildFilter(f, indexType, indexedFields))
-                .filter(Objects::nonNull)
-                .collect(Collectors.toList());
+            return "*:*";
+        List<String> queries = new ArrayList<>();
+        for (Filter filter : params.getFilter()) {
+            String query = IndexQueryUtils.buildFilter(filter, indexType, indexedFields);
+            if (query != null) {
+                queries.add(query);
+            }
+        }
         if (params.getOperation() == RootFilterOperation.OR) {
             return orQueryInternal(queries);
         } else {
@@ -353,7 +325,7 @@ public class IndexQueryUtils {
         }
     }
 
-    public static Criteria buildFilter(Filter filter, String indexType, Map<String, IndexField> indexedFields) {
+    public static String buildFilter(Filter filter, String indexType, Map<String, IndexField> indexedFields) {
         String value = sanitizeFilterValue(filter.getValue());
         FilterOperation operation = filter.getOperation();
         if (operation == null) {
@@ -388,13 +360,13 @@ public class IndexQueryUtils {
             case CONTAINS:
                 return containsQuery(field, value);
             case GT:
-                return gtQuery(field.getFieldName(), value);
+                return field.getFieldName() + ":{" + value + " TO *]";
             case LT:
-                return ltQuery(field.getFieldName(), value);
+                return field.getFieldName() + ":[* TO " + value + "}";
             case GTE:
-                return gteQuery(field.getFieldName(), value);
+                return field.getFieldName() + ":[" + value + " TO *]";
             case LTE:
-                return lteQuery(field.getFieldName(), value);
+                return field.getFieldName() + ":[* TO " + value + "]";
             case AND:
                 return andQuery(filter.getFilter(), indexType, indexedFields);
             case OR:

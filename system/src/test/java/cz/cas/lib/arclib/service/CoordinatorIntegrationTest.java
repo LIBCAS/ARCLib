@@ -19,11 +19,12 @@ import helper.auth.WithMockCustomUser;
 import org.dom4j.DocumentException;
 import org.junit.*;
 import org.junit.runner.RunWith;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.util.FileSystemUtils;
 
-import javax.inject.Inject;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -38,39 +39,38 @@ import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.fileUpload;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest
 public class CoordinatorIntegrationTest extends SrDbTest implements ApiTest {
 
-    @Inject
+    @Autowired
     private BatchService batchService;
 
-    @Inject
+    @Autowired
     private ProducerProfileStore producerProfileStore;
 
-    @Inject
+    @Autowired
     private SipProfileService sipProfileService;
 
-    @Inject
+    @Autowired
     private ValidationProfileStore validationProfileStore;
 
-    @Inject
+    @Autowired
     private BatchApi api;
 
-    @Inject
+    @Autowired
     private IngestWorkflowStore ingestWorkflowStore;
 
-    @Inject
+    @Autowired
     private ProducerStore producerStore;
 
-    @Inject
+    @Autowired
     private WorkflowDefinitionStore workflowDefinitionStore;
 
-    @Inject
+    @Autowired
     private BatchStore batchStore;
 
     private static final Path BPMN_TEST_PATH = Paths.get("src/test/resources/bpmn/minimalWorkflow.bpmn");
@@ -170,7 +170,7 @@ public class CoordinatorIntegrationTest extends SrDbTest implements ApiTest {
 
         final String[] result = new String[1];
         mvc(api).perform(
-                fileUpload("/api/coordinator/start")
+                multipart("/api/coordinator/start")
                         .param("workflowConfig", INGEST_CONFIG)
                         .param("producerProfileId", producerProfile.getId())
         )
@@ -227,7 +227,7 @@ public class CoordinatorIntegrationTest extends SrDbTest implements ApiTest {
 
         final String[] result = new String[1];
         mvc(api).perform(
-                fileUpload("/api/coordinator/start")
+                multipart("/api/coordinator/start")
                         .param("workflowConfig", INGEST_CONFIG)
                         .param("producerProfileId", producerProfile.getId())
         )
@@ -281,7 +281,7 @@ public class CoordinatorIntegrationTest extends SrDbTest implements ApiTest {
 
         final String[] result = new String[1];
         mvc(api).perform(
-                fileUpload("/api/coordinator/start")
+                multipart("/api/coordinator/start")
                         .param("workflowConfig", INGEST_CONFIG)
                         .param("producerProfileId", producerProfile.getId())
         )
@@ -336,7 +336,7 @@ public class CoordinatorIntegrationTest extends SrDbTest implements ApiTest {
 
         final String[] result = new String[1];
         mvc(api).perform(
-                fileUpload("/api/coordinator/start")
+                multipart("/api/coordinator/start")
                         .param("workflowConfig", INGEST_CONFIG)
                         .param("producerProfileId", producerProfile.getId())
         )

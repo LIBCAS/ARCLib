@@ -8,10 +8,10 @@ import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Fetch;
 import org.hibernate.annotations.FetchMode;
 
-import javax.persistence.Entity;
-import javax.persistence.Lob;
-import javax.persistence.ManyToOne;
-import javax.persistence.Table;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Lob;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
 
 /**
  * Previous run of job
@@ -26,10 +26,8 @@ public class JobRun extends DatedObject {
     @ManyToOne
     private Job job;
 
-    @Lob
     private String console;
 
-    @Lob
     private String result;
 
     private Boolean success;

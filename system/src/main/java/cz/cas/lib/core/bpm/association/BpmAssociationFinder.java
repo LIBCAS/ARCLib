@@ -3,10 +3,10 @@ package cz.cas.lib.core.bpm.association;
 import org.camunda.bpm.engine.RuntimeService;
 import org.camunda.bpm.engine.TaskService;
 import org.camunda.bpm.engine.runtime.ProcessInstance;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 
-import javax.inject.Inject;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
@@ -101,12 +101,12 @@ public class BpmAssociationFinder {
                 .orElse(null);
     }
 
-    @Inject
+    @Autowired
     public void setRuntimeService(RuntimeService runtimeService) {
         this.runtimeService = runtimeService;
     }
 
-    @Inject
+    @Autowired
     public void setTaskService(TaskService taskService) {
         this.taskService = taskService;
     }

@@ -19,12 +19,13 @@ import cz.cas.lib.core.store.Transactional;
 import cz.cas.lib.core.util.Utils;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StreamUtils;
 
-import javax.inject.Inject;
+
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.charset.Charset;
@@ -164,28 +165,28 @@ public class ExportRoutineService {
     }
 
 
-    @Inject
+    @Autowired
     public void setStore(ExportRoutineStore store) {
         this.store = store;
     }
 
-    @Inject
+    @Autowired
     public void setJobService(JobService jobService) {
         this.jobService = jobService;
     }
 
-    @Inject
+    @Autowired
     public void setUserDetails(UserDetails userDetails) {
         this.userDetails = userDetails;
     }
 
 
-    @Inject
+    @Autowired
     public void setAipQueryStore(AipQueryStore aipQueryStore) {
         this.aipQueryStore = aipQueryStore;
     }
 
-    @Inject
+    @Autowired
     public void setExportScript(@Value("${arclib.script.export}") Resource exportScript) {
         this.exportScript = exportScript;
     }

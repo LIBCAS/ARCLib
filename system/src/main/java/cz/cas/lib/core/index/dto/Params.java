@@ -5,12 +5,11 @@ import cz.cas.lib.arclib.index.solr.IndexQueryUtils;
 import cz.cas.lib.core.index.solr.IndexedStore;
 import lombok.Getter;
 import lombok.Setter;
-import org.springframework.data.solr.core.query.Criteria;
 
-import javax.persistence.Transient;
-import javax.validation.Valid;
-import javax.validation.constraints.Min;
-import javax.validation.constraints.NotNull;
+import jakarta.persistence.Transient;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -85,19 +84,6 @@ public class Params {
     @Transient
     protected boolean prefilterAdded = false;
 
-    /**
-     * Internal query.
-     * <p>
-     * Used for additional complicated queries added on backend.
-     * </p>
-     * <p>
-     * This will be used in query field, not filter query. Boost will work.
-     * </p>
-     */
-    @JsonIgnore
-    @Transient
-    protected Criteria internalQuery;
-
     public void addFilter(Filter filter) {
         List<Filter> newList = new ArrayList<>(getFilter());
         newList.add(filter);
@@ -118,7 +104,6 @@ public class Params {
         params.setSorting(getSorting());
         params.setOperation(getOperation());
         params.setPrefilterAdded(isPrefilterAdded());
-        params.setInternalQuery(getInternalQuery());
         return params;
     }
 

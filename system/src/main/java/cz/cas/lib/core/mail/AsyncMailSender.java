@@ -1,11 +1,12 @@
 package cz.cas.lib.core.mail;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
-import javax.inject.Inject;
-import javax.mail.internet.MimeMessage;
+
+import jakarta.mail.internet.MimeMessage;
 
 /**
  * Asynchronous wrapper around Spring {@link JavaMailSender}.
@@ -23,7 +24,7 @@ public class AsyncMailSender {
         return sender.createMimeMessage();
     }
 
-    @Inject
+    @Autowired
     public void setSender(JavaMailSender sender) {
         this.sender = sender;
     }

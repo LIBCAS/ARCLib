@@ -2,11 +2,12 @@ package cz.cas.lib.core.scheduling.job;
 
 import cz.cas.lib.core.scheduling.JobRunner;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.support.CronTrigger;
 import org.springframework.stereotype.Service;
 
-import javax.inject.Inject;
+
 import java.util.Collection;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -66,17 +67,17 @@ public class JobService {
         }
     }
 
-    @Inject
+    @Autowired
     public void setStore(JobStore store) {
         this.store = store;
     }
 
-    @Inject
+    @Autowired
     public void setScheduler(TaskScheduler scheduler) {
         this.scheduler = scheduler;
     }
 
-    @Inject
+    @Autowired
     public void setRunner(JobRunner runner) {
         this.runner = runner;
     }

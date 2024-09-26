@@ -12,9 +12,10 @@ import cz.cas.lib.core.rest.data.DelegateAdapter;
 import cz.cas.lib.core.store.Transactional;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import javax.inject.Inject;
+
 import java.util.List;
 
 import static cz.cas.lib.core.util.Utils.notNull;
@@ -83,12 +84,12 @@ public class BatchService implements DelegateAdapter<Batch> {
         return batchDetailDto;
     }
 
-    @Inject
+    @Autowired
     public void setBeanMappingService(BeanMappingService beanMappingService) {
         this.beanMappingService = beanMappingService;
     }
 
-    @Inject
+    @Autowired
     public void setDelegate(BatchStore delegate) {
         this.delegate = delegate;
     }

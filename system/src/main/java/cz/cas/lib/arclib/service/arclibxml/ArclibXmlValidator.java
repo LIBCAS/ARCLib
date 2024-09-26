@@ -9,6 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
 import org.apache.commons.lang3.tuple.Pair;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
@@ -17,7 +18,7 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
-import javax.inject.Inject;
+
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathConstants;
@@ -138,7 +139,10 @@ public class ArclibXmlValidator {
         ByteArrayInputStream is = new ByteArrayInputStream(xml.getBytes(StandardCharsets.UTF_8));
         validateSysGenNode(is, AIP_ID, iw.getSip().getId());
         validateSysGenNode(is, CREATE_DATE, iw.getCreated().truncatedTo(ChronoUnit.SECONDS).toString());
-        validateSysGenNode(is, MODIFY_DATE, iw.getUpdated().truncatedTo(ChronoUnit.SECONDS).toString());
+
+        //DB record is also updated after the XML is generated so modification timestamp should not be checked
+        //validateSysGenNode(is, MODIFY_DATE, iw.getUpdated().truncatedTo(ChronoUnit.SECONDS).toString());
+
         validateSysGenNode(is, XML_ID, iw.getExternalId());
         validateSysGenNode(is, SIP_VERSION_NUMBER, String.valueOf(iw.getSip().getVersionNumber()));
         validateSysGenNode(is, XML_VERSION_NUMBER, String.valueOf(iw.getXmlVersionNumber()));
@@ -180,7 +184,7 @@ public class ArclibXmlValidator {
         public static final String WORKFLOW_DEFINITION = "/METS:mets/METS:amdSec/mets:digiprovMD[@ID='ARCLIB_SIP_INFO']/METS:mdWrap/METS:xmlData/ARCLib:sipInfo/ARCLib:ingestProfiles/ARCLib:workflowDefinition";
     }
 
-    @Inject
+    @Autowired
     public void setSystemWideValidationItems(@Value("${arclib.arclibXmlSystemWideValidationConfig}")
                                                      Resource arclibXmlSystemWideValidationConfig) throws IOException {
         BufferedReader br = new BufferedReader(new InputStreamReader(arclibXmlSystemWideValidationConfig.getInputStream(), StandardCharsets.UTF_8));
@@ -194,22 +198,22 @@ public class ArclibXmlValidator {
         }
     }
 
-    @Inject
+    @Autowired
     public void setArclibXmlSchema(@Value("${arclib.arclibXmlSchema}") Resource arclibXmlSchema) {
         this.arclibXmlSchema = arclibXmlSchema;
     }
 
-    @Inject
+    @Autowired
     public void setMetsSchema(@Value("${arclib.metsSchema}") Resource metsSchema) {
         this.metsSchema = metsSchema;
     }
 
-    @Inject
+    @Autowired
     public void setPremisSchema(@Value("${arclib.premisSchema}") Resource premisSchema) {
         this.premisSchema = premisSchema;
     }
 
-    @Inject
+    @Autowired
     public void setUris(@Value("${namespaces.mets}") String mets, @Value("${namespaces.xsi}") String xsi, @Value("${namespaces.arclib}") String arclib, @Value("${namespaces" +
             ".premis}") String premis, @Value("${namespaces.oai_dc}") String oai_dc, @Value("${namespaces.dc}") String dc, @Value("${namespaces.xlink}") String xlink) {
         Map<String, String> uris = new HashMap<>();

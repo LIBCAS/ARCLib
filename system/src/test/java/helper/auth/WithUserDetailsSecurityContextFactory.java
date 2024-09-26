@@ -1,5 +1,6 @@
 package helper.auth;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
@@ -10,14 +11,14 @@ import org.springframework.security.test.context.support.WithSecurityContextFact
 import org.springframework.security.test.context.support.WithUserDetails;
 import org.springframework.util.Assert;
 
-import javax.inject.Inject;
+
 
 final class WithUserDetailsSecurityContextFactory
         implements WithSecurityContextFactory<WithUserDetails> {
 
     private UserDetailsService userDetailsService;
 
-    @Inject
+    @Autowired
     public WithUserDetailsSecurityContextFactory(UserDetailsService userDetailsService) {
         this.userDetailsService = userDetailsService;
     }

@@ -27,11 +27,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.camunda.bpm.engine.delegate.DelegateExecution;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.util.FileSystemUtils;
 
-import javax.inject.Inject;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -255,52 +255,52 @@ public class StorageSuccessVerifierDelegate extends ArclibDelegate {
                 : archivalStorageService.exportSingleXml(iw.getSip().getId(), iw.getXmlVersionNumber());
     }
 
-    @Inject
+    @Autowired
     public void setArchivalStorageService(ArchivalStorageService archivalStorageService) {
         this.archivalStorageService = archivalStorageService;
     }
 
-    @Inject
+    @Autowired
     public void setArchivalStorageServiceDebug(ArchivalStorageServiceDebug archivalStorageServiceDebug) {
         this.archivalStorageServiceDebug = archivalStorageServiceDebug;
     }
 
-    @Inject
+    @Autowired
     public void setIndexArclibXmlStore(IndexedArclibXmlStore indexArclibXmlStore) {
         this.indexArclibXmlStore = indexArclibXmlStore;
     }
 
-    @Inject
+    @Autowired
     public void setAipService(AipService aipService) {
         this.aipService = aipService;
     }
 
-    @Inject
+    @Autowired
     public void setDeleteSipFromTransferArea(@Value("${arclib.deleteSipFromTransferArea}") Boolean deleteSipFromTransferArea) {
         this.deleteSipFromTransferArea = deleteSipFromTransferArea;
     }
 
-    @Inject
+    @Autowired
     public void setProducerStore(ProducerStore producerStore) {
         this.producerStore = producerStore;
     }
 
-    @Inject
+    @Autowired
     public void setUserStore(UserStore userStore) {
         this.userStore = userStore;
     }
 
-    @Inject
+    @Autowired
     public void setDeletionRequestService(DeletionRequestService deletionRequestService) {
         this.deletionRequestService = deletionRequestService;
     }
 
-    @Inject
+    @Autowired
     public void setAuthorialPackageStore(AuthorialPackageStore authorialPackageStore) {
         this.authorialPackageStore = authorialPackageStore;
     }
 
-    @Inject
+    @Autowired
     public void setSipStore(SipStore sipStore) {
         this.sipStore = sipStore;
     }

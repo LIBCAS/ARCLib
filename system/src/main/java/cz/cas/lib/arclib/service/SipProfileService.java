@@ -11,9 +11,10 @@ import cz.cas.lib.arclib.store.SipProfileStore;
 import cz.cas.lib.core.store.Transactional;
 import org.dom4j.DocumentException;
 import org.dom4j.io.SAXReader;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import javax.inject.Inject;
+
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Collection;
@@ -98,17 +99,17 @@ public class SipProfileService {
     }
 
 
-    @Inject
+    @Autowired
     public void setBeanMappingService(BeanMappingService beanMappingService) {
         this.beanMappingService = beanMappingService;
     }
 
-    @Inject
+    @Autowired
     public void setStore(SipProfileStore store) {
         this.store = store;
     }
 
-    @Inject
+    @Autowired
     public void setUserDetails(UserDetails userDetails) {
         this.userDetails = userDetails;
     }

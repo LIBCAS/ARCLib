@@ -6,9 +6,10 @@ import cz.cas.lib.arclib.domain.preservationPlanning.QIngestIssueDefinition;
 import cz.cas.lib.core.sequence.Generator;
 import cz.cas.lib.arclib.domainbase.store.NamedStore;
 import lombok.Getter;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
-import javax.inject.Inject;
+
 
 @Repository
 public class IngestIssueDefinitionStore extends NamedStore<IngestIssueDefinition, QIngestIssueDefinition> {
@@ -36,7 +37,7 @@ public class IngestIssueDefinitionStore extends NamedStore<IngestIssueDefinition
         return d;
     }
 
-    @Inject
+    @Autowired
     public void setGenerator(Generator generator) {
         this.generator = generator;
     }

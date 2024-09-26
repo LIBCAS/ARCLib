@@ -8,9 +8,10 @@ import cz.cas.lib.arclib.security.user.UserDetails;
 import cz.cas.lib.arclib.store.ExportTemplateStore;
 import cz.cas.lib.core.store.Transactional;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import javax.inject.Inject;
+
 import java.io.IOException;
 import java.util.Collection;
 
@@ -77,12 +78,12 @@ public class ExportTemplateService {
         }
     }
 
-    @Inject
+    @Autowired
     public void setStore(ExportTemplateStore store) {
         this.store = store;
     }
 
-    @Inject
+    @Autowired
     public void setUserDetails(UserDetails userDetails) {
         this.userDetails = userDetails;
     }

@@ -9,11 +9,12 @@ import cz.cas.lib.arclib.security.user.UserDetails;
 import cz.cas.lib.arclib.store.ValidationProfileStore;
 import cz.cas.lib.arclib.utils.XmlUtils;
 import cz.cas.lib.core.store.Transactional;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 
-import javax.inject.Inject;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collection;
@@ -91,22 +92,22 @@ public class ValidationProfileService {
     }
 
 
-    @Inject
+    @Autowired
     public void setBeanMappingService(BeanMappingService beanMappingService) {
         this.beanMappingService = beanMappingService;
     }
 
-    @Inject
+    @Autowired
     public void setStore(ValidationProfileStore store) {
         this.store = store;
     }
 
-    @Inject
+    @Autowired
     public void setValidationProfileSchema(@Value("${arclib.validationProfileSchema}") Resource validationProfileSchema) {
         this.validationProfileSchema = validationProfileSchema;
     }
 
-    @Inject
+    @Autowired
     public void setUserDetails(UserDetails userDetails) {
         this.userDetails = userDetails;
     }

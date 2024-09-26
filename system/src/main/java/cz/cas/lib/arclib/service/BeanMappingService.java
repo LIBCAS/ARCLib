@@ -1,6 +1,6 @@
 package cz.cas.lib.arclib.service;
 
-import org.dozer.Mapper;
+import com.github.dozermapper.core.Mapper;
 
 import java.util.Collection;
 import java.util.List;

@@ -14,6 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
 import org.dom4j.*;
 import org.dom4j.io.SAXReader;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.scheduling.annotation.Async;
@@ -23,7 +24,6 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 
-import javax.inject.Inject;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -584,42 +584,42 @@ public class FormatLibraryUpdater {
                 .replace("-", "");
     }
 
-    @Inject
+    @Autowired
     public void setObjectMapper(ObjectMapper objectMapper) {
         this.objectMapper = objectMapper;
     }
 
-    @Inject
+    @Autowired
     public void setFormatService(FormatService formatService) {
         this.formatService = formatService;
     }
 
-    @Inject
+    @Autowired
     public void setFormatDeveloperService(FormatDeveloperService formatDeveloperService) {
         this.formatDeveloperService = formatDeveloperService;
     }
 
-    @Inject
+    @Autowired
     public void setFormatDefinitionService(FormatDefinitionService formatDefinitionService) {
         this.formatDefinitionService = formatDefinitionService;
     }
 
-    @Inject
+    @Autowired
     public void setFormatListUrl(@Value("${formatLibrary.formatListUrl}") String formatListUrl) {
         this.formatListUrl = formatListUrl;
     }
 
-    @Inject
+    @Autowired
     public void setFormatDetailListUrl(@Value("${formatLibrary.formatDetailListUrl}") String formatDetailListUrl) {
         this.formatDetailListUrl = formatDetailListUrl;
     }
 
-    @Inject
+    @Autowired
     public void setFormatIdentifierService(FormatIdentifierService formatIdentifierService) {
         this.formatIdentifierService = formatIdentifierService;
     }
 
-    @Inject
+    @Autowired
     public void setFormatLibraryNotifier(Optional<FormatLibraryNotifier> formatLibraryNotifier) {
         this.formatLibraryNotifier = formatLibraryNotifier;
     }

@@ -3,6 +3,7 @@ package cz.cas.lib.arclib.domain;
 import cz.cas.lib.arclib.domainbase.domain.DatedObject;
 import cz.cas.lib.arclib.security.authorization.permission.Permissions;
 import cz.cas.lib.arclib.security.authorization.role.UserRole;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -11,7 +12,6 @@ import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Fetch;
 import org.hibernate.annotations.FetchMode;
 
-import javax.persistence.*;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -51,6 +51,11 @@ public class User extends DatedObject {
      * Unikátny identifikátor v rámci LDAPu
      */
     private String ldapDn;
+
+    /**
+     * Heslo, v případě že je použita lokální DB hesel
+     */
+    private String password;
 
     /**
      * Dodávateľ

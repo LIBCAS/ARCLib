@@ -18,11 +18,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.camunda.bpm.engine.delegate.DelegateExecution;
 import org.dom4j.DocumentException;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.FileSystemUtils;
 import org.xml.sax.SAXException;
 
-import javax.inject.Inject;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.TransformerException;
 import java.io.FileOutputStream;
@@ -199,22 +199,22 @@ public class SipMergerDelegate extends ArclibDelegate {
         DELETE, KEEP
     }
 
-    @Inject
+    @Autowired
     public void setSipStore(SipStore sipStore) {
         this.sipStore = sipStore;
     }
 
-    @Inject
+    @Autowired
     public void setFixityCounterFacade(FixityCounterFacade fixityCounterFacade) {
         this.fixityCounterFacade = fixityCounterFacade;
     }
 
-    @Inject
+    @Autowired
     public void setArchivalStorageService(ArchivalStorageService archivalStorageService) {
         this.archivalStorageService = archivalStorageService;
     }
 
-    @Inject
+    @Autowired
     public void setArchivalStorageResponseExtractor(ArchivalStorageResponseExtractor archivalStorageResponseExtractor) {
         this.archivalStorageResponseExtractor = archivalStorageResponseExtractor;
     }

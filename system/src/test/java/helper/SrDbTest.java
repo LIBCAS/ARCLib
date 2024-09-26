@@ -13,10 +13,7 @@ import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
-import org.springframework.data.solr.core.SolrTemplate;
-import org.springframework.data.solr.core.schema.SolrPersistentEntitySchemaCreator;
 
-import java.util.Collections;
 import java.util.Properties;
 
 public class SrDbTest extends DbTest {
@@ -26,10 +23,6 @@ public class SrDbTest extends DbTest {
 
     @Getter
     private HttpSolrClient client;
-    @Getter
-    private SolrTemplate template;
-    @Getter
-    private SolrTemplate arclibXmlSolrTemplate;
     protected String arclibXmlCoreName;
     protected String testCoreName;
 
@@ -58,13 +51,6 @@ public class SrDbTest extends DbTest {
         ObjectMapper objectMapper = objectMapperProducer.objectMapper(false, false);
 
         client = new HttpSolrClient.Builder().withBaseSolrUrl("http://localhost:8983/solr").build();
-
-        template = new SolrTemplate(client);
-        template.setSchemaCreationFeatures(Collections.singletonList(SolrPersistentEntitySchemaCreator.Feature.CREATE_MISSING_FIELDS));
-        template.afterPropertiesSet();
-
-        arclibXmlSolrTemplate = new SolrTemplate(client);
-        arclibXmlSolrTemplate.afterPropertiesSet();
     }
 
     /**
@@ -87,17 +73,17 @@ public class SrDbTest extends DbTest {
             store.setEntityManager(super.getEm());
             store.setQueryFactory(new JPAQueryFactory(super.getEm()));
             if (store instanceof IndexedDomainStore) {
-                ((IndexedDomainStore) store).setTemplate(getTemplate());
+                ((IndexedDomainStore) store).setSolrClient(getClient());
                 ((IndexedDomainStore) store).init();
                 continue;
             }
             if (store instanceof IndexedDatedStore) {
-                ((IndexedDatedStore) store).setTemplate(getTemplate());
+                ((IndexedDatedStore) store).setSolrClient(getClient());
                 ((IndexedDatedStore) store).init();
                 continue;
             }
             if (store instanceof IndexedNamedStore) {
-                ((IndexedNamedStore) store).setTemplate(getTemplate());
+                ((IndexedNamedStore) store).setSolrClient(getClient());
                 ((IndexedNamedStore) store).init();
             }
 

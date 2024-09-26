@@ -3,6 +3,7 @@ package cz.cas.lib.arclib.security.user;
 import cz.cas.lib.arclib.domain.Producer;
 import cz.cas.lib.arclib.domain.User;
 import cz.cas.lib.arclib.security.authorization.role.UserRole;
+import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
@@ -10,7 +11,6 @@ import org.hibernate.proxy.HibernateProxy;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
-import javax.validation.constraints.NotNull;
 import java.util.Collection;
 import java.util.stream.Collectors;
 
@@ -29,7 +29,7 @@ public class UserDetailsImpl implements UserDetails {
     /**
      * Method returns collection of authorities which the annotation
      * {@code @PreAuthorize("hasAuthority('" + MY_DECLARED_PERMISSION + "')")} validates against.
-     *
+     * <p>
      * User roles and permissions are stored in structure like this:
      * <pre>
      *     User --- Role1 --- Permission A, Permission B, Permission C
@@ -70,4 +70,8 @@ public class UserDetailsImpl implements UserDetails {
         return user.getUsername();
     }
 
+    @Override
+    public String getPassword() {
+        return user.getPassword();
+    }
 }

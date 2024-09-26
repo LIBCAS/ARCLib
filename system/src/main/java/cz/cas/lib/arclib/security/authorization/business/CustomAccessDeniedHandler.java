@@ -1,5 +1,9 @@
 package cz.cas.lib.arclib.security.authorization.business;
 
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -9,10 +13,6 @@ import org.springframework.web.servlet.DispatcherServlet;
 import org.springframework.web.servlet.HandlerExecutionChain;
 import org.springframework.web.servlet.HandlerMapping;
 
-import javax.inject.Inject;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.List;
 
@@ -49,7 +49,7 @@ public class CustomAccessDeniedHandler implements AccessDeniedHandler {
         }
     }
 
-    @Inject
+    @Autowired
     public void setDispatcherServlet(DispatcherServlet dispatcherServlet) {
         this.dispatcherServlet = dispatcherServlet;
     }

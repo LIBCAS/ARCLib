@@ -3,9 +3,10 @@ package cz.cas.lib.arclib.service.fixity;
 import cz.cas.lib.arclib.domain.HashType;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import javax.inject.Inject;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
@@ -32,7 +33,7 @@ public class FixityCounterFacade {
         return fixityCounters.get(hashType).verifyFixity(fileStream, expectedDigest);
     }
 
-    @Inject
+    @Autowired
     public void setFixityCheckers(List<FixityCounter> fixityCounters) {
         this.fixityCounters = fixityCounters.stream().collect(Collectors.toMap(f -> f.getHashType(), f -> f));
     }

@@ -2,9 +2,8 @@ package helper;
 
 
 import cz.cas.lib.arclib.service.ExternalProcessRunner;
-import liquibase.util.SystemUtils;
+import liquibase.util.SystemUtil;
 import org.hamcrest.Description;
-import org.hamcrest.Factory;
 import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeMatcher;
 
@@ -13,7 +12,7 @@ import java.time.Instant;
 public class TestUtils {
 
     public static class Solr {
-        private static final String CMD = SystemUtils.IS_OS_WINDOWS ? "solr.cmd" : "solr";
+        private static final String CMD = SystemUtil.isWindows() ? "solr.cmd" : "solr";
         private static final String[] START_CMD = {CMD, "start"};
         private static final String[] KILL_CMD = {CMD, "stop", "-all"};
         private static final ExternalProcessRunner externalProcessRunner = new ExternalProcessRunner();
@@ -83,7 +82,6 @@ public class TestUtils {
          * @param operand the expected value of matching Instants
          * @param error   the delta (+/-) miliseconds within which matches will be allowed
          */
-        @Factory
         public static Matcher<Instant> closeTo(Instant operand, long error) {
             return new IsInstantCloseTo(operand, error);
         }

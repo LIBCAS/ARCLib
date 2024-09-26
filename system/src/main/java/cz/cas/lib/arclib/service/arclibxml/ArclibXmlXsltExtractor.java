@@ -7,9 +7,10 @@ import cz.cas.lib.arclib.service.SipProfileService;
 import cz.cas.lib.core.store.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import net.sf.saxon.jaxp.SaxonTransformerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import javax.inject.Inject;
+
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
@@ -79,7 +80,7 @@ public class ArclibXmlXsltExtractor {
         return result.toString();
     }
 
-    @Inject
+    @Autowired
     public void setSipProfileService(SipProfileService sipProfileService) {
         this.sipProfileService = sipProfileService;
     }

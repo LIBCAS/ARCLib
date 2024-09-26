@@ -7,9 +7,10 @@ import cz.cas.lib.arclib.domainbase.store.DatedStore;
 import cz.cas.lib.arclib.formatlibrary.domain.Format;
 import cz.cas.lib.arclib.report.Report;
 import cz.cas.lib.arclib.report.ReportStore;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
-import javax.inject.Inject;
+
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -68,12 +69,12 @@ public class NotificationStore extends DatedStore<Notification, QNotification> {
     }
 
 
-    @Inject
+    @Autowired
     public void setFormatStore(IndexedFormatStore formatStore) {
         this.formatStore = formatStore;
     }
 
-    @Inject
+    @Autowired
     public void setReportStore(ReportStore reportStore) {
         this.reportStore = reportStore;
     }

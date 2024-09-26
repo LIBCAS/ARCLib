@@ -8,26 +8,23 @@ import cz.cas.lib.arclib.domainbase.store.DomainStore;
 import cz.cas.lib.arclib.index.autocomplete.AutoCompleteAware;
 import cz.cas.lib.arclib.index.autocomplete.AutoCompleteItem;
 import cz.cas.lib.arclib.index.solr.IndexQueryUtils;
+import cz.cas.lib.core.index.Indexed;
+import cz.cas.lib.core.index.SolrDocument;
 import cz.cas.lib.core.index.dto.Params;
 import cz.cas.lib.core.index.dto.Result;
+import jakarta.annotation.PostConstruct;
 import lombok.NonNull;
 import lombok.SneakyThrows;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.reflect.FieldUtils;
 import org.apache.solr.client.solrj.SolrClient;
+import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.beans.Field;
+import org.apache.solr.client.solrj.response.QueryResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.data.domain.Page;
-import org.springframework.data.solr.core.SolrTemplate;
-import org.springframework.data.solr.core.mapping.Indexed;
-import org.springframework.data.solr.core.mapping.SolrDocument;
-import org.springframework.data.solr.core.query.Criteria;
-import org.springframework.data.solr.core.query.SimpleFilterQuery;
-import org.springframework.data.solr.core.query.SimpleQuery;
-import org.springframework.util.ObjectUtils;
 
-import javax.annotation.PostConstruct;
 import java.io.IOException;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
@@ -66,7 +63,7 @@ public interface IndexedStore<T extends DomainObject, U extends IndexedDomainObj
 
     List<T> findAllInList(List<String> ids);
 
-    SolrTemplate getTemplate();
+    SolrClient getSolrClient();
 
     Class<T> getType();
 
@@ -148,21 +145,25 @@ public interface IndexedStore<T extends DomainObject, U extends IndexedDomainObj
      * @return Sorted {@link List} of instances with total number
      */
     default Result<T> findAll(Params params) {
-        SimpleQuery query = new SimpleQuery();
+        SolrQuery query = new SolrQuery("*:*");
         Map<String, IndexField> indexedFields = IndexQueryUtils.INDEXED_FIELDS_MAP.get(getIndexType());
         initializeQuery(query, params, indexedFields);
 
-        query.addProjectionOnField("id");
-        query.addCriteria(typeCriteria());
-        if (params.getInternalQuery() != null)
-            query.addCriteria(params.getInternalQuery());
-        query.addFilterQuery(new SimpleFilterQuery(buildFilters(params, getIndexType(), indexedFields)));
+        query.addField("id");
+        query.addFilterQuery(typeCriteria());
+        query.addFilterQuery(buildFilters(params, getIndexType(), indexedFields));
         Result<T> result = new Result<>();
-        Page<U> page = getTemplate().query(getIndexCollection(), query, getUType());
-        List<String> ids = page.getContent().stream().map(IndexedDomainObject::getId).collect(Collectors.toList());
+        QueryResponse queryResponse;
+        try {
+            queryResponse = getSolrClient().query(getIndexCollection(), query);
+        } catch (SolrServerException | IOException e) {
+            throw new RuntimeException(e);
+        }
+        List<U> beans = queryResponse.getBeans(getUType());
+        List<String> ids = beans.stream().map(IndexedDomainObject::getId).collect(Collectors.toList());
         List<T> sorted = findAllInList(ids);
         result.setItems(sorted);
-        result.setCount(page.getTotalElements());
+        result.setCount(queryResponse.getResults().getNumFound());
         return result;
     }
 
@@ -184,20 +185,24 @@ public interface IndexedStore<T extends DomainObject, U extends IndexedDomainObj
             throw new UnsupportedOperationException("Type class '" + getType() + "' must implement interface '" + AutoCompleteAware.class.getName() + "'.");
         }
 
-        SimpleQuery query = new SimpleQuery();
+        SolrQuery query = new SolrQuery("*:*");
         Map<String, IndexField> indexedFields = IndexQueryUtils.INDEXED_FIELDS_MAP.get(getIndexType());
         initializeQuery(query, params, indexedFields);
 
-        query.addProjectionOnField("id");
-        query.addProjectionOnField(AUTOCOMPLETE_FIELD_NAME);
-        query.addCriteria(typeCriteria());
-        if (params.getInternalQuery() != null)
-            query.addCriteria(params.getInternalQuery());
-        query.addFilterQuery(new SimpleFilterQuery(buildFilters(params, getIndexType(), indexedFields)));
+        query.addField("id");
+        query.addField(AUTOCOMPLETE_FIELD_NAME);
+        query.addFilterQuery(typeCriteria());
+        query.addFilterQuery(buildFilters(params, getIndexType(), indexedFields));
 
-        Page<U> page = getTemplate().query(getIndexCollection(), query, getUType());
+        QueryResponse queryResponse;
+        try {
+            queryResponse = getSolrClient().query(getIndexCollection(), query);
+        } catch (SolrServerException | IOException e) {
+            throw new RuntimeException(e);
+        }
+        List<U> beans = queryResponse.getBeans(getUType());
 
-        List<AutoCompleteItem> queriedAutoCompleteData = page.getContent().stream().map(u -> {
+        List<AutoCompleteItem> queriedAutoCompleteData = beans.stream().map(u -> {
             AutoCompleteItem item = new AutoCompleteItem();
             item.setId(u.getId());
             if (u.getAutoCompleteLabel() != null) {
@@ -208,13 +213,13 @@ public interface IndexedStore<T extends DomainObject, U extends IndexedDomainObj
 
         Result<AutoCompleteItem> result = new Result<>();
         result.setItems(queriedAutoCompleteData);
-        result.setCount(page.getTotalElements());
+        result.setCount(queryResponse.getResults().getNumFound());
 
         return result;
     }
 
-    default Criteria typeCriteria() {
-        return Criteria.where(IndexQueryUtils.TYPE_FIELD).in(getIndexType());
+    default String typeCriteria() {
+        return IndexQueryUtils.TYPE_FIELD + ":" + getIndexType();
     }
 
     /**
@@ -235,30 +240,30 @@ public interface IndexedStore<T extends DomainObject, U extends IndexedDomainObj
     default String getIndexCollection() {
         SolrDocument document = getUType().getAnnotation(SolrDocument.class);
 
-        if (document != null) {
-            return document.collection().equalsIgnoreCase("") ? document.collection() : document.collection();
+        if (document != null && StringUtils.isNotBlank(document.collection())) {
+            return document.collection();
         } else {
             throw new GeneralException("Missing Solr @SolrDocument.collection for " + getUType().getSimpleName());
         }
     }
 
     default void removeIndex(T obj) {
-        getTemplate().deleteByIds(getIndexCollection(), obj.getId());
-        getTemplate().commit(getIndexCollection());
-        if (isParentStore()) {
-            SolrClient client = getTemplate().getSolrClient();
-            try {
+        try {
+            getSolrClient().deleteById(getIndexCollection(), obj.getId());
+            getSolrClient().commit(getIndexCollection());
+            if (isParentStore()) {
+                SolrClient client = getSolrClient();
                 client.deleteByQuery(getIndexCollection(), "_root_:" + obj.getId());
                 client.commit(getIndexCollection());
-            } catch (SolrServerException | IOException e) {
-                throw new RuntimeException(e);
             }
+        } catch (SolrServerException | IOException e) {
+            throw new RuntimeException(e);
         }
     }
 
     default void removeAllIndexes() {
         indexedStoreLogger.trace("removing all records of type: {} from core: {} ", this.getIndexType(), getIndexCollection());
-        SolrClient client = getTemplate().getSolrClient();
+        SolrClient client = getSolrClient();
         try {
             client.deleteByQuery(getIndexCollection(), IndexQueryUtils.TYPE_FIELD + ":" + this.getIndexType());
             client.commit(getIndexCollection());
@@ -271,8 +276,12 @@ public interface IndexedStore<T extends DomainObject, U extends IndexedDomainObj
     default T index(T obj) {
         if (isChildStore())
             return obj;
-        getTemplate().saveBean(getIndexCollection(), this.toIndexObject(obj));
-        getTemplate().commit(getIndexCollection());
+        try {
+            getSolrClient().addBean(getIndexCollection(), this.toIndexObject(obj));
+            getSolrClient().commit(getIndexCollection());
+        } catch (IOException | SolrServerException e) {
+            throw new RuntimeException(e);
+        }
 
         return obj;
     }
@@ -291,8 +300,12 @@ public interface IndexedStore<T extends DomainObject, U extends IndexedDomainObj
         List<U> indexObjects = objects.stream()
                 .map(this::toIndexObject)
                 .collect(Collectors.toList());
-        getTemplate().saveBeans(getIndexCollection(), indexObjects);
-        getTemplate().commit(getIndexCollection());
+        try {
+            getSolrClient().addBeans(getIndexCollection(), indexObjects);
+            getSolrClient().commit(getIndexCollection());
+        } catch (IOException | SolrServerException e) {
+            throw new RuntimeException(e);
+        }
 
         return objects;
     }

@@ -19,9 +19,9 @@ import cz.cas.lib.core.store.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
 import org.camunda.bpm.engine.delegate.BpmnError;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import javax.inject.Inject;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;
@@ -175,32 +175,32 @@ public abstract class FixityChecker {
             throw new BpmnError(BpmConstants.ErrorCodes.ProcessFailure, ArclibUtils.trimBpmnErrorMsg(errorMsg));
     }
 
-    @Inject
+    @Autowired
     public void setIngestWorkflowStore(IngestWorkflowStore ingestWorkflowStore) {
         this.ingestWorkflowStore = ingestWorkflowStore;
     }
 
-    @Inject
+    @Autowired
     public void setIngestIssueService(IngestIssueService ingestIssueService) {
         this.ingestIssueService = ingestIssueService;
     }
 
-    @Inject
+    @Autowired
     public void setFormatDefinitionService(FormatDefinitionService formatDefinitionService) {
         this.formatDefinitionService = formatDefinitionService;
     }
 
-    @Inject
+    @Autowired
     public void setToolService(ToolService toolService) {
         this.toolService = toolService;
     }
 
-    @Inject
+    @Autowired
     public void setIngestIssueDefinitionStore(IngestIssueDefinitionStore ingestIssueDefinitionStore) {
         this.ingestIssueDefinitionStore = ingestIssueDefinitionStore;
     }
 
-    @Inject
+    @Autowired
     public void setFixityCounterFacade(FixityCounterFacade fixityCounterFacade) {
         this.fixityCounterFacade = fixityCounterFacade;
     }

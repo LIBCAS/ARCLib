@@ -17,11 +17,12 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jms.core.JmsTemplate;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import javax.inject.Inject;
+
 import java.io.ByteArrayInputStream;
 import java.io.FileInputStream;
 import java.nio.file.Paths;
@@ -35,19 +36,19 @@ import static org.junit.Assert.assertThat;
 @SpringBootTest
 public class WorkerServiceTest extends TransformerFactoryWorkaroundTest {
 
-    @Inject
+    @Autowired
     private BatchStore batchStore;
 
-    @Inject
+    @Autowired
     private WorkerService service;
 
-    @Inject
+    @Autowired
     private IngestWorkflowStore ingestWorkflowStore;
 
-    @Inject
+    @Autowired
     private JmsTemplate template;
 
-    @Inject
+    @Autowired
     private RepositoryService repositoryService;
 
     @Before

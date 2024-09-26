@@ -15,12 +15,19 @@ import cz.cas.lib.core.index.dto.Filter;
 import cz.cas.lib.core.index.dto.FilterOperation;
 import cz.cas.lib.core.index.dto.Params;
 import cz.cas.lib.core.index.dto.Result;
-import io.swagger.annotations.*;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import javax.inject.Inject;
 import java.io.IOException;
 
 import static cz.cas.lib.arclib.utils.ArclibUtils.hasRole;
@@ -28,7 +35,7 @@ import static cz.cas.lib.core.util.Utils.addPrefilter;
 import static cz.cas.lib.core.util.Utils.notNull;
 
 @RestController
-@Api(value = "batch", description = "Api for interaction with batches")
+@Tag(name = "batch", description = "Api for interaction with batches")
 @RequestMapping("/api/batch")
 public class BatchApi {
 
@@ -37,19 +44,19 @@ public class BatchApi {
     private UserDetails userDetails;
 
     // Vykomentovane za suhlasu @Tomasek, ku dnu vykomentovania nebol endpoint pouzivany na FE
-//    @ApiOperation(value = "Starts processing of SIPs stored in the specified folder. [Perm.BATCH_PROCESSING_WRITE]")
+//    @Operation(summary = "Starts processing of SIPs stored in the specified folder. [Perm.BATCH_PROCESSING_WRITE]")
 //    @ApiResponses(value = {
-//            @ApiResponse(code = 200, message = "Successful response"),
-//            @ApiResponse(code = 400, message = "Workflow config is empty")})
+//            @ApiResponse(responseCode = "200", description = "Successful response"),
+//            @ApiResponse(responseCode = "400", description = "Workflow config is empty")})
 //    @PreAuthorize("hasAuthority('" + Permissions.BATCH_PROCESSING_WRITE + "')")
 //    @RequestMapping(value = "/start", method = RequestMethod.POST)
-//    public String start(@ApiParam(value = "External id of the producer profile", required = true)
+//    public String start(@Parameter(description = "External id of the producer profile", required = true)
 //                        @RequestParam("producerProfileExternalId") String producerProfileExternalId,
-//                        @ApiParam(value = "JSON configuration of the ingest workflow", required = true)
+//                        @Parameter(description = "JSON configuration of the ingest workflow", required = true)
 //                        @RequestParam("workflowConfig") String workflowConfig,
-//                        @ApiParam(value = "Transfer area path")
+//                        @Parameter(description = "Transfer area path")
 //                        @RequestParam(value = "transferAreaPath", required = false) String transferAreaPath,
-//                        @ApiParam(value = "User id")
+//                        @Parameter(description = "User id")
 //                        @RequestParam(value = "userId", required = false) String userId) throws IOException {
 //        if (userId == null) {
 //            if (userDetails == null)
@@ -59,22 +66,22 @@ public class BatchApi {
 //        return coordinatorService.processBatchOfSips(producerProfileExternalId, workflowConfig, transferAreaPath, userId, null);
 //    }
 
-    @ApiOperation(value = "Starts processing of a SIP from the provided SIP content. [Perm.BATCH_PROCESSING_WRITE]")
+    @Operation(summary = "Starts processing of a SIP from the provided SIP content. [Perm.BATCH_PROCESSING_WRITE]")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successful response"),
-            @ApiResponse(code = 400, message = "Content of the SIP package is not in the zip format, " +
+            @ApiResponse(responseCode = "200", description = "Successful response"),
+            @ApiResponse(responseCode = "400", description = "Content of the SIP package is not in the zip format, " +
                     "or some of the required attributes is empty")})
     @PreAuthorize("hasAuthority('" + Permissions.BATCH_PROCESSING_WRITE + "')")
     @RequestMapping(value = "/process_one", method = RequestMethod.POST)
-    public String processSip(@ApiParam(value = "Content of SIP package", required = true)
+    public String processSip(@Parameter(description = "Content of SIP package", required = true)
                              @RequestParam("sipContent") MultipartFile sipContent,
-                             @ApiParam(value = "Hash of SIP package", required = true)
+                             @Parameter(description = "Hash of SIP package", required = true)
                              @ModelAttribute("sipHash") Hash hash,
-                             @ApiParam(value = "External id of producer profile", required = true)
+                             @Parameter(description = "External id of producer profile", required = true)
                              @RequestParam("producerProfileExternalId") String producerProfileExternalId,
-                             @ApiParam(value = "JSON configuration of ingest workflow", required = true)
+                             @Parameter(description = "JSON configuration of ingest workflow", required = true)
                              @RequestParam("workflowConfig") String workflowConfig,
-                             @ApiParam(value = "Transfer area path")
+                             @Parameter(description = "Transfer area path")
                              @RequestParam(value = "transferAreaPath", required = false) String transferAreaPath) throws IOException, BadRequestException {
         if (!("application/x-zip-compressed".equals(sipContent.getContentType()) ||
                 ("application/zip".equalsIgnoreCase(sipContent.getContentType())))) {
@@ -84,23 +91,23 @@ public class BatchApi {
                 sipContent.getOriginalFilename(), transferAreaPath);
     }
 
-    @ApiOperation(value = "Suspends processing of batch. [Perm.BATCH_PROCESSING_WRITE]")
+    @Operation(summary = "Suspends processing of batch. [Perm.BATCH_PROCESSING_WRITE]")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successful response"),
-            @ApiResponse(code = 404, message = "Instance does not exist")})
+            @ApiResponse(responseCode = "200", description = "Successful response"),
+            @ApiResponse(responseCode = "404", description = "Instance does not exist")})
     @PreAuthorize("hasAuthority('" + Permissions.BATCH_PROCESSING_WRITE + "')")
     @RequestMapping(value = "/{batchId}/suspend", method = RequestMethod.POST)
-    public void suspend(@ApiParam(value = "Id of the batch to suspend", required = true) @PathVariable("batchId") String batchId) {
+    public void suspend(@Parameter(description = "Id of the batch to suspend", required = true) @PathVariable("batchId") String batchId) {
         coordinatorService.suspendBatch(batchId);
     }
 
-    @ApiOperation(value = "Cancels processing of batch. [Perm.BATCH_PROCESSING_WRITE]")
+    @Operation(summary = "Cancels processing of batch. [Perm.BATCH_PROCESSING_WRITE]")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successful response"),
-            @ApiResponse(code = 404, message = "Instance does not exist")})
+            @ApiResponse(responseCode = "200", description = "Successful response"),
+            @ApiResponse(responseCode = "404", description = "Instance does not exist")})
     @PreAuthorize("hasAuthority('" + Permissions.BATCH_PROCESSING_WRITE + "')")
     @RequestMapping(value = "/{batchId}/cancel", method = RequestMethod.POST)
-    public void cancel(@ApiParam(value = "Id of the batch to cancel", required = true) @PathVariable("batchId") String batchId) {
+    public void cancel(@Parameter(description = "Id of the batch to cancel", required = true) @PathVariable("batchId") String batchId) {
         Batch batch = batchService.find(batchId);
         notNull(batch, () -> new MissingObject(Batch.class, batchId));
         notNull(batch.getProducerProfile(), () -> new IllegalArgumentException("producer profile of batch " + batchId + " is null"));
@@ -110,28 +117,28 @@ public class BatchApi {
         coordinatorService.cancelBatch(new JmsDto(batchId, userDetails.getId()));
     }
 
-    @ApiOperation(value = "Resumes processing of batch. [Perm.BATCH_PROCESSING_WRITE]", response = Boolean.class,
-            notes = "returns true, if the batch has succeeded to resume, false otherwise")
+    @Operation(summary = "Resumes processing of batch. [Perm.BATCH_PROCESSING_WRITE]", responses = {@ApiResponse(content = @Content(schema = @Schema(implementation = Boolean.class)))},
+            description = "returns true, if the batch has succeeded to resume, false otherwise")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successful response"),
-            @ApiResponse(code = 404, message = "Instance does not exist")})
+            @ApiResponse(responseCode = "200", description = "Successful response"),
+            @ApiResponse(responseCode = "404", description = "Instance does not exist")})
     @PreAuthorize("hasAuthority('" + Permissions.BATCH_PROCESSING_WRITE + "')")
     @RequestMapping(value = "/{batchId}/resume", method = RequestMethod.POST)
-    public boolean resume(@ApiParam(value = "Id of the batch to resume", required = true)
+    public boolean resume(@Parameter(description = "Id of the batch to resume", required = true)
                           @PathVariable("batchId") String batchId) {
         return coordinatorService.resumeBatch(batchId);
     }
 
-    @ApiOperation(value = "Gets DTOs of batches that respect the selected parameters. [Perm.BATCH_PROCESSING_READ]",
-            notes = "Filter/Sort fields = id, created, updated, config, producerId, producerName, producerProfileId," +
+    @Operation(summary = "Gets DTOs of batches that respect the selected parameters. [Perm.BATCH_PROCESSING_READ]",
+            description = "Filter/Sort fields = id, created, updated, config, producerId, producerName, producerProfileId," +
                     " producerProfileName, state (PROCESSING,SUSPENDED,CANCELED,PROCESSED), userId.." +
                     "SUPER_ADMIN can see all batches, ADMIN can see all batches of its producer and others see their batches " +
-                    "i.e. batches they started manually or batches created by their routine", response = Result.class)
+                    "i.e. batches they started manually or batches created by their routine")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successful response", response = Result.class)})
+            @ApiResponse(responseCode = "200", description = "Successful response", content = @Content(schema = @Schema(implementation = Result.class)))})
     @PreAuthorize("hasAuthority('" + Permissions.BATCH_PROCESSING_READ + "')")
     @RequestMapping(value = "/list_dtos", method = RequestMethod.GET)
-    public Result<BatchDto> listDtos(@ApiParam(value = "Parameters to comply with", required = true)
+    public Result<BatchDto> listDtos(@Parameter(description = "Parameters to comply with", required = true)
                                      @ModelAttribute Params params) {
         if (!hasRole(userDetails, Permissions.SUPER_ADMIN_PRIVILEGE)) {
             addPrefilter(params, new Filter("producerId", FilterOperation.EQ, userDetails.getProducerId(), null));
@@ -139,28 +146,28 @@ public class BatchApi {
         return batchService.listBatchDtos(params);
     }
 
-    @ApiOperation(value = "Gets batch by id. [Perm.BATCH_PROCESSING_READ]", response = Batch.class)
+    @Operation(summary = "Gets batch by id. [Perm.BATCH_PROCESSING_READ]")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successful response", response = Batch.class),
-            @ApiResponse(code = 404, message = "Instance does not exist")})
+            @ApiResponse(responseCode = "200", description = "Successful response", content = @Content(schema = @Schema(implementation = Batch.class))),
+            @ApiResponse(responseCode = "404", description = "Instance does not exist")})
     @PreAuthorize("hasAuthority('" + Permissions.BATCH_PROCESSING_READ + "')")
     @RequestMapping(value = "/{id}", method = RequestMethod.GET)
-    public BatchDetailDto get(@ApiParam(value = "Id of the batch", required = true)
+    public BatchDetailDto get(@Parameter(description = "Id of the batch", required = true)
                               @PathVariable("id") String id) {
         return batchService.getDetailView(id);
     }
 
-    @Inject
+    @Autowired
     public void setBatchService(BatchService batchService) {
         this.batchService = batchService;
     }
 
-    @Inject
+    @Autowired
     public void setCoordinatorService(CoordinatorService coordinatorService) {
         this.coordinatorService = coordinatorService;
     }
 
-    @Inject
+    @Autowired
     public void setUserDetails(UserDetails userDetails) {
         this.userDetails = userDetails;
     }

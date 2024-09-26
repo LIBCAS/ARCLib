@@ -1,9 +1,9 @@
 package cz.cas.lib.arclib.service;
 
-import org.dozer.Mapper;
+import com.github.dozermapper.core.Mapper;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -11,7 +11,7 @@ import java.util.List;
 @Service
 public class BeanMappingServiceImpl implements BeanMappingService {
 
-    @Inject
+    @Autowired
     private Mapper dozer;
 
     @Override

@@ -5,7 +5,7 @@ import cz.cas.lib.arclib.domain.QProducer;
 import cz.cas.lib.arclib.domainbase.store.NamedStore;
 import org.springframework.stereotype.Repository;
 
-import javax.transaction.Transactional;
+import jakarta.transaction.Transactional;
 
 @Repository
 public class ProducerStore extends NamedStore<Producer, QProducer> {

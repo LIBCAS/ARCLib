@@ -2,16 +2,17 @@ package cz.cas.lib.core.mail;
 
 import cz.cas.lib.core.service.Templater;
 import freemarker.template.TemplateException;
+import jakarta.annotation.Nullable;
+
+import jakarta.mail.MessagingException;
+import jakarta.mail.internet.MimeMessage;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Component;
 
-import javax.annotation.Nullable;
-import javax.inject.Inject;
-import javax.mail.MessagingException;
-import javax.mail.internet.MimeMessage;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
@@ -104,47 +105,47 @@ public class MailCenter {
         return appUrl;
     }
 
-    @Inject
+    @Autowired
     public void setEnabled(@Value("${mail.enabled}") Boolean enabled) {
         this.enabled = enabled;
     }
 
-    @Inject
+    @Autowired
     public void setSenderEmail(@Value("${spring.mail.username}") String senderEmail) {
         this.senderEmail = senderEmail;
     }
 
-    @Inject
+    @Autowired
     public void setSenderName(@Value("${mail.sender.name}") String senderName) {
         this.senderName = senderName;
     }
 
-    @Inject
+    @Autowired
     public void setAppLogo(@Value("${mail.app.logo}") String appLogo) {
         this.appLogo = appLogo;
     }
 
-    @Inject
+    @Autowired
     public void setAppName(@Value("${mail.app.name}") String appName) {
         this.appName = appName;
     }
 
-    @Inject
+    @Autowired
     public void setAppLink(@Value("${mail.app.link}") String appLink) {
         this.appLink = appLink;
     }
 
-    @Inject
+    @Autowired
     public void setAppUrl(@Value("${mail.app.url}") String appUrl) {
         this.appUrl = appUrl;
     }
 
-    @Inject
+    @Autowired
     public void setSender(AsyncMailSender sender) {
         this.sender = sender;
     }
 
-    @Inject
+    @Autowired
     public void setTemplater(Templater templater) {
         this.templater = templater;
     }

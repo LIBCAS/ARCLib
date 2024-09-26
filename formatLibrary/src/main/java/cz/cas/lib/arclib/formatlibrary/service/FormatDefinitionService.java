@@ -4,10 +4,11 @@ import cz.cas.lib.arclib.formatlibrary.domain.FormatDefinition;
 import cz.cas.lib.arclib.formatlibrary.store.FormatDefinitionStore;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.inject.Inject;
+
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
@@ -155,7 +156,7 @@ public class FormatDefinitionService {
         return Pair.of(formatDefinition, message);
     }
 
-    @Inject
+    @Autowired
     public void setStore(FormatDefinitionStore store) {
         this.store = store;
     }

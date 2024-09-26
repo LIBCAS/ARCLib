@@ -6,7 +6,7 @@ import cz.cas.lib.arclib.domain.packages.QAuthorialPackage;
 import cz.cas.lib.arclib.domainbase.store.DatedStore;
 import org.springframework.stereotype.Repository;
 
-import javax.transaction.Transactional;
+import jakarta.transaction.Transactional;
 
 @Repository
 public class AuthorialPackageStore

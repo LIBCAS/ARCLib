@@ -16,6 +16,7 @@ import cz.cas.lib.arclib.store.AipBulkDeletionStore;
 import cz.cas.lib.arclib.store.SipStore;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.mutable.MutableInt;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.util.ObjectUtils;
@@ -124,37 +125,37 @@ public class AipBulkDeletionService {
         }
     }
 
-    @Inject
+    @Autowired
     public void setBeanMappingService(BeanMappingService beanMappingService) {
         this.beanMappingService = beanMappingService;
     }
 
-    @Inject
+    @Autowired
     public void setStore(AipBulkDeletionStore store) {
         this.store = store;
     }
 
-    @Inject
+    @Autowired
     public void setIngestWorkflowService(IngestWorkflowService ingestWorkflowService) {
         this.ingestWorkflowService = ingestWorkflowService;
     }
 
-    @Inject
+    @Autowired
     public void setAipService(AipService aipService) {
         this.aipService = aipService;
     }
 
-    @Inject
+    @Autowired
     public void setTransactionTemplate(TransactionTemplate transactionTemplate) {
         this.transactionTemplate = transactionTemplate;
     }
 
-    @Inject
+    @Autowired
     public void setSipStore(SipStore sipStore) {
         this.sipStore = sipStore;
     }
 
-    @Inject
+    @Autowired
     public void setUserDetails(UserDetails userDetails) {
         this.userDetails = userDetails;
     }

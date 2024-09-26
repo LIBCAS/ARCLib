@@ -2,11 +2,12 @@ package cz.cas.lib.core.sequence;
 
 import cz.cas.lib.arclib.domainbase.exception.BadArgument;
 import cz.cas.lib.arclib.domainbase.exception.MissingObject;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.inject.Inject;
+
 import java.text.DecimalFormat;
 
 import static cz.cas.lib.core.util.Utils.notNull;
@@ -147,7 +148,7 @@ public class Generator {
         return format.format(counter);
     }
 
-    @Inject
+    @Autowired
     public void setStore(SequenceStore store) {
         this.store = store;
     }

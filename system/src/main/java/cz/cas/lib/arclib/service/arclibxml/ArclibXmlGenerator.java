@@ -21,10 +21,11 @@ import org.apache.commons.lang3.tuple.Triple;
 import org.dom4j.*;
 import org.dom4j.io.SAXReader;
 import org.dom4j.tree.DefaultAttribute;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import javax.inject.Inject;
+
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -641,17 +642,17 @@ public class ArclibXmlGenerator {
         return "agent_" + tool.getName();
     }
 
-    @Inject
+    @Autowired
     public void setIngestWorkflowStore(IngestWorkflowStore ingestWorkflowStore) {
         this.ingestWorkflowStore = ingestWorkflowStore;
     }
 
-    @Inject
+    @Autowired
     public void setIngestEventStore(IngestEventStore ingestEventStore) {
         this.ingestEventStore = ingestEventStore;
     }
 
-    @Inject
+    @Autowired
     public void setUris(@Value("${namespaces.mets}") String mets, @Value("${namespaces.xsi}") String xsi, @Value("${namespaces.arclib}") String arclib, @Value("${namespaces" +
             ".premis}") String premis, @Value("${namespaces.oai_dc}") String oai_dc, @Value("${namespaces.dc}") String dc, @Value("${namespaces.xlink}") String xlink) {
         Map<String, String> uris = new HashMap<>();
@@ -666,7 +667,7 @@ public class ArclibXmlGenerator {
         this.uris = uris;
     }
 
-    @Inject
+    @Autowired
     public void setArclibVersion(@Value("${arclib.version}") String arclibVersion) {
         this.arclibVersion = arclibVersion;
     }

@@ -17,10 +17,10 @@ import cz.cas.lib.arclib.service.archivalStorage.ObjectState;
 import cz.cas.lib.arclib.store.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
-import javax.inject.Inject;
 import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
@@ -31,7 +31,6 @@ import static cz.cas.lib.core.util.Utils.notNull;
 
 @Service
 @Slf4j
-@Async
 public class ReindexService {
 
     private BatchStore batchStore;
@@ -49,6 +48,7 @@ public class ReindexService {
     /**
      * formats are omitted as there are too many records
      */
+    @Async
     public void dropReindexAll() {
         batchStore.dropReindex();
         producerProfileStore.dropReindex();
@@ -57,14 +57,23 @@ public class ReindexService {
         reportStore.dropReindex();
     }
 
+    @Async
     public void dropReindexFormat() {
         formatStore.dropReindex();
     }
 
+    @Async
     public void dropReindexFormatDefinition() {
         formatDefinitionStore.dropReindex();
     }
 
+    public void dropReindexManagedSync() {
+        dropReindexAll();
+        dropReindexFormat();
+        dropReindexFormatDefinition();
+    }
+
+    @Async
     public void reindexArclibXml() {
         log.info("recovering ARCLib XML index from DB, retrieving XMLs from Archival Storage");
         AtomicLong successCount = new AtomicLong(0);
@@ -97,7 +106,7 @@ public class ReindexService {
                             ObjectState aipState = archivalStorageService.getAipState(iw.getSip().getId());
                             stateAtArchivalStorage = objectStateToIndexedAipState(aipState);
                         }
-                        indexedArclibXmlStore.createIndex(new CreateIndexRecordDto(xml.getBytes(), p.getId(), p.getName(), username, stateAtArchivalStorage, iw.wasIngestedInDebugMode(), iw.isLatestVersion(),iw.getSip().isLatestVersion()));
+                        indexedArclibXmlStore.createIndex(new CreateIndexRecordDto(xml.getBytes(), p.getId(), p.getName(), username, stateAtArchivalStorage, iw.wasIngestedInDebugMode(), iw.isLatestVersion(), iw.getSip().isLatestVersion()));
                         successCount.incrementAndGet();
                     } catch (Exception e) {
                         log.error("error while reindexing " + iw.getId(), e);
@@ -139,57 +148,57 @@ public class ReindexService {
         return stateAtArchivalStorage;
     }
 
-    @Inject
+    @Autowired
     public void setUserStore(UserStore userStore) {
         this.userStore = userStore;
     }
 
-    @Inject
+    @Autowired
     public void setBatchStore(BatchStore batchStore) {
         this.batchStore = batchStore;
     }
 
-    @Inject
+    @Autowired
     public void setProducerProfileStore(ProducerProfileStore producerProfileStore) {
         this.producerProfileStore = producerProfileStore;
     }
 
-    @Inject
+    @Autowired
     public void setFormatStore(IndexedFormatStore formatStore) {
         this.formatStore = formatStore;
     }
 
-    @Inject
+    @Autowired
     public void setIngestIssueStore(IngestIssueStore ingestIssueStore) {
         this.ingestIssueStore = ingestIssueStore;
     }
 
-    @Inject
+    @Autowired
     public void setFormatDefinitionStore(IndexedFormatDefinitionStore formatDefinitionStore) {
         this.formatDefinitionStore = formatDefinitionStore;
     }
 
-    @Inject
+    @Autowired
     public void setIngestWorkflowService(IngestWorkflowService ingestWorkflowService) {
         this.ingestWorkflowService = ingestWorkflowService;
     }
 
-    @Inject
-    public void setindexedArclibXmlStore(SolrArclibXmlStore indexedArclibXmlStore) {
+    @Autowired
+    public void setIndexedArclibXmlStore(SolrArclibXmlStore indexedArclibXmlStore) {
         this.indexedArclibXmlStore = indexedArclibXmlStore;
     }
 
-    @Inject
+    @Autowired
     public void setArchivalStorageService(ArchivalStorageService archivalStorageService) {
         this.archivalStorageService = archivalStorageService;
     }
 
-    @Inject
+    @Autowired
     public void setArchivalStorageServiceDebug(ArchivalStorageServiceDebug archivalStorageServiceDebug) {
         this.archivalStorageServiceDebug = archivalStorageServiceDebug;
     }
 
-    @Inject
+    @Autowired
     public void setReportStore(ReportStore reportStore) {
         this.reportStore = reportStore;
     }

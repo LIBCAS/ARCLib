@@ -5,9 +5,10 @@ import cz.cas.lib.core.scheduling.job.Job;
 import cz.cas.lib.core.scheduling.run.JobRun;
 import cz.cas.lib.core.script.ScriptExecutor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import javax.inject.Inject;
+
 import java.io.StringWriter;
 import java.util.HashMap;
 
@@ -44,12 +45,12 @@ public class JobRunner {
         logger.log(run);
     }
 
-    @Inject
+    @Autowired
     public void setExecutor(ScriptExecutor executor) {
         this.executor = executor;
     }
 
-    @Inject
+    @Autowired
     public void setLogger(JobLogger logger) {
         this.logger = logger;
     }

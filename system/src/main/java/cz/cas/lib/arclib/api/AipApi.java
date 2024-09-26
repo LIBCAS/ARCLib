@@ -20,20 +20,27 @@ import cz.cas.lib.core.index.dto.Filter;
 import cz.cas.lib.core.index.dto.FilterOperation;
 import cz.cas.lib.core.index.dto.Params;
 import cz.cas.lib.core.index.dto.Result;
-import io.swagger.annotations.*;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.dom4j.DocumentException;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.xml.sax.SAXException;
 
-import javax.inject.Inject;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import javax.xml.parsers.ParserConfigurationException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -43,7 +50,7 @@ import static cz.cas.lib.core.util.Utils.addPrefilter;
 import static cz.cas.lib.core.util.Utils.checkUUID;
 
 @RestController
-@Api(value = "aip", description = "Api for searching within ARCLib XML index, retrieving from Archival Storage and editing of ArclibXml")
+@Tag(name = "aip", description = "Api for searching within ARCLib XML index, retrieving from Archival Storage and editing of ArclibXml")
 @RequestMapping("/api/aip")
 @Slf4j
 public class AipApi extends ArchivalStoragePipe {
@@ -55,20 +62,20 @@ public class AipApi extends ArchivalStoragePipe {
     private ArchivalStorageService archivalStorageService;
     private AipQueryService aipQueryService;
 
-    @ApiOperation(value = "Gets partially filled ARCLib XML index records. The result of query as well as the query itself is saved if the queryName param is filled. [Perm.AIP_RECORDS_READ]",
-            notes = "If the calling user is not Roles.SUPER_ADMIN, only the respective records of the users producer are returned." +
+    @Operation(summary = "Gets partially filled ARCLib XML index records. The result of query as well as the query itself is saved if the queryName param is filled. [Perm.AIP_RECORDS_READ]",
+            description = "If the calling user is not Roles.SUPER_ADMIN, only the respective records of the users producer are returned." +
                     "Records with state REMOVED and DELETED are returned only to the user with role Roles.SUPER_ADMIN or Roles.ADMIN.\n" +
                     "Sort fields: producer_name, user_name, aip_state, sip_version_number,  xml_version_number, created, updated, id, authorial_id\n" +
                     " ..producerId filter will have effect only for super admin account",
-            response = Result.class)
+            responses = {@ApiResponse(content = @Content(schema = @Schema(implementation = Result.class)))})
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successful response")})
+            @ApiResponse(responseCode = "200", description = "Successful response")})
     @PreAuthorize("hasAuthority('" + Permissions.AIP_RECORDS_READ + "')")
     @RequestMapping(value = "/list", method = RequestMethod.GET)
     public Result<IndexedArclibXmlDocument> list(
-            @ApiParam(value = "Parameters to comply with", required = true)
+            @Parameter(description = "Parameters to comply with", required = true)
             @ModelAttribute Params params,
-            @ApiParam(value = "Query name")
+            @Parameter(description = "Query name")
             @RequestParam(value = "queryName", defaultValue = "", required = false) String queryName) {
         if (!hasRole(userDetails, Permissions.SUPER_ADMIN_PRIVILEGE)) {
             addPrefilter(params, new Filter(IndexedArclibXmlDocument.PRODUCER_ID, FilterOperation.EQ, userDetails.getProducerId(), null));
@@ -88,29 +95,29 @@ public class AipApi extends ArchivalStoragePipe {
         return uiPageResult;
     }
 
-    @ApiOperation(value = "Gets all main fields of ARCLib XML index record together with corresponding IW entity containing SIPs folder structure. [Perm.AIP_RECORDS_READ]",
-            notes = "If the calling user is not Roles.SUPER_ADMIN, the producer of the record must match the producer of the user.",
-            response = AipDetailDto.class)
+    @Operation(summary = "Gets all main fields of ARCLib XML index record together with corresponding IW entity containing SIPs folder structure. [Perm.AIP_RECORDS_READ]",
+            description = "If the calling user is not Roles.SUPER_ADMIN, the producer of the record must match the producer of the user.",
+            responses = {@ApiResponse(content = @Content(schema = @Schema(implementation = AipDetailDto.class)))})
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successful response"),
-            @ApiResponse(code = 404, message = "Ingest workflow not found.")})
+            @ApiResponse(responseCode = "200", description = "Successful response"),
+            @ApiResponse(responseCode = "404", description = "Ingest workflow not found.")})
     @PreAuthorize("hasAuthority('" + Permissions.AIP_RECORDS_READ + "')")
     @RequestMapping(value = "/{xmlId}", method = RequestMethod.GET)
     public AipDetailDto getMetadata(
-            @ApiParam(value = "Ingest workflow external id", required = true)
+            @Parameter(description = "Ingest workflow external id", required = true)
             @PathVariable(value = "xmlId") String xmlId) throws IOException {
         return aipService.getMetadata(xmlId, userDetails);
     }
 
-    @ApiOperation(value = "Gets AIP data in a .zip [Perm.EXPORT_FILES]")
+    @Operation(summary = "Gets AIP data in a .zip [Perm.EXPORT_FILES]")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successful response"),
-            @ApiResponse(code = 400, message = "aipId is not a valid UUID.")})
+            @ApiResponse(responseCode = "200", description = "Successful response"),
+            @ApiResponse(responseCode = "400", description = "aipId is not a valid UUID.")})
     @PreAuthorize("hasAuthority('" + Permissions.EXPORT_FILES + "')")
     @RequestMapping(value = "/export/{aipId}", method = RequestMethod.GET)
     public void exportAip(
-            @ApiParam(value = "AIP ID", required = true) @PathVariable("aipId") String aipId,
-            @ApiParam(value = "True to return all XMLs, otherwise only the latest is returned")
+            @Parameter(description = "AIP ID", required = true) @PathVariable("aipId") String aipId,
+            @Parameter(description = "True to return all XMLs, otherwise only the latest is returned")
             @RequestParam(value = "all", defaultValue = "false") boolean all,
             HttpServletResponse response) throws ArchivalStorageException, IOException {
         checkUUID(aipId);
@@ -120,16 +127,16 @@ public class AipApi extends ArchivalStoragePipe {
         IOUtils.copyLarge(storageResponse, response.getOutputStream());
     }
 
-    @ApiOperation(value = "Returns specified AIP XML [Perm.EXPORT_FILES]")
+    @Operation(summary = "Returns specified AIP XML [Perm.EXPORT_FILES]")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successful response"),
-            @ApiResponse(code = 400, message = "aipId is not a valid UUID.")})
+            @ApiResponse(responseCode = "200", description = "Successful response"),
+            @ApiResponse(responseCode = "400", description = "aipId is not a valid UUID.")})
     @PreAuthorize("hasAuthority('" + Permissions.EXPORT_FILES + "')")
     @RequestMapping(value = "/export/{aipId}/xml", method = RequestMethod.GET)
     public void exportXml(
-            @ApiParam(value = "AIP ID", required = true)
+            @Parameter(description = "AIP ID", required = true)
             @PathVariable("aipId") String aipId,
-            @ApiParam(value = "Version number of XML, if not set the latest version is returned")
+            @Parameter(description = "Version number of XML, if not set the latest version is returned")
             @RequestParam(value = "v", defaultValue = "") Integer version,
             HttpServletResponse response) throws ArchivalStorageException, IOException {
         checkUUID(aipId);
@@ -139,103 +146,103 @@ public class AipApi extends ArchivalStoragePipe {
         IOUtils.copyLarge(storageResponse, response.getOutputStream());
     }
 
-    @ApiOperation(notes = "If the AIP is in PROCESSING state or the storage is not reachable, the storage checksums are not filled and the consistent flag is set to false",
-            value = "Retrieves information about AIP containing state, whether is consistent etc from the given storage. [Perm.AIP_RECORDS_READ]")
+    @Operation(description = "If the AIP is in PROCESSING state or the storage is not reachable, the storage checksums are not filled and the consistent flag is set to false",
+            summary = "Retrieves information about AIP containing state, whether is consistent etc from the given storage. [Perm.AIP_RECORDS_READ]")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "AIP successfully deleted"),
-            @ApiResponse(code = 400, message = "bad request, e.g. the specified id is not a valid UUID"),
-            @ApiResponse(code = 500, message = "internal server error")
+            @ApiResponse(responseCode = "200", description = "AIP successfully deleted"),
+            @ApiResponse(responseCode = "400", description = "bad request, e.g. the specified id is not a valid UUID"),
+            @ApiResponse(responseCode = "500", description = "internal server error")
     })
     @PreAuthorize("hasAuthority('" + Permissions.AIP_RECORDS_READ + "')")
     @RequestMapping(value = "/{aipId}/info", method = RequestMethod.GET)
     public void getAipInfo(
-            @ApiParam(value = "AIP id", required = true) @PathVariable("aipId") String aipId,
-            @ApiParam(value = "id of the logical storage", required = true) @RequestParam(value = "storageId") String storageId,
+            @Parameter(description = "AIP id", required = true) @PathVariable("aipId") String aipId,
+            @Parameter(description = "id of the logical storage", required = true) @RequestParam(value = "storageId") String storageId,
             HttpServletResponse response, HttpServletRequest request) {
         checkUUID(aipId);
         passToArchivalStorage(response, request, "/storage/" + aipId + "/info?storageId=" + storageId, HttpMethod.GET, "retrieve info about AIP: " + aipId + "at storage: " + storageId, AccessTokenType.READ);
     }
 
-    @ApiOperation(value = "Logically removes AIP at archival storage. [Perm.LOGICAL_FILE_REMOVE]")
+    @Operation(summary = "Logically removes AIP at archival storage. [Perm.LOGICAL_FILE_REMOVE]")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "AIP successfully removed"),
-            @ApiResponse(code = 400, message = "The specified aip id is not a valid UUID"),
+            @ApiResponse(responseCode = "200", description = "AIP successfully removed"),
+            @ApiResponse(responseCode = "400", description = "The specified aip id is not a valid UUID"),
     })
     @PreAuthorize("hasAuthority('" + Permissions.LOGICAL_FILE_REMOVE + "')")
     @RequestMapping(value = "/{aipId}/remove", method = RequestMethod.PUT)
-    public void remove(@ApiParam(value = "AIP id", required = true) @PathVariable("aipId") String aipId, HttpServletResponse response) throws ArchivalStorageException, AipStateChangeException, IOException {
+    public void remove(@Parameter(description = "AIP id", required = true) @PathVariable("aipId") String aipId, HttpServletResponse response) throws ArchivalStorageException, AipStateChangeException, IOException {
         checkUUID(aipId);
         aipService.changeAipState(aipId, IndexedAipState.REMOVED, true);
     }
 
-    @ApiOperation(value = "Renews logically removed AIP at archival storage. [Perm.LOGICAL_FILE_RENEW]")
+    @Operation(summary = "Renews logically removed AIP at archival storage. [Perm.LOGICAL_FILE_RENEW]")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "AIP successfully renewed"),
-            @ApiResponse(code = 400, message = "The specified aip id is not a valid UUID"),
+            @ApiResponse(responseCode = "200", description = "AIP successfully renewed"),
+            @ApiResponse(responseCode = "400", description = "The specified aip id is not a valid UUID"),
     })
     @PreAuthorize("hasAuthority('" + Permissions.LOGICAL_FILE_RENEW + "')")
     @RequestMapping(value = "/{aipId}/renew", method = RequestMethod.PUT)
-    public void renew(@ApiParam(value = "AIP id", required = true) @PathVariable("aipId") String aipId) throws ArchivalStorageException, AipStateChangeException, IOException {
+    public void renew(@Parameter(description = "AIP id", required = true) @PathVariable("aipId") String aipId) throws ArchivalStorageException, AipStateChangeException, IOException {
         checkUUID(aipId);
         aipService.changeAipState(aipId, IndexedAipState.ARCHIVED, true);
     }
 
-    @ApiOperation(value = "Registers update of Arclib Xml of authorial package. [Perm.UPDATE_XML]")
+    @Operation(summary = "Registers update of Arclib Xml of authorial package. [Perm.UPDATE_XML]")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Xml update successfully registered"),
-            @ApiResponse(code = 404, message = "Authorial package with the specified id not found"),
-            @ApiResponse(code = 423, message = "Another update process of the XML is already in progress")
+            @ApiResponse(responseCode = "200", description = "Xml update successfully registered"),
+            @ApiResponse(responseCode = "404", description = "Authorial package with the specified id not found"),
+            @ApiResponse(responseCode = "423", description = "Another update process of the XML is already in progress")
     })
     @PreAuthorize("hasAuthority('" + Permissions.UPDATE_XML + "')")
     @RequestMapping(value = "/{authorialPackageId}/register_update", method = RequestMethod.PUT)
     public void registerXmlUpdate(
-            @ApiParam(value = "Authorial package id", required = true)
+            @Parameter(description = "Authorial package id", required = true)
             @PathVariable("authorialPackageId") String authorialPackageId) throws IOException {
         aipService.registerXmlUpdate(authorialPackageId);
     }
 
-    @ApiOperation(value = "Cancels update of Arclib Xml of authorial package. [Perm.UPDATE_XML]")
+    @Operation(summary = "Cancels update of Arclib Xml of authorial package. [Perm.UPDATE_XML]")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Xml update successfully canceled"),
-            @ApiResponse(code = 404, message = "Authorial package with the specified id not found"),
-            @ApiResponse(code = 500, message = "Specified XML is not being updated")
+            @ApiResponse(responseCode = "200", description = "Xml update successfully canceled"),
+            @ApiResponse(responseCode = "404", description = "Authorial package with the specified id not found"),
+            @ApiResponse(responseCode = "500", description = "Specified XML is not being updated")
     })
     @PreAuthorize("hasAuthority('" + Permissions.UPDATE_XML + "')")
     @RequestMapping(value = "/{authorialPackageId}/cancel_update", method = RequestMethod.PUT)
     public void cancelXmlUpdate(
-            @ApiParam(value = "Authorial package id", required = true)
+            @Parameter(description = "Authorial package id", required = true)
             @PathVariable("authorialPackageId") String authorialPackageId) {
         log.debug("Canceling XML update for authorial package " + authorialPackageId + ".");
         aipService.deactivateLock(authorialPackageId, true);
     }
 
-    @ApiOperation(value = "Updates Arclib XML of AIP. Register update must be called prior to calling this method. [Perm.UPDATE_XML]")
+    @Operation(summary = "Updates Arclib XML of AIP. Register update must be called prior to calling this method. [Perm.UPDATE_XML]")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "AIP XML successfully stored"),
-            @ApiResponse(code = 400, message = "the specified aip id is not a valid UUID"),
+            @ApiResponse(responseCode = "200", description = "AIP XML successfully stored"),
+            @ApiResponse(responseCode = "400", description = "the specified aip id is not a valid UUID"),
     })
     @PreAuthorize("hasAuthority('" + Permissions.UPDATE_XML + "')")
     @RequestMapping(value = "/{aipId}/update", method = RequestMethod.POST)
     public void finishXmlUpdate(
-            @ApiParam(value = "XML content", required = true)
+            @Parameter(description = "XML content", required = true)
             @RequestBody String xml,
-            @ApiParam(value = "AIP id", required = true)
+            @Parameter(description = "AIP id", required = true)
             @PathVariable("aipId") String aipId,
-            @ApiParam(value = "XML id of the latest version XML of the AIP", required = true)
+            @Parameter(description = "XML id of the latest version XML of the AIP", required = true)
             @RequestParam("xmlId") String xmlId,
-            @ApiParam(value = "Hash of the XML", required = true)
+            @Parameter(description = "Hash of the XML", required = true)
             @ModelAttribute("xmlHash") Hash hash,
-            @ApiParam(value = "Version of the XML", required = true)
+            @Parameter(description = "Version of the XML", required = true)
             @RequestParam("version") int version,
-            @ApiParam(value = "Reason for update", required = true)
+            @Parameter(description = "Reason for update", required = true)
             @RequestParam("reason") String reason) throws DocumentException, SAXException, ParserConfigurationException, IOException, AuthorialPackageNotLockedException, ArchivalStorageException {
         checkUUID(aipId);
         aipService.finishXmlUpdate(aipId, xmlId, xml, hash, version, reason);
     }
 
-    @ApiOperation(value = "Returns keep alive timeout in seconds used during the update process. [Perm.UPDATE_XML]")
+    @Operation(summary = "Returns keep alive timeout in seconds used during the update process. [Perm.UPDATE_XML]")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successful response")
+            @ApiResponse(responseCode = "200", description = "Successful response")
     })
     @PreAuthorize("hasAuthority('" + Permissions.UPDATE_XML + "')")
     @RequestMapping(value = "/keep_alive_timeout", method = RequestMethod.GET)
@@ -243,46 +250,46 @@ public class AipApi extends ArchivalStoragePipe {
         return keepAliveUpdateTimeout;
     }
 
-    @ApiOperation(value = "Refreshes keep alive update of Arclib Xml of authorial package. [Perm.UPDATE_XML]")
+    @Operation(summary = "Refreshes keep alive update of Arclib Xml of authorial package. [Perm.UPDATE_XML]")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successful response"),
-            @ApiResponse(code = 404, message = "Authorial package with the specified id not found"),
-            @ApiResponse(code = 500, message = "Specified XML is not being updated")
+            @ApiResponse(responseCode = "200", description = "Successful response"),
+            @ApiResponse(responseCode = "404", description = "Authorial package with the specified id not found"),
+            @ApiResponse(responseCode = "500", description = "Specified XML is not being updated")
     })
     @PreAuthorize("hasAuthority('" + Permissions.UPDATE_XML + "')")
     @RequestMapping(value = "/{authorialPackageId}/keep_alive_update", method = RequestMethod.PUT)
     public void refreshKeepAliveUpdate(
-            @ApiParam(value = "AIP id", required = true) @PathVariable("authorialPackageId") String authorialPackageId) throws AuthorialPackageNotLockedException {
+            @Parameter(description = "AIP id", required = true) @PathVariable("authorialPackageId") String authorialPackageId) throws AuthorialPackageNotLockedException {
         aipService.refreshKeepAliveUpdate(authorialPackageId);
     }
 
 
-    @Inject
+    @Autowired
     public void setArchivalStorageService(ArchivalStorageService archivalStorageService) {
         this.archivalStorageService = archivalStorageService;
     }
 
-    @Inject
+    @Autowired
     public void setIndexArclibXmlStore(IndexedArclibXmlStore indexArclibXmlStore) {
         this.indexArclibXmlStore = indexArclibXmlStore;
     }
 
-    @Inject
+    @Autowired
     public void setUserDetails(UserDetails userDetails) {
         this.userDetails = userDetails;
     }
 
-    @Inject
+    @Autowired
     public void setAipService(AipService aipService) {
         this.aipService = aipService;
     }
 
-    @Inject
+    @Autowired
     public void setKeepAliveUpdateTimeout(@Value("${arclib.keepAliveUpdateTimeout}") int keepAliveUpdateTimeout) {
         this.keepAliveUpdateTimeout = keepAliveUpdateTimeout;
     }
 
-    @Inject
+    @Autowired
     public void setAipQueryService(AipQueryService aipQueryService) {
         this.aipQueryService = aipQueryService;
     }

@@ -12,11 +12,12 @@ import cz.cas.lib.core.util.Utils;
 import freemarker.template.TemplateException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 
-import javax.inject.Inject;
-import javax.mail.MessagingException;
+
+import jakarta.mail.MessagingException;
 import java.io.File;
 import java.io.IOException;
 import java.time.Instant;
@@ -245,12 +246,12 @@ public class ArclibMailCenter extends MailCenter implements FormatLibraryNotifie
         }
     }
 
-    @Inject
+    @Autowired
     public void setAssignedRoleService(UserRoleService assignedRoleService) {
         this.assignedRoleService = assignedRoleService;
     }
 
-    @Inject
+    @Autowired
     public void setUserService(UserService userService) {
         this.userService = userService;
     }

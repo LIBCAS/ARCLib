@@ -7,9 +7,10 @@ import cz.cas.lib.arclib.security.user.UserDetails;
 import cz.cas.lib.arclib.service.UserService;
 import cz.cas.lib.core.index.dto.Result;
 import cz.cas.lib.core.store.Transactional;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import javax.inject.Inject;
+
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Objects;
@@ -94,17 +95,17 @@ public class UserRoleService {
     }
 
 
-    @Inject
+    @Autowired
     public void setStore(UserRoleStore store) {
         this.store = store;
     }
 
-    @Inject
+    @Autowired
     public void setUserService(UserService userService) {
         this.userService = userService;
     }
 
-    @Inject
+    @Autowired
     public void setUserDetails(UserDetails userDetails) {
         this.userDetails = userDetails;
     }

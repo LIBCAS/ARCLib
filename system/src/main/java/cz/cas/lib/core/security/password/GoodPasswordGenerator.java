@@ -1,15 +1,15 @@
 package cz.cas.lib.core.security.password;
 
 import org.passay.*;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 
-import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.List;
 
-@ConditionalOnProperty(prefix = "security.password", name = "enabled", havingValue = "true")
+@ConditionalOnProperty(prefix = "security.local", name = "enabled", havingValue = "true")
 @Service
 public class GoodPasswordGenerator {
     private Integer minPasswordLength;
@@ -21,10 +21,10 @@ public class GoodPasswordGenerator {
     private List<Rule> rules;
     private List<CharacterRule> characterRules;
 
-    @Inject
-    public GoodPasswordGenerator(@Value("${security.password.length}") Integer minPasswordLength,
-                                 @Value("${security.password.digit}") Boolean requireDigit,
-                                 @Value("${security.password.alphabet}") Boolean requireAlphabet) {
+    @Autowired
+    public GoodPasswordGenerator(@Value("${security.local.password.length:8}") Integer minPasswordLength,
+                                 @Value("${security.local.password.digit:true}") Boolean requireDigit,
+                                 @Value("${security.local.password.alphabet:true}") Boolean requireAlphabet) {
         this.minPasswordLength = minPasswordLength;
         this.requireDigit = requireDigit;
         this.requireAlphabet = requireAlphabet;

@@ -7,12 +7,20 @@ import cz.cas.lib.arclib.formatlibrary.domain.Format;
 import cz.cas.lib.arclib.formatlibrary.domain.Risk;
 import cz.cas.lib.arclib.formatlibrary.service.FormatService;
 import cz.cas.lib.arclib.formatlibrary.store.RiskStore;
-import io.swagger.annotations.*;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
-import javax.inject.Inject;
+
 import java.util.Collection;
 import java.util.List;
 
@@ -20,37 +28,36 @@ import static cz.cas.lib.arclib.domainbase.util.DomainBaseUtils.eq;
 import static cz.cas.lib.arclib.domainbase.util.DomainBaseUtils.notNull;
 
 @RestController
-@Api(value = "risk", description = "Api for interaction with risks")
+@Tag(name = "risk", description = "Api for interaction with risks")
 @RequestMapping("/api/risk")
 public class RiskApi {
     private RiskStore store;
     private FormatService formatService;
 
-    @ApiOperation(value = "Saves an instance. [Perm.RISK_RECORDS_WRITE]", notes = "Returns single instance (possibly with computed attributes)",
-            response = Risk.class)
+    @Operation(summary = "Saves an instance. [Perm.RISK_RECORDS_WRITE]", description = "Returns single instance (possibly with computed attributes)")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successful response", response = Risk.class),
-            @ApiResponse(code = 400, message = "Specified id does not correspond to the id of the instance")})
+            @ApiResponse(responseCode = "200", description = "Successful response", content = @Content(schema = @Schema(implementation = Risk.class))),
+            @ApiResponse(responseCode = "400", description = "Specified id does not correspond to the id of the instance")})
     @PreAuthorize("hasAuthority('" + Permissions.RISK_RECORDS_WRITE + "')")
     @PutMapping(value = "/{id}")
     @Transactional
-    public Risk save(@ApiParam(value = "Id of the instance", required = true)
+    public Risk save(@Parameter(description = "Id of the instance", required = true)
                      @PathVariable("id") String id,
-                     @ApiParam(value = "Single instance", required = true)
+                     @Parameter(description = "Single instance", required = true)
                      @RequestBody Risk request) {
         eq(id, request.getId(), () -> new BadArgument("id"));
 
         return store.save(request);
     }
 
-    @ApiOperation(value = "Deletes an instance. [Perm.RISK_RECORDS_WRITE]")
+    @Operation(summary = "Deletes an instance. [Perm.RISK_RECORDS_WRITE]")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successful response"),
-            @ApiResponse(code = 404, message = "Instance does not exist")})
+            @ApiResponse(responseCode = "200", description = "Successful response"),
+            @ApiResponse(responseCode = "404", description = "Instance does not exist")})
     @PreAuthorize("hasAuthority('" + Permissions.RISK_RECORDS_WRITE + "')")
     @DeleteMapping(value = "/{id}")
     @Transactional
-    public void delete(@ApiParam(value = "Id of the instance", required = true)
+    public void delete(@Parameter(description = "Id of the instance", required = true)
                        @PathVariable("id") String id) {
         Risk risk = store.find(id);
         notNull(risk, () -> new MissingObject(store.getType(), id));
@@ -58,14 +65,14 @@ public class RiskApi {
         store.delete(risk);
     }
 
-    @ApiOperation(value = "Gets one instance specified by id [Perm.RISK_RECORDS_READ]", response = Risk.class)
+    @Operation(summary = "Gets one instance specified by id [Perm.RISK_RECORDS_READ]")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successful response", response = Risk.class),
-            @ApiResponse(code = 404, message = "Instance does not exist")})
+            @ApiResponse(responseCode = "200", description = "Successful response", content = @Content(schema = @Schema(implementation = Risk.class))),
+            @ApiResponse(responseCode = "404", description = "Instance does not exist")})
     @PreAuthorize("hasAuthority('" + Permissions.RISK_RECORDS_READ + "')")
     @GetMapping(value = "/{id}")
     @Transactional
-    public Risk get(@ApiParam(value = "Id of the instance", required = true)
+    public Risk get(@Parameter(description = "Id of the instance", required = true)
                     @PathVariable("id") String id) {
         Risk entity = store.find(id);
         notNull(entity, () -> new MissingObject(store.getType(), id));
@@ -73,9 +80,8 @@ public class RiskApi {
         return entity;
     }
 
-    @ApiOperation(value = "Gets all instances that respect the selected parameters [Perm.RISK_RECORDS_READ]",
-            response = Collection.class)
-    @ApiResponses({@ApiResponse(code = 200, message = "Successful response", response = Collection.class)})
+    @Operation(summary = "Gets all instances that respect the selected parameters [Perm.RISK_RECORDS_READ]")
+    @ApiResponses({@ApiResponse(responseCode = "200", description = "Successful response", content = @Content(schema = @Schema(implementation = Collection.class)))})
     @PreAuthorize("hasAuthority('" + Permissions.RISK_RECORDS_READ + "')")
     @GetMapping
     @Transactional
@@ -83,21 +89,21 @@ public class RiskApi {
         return store.findAll();
     }
 
-    @ApiOperation(value = "Gets formats related to risk [Perm.RISK_RECORDS_READ]",
-            response = Format.class, responseContainer = "List")
+    @Operation(summary = "Gets formats related to risk [Perm.RISK_RECORDS_READ]",
+            responses = {@ApiResponse(content = @Content(array = @ArraySchema(schema = @Schema(implementation = Format.class))))})
     @PreAuthorize("hasAuthority('" + Permissions.RISK_RECORDS_READ + "')")
     @GetMapping(value = "/{id}/related_formats")
     public List<Format> listFormatsOfRisk(
-            @ApiParam(value = "Id of the risk", required = true) @PathVariable("id") String id) {
+            @Parameter(description = "Id of the risk", required = true) @PathVariable("id") String id) {
         return formatService.findFormatsOfRisk(id);
     }
 
-    @Inject
+    @Autowired
     public void setStore(RiskStore store) {
         this.store = store;
     }
 
-    @Inject
+    @Autowired
     public void setFormatService(FormatService formatService) {
         this.formatService = formatService;
     }

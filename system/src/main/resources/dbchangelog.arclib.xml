@@ -1236,11 +1236,11 @@
             'AIP_QUERY_RECORDS_WRITE');
         </sql>
     </changeSet>
-    <changeSet id="13" author="tomasek">
-        <createIndex tableName="act_ru_job" indexName="">
-            <column name="priority_" descending="true"/>
-        </createIndex>
-    </changeSet>
+    <!--    <changeSet id="13" author="tomasek">--> <!-- table no longer exists -->
+    <!--        <createIndex tableName="act_ru_job" indexName="">-->
+    <!--            <column name="priority_" descending="true"/>-->
+    <!--        </createIndex>-->
+    <!--    </changeSet>-->
     <changeSet id="14" author="tomasek">
         <sql>
             DELETE FROM arclib_role_permission where perm = 'AUTHORIAL_PACKAGE_DELETE';
@@ -1329,13 +1329,13 @@
     </changeSet>
     <changeSet id="21" author="tomasek">
         <sql>
-            insert into public.arclib_ingest_issue_definition (id, "number",
+            insert into arclib_ingest_issue_definition (id, "number",
             code,name,created,updated,description,solution,reconfigurable) values
             ('7cef3702-7c0f-4279-9427-0028387d66d1','1','CONFIG_PARSE_ERROR','config parser error',current_timestamp,
             current_timestamp,'value in JSON config could not be parsed','see the ingest issue definition for details
             about the wrong config value and update the config',true);
 
-            insert into public.arclib_ingest_issue_definition (id, "number",
+            insert into arclib_ingest_issue_definition (id, "number",
             code,name,created,updated,description,solution,reconfigurable) values
             ('48f3ff3b-d0e2-4d2d-80e5-359931866788','2','FILE_VIRUS_FOUND','virus found',current_timestamp,
             current_timestamp,'virus has been found in one or more files','the issue is solved according to mandatory
@@ -1343,160 +1343,160 @@
             ignored and Ingest workflow process continues, "QUARANTINE": the infected files are moved to the quarantine
             and the Ingest workflow process is stopped, "CANCEL": the Ingest workflow process is stopped',true);
 
-            insert into public.arclib_ingest_issue_definition (id, "number",
+            insert into arclib_ingest_issue_definition (id, "number",
             code,name,created,updated,description,solution,reconfigurable) values
             ('d36b245a-0407-44d5-882e-5afb0f6321cb','3','FILE_MISSING','missing file',current_timestamp,
             current_timestamp,'one or more files are missing in SIP','the issue may be solved by setting JSON config
             value at /fixityCheck/continueOnMissingFiles to true',true);
 
-            insert into public.arclib_ingest_issue_definition (id, "number",
+            insert into arclib_ingest_issue_definition (id, "number",
             code,name,created,updated,description,solution,reconfigurable) values
             ('ae9c3f11-908a-4e78-9d83-387365a619f5','4','FILE_INVALID_CHECKSUM','invalid checksum
             (file)',current_timestamp, current_timestamp,'one or more files of SIP have invalid checksum','the issue may
             be solved by setting JSON config value at /fixityCheck/continueOnInvalidChecksums to true',true);
 
-            insert into public.arclib_ingest_issue_definition (id, "number",
+            insert into arclib_ingest_issue_definition (id, "number",
             code,name,created,updated,description,solution,reconfigurable) values
             ('a8d48f32-5244-4416-adb9-eb3186d215d4','5','FILE_UNSUPPORTED_CHECKSUM_TYPE','unsupported checksum
             type',current_timestamp, current_timestamp,'one or more files of SIP is linked with checksum of unsupported
             type in the SIP metadata','the issue may be solved by setting JSON config value at
             /fixityCheck/continueOnUnsupportedChecksumType to true',true);
 
-            insert into public.arclib_ingest_issue_definition (id, "number",
+            insert into arclib_ingest_issue_definition (id, "number",
             code,name,created,updated,description,solution,reconfigurable) values
             ('c6e031e7-0a54-41b8-9958-213f13bb12c8','6','FILE_FORMAT_RESOLVED_BY_CONFIG','format resolved by
             config',current_timestamp, current_timestamp,null,null,true);
 
-            insert into public.arclib_ingest_issue_definition (id, "number",
+            insert into arclib_ingest_issue_definition (id, "number",
             code,name,created,updated,description,solution,reconfigurable) values
             ('39093925-e1d1-4c35-b3e1-662852e18ba8','7','FILE_FORMAT_UNRESOLVABLE','format
             unresolvable',current_timestamp, current_timestamp,null,null,true);
 
-            insert into public.arclib_ingest_issue_definition (id, "number",
+            insert into arclib_ingest_issue_definition (id, "number",
             code,name,created,updated,description,solution,reconfigurable) values
             ('1af54fb0-a3f4-4262-a3f4-60cb0959dd6e','8','AUTHORIAL_PACKAGE_LOCKED','authorial package
             locked',current_timestamp, current_timestamp,'authorial package is locked by another ongoing ingest
             process','wait until the ongoing ingest process is finished, resolve or cancel (thus cancel the ingest
             process) the respective incidents if any occurred',false);
 
-            insert into public.arclib_ingest_issue_definition (id, "number",
+            insert into arclib_ingest_issue_definition (id, "number",
             code,name,created,updated,description,solution,reconfigurable) values
             ('6e3f8886-93be-4079-a580-d2f8cca7318f','9','INTERNAL_ERROR','internal error',current_timestamp,
             current_timestamp,'unexpected system error','contact administrator',false);
 
-            insert into public.arclib_ingest_issue_definition (id, "number",
+            insert into arclib_ingest_issue_definition (id, "number",
             code,name,created,updated,description,solution,reconfigurable) values
             ('1d98c8bc-0a10-49f1-a93a-44f1b5244571','10','INVALID_CHECKSUM','invalid checksum (SIP)',current_timestamp,
             current_timestamp,'invalid checksum provided with the SIP','compute new checksum and run new batch with
             repaired SIP-hash pair through routine or through manual ingest',false);
 
-            insert into public.arclib_ingest_issue_definition (id, "number",
+            insert into arclib_ingest_issue_definition (id, "number",
             code,name,created,updated,description,solution,reconfigurable) values
             ('5ddfe482-2310-44d3-a99f-cef201c8c2b6','11','BATCH_CANCELLATION','batch cancellation',current_timestamp,
             current_timestamp,'the batch has been cancelled while the ingest workflow was waiting in queue, before its
             processing even started','',false);
 
-            insert into public.arclib_ingest_issue_definition (id, "number",
+            insert into arclib_ingest_issue_definition (id, "number",
             code,name,created,updated,description,solution,reconfigurable) values
             ('c8152325-a7e7-468a-ad0d-86dc8488b4ed','12','INCIDENT_CANCELLATION','incident
             cancellation',current_timestamp, current_timestamp,'incident has occurred during ingest and it was cancelled
             so tha ingest workflow has failed','',false);
 
-            insert into public.arclib_ingest_issue_definition (id, "number",
+            insert into arclib_ingest_issue_definition (id, "number",
             code,name,created,updated,description,solution,reconfigurable) values
             ('d1fca45f-4545-40db-adcf-4ecddfe023c1','13','BPM_ERROR','bpm error',current_timestamp,
             current_timestamp,'controlled error, ingest workflow has encountered a state in which it should fail (the
             failure behavior is described by JSON config)','',false);
 
-            insert into public.arclib_tool
+            insert into arclib_tool
             (id,name,created,updated,version,description,tool_function,documentation,format_relation_type,format_relation_value,internal)
             values
             ('d920fc98-aabf-445d-9795-f56501d5e153','ARCLib_virus_check',current_timestamp,
             current_timestamp,null,null,'virus_check',null,'ALL',null,true);
 
-            insert into public.arclib_tool
+            insert into arclib_tool
             (id,name,created,updated,version,description,tool_function,documentation,format_relation_type,format_relation_value,internal)
             values
             ('34d50605-b886-4f14-a2a7-b2983d8d435b','ARCLib_validation',current_timestamp,
             current_timestamp,null,null,'validation',null,'ALL',null,true);
 
-            insert into public.arclib_tool
+            insert into arclib_tool
             (id,name,created,updated,version,description,tool_function,documentation,format_relation_type,format_relation_value,internal)
             values
             ('6d4ffc4f-56dc-45c5-9fbb-3042f651ebb9','ARCLib_message_digest_calculation',current_timestamp,
             current_timestamp,null,null,'message_digest_calculation',null,'ALL',null,true);
 
-            insert into public.arclib_tool
+            insert into arclib_tool
             (id,name,created,updated,version,description,tool_function,documentation,format_relation_type,format_relation_value,internal)
             values
             ('b1ffa416-c815-47c3-be0e-f7a5404a805e','ARCLib_fixity_check',current_timestamp,
             current_timestamp,null,null,'fixity_check',null,'ALL',null,true);
 
-            insert into public.arclib_tool
+            insert into arclib_tool
             (id,name,created,updated,version,description,tool_function,documentation,format_relation_type,format_relation_value,internal)
             values
             ('2f2aa04b-c275-4c94-8b82-60a07bc5b577','ARCLib_mets_fixity_check',current_timestamp,
             current_timestamp,null,null,'fixity_check',null,'ALL',null,true);
 
-            insert into public.arclib_tool
+            insert into arclib_tool
             (id,name,created,updated,version,description,tool_function,documentation,format_relation_type,format_relation_value,internal)
             values
             ('9460e07e-d00c-4729-b861-74b0c29f8527','ARCLib_bagit_fixity_check',current_timestamp,
             current_timestamp,null,null,'fixity_check',null,'ALL',null,true);
 
-            insert into public.arclib_tool
+            insert into arclib_tool
             (id,name,created,updated,version,description,tool_function,documentation,format_relation_type,format_relation_value,internal)
             values
             ('104968c7-bb33-4f84-ad6f-0fd4dfaf0f36','ARCLib_format_identification',current_timestamp,
             current_timestamp,null,null,'format_identification',null,'ALL',null,true);
 
-            insert into public.arclib_tool
+            insert into arclib_tool
             (id,name,created,updated,version,description,tool_function,documentation,format_relation_type,format_relation_value,internal)
             values
             ('e1c83f3a-c03a-4231-8c8c-102a53c0f6ed','ARCLib_metadata_extraction',current_timestamp,
             current_timestamp,null,null,'metadata_extraction',null,'ALL',null,true);
 
-            insert into public.arclib_tool
+            insert into arclib_tool
             (id,name,created,updated,version,description,tool_function,documentation,format_relation_type,format_relation_value,internal)
             values
             ('c0068cb1-5755-4133-9be9-f49840f19ec3','ARCLib_information_package_creation',current_timestamp,
             current_timestamp,null,null,'information_package_creation',null,'ALL',null,true);
 
-            INSERT INTO public.arclib_tool
+            INSERT INTO arclib_tool
             (id, "name", created, updated, "version", description, tool_function, license_information, documentation,
             format_relation_type, format_relation_value, internal)
             VALUES('61669cb0-2459-4715-9920-3950c8e79326', 'DROID', current_timestamp, current_timestamp, null, null,
             'format_identification', 'New BSD', null, 'ALL', null, false);
 
-            INSERT INTO public.arclib_tool
+            INSERT INTO arclib_tool
             (id, "name", created, updated, "version", description, tool_function, license_information, documentation,
             format_relation_type, format_relation_value, internal)
             VALUES('801b4429-30a3-4b1b-b71f-173506f508da', 'CLAMAV', current_timestamp, current_timestamp, null, null,
             'virus_check', 'GNU', null, 'ALL', null, false);
 
-            insert into public.arclib_tool_ingest_issue_definition(tool_id,ingest_issue_definition_id)
+            insert into arclib_tool_ingest_issue_definition(tool_id,ingest_issue_definition_id)
             values('61669cb0-2459-4715-9920-3950c8e79326','39093925-e1d1-4c35-b3e1-662852e18ba8');
-            insert into public.arclib_tool_ingest_issue_definition(tool_id,ingest_issue_definition_id)
+            insert into arclib_tool_ingest_issue_definition(tool_id,ingest_issue_definition_id)
             values('61669cb0-2459-4715-9920-3950c8e79326','c6e031e7-0a54-41b8-9958-213f13bb12c8');
-            insert into public.arclib_tool_ingest_issue_definition(tool_id,ingest_issue_definition_id)
+            insert into arclib_tool_ingest_issue_definition(tool_id,ingest_issue_definition_id)
             values('61669cb0-2459-4715-9920-3950c8e79326','7cef3702-7c0f-4279-9427-0028387d66d1');
-            insert into public.arclib_tool_ingest_issue_definition(tool_id,ingest_issue_definition_id)
+            insert into arclib_tool_ingest_issue_definition(tool_id,ingest_issue_definition_id)
             values('801b4429-30a3-4b1b-b71f-173506f508da','48f3ff3b-d0e2-4d2d-80e5-359931866788');
-            insert into public.arclib_tool_ingest_issue_definition(tool_id,ingest_issue_definition_id)
+            insert into arclib_tool_ingest_issue_definition(tool_id,ingest_issue_definition_id)
             values('d920fc98-aabf-445d-9795-f56501d5e153','7cef3702-7c0f-4279-9427-0028387d66d1');
-            insert into public.arclib_tool_ingest_issue_definition(tool_id,ingest_issue_definition_id)
+            insert into arclib_tool_ingest_issue_definition(tool_id,ingest_issue_definition_id)
             values('104968c7-bb33-4f84-ad6f-0fd4dfaf0f36','7cef3702-7c0f-4279-9427-0028387d66d1');
-            insert into public.arclib_tool_ingest_issue_definition(tool_id,ingest_issue_definition_id)
+            insert into arclib_tool_ingest_issue_definition(tool_id,ingest_issue_definition_id)
             values('9460e07e-d00c-4729-b861-74b0c29f8527','a8d48f32-5244-4416-adb9-eb3186d215d4');
-            insert into public.arclib_tool_ingest_issue_definition(tool_id,ingest_issue_definition_id)
+            insert into arclib_tool_ingest_issue_definition(tool_id,ingest_issue_definition_id)
             values('9460e07e-d00c-4729-b861-74b0c29f8527','ae9c3f11-908a-4e78-9d83-387365a619f5');
-            insert into public.arclib_tool_ingest_issue_definition(tool_id,ingest_issue_definition_id)
+            insert into arclib_tool_ingest_issue_definition(tool_id,ingest_issue_definition_id)
             values('9460e07e-d00c-4729-b861-74b0c29f8527','d36b245a-0407-44d5-882e-5afb0f6321cb');
-            insert into public.arclib_tool_ingest_issue_definition(tool_id,ingest_issue_definition_id)
+            insert into arclib_tool_ingest_issue_definition(tool_id,ingest_issue_definition_id)
             values('2f2aa04b-c275-4c94-8b82-60a07bc5b577','a8d48f32-5244-4416-adb9-eb3186d215d4');
-            insert into public.arclib_tool_ingest_issue_definition(tool_id,ingest_issue_definition_id)
+            insert into arclib_tool_ingest_issue_definition(tool_id,ingest_issue_definition_id)
             values('2f2aa04b-c275-4c94-8b82-60a07bc5b577','ae9c3f11-908a-4e78-9d83-387365a619f5');
-            insert into public.arclib_tool_ingest_issue_definition(tool_id,ingest_issue_definition_id)
+            insert into arclib_tool_ingest_issue_definition(tool_id,ingest_issue_definition_id)
             values('2f2aa04b-c275-4c94-8b82-60a07bc5b577','d36b245a-0407-44d5-882e-5afb0f6321cb');
         </sql>
     </changeSet>
@@ -1778,7 +1778,7 @@
     </changeSet>
     <changeSet id="39" author="tomasek">
         <sql>
-            insert into public.arclib_tool
+            insert into arclib_tool
             (id,name,created,updated,version,description,tool_function,documentation,format_relation_type,format_relation_value,internal)
             values
             ('2ff0ff87-5292-435e-b372-efdca34bc668','ARCLib_SIP_merger',current_timestamp,
@@ -1787,11 +1787,12 @@
         <dropNotNullConstraint tableName="arclib_sip" columnName="size_in_bytes"/>
     </changeSet>
     <changeSet id="40" author="tomasek">
-        <dropUniqueConstraint tableName="arclib_authorial_package" constraintName="arclib_authorial_package_authorial_id_producer_profile_id_key"/>
+        <dropUniqueConstraint tableName="arclib_authorial_package"
+                              constraintName="arclib_authorial_package_authorial_id_producer_profile_id_key"/>
     </changeSet>
     <changeSet id="41" author="tomasek">
         <sql>
-            insert into public.arclib_ingest_issue_definition (id, "number",
+            insert into arclib_ingest_issue_definition (id, "number",
             code,name,created,updated,description,solution,reconfigurable) values
             ('aa46b316-186d-4f6a-b54c-0cb4fd354a20','15','SYSTEM_WIDE_VALIDATION_NODE_MISSING','system wide validation
             nodes missing',
@@ -1805,9 +1806,9 @@
             process
             continues as if there were no missing nodes, "CANCEL": the Ingest workflow process is cancelled.',true);
 
-            insert into public.arclib_tool_ingest_issue_definition(tool_id,ingest_issue_definition_id)
+            insert into arclib_tool_ingest_issue_definition(tool_id,ingest_issue_definition_id)
             values('e1c83f3a-c03a-4231-8c8c-102a53c0f6ed','aa46b316-186d-4f6a-b54c-0cb4fd354a20');
-            insert into public.arclib_tool_ingest_issue_definition(tool_id,ingest_issue_definition_id)
+            insert into arclib_tool_ingest_issue_definition(tool_id,ingest_issue_definition_id)
             values('c0068cb1-5755-4133-9be9-f49840f19ec3','aa46b316-186d-4f6a-b54c-0cb4fd354a20');
         </sql>
     </changeSet>
@@ -1865,6 +1866,12 @@
         </createTable>
     </changeSet>
     <changeSet id="43" author="tomasek">
-        <renameColumn tableName="arclib_aip_bulk_deletion" oldColumnName="skip_if_newer_version_not_exists" newColumnName="delete_if_newer_versions_deleted"/>
+        <renameColumn tableName="arclib_aip_bulk_deletion" oldColumnName="skip_if_newer_version_not_exists"
+                      newColumnName="delete_if_newer_versions_deleted"/>
+    </changeSet>
+    <changeSet id="44" author="tomasek">
+        <addColumn tableName="arclib_user">
+            <column name="password" type="nvarchar(255)"/>
+        </addColumn>
     </changeSet>
 </databaseChangeLog>

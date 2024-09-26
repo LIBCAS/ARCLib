@@ -27,13 +27,14 @@ import lombok.extern.slf4j.Slf4j;
 import org.camunda.bpm.engine.RepositoryService;
 import org.camunda.bpm.engine.RuntimeService;
 import org.camunda.bpm.engine.runtime.ProcessInstance;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jms.annotation.JmsListener;
 import org.springframework.jms.core.JmsTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
 
-import javax.inject.Inject;
+
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
@@ -538,72 +539,72 @@ public class CoordinatorService {
         }
     }
 
-    @Inject
+    @Autowired
     public void setProducerProfileService(ProducerProfileService producerProfileService) {
         this.producerProfileService = producerProfileService;
     }
 
-    @Inject
+    @Autowired
     public void setTemplate(JmsTemplate template) {
         this.template = template;
     }
 
-    @Inject
+    @Autowired
     public void setIngestWorkflowService(IngestWorkflowService ingestWorkflowService) {
         this.ingestWorkflowService = ingestWorkflowService;
     }
 
-    @Inject
+    @Autowired
     public void setBatchService(BatchService batchService) {
         this.batchService = batchService;
     }
 
-    @Inject
+    @Autowired
     public void setRepositoryService(RepositoryService repositoryService) {
         this.repositoryService = repositoryService;
     }
 
-    @Inject
+    @Autowired
     public void setUserDetails(UserDetails userDetails) {
         this.userDetails = userDetails;
     }
 
-    @Inject
+    @Autowired
     public void setHashStore(HashStore hashStore) {
         this.hashStore = hashStore;
     }
 
-    @Inject
+    @Autowired
     public void setArclibMailCenter(ArclibMailCenter arclibMailCenter) {
         this.arclibMailCenter = arclibMailCenter;
     }
 
-    @Inject
+    @Autowired
     public void setUserService(UserService userService) {
         this.userService = userService;
     }
 
-    @Inject
+    @Autowired
     public void setIngestErrorHandler(IngestErrorHandler ingestErrorHandler) {
         this.ingestErrorHandler = ingestErrorHandler;
     }
 
-    @Inject
+    @Autowired
     public void setRuntimeService(RuntimeService runtimeService) {
         this.runtimeService = runtimeService;
     }
 
-    @Inject
+    @Autowired
     public void setFileStorage(@Value("${arclib.path.fileStorage}") String fileStorage) {
         this.fileStorage = fileStorage;
     }
 
-    @Inject
+    @Autowired
     public void setTransactionTemplate(TransactionTemplate transactionTemplate) {
         this.transactionTemplate = transactionTemplate;
     }
 
-    @Inject
+    @Autowired
     public void setIngestRoutineStore(IngestRoutineStore ingestRoutineStore) {
         this.ingestRoutineStore = ingestRoutineStore;
     }

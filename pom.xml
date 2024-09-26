@@ -12,7 +12,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>2.1.2.RELEASE</version>
+        <version>3.3.3</version>
         <relativePath/>
     </parent>
 
@@ -25,34 +25,19 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <java.version>11</java.version>
-        <spring.kerberos.version>1.0.1.RELEASE</spring.kerberos.version>
-        <passay.version>1.2.0</passay.version>
-        <jjwt.version>0.7.0</jjwt.version>
-        <poi.version>3.15</poi.version>
-        <jxls.version>2.4.2</jxls.version>
-        <jxls.poi.version>1.0.13</jxls.poi.version>
-        <xdocreport.version>1.0.6</xdocreport.version>
-        <tika.version>1.14</tika.version>
-        <jempbox.version>1.8.12</jempbox.version>
+        <java.version>17</java.version>
+        <spring.kerberos.version>2.0.0</spring.kerberos.version>
+        <passay.version>1.6.4</passay.version>
+        <jjwt.version>0.12.3</jjwt.version>
+        <tika.version>2.9.0</tika.version>
+        <spotbugs.version>4.8.0</spotbugs.version>
+        <jasper.version>6.20.6</jasper.version>
 
-        <!-- override defaults -->
-        <logback.version>1.1.6</logback.version><!-- pushed back because of incompatibility -->
-        <!--<tomcat.version>8.5.6</tomcat.version>-->
-        <!-- transitive -->
-        <findbugs.version>2.0.1</findbugs.version>
-        <solr.version>7.6.0</solr.version>
+        <lucene.version>9.8.0</lucene.version>
 
-        <lucene.version>5.5.2</lucene.version>
-        <postgis.version>2.2.1</postgis.version>
-        <swagger.version>2.7.0</swagger.version>
-
-        <camunda-boot.version>3.2.0</camunda-boot.version>
-        <sqlserver.version>6.0</sqlserver.version>
-        <oracle.version>12.1.0.2</oracle.version>
+        <camunda-boot.version>7.20.0</camunda-boot.version>
 
         <wss4j.version>1.6.19</wss4j.version>
-        <xmlsec.version>2.0.8</xmlsec.version>
     </properties>
 
     <dependencyManagement>
@@ -60,7 +45,7 @@
             <dependency>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-starter-parent</artifactId>
-                <version>2.1.2.RELEASE</version>
+                <version>3.3.3</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -87,20 +72,6 @@
                 <groupId>org.apache.ws.security</groupId>
                 <artifactId>wss4j</artifactId>
                 <version>${wss4j.version}</version>
-                <exclusions>
-                    <exclusion>
-                        <groupId>commons-logging</groupId>
-                        <artifactId>commons-logging</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>org.opensaml</groupId>
-                        <artifactId>opensaml</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>org.apache.santuario</groupId>
-                        <artifactId>xmlsec</artifactId>
-                    </exclusion>
-                </exclusions>
             </dependency>
 
             <dependency>
@@ -112,53 +83,12 @@
                 <groupId>org.apache.tika</groupId>
                 <artifactId>tika-parsers</artifactId>
                 <version>${tika.version}</version>
-                <exclusions>
-                    <exclusion>
-                        <groupId>commons-logging</groupId>
-                        <artifactId>commons-logging-api</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>commons-logging</groupId>
-                        <artifactId>commons-logging</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>org.ow2.asm</groupId>
-                        <artifactId>asm</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>de.l3s.boilerpipe</groupId>
-                        <artifactId>boilerpipe</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>net.jcip</groupId>
-                        <artifactId>jcip-annotations</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>net.sf.ehcache</groupId>
-                        <artifactId>ehcache-core</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>regexp</groupId>
-                        <artifactId>regexp</artifactId>
-                    </exclusion>
-                </exclusions>
             </dependency>
 
             <dependency>
                 <groupId>org.apache.santuario</groupId>
                 <artifactId>xmlsec</artifactId>
                 <version>2.0.8</version>
-                <exclusions>
-                    <!--  STAX comes with Java 1.6 -->
-                    <exclusion>
-                        <artifactId>stax-api</artifactId>
-                        <groupId>javax.xml.stream</groupId>
-                    </exclusion>
-                    <exclusion>
-                        <artifactId>stax-api</artifactId>
-                        <groupId>stax</groupId>
-                    </exclusion>
-                </exclusions>
             </dependency>
         </dependencies>
     </dependencyManagement>
@@ -169,7 +99,7 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-compiler-plugin</artifactId>
-                    <version>3.2</version>
+                    <version>3.11.0</version>
                     <configuration>
                         <source>${java.version}</source>
                         <target>${java.version}</target>
@@ -178,7 +108,7 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-resources-plugin</artifactId>
-                    <version>2.7</version>
+                    <version>3.3.1</version>
                     <configuration>
                         <encoding>UTF-8</encoding>
                         <delimiters>
@@ -190,7 +120,7 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-source-plugin</artifactId>
-                    <version>3.0.1</version>
+                    <version>3.3.0</version>
                     <executions>
                         <execution>
                             <id>attach-sources</id>
@@ -202,38 +132,9 @@
                     </executions>
                 </plugin>
                 <plugin>
-                    <groupId>com.mysema.maven</groupId>
-                    <artifactId>apt-maven-plugin</artifactId>
-                    <version>1.1.3</version>
-                    <executions>
-                        <execution>
-                            <id>original</id>
-                            <phase>generate-sources</phase>
-                            <goals>
-                                <goal>process</goal>
-                            </goals>
-                            <configuration>
-                                <outputDirectory>target/generated-sources/mysema</outputDirectory>
-                                <processor>com.querydsl.apt.jpa.JPAAnnotationProcessor</processor>
-                            </configuration>
-                        </execution>
-                        <execution>
-                            <id>test</id>
-                            <phase>generate-test-sources</phase>
-                            <goals>
-                                <goal>test-process</goal>
-                            </goals>
-                            <configuration>
-                                <outputDirectory>target/generated-test-sources/mysema</outputDirectory>
-                                <processor>com.querydsl.apt.jpa.JPAAnnotationProcessor</processor>
-                            </configuration>
-                        </execution>
-                    </executions>
-                </plugin>
-                <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-enforcer-plugin</artifactId>
-                    <version>1.4.1</version>
+                    <version>3.4.1</version>
                     <executions>
                         <execution>
                             <id>enforce</id>
@@ -245,8 +146,7 @@
                                 <rules>
                                     <banDuplicateClasses>
                                         <ignoreClasses>
-                                            <ignoreClass>org.joda.time.base.BaseDateTime</ignoreClass>
-                                            <ignoreClass>*module-info</ignoreClass>
+                                           <ignoreClass>*module-info</ignoreClass>
                                         </ignoreClasses>
                                         <findAllDuplicates>true</findAllDuplicates>
                                     </banDuplicateClasses>
@@ -277,14 +177,14 @@
                         <dependency>
                             <groupId>org.codehaus.mojo</groupId>
                             <artifactId>extra-enforcer-rules</artifactId>
-                            <version>1.0-beta-6</version>
+                            <version>1.7.0</version>
                         </dependency>
                     </dependencies>
                 </plugin>
                 <plugin>
                     <groupId>org.jacoco</groupId>
                     <artifactId>jacoco-maven-plugin</artifactId>
-                    <version>0.7.7.201606060606</version>
+                    <version>0.8.11</version>
                     <executions>
                         <execution>
                             <id>pre-unit-test</id>
@@ -304,7 +204,7 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-surefire-plugin</artifactId>
-                    <version>2.18.1</version>
+                    <version>3.1.2</version>
                     <configuration>
                         <!--suppress MavenModelInspection -->
                         <argLine>-Dtests.security.manager=false</argLine>
@@ -314,7 +214,9 @@
                     <groupId>org.springframework.boot</groupId>
                     <artifactId>spring-boot-maven-plugin</artifactId>
                     <configuration>
-                        <executable>true</executable>
+                        <layers>
+                            <enabled>true</enabled>
+                        </layers>
                     </configuration>
                     <executions>
                         <execution>

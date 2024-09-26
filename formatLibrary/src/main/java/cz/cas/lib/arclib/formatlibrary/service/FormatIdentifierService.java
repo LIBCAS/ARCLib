@@ -2,10 +2,11 @@ package cz.cas.lib.arclib.formatlibrary.service;
 
 import cz.cas.lib.arclib.formatlibrary.domain.FormatIdentifier;
 import cz.cas.lib.arclib.formatlibrary.store.FormatIdentifierStore;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.inject.Inject;
+
 
 @Service
 public class FormatIdentifierService {
@@ -22,7 +23,7 @@ public class FormatIdentifierService {
         return store.save(entity);
     }
 
-    @Inject
+    @Autowired
     public void setStore(FormatIdentifierStore store) {
         this.store = store;
     }

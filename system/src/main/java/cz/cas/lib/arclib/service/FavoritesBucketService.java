@@ -10,9 +10,10 @@ import cz.cas.lib.core.index.dto.FilterOperation;
 import cz.cas.lib.core.index.dto.Params;
 import cz.cas.lib.core.index.dto.Result;
 import cz.cas.lib.core.store.Transactional;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import javax.inject.Inject;
+
 import java.util.List;
 import java.util.Set;
 
@@ -54,12 +55,12 @@ public class FavoritesBucketService {
         }
     }
 
-    @Inject
+    @Autowired
     public void setArclibXmlIndexStore(SolrArclibXmlStore arclibXmlIndexStore) {
         this.arclibXmlIndexStore = arclibXmlIndexStore;
     }
 
-    @Inject
+    @Autowired
     public void setStore(FavoritesBucketStore store) {
         this.store = store;
     }

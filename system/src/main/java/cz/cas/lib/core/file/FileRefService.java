@@ -5,10 +5,10 @@ import cz.cas.lib.arclib.domainbase.exception.ForbiddenObject;
 import cz.cas.lib.arclib.domainbase.exception.MissingObject;
 import cz.cas.lib.core.store.Transactional;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import javax.inject.Inject;
 import java.io.InputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -206,12 +206,12 @@ public class FileRefService {
      *
      * @param basePath Path on file system
      */
-    @Inject
+    @Autowired
     public void setBasePath(@Value("${file.path:data}") String basePath) {
         this.basePath = basePath;
     }
 
-    @Inject
+    @Autowired
     public void setStore(FileRefStore store) {
         this.store = store;
     }

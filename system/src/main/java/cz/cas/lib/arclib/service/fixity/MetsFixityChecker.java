@@ -7,6 +7,7 @@ import cz.cas.lib.arclib.domainbase.exception.GeneralException;
 import cz.cas.lib.arclib.exception.bpm.IncidentException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.w3c.dom.Document;
@@ -14,7 +15,6 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
-import javax.inject.Inject;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathConstants;
@@ -139,7 +139,7 @@ public class MetsFixityChecker extends FixityChecker {
     /**
      * Namespace URIs must match URIs in ARCLib XML file.
      */
-    @Inject
+    @Autowired
     public void setUris(@Value("${namespaces.mets}") String mets, @Value("${namespaces.xsi}") String xsi, @Value("${namespaces.arclib}") String arclib, @Value("${namespaces" +
             ".premis}") String premis, @Value("${namespaces.oai_dc}") String oai_dc, @Value("${namespaces.dc}") String dc, @Value("${namespaces.xlink}") String xlink) {
         Map<String, String> uris = new HashMap<>();

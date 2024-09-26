@@ -7,7 +7,7 @@ import cz.cas.lib.arclib.service.formatIdentification.FormatIdentificationToolTy
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
-import org.apache.commons.lang.SystemUtils;
+import org.apache.commons.lang3.SystemUtils;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.io.BufferedReader;

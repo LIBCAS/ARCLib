@@ -11,9 +11,10 @@ import cz.cas.lib.core.index.dto.Result;
 import cz.cas.lib.core.store.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import net.sf.jasperreports.engine.*;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import javax.inject.Inject;
+
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -137,7 +138,7 @@ public class ReportService {
         }
     }
 
-    @Inject
+    @Autowired
     public void setStore(ReportStore store) {
         this.store = store;
     }

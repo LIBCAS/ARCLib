@@ -3,6 +3,7 @@ package cz.cas.lib.arclib.service.archivalStorage;
 import cz.cas.lib.arclib.security.user.UserDetails;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.http.client.ClientHttpResponse;
@@ -10,9 +11,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.ResponseErrorHandler;
 import org.springframework.web.client.RestTemplate;
 
-import javax.inject.Inject;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 
@@ -88,27 +89,27 @@ public class ArchivalStoragePipe {
         ADMIN, READ, READ_WRITE
     }
 
-    @Inject
+    @Autowired
     public void setBaseEndpoint(@Value("${archivalStorage.api}") String baseEndpoint) {
         this.baseEndpoint = baseEndpoint;
     }
 
-    @Inject
+    @Autowired
     public void setReadKeypair(@Value("${archivalStorage.authorization.basic.read}") String readKeypair) {
         this.readKeypair = readKeypair;
     }
 
-    @Inject
+    @Autowired
     public void setReadWriteKeypair(@Value("${archivalStorage.authorization.basic.readWrite}") String readWriteKeypair) {
         this.readWriteKeypair = readWriteKeypair;
     }
 
-    @Inject
+    @Autowired
     public void setAdminKeypair(@Value("${archivalStorage.authorization.basic.admin}") String adminKeypair) {
         this.adminKeypair = adminKeypair;
     }
 
-    @Inject
+    @Autowired
     public void setUserDetails(UserDetails userDetails) {
         this.userDetails = userDetails;
     }

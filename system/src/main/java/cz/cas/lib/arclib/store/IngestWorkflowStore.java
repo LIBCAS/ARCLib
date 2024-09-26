@@ -6,9 +6,10 @@ import cz.cas.lib.arclib.domain.ingestWorkflow.QIngestWorkflow;
 import cz.cas.lib.core.sequence.Generator;
 import cz.cas.lib.arclib.domainbase.store.DatedStore;
 import lombok.Getter;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
-import javax.inject.Inject;
+
 import java.util.List;
 
 @Repository
@@ -86,7 +87,7 @@ public class IngestWorkflowStore extends DatedStore<IngestWorkflow, QIngestWorkf
         return workflows;
     }
 
-    @Inject
+    @Autowired
     public void setGenerator(Generator generator) {
         this.generator = generator;
     }

@@ -8,10 +8,12 @@ import cz.cas.lib.arclib.domain.profiles.ProducerProfile;
 import cz.cas.lib.arclib.index.solr.entity.IndexedBatch;
 import cz.cas.lib.core.index.solr.IndexedDatedStore;
 import lombok.Getter;
-import org.springframework.data.solr.core.query.Criteria;
-import org.springframework.data.solr.core.query.SimpleQuery;
+import org.apache.solr.client.solrj.SolrQuery;
+import org.apache.solr.client.solrj.SolrServerException;
+import org.apache.solr.client.solrj.response.QueryResponse;
 import org.springframework.stereotype.Repository;
 
+import java.io.IOException;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -31,8 +33,12 @@ public class BatchStore extends IndexedDatedStore<Batch, QBatch, IndexedBatch> {
     public Batch create(Batch b, String userId) {
         IndexedBatch solrBatch = toIndexObject(b);
         solrBatch.setUserId(userId);
-        getTemplate().saveBean(getIndexCollection(), solrBatch);
-        getTemplate().commit(getIndexCollection());
+        try {
+            getSolrClient().addBean(getIndexCollection(), solrBatch);
+            getSolrClient().commit(getIndexCollection());
+        } catch (IOException | SolrServerException e) {
+            throw new RuntimeException(e);
+        }
         save(b);
         return b;
     }
@@ -63,14 +69,19 @@ public class BatchStore extends IndexedDatedStore<Batch, QBatch, IndexedBatch> {
     @Override
     public Batch index(Batch obj) {
         IndexedBatch newBatch = toIndexObject(obj);
-        SimpleQuery q = new SimpleQuery();
-        q.addCriteria(Criteria.where("id").in(obj.getId()));
-        List<IndexedBatch> old = getTemplate().query(getIndexCollection(), q, IndexedBatch.class).getContent();
-        if (!old.isEmpty()) {
-            newBatch.setUserId(old.get(0).getUserId());
+        try {
+            SolrQuery q = new SolrQuery("*:*");
+            q.addFilterQuery("id:" + obj.getId());
+            QueryResponse queryResponse = getSolrClient().query(getIndexCollection(), q);
+            List<IndexedBatch> old = queryResponse.getBeans(IndexedBatch.class);
+            if (!old.isEmpty()) {
+                newBatch.setUserId(old.get(0).getUserId());
+            }
+            getSolrClient().addBean(getIndexCollection(), newBatch);
+            getSolrClient().commit(getIndexCollection());
+        } catch (IOException | SolrServerException e) {
+            throw new RuntimeException(e);
         }
-        getTemplate().saveBean(getIndexCollection(), newBatch);
-        getTemplate().commit(getIndexCollection());
         return obj;
     }
 
@@ -80,26 +91,32 @@ public class BatchStore extends IndexedDatedStore<Batch, QBatch, IndexedBatch> {
             return objects;
         }
         List<String> objIds = objects.stream().map(Batch::getId).collect(Collectors.toList());
-        SimpleQuery q = new SimpleQuery();
-        q.addCriteria(Criteria.where("id").in(objIds));
-        Map<String, IndexedBatch> solrDocs = new HashMap<>();
-        for (IndexedBatch solrBatch : getTemplate()
-                .query(getIndexCollection(), q, IndexedBatch.class)
-                .getContent()) {
-            solrDocs.put(solrBatch.getId(),solrBatch);
-        }
 
-        List<IndexedBatch> indexObjects = objects.stream()
-                .map(b -> {
-                            IndexedBatch batch = toIndexObject(b);
-                            IndexedBatch old = solrDocs.get(batch.getId());
-                            if (old != null)
-                                batch.setUserId(old.getUserId());
-                            return batch;
-                        }
-                ).collect(Collectors.toList());
-        getTemplate().saveBeans(getIndexCollection(), indexObjects);
-        getTemplate().commit(getIndexCollection());
+        try {
+            SolrQuery q = new SolrQuery("*:*");
+            q.addFilterQuery("id:(" + String.join(" ", objIds) + ")");
+            Map<String, IndexedBatch> solrDocs = new HashMap<>();
+            QueryResponse queryResponse = getSolrClient()
+                    .query(getIndexCollection(), q);
+            for (IndexedBatch solrBatch : queryResponse
+                    .getBeans(IndexedBatch.class)) {
+                solrDocs.put(solrBatch.getId(), solrBatch);
+            }
+
+            List<IndexedBatch> indexObjects = objects.stream()
+                    .map(b -> {
+                                IndexedBatch batch = toIndexObject(b);
+                                IndexedBatch old = solrDocs.get(batch.getId());
+                                if (old != null)
+                                    batch.setUserId(old.getUserId());
+                                return batch;
+                            }
+                    ).collect(Collectors.toList());
+            getSolrClient().addBeans(getIndexCollection(), indexObjects);
+            getSolrClient().commit(getIndexCollection());
+        } catch (IOException | SolrServerException e) {
+            throw new RuntimeException(e);
+        }
         return objects;
     }
 
@@ -108,7 +125,9 @@ public class BatchStore extends IndexedDatedStore<Batch, QBatch, IndexedBatch> {
     public IndexedBatch toIndexObject(Batch obj) {
         IndexedBatch indexObject = super.toIndexObject(obj);
         indexObject.setConfig(obj.getWorkflowConfig());
-        indexObject.setState(obj.getState());
+        if (obj.getState() != null) {
+            indexObject.setState(obj.getState().name());
+        }
 
         ProducerProfile producerProfile = obj.getProducerProfile();
         if (producerProfile != null) {

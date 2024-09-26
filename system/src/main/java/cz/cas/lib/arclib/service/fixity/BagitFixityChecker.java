@@ -6,9 +6,9 @@ import cz.cas.lib.arclib.domain.HashType;
 import cz.cas.lib.arclib.exception.bpm.IncidentException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import javax.inject.Inject;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -138,7 +138,7 @@ public class BagitFixityChecker extends FixityChecker {
         return checksumPairs;
     }
 
-    @Inject
+    @Autowired
     public void setFixityCounterFacade(FixityCounterFacade fixityCounterFacade) {
         this.fixityCounterFacade = fixityCounterFacade;
     }

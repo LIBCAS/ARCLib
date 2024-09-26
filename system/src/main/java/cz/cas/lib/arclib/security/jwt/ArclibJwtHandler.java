@@ -5,10 +5,10 @@ import cz.cas.lib.arclib.security.user.UserDetails;
 import cz.cas.lib.arclib.security.user.UserDetailsImpl;
 import cz.cas.lib.arclib.service.UserService;
 import cz.cas.lib.core.security.jwt.spi.JwtHandler;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.stereotype.Service;
 
-import javax.inject.Inject;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -45,7 +45,7 @@ public class ArclibJwtHandler implements JwtHandler {
     }
 
 
-    @Inject
+    @Autowired
     public void setUserService(UserService userService) {
         this.userService = userService;
     }

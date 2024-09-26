@@ -7,7 +7,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.BatchSize;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.util.Set;
 
 /**
@@ -54,9 +54,9 @@ public class Tool extends NamedObject {
 
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(name = "arclib_tool_ingest_issue_definition", joinColumns = {
-            @JoinColumn(name = "tool_id", nullable = false, updatable = false)},
+            @JoinColumn(name = "tool_id", nullable = false, updatable = false, insertable = false)},
             inverseJoinColumns = {@JoinColumn(name = "ingest_issue_definition_id",
-                    nullable = false, updatable = false)})
+                    nullable = false, updatable = false, insertable = false)})
     private Set<IngestIssueDefinition> possibleIssues;
 
 

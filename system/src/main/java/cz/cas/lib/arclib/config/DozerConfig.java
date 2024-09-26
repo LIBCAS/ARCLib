@@ -1,5 +1,9 @@
 package cz.cas.lib.arclib.config;
 
+import com.github.dozermapper.core.DozerBeanMapperBuilder;
+import com.github.dozermapper.core.Mapper;
+import com.github.dozermapper.core.loader.api.BeanMappingBuilder;
+import com.github.dozermapper.core.loader.api.FieldsMappingOptions;
 import cz.cas.lib.arclib.domain.AipQuery;
 import cz.cas.lib.arclib.domain.Batch;
 import cz.cas.lib.arclib.domain.IngestRoutine;
@@ -12,10 +16,6 @@ import cz.cas.lib.arclib.domain.profiles.ProducerProfile;
 import cz.cas.lib.arclib.domain.profiles.SipProfile;
 import cz.cas.lib.arclib.domain.profiles.ValidationProfile;
 import cz.cas.lib.arclib.dto.*;
-import org.dozer.DozerBeanMapper;
-import org.dozer.Mapper;
-import org.dozer.loader.api.BeanMappingBuilder;
-import org.dozer.loader.api.FieldsMappingOptions;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -91,8 +91,6 @@ public class DozerConfig {
 
     @Bean
     public Mapper dozer() {
-        DozerBeanMapper dozer = new DozerBeanMapper();
-        dozer.addMapping(new DozerCustomConfig());
-        return dozer;
+        return DozerBeanMapperBuilder.create().withMappingBuilder(new DozerCustomConfig()).build();
     }
 }

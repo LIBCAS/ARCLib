@@ -1,0 +1,183 @@
+services:
+  arclib-be:
+    image: arclib-be:latest
+    depends_on:
+      - arclib-database
+      - solr
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    networks:
+      - backend
+    ports:
+      - "5000:5005"
+      - "8001:8080"
+    expose:
+      - "8080"
+    deploy:
+      resources:
+        limits:
+          memory: 2g
+    environment:
+      SERVER_PORT: "8080"
+      JAVA_TOOL_OPTIONS: "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005 -Xverify:none"
+      LOGGING_LEVEL_ORG_SPRINGFRAMEWORK: "info"
+      LOGGING_LEVEL_CZ_INQOOL: "debug"
+      TZ: "Europe/Prague"
+      SPRING_DATASOURCE_JDBCURL: "jdbc:postgresql://arclib-database:5432/arclib"
+      SPRING_DATASOURCE_USERNAME: "arclib"
+      SPRING_DATASOURCE_PASSWORD: "arcL1B"
+      SPRING_SOLR-ARCLIB-XML-DATASOURCE_URL: "jdbc:solr://solr:9983/?collection=arclibXmlC"
+      SOLR_ENDPOINT: "http://solr:8983/solr"
+      SECURITY_LOCAL_ENABLED: "true"
+      SECURITY_LDAP_ENABLED: "false"
+      SECURITY_JWT_EXPIRATION: "900000"
+      ARCHIVALSTORAGE_API: "http://archival-storage:8080/api"
+      ARCHIVALSTORAGE_AUTHORIZATION_BASIC_ADMIN: "YWRtaW46YWRtaW4="
+      ARCHIVALSTORAGE_AUTHORIZATION_BASIC_READ: "cmVhZDpyZWFk"
+      ARCHIVALSTORAGE_AUTHORIZATION_BASIC_READWRITE: "cmVhZHdyaXRlOnJlYWR3cml0ZQ=="
+      ARCLIB_INIT_SAMPLES_ENABLED: "true"
+      ARCLIB_INIT_SAMPLES_DEBUG: "false"
+      ARCLIB_AIP_STORE_ATTEMPTS_INTERVAL: PT1M
+
+  archival-storage:
+    image: archival-storage:latest
+    depends_on:
+      - archival-storage-database
+    build:
+      context: ../ARCLib-Archival-Storage
+      dockerfile: docker/Dockerfile
+    networks:
+      - backend
+    ports:
+      - "5001:5005"
+    expose:
+      - "8080"
+    deploy:
+      resources:
+        limits:
+          memory: 1024m
+    environment:
+      SERVER_PORT: "8080"
+      JAVA_TOOL_OPTIONS: "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005 -Xverify:none"
+      LOGGING_LEVEL_ORG_SPRINGFRAMEWORK: "info"
+      LOGGING_LEVEL_CZ_INQOOL: "debug"
+      TZ: "Europe/Prague"
+      SPRING_DATASOURCE_URL: "jdbc:postgresql://archival-storage-database:5432/arcstorage"
+      SPRING_DATASOURCE_USERNAME: "arcstorage"
+      SPRING_DATASOURCE_PASSWORD: "arcST0rage"
+      ARCSTORAGE_INIT_SAMPLES_ENABLED: "true"
+      SPRING_SERVLET_MULTIPART_LOCATION: "/app/workspace"
+
+  arclib-web:
+    image: arclib-web:latest
+    build:
+      context: ../ARCLib-frontend
+      dockerfile: docker/Dockerfile
+    networks:
+      - backend
+    ports:
+      - "8000:8080"
+    deploy:
+      resources:
+        limits:
+          memory: 32m
+
+  arclib-database:
+    image: postgres:16-alpine
+    networks:
+      - backend
+    ports:
+      - "5400:5432"
+    expose:
+      - "5432"
+    deploy:
+      resources:
+        limits:
+          memory: 200m
+    environment:
+      PGDATA: /var/lib/postgresql/data/db-files/
+      POSTGRES_PASSWORD: "arcL1B"
+      POSTGRES_USER: "arclib"
+      POSTGRES_DB: "arclib"
+    volumes:
+      - arclib_database_volume:/var/lib/postgresql/data/
+
+  archival-storage-database:
+    image: postgres:16-alpine
+    networks:
+      - backend
+    ports:
+      - "5401:5432"
+    expose:
+      - "5432"
+    deploy:
+      resources:
+        limits:
+          memory: 200m
+    environment:
+      PGDATA: /var/lib/postgresql/data/db-files/
+      POSTGRES_PASSWORD: "arcST0rage"
+      POSTGRES_USER: "arcstorage"
+      POSTGRES_DB: "arcstorage"
+    volumes:
+      - archival_storage_database_volume:/var/lib/postgresql/data/
+
+  solr:
+    image: solr:8.11.3
+    networks:
+      - backend
+    ports:
+      - "8900:8983"
+    expose:
+      - "8983"
+      - "9983"
+    deploy:
+      resources:
+        limits:
+          memory: 1024m
+    ## comment this command to execute Solr init and uncomment second command and vice versa
+#    command:
+#      - "-c"
+    # uncomment this command Solr init to be applied
+    command: |
+      bash -c "
+        solr start -c;
+        solr create -c arclibDomainC -d arclib-managed;
+        solr create -c formatC -d arclib-managed;
+        solr create -c formatDefinitionC -d arclib-managed;
+        solr create -c ingestIssueC -d arclib-managed;
+        solr create -c arclibXmlC -d arclib-arclibXmlC-schema;
+        tail -f /dev/null
+      "
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - solr_volume:/var/solr
+      - ./system/src/main/resources/index/config:/opt/solr/server/solr/configsets
+
+  activemq:
+    image: apache/activemq-classic:6.1.2
+    networks:
+      - backend
+    ports:
+      - "8100:8161"
+    expose:
+      - "61616"
+    deploy:
+      resources:
+        limits:
+          memory: 256m
+    volumes:
+      - activemq_volume:/data
+
+networks:
+  backend:
+
+volumes:
+  arclib_database_volume:
+  solr_volume:
+  archival_storage_database_volume:
+  activemq_volume:

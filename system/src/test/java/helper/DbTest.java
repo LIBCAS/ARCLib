@@ -11,9 +11,9 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.springframework.util.FileSystemUtils;
 
-import javax.persistence.EntityManager;
-import javax.persistence.EntityManagerFactory;
-import javax.persistence.Persistence;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.EntityManagerFactory;
+import jakarta.persistence.Persistence;
 import java.io.File;
 import java.io.IOException;
 import java.sql.Connection;
@@ -72,7 +72,7 @@ public abstract class DbTest extends TransformerFactoryWorkaroundTest {
     }
 
     public void setSyntax() throws SQLException {
-        Connection c = ((SessionImpl) em.getDelegate()).connection();
+        Connection c = ((SessionImpl) em.getDelegate()).getJdbcConnectionAccess().obtainConnection();
         Statement s = c.createStatement();
 
         s.execute("SET DATABASE SQL SYNTAX PGS TRUE");
@@ -80,7 +80,7 @@ public abstract class DbTest extends TransformerFactoryWorkaroundTest {
     }
 
     public void clearDatabase() throws SQLException {
-        Connection c = ((SessionImpl) em.getDelegate()).connection();
+        Connection c = ((SessionImpl) em.getDelegate()).getJdbcConnectionAccess().obtainConnection();
         Statement s = c.createStatement();
 
         //s.execute("DROP SCHEMA PUBLIC CASCADE ");

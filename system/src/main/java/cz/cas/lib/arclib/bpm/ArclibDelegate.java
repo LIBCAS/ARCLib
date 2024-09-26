@@ -19,10 +19,11 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.camunda.bpm.engine.delegate.BpmnError;
 import org.camunda.bpm.engine.delegate.DelegateExecution;
 import org.camunda.bpm.engine.delegate.JavaDelegate;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import javax.inject.Inject;
+
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -213,37 +214,37 @@ public abstract class ArclibDelegate implements VariableMapper, IngestTool, Java
         return getStringVariable(execution, BpmConstants.ProcessVariables.latestConfig);
     }
 
-    @Inject
+    @Autowired
     public void setWorkspace(@Value("${arclib.path.workspace}") String workspace) {
         this.workspace = workspace;
     }
 
-    @Inject
+    @Autowired
     public void setObjectMapper(ObjectMapper objectMapper) {
         this.objectMapper = objectMapper;
     }
 
-    @Inject
+    @Autowired
     public void setIngestEventStore(IngestEventStore ingestEventStore) {
         this.ingestEventStore = ingestEventStore;
     }
 
-    @Inject
+    @Autowired
     public void setToolService(ToolService toolService) {
         this.toolService = toolService;
     }
 
-    @Inject
+    @Autowired
     public void setIngestWorkflowService(IngestWorkflowService ingestWorkflowService) {
         this.ingestWorkflowService = ingestWorkflowService;
     }
 
-    @Inject
+    @Autowired
     public void setIngestIssueService(IngestIssueService ingestIssueService) {
         this.ingestIssueService = ingestIssueService;
     }
 
-    @Inject
+    @Autowired
     public void setIngestIssueDefinitionStore(IngestIssueDefinitionStore ingestIssueDefinitionStore) {
         this.ingestIssueDefinitionStore = ingestIssueDefinitionStore;
     }

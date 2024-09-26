@@ -12,9 +12,10 @@ import cz.cas.lib.core.index.solr.IndexedNamedStore;
 import cz.cas.lib.core.sequence.Generator;
 import lombok.Getter;
 import lombok.NonNull;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
-import javax.inject.Inject;
+
 import java.util.List;
 
 @Repository
@@ -100,7 +101,7 @@ public class ProducerProfileStore extends IndexedNamedStore<ProducerProfile, QPr
         return indexObject;
     }
 
-    @Inject
+    @Autowired
     public void setGenerator(Generator generator) {
         this.generator = generator;
     }

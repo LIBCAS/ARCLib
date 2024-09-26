@@ -5,7 +5,7 @@ import cz.cas.lib.arclib.domain.export.QExportTemplate;
 import cz.cas.lib.arclib.domainbase.store.NamedStore;
 import org.springframework.stereotype.Repository;
 
-import javax.transaction.Transactional;
+import jakarta.transaction.Transactional;
 import java.util.List;
 
 @Repository

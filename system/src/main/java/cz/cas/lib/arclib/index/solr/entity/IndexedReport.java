@@ -1,9 +1,9 @@
 package cz.cas.lib.arclib.index.solr.entity;
 
+import cz.cas.lib.core.index.SolrDocument;
 import cz.cas.lib.core.index.solr.IndexedDatedObject;
 import lombok.Getter;
 import lombok.Setter;
-import org.springframework.data.solr.core.mapping.SolrDocument;
 
 @Getter
 @Setter

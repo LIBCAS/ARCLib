@@ -13,9 +13,10 @@ import cz.cas.lib.core.store.Transactional;
 import org.camunda.bpm.engine.HistoryService;
 import org.camunda.bpm.engine.history.HistoricProcessInstance;
 import org.camunda.bpm.engine.history.HistoricVariableInstance;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import javax.inject.Inject;
+
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -135,17 +136,17 @@ public class IngestWorkflowService {
         return vars.isEmpty() ? null : vars.get(0).getValue();
     }
 
-    @Inject
+    @Autowired
     public void setIngestEventStore(IngestEventStore ingestEventStore) {
         this.ingestEventStore = ingestEventStore;
     }
 
-    @Inject
+    @Autowired
     public void setStore(IngestWorkflowStore store) {
         this.store = store;
     }
 
-    @Inject
+    @Autowired
     public void setHistoryService(HistoryService historyService) {
         this.historyService = historyService;
     }

@@ -4,9 +4,10 @@ import cz.cas.lib.arclib.domainbase.exception.BadArgument;
 import cz.cas.lib.core.scheduling.run.JobRun;
 import cz.cas.lib.core.scheduling.run.JobRunStore;
 import cz.cas.lib.core.store.Transactional;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import javax.inject.Inject;
+
 
 import static cz.cas.lib.core.util.Utils.notNull;
 
@@ -21,7 +22,7 @@ public class JobLogger {
         store.save(run);
     }
 
-    @Inject
+    @Autowired
     public void setStore(JobRunStore store) {
         this.store = store;
     }

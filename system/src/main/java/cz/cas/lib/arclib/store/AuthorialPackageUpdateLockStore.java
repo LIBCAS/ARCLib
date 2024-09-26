@@ -6,7 +6,7 @@ import cz.cas.lib.arclib.domain.packages.AuthorialPackageUpdateLock;
 import cz.cas.lib.arclib.domainbase.store.DomainStore;
 import org.springframework.stereotype.Repository;
 
-import javax.transaction.Transactional;
+import jakarta.transaction.Transactional;
 
 @Repository
 public class AuthorialPackageUpdateLockStore

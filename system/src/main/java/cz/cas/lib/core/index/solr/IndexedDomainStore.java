@@ -9,16 +9,18 @@ import cz.cas.lib.core.index.dto.Result;
 import cz.cas.lib.core.rest.data.DataAdapter;
 import lombok.Getter;
 import lombok.SneakyThrows;
-import org.springframework.data.solr.core.SolrTemplate;
+import org.apache.solr.client.solrj.SolrClient;
 
-import javax.annotation.PostConstruct;
-import javax.inject.Inject;
+import jakarta.annotation.PostConstruct;
+
+import org.springframework.beans.factory.annotation.Autowired;
+
 import java.util.Collection;
 
 @Getter
 public abstract class IndexedDomainStore<T extends DomainObject, Q extends EntityPathBase<T>, U extends IndexedDomainObject>
         extends DomainStore<T, Q> implements IndexedStore<T, U>, DataAdapter<T> {
-    private SolrTemplate template;
+    private SolrClient solrClient;
 
     private Class<U> uType;
 
@@ -48,9 +50,9 @@ public abstract class IndexedDomainStore<T extends DomainObject, Q extends Entit
         return u;
     }
 
-    @Inject
-    public void setTemplate(SolrTemplate template) {
-        this.template = template;
+    @Autowired
+    public void setSolrClient(SolrClient solrClient) {
+        this.solrClient = solrClient;
     }
 
     @Override

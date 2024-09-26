@@ -64,10 +64,10 @@
             <!--value="org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl"/>-->
 
             <property name="hibernate.archive.autodetection" value="class, hbm"/>
-            <property name="javax.persistence.schema-generation.database.action" value="create"/>
-            <property name="javax.persistence.jdbc.driver" value="org.hsqldb.jdbc.JDBCDriver"/>
-            <property name="javax.persistence.jdbc.url" value="jdbc:hsqldb:mem:testdb"/>
-            <property name="javax.persistence.validation.mode" value="none"/>
+            <property name="jakarta.persistence.schema-generation.database.action" value="create"/>
+            <property name="jakarta.persistence.jdbc.driver" value="org.hsqldb.jdbc.JDBCDriver"/>
+            <property name="jakarta.persistence.jdbc.url" value="jdbc:hsqldb:mem:testdb"/>
+            <property name="jakarta.persistence.validation.mode" value="none"/>
         </properties>
     </persistence-unit>
 

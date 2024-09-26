@@ -21,12 +21,12 @@ import org.camunda.bpm.engine.RuntimeService;
 import org.camunda.bpm.engine.runtime.Incident;
 import org.camunda.bpm.engine.runtime.ProcessInstance;
 import org.camunda.bpm.engine.runtime.ProcessInstanceQuery;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.jms.core.JmsTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
 
-import javax.inject.Inject;
 import java.text.Collator;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -206,37 +206,37 @@ public class IncidentService {
         }
     }
 
-    @Inject
+    @Autowired
     public void setRuntimeService(RuntimeService runtimeService) {
         this.runtimeService = runtimeService;
     }
 
-    @Inject
+    @Autowired
     public void setManagementService(ManagementService managementService) {
         this.managementService = managementService;
     }
 
-    @Inject
+    @Autowired
     public void setTemplate(JmsTemplate template) {
         this.template = template;
     }
 
-    @Inject
+    @Autowired
     public void setIngestErrorHandler(IngestErrorHandler ingestErrorHandler) {
         this.ingestErrorHandler = ingestErrorHandler;
     }
 
-    @Inject
+    @Autowired
     public void setUserService(UserService userService) {
         this.userService = userService;
     }
 
-    @Inject
+    @Autowired
     public void setBatchService(BatchService batchService) {
         this.batchService = batchService;
     }
     
-    @Inject
+    @Autowired
     public void setTransactionTemplate(TransactionTemplate transactionTemplate) {
         this.transactionTemplate = transactionTemplate;
     }

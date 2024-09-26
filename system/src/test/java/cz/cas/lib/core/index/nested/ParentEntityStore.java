@@ -2,9 +2,10 @@ package cz.cas.lib.core.index.nested;
 
 import cz.cas.lib.core.index.solr.IndexedDomainStore;
 import lombok.Getter;
-import org.apache.solr.common.SolrInputDocument;
+import org.apache.solr.client.solrj.SolrServerException;
 import org.springframework.stereotype.Repository;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -35,10 +36,12 @@ public class ParentEntityStore extends IndexedDomainStore<ParentEntity, QParentE
             iChild.setId(obj.getId());
             children.add(iChild);
         }
-        SolrInputDocument parentInputDocument = getTemplate().convertBeanToSolrInputDocument(indexedParent);
-        children.stream().map(d -> getTemplate().convertBeanToSolrInputDocument(d)).forEach(parentInputDocument::addChildDocument);
-        getTemplate().saveDocument(getIndexCollection(), parentInputDocument);
-        getTemplate().commit(getIndexCollection());
+        try {
+            getSolrClient().addBean(getIndexCollection(), indexedParent);
+            getSolrClient().commit(getIndexCollection());
+        } catch (SolrServerException | IOException e) {
+            throw new RuntimeException(e);
+        }
         return obj;
     }
 }

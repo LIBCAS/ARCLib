@@ -76,7 +76,7 @@ public class ArclibXmlXsltExtractorTest extends SrDbTest {
         sequenceStore = new SequenceStore();
 
         batchStore = new BatchStore();
-        batchStore.setTemplate(getTemplate());
+        batchStore.setSolrClient(getClient());
 
         ingestWorkflowStore = new IngestWorkflowStore();
 

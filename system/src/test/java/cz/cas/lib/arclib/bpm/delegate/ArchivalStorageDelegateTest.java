@@ -44,7 +44,7 @@ import static cz.cas.lib.core.util.Utils.asMap;
 import static cz.cas.lib.core.util.Utils.fileExists;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
-import static org.mockito.Matchers.anyString;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
 @Deployment(resources = "bpmn/archivalStorage.bpmn")
@@ -98,7 +98,7 @@ public class ArchivalStorageDelegateTest extends DelegateTest {
         sequenceStore = new SequenceStore();
 
         userStore = new UserStore();
-        userStore.setTemplate(getTemplate());
+        userStore.setSolrClient(getClient());
 
         ingestWorkflowStore = new IngestWorkflowStore();
         sipProfileStore = new SipProfileStore();
@@ -107,12 +107,12 @@ public class ArchivalStorageDelegateTest extends DelegateTest {
         producerStore = new ProducerStore();
 
         batchStore = new BatchStore();
-        batchStore.setTemplate(getTemplate());
+        batchStore.setSolrClient(getClient());
 
         ingestWorkflowStore.setGenerator(generator);
 
         producerProfileStore = new ProducerProfileStore();
-        producerProfileStore.setTemplate(getTemplate());
+        producerProfileStore.setSolrClient(getClient());
 
         initializeStores(sequenceStore, aipQueryStore, ingestWorkflowStore, sipProfileStore,
                 sipStore, batchStore, producerProfileStore, producerStore, authorialPackageStore, userStore);

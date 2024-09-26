@@ -28,7 +28,7 @@ import org.camunda.bpm.engine.test.Deployment;
 import org.camunda.bpm.engine.test.mock.Mocks;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.Matchers;
+import org.mockito.ArgumentMatchers;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
@@ -163,7 +163,7 @@ public class AntivirusDelegateTest extends DelegateTest {
         variables.put(BpmConstants.Antivirus.antivirusToolCounter, 0);
         startJob(PROCESS_INSTANCE_KEY, variables);
         assertThat(fileExists(QUARANTINE_PATH.resolve(EXTERNAL_ID)), is(true));
-        verify(mailCenter).sendNewToolVersionNotification(Matchers.any(), Matchers.any());
+        verify(mailCenter).sendNewToolVersionNotification(ArgumentMatchers.any(), ArgumentMatchers.any());
     }
 
     @Test

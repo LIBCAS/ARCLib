@@ -15,8 +15,8 @@ import org.springframework.beans.factory.BeanCreationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
 
-import javax.inject.Inject;
-import javax.persistence.EntityManager;
+
+import jakarta.persistence.EntityManager;
 import java.lang.reflect.Constructor;
 import java.time.Instant;
 import java.util.Collection;
@@ -418,17 +418,17 @@ public abstract class DomainStore<T extends DomainObject, Q extends EntityPathBa
         }
     }
 
-    @Inject
+    @Autowired
     public void setEntityManager(EntityManager entityManager) {
         this.entityManager = entityManager;
     }
 
-    @Inject
+    @Autowired
     public void setQueryFactory(JPAQueryFactory queryFactory) {
         this.queryFactory = queryFactory;
     }
 
-    @Inject
+    @Autowired
     public void setAuditLogger(AuditLogger auditLogger) {
         this.auditLogger = auditLogger;
     }

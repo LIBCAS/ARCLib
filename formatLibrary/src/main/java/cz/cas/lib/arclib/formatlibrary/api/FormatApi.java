@@ -6,34 +6,41 @@ import cz.cas.lib.arclib.domainbase.util.DomainBaseUtils;
 import cz.cas.lib.arclib.formatlibrary.Permissions;
 import cz.cas.lib.arclib.formatlibrary.domain.Format;
 import cz.cas.lib.arclib.formatlibrary.store.FormatStore;
-import io.swagger.annotations.*;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.Getter;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
-import javax.inject.Inject;
+
 
 import static cz.cas.lib.arclib.domainbase.util.DomainBaseUtils.eq;
 
 @RestController
-@Api(value = "format", description = "Api for interaction with formats")
+@Tag(name = "format", description = "Api for interaction with formats")
 @RequestMapping("/api/format")
 public class FormatApi {
     @Getter
     private FormatStore store;
 
-    @ApiOperation(value = "Saves or updates an instance. [Perm.FORMAT_RECORDS_WRITE]",
-            notes = "Returns single instance (possibly with computed attributes).", response = Format.class)
+    @Operation(summary = "Saves or updates an instance. [Perm.FORMAT_RECORDS_WRITE]",
+            description = "Returns single instance (possibly with computed attributes).")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successful response", response = Format.class),
-            @ApiResponse(code = 400, message = "Specified id does not correspond to the id of the instance")})
+            @ApiResponse(responseCode = "200", description = "Successful response", content = @Content(schema = @Schema(implementation = Format.class))),
+            @ApiResponse(responseCode = "400", description = "Specified id does not correspond to the id of the instance")})
     @PreAuthorize("hasAuthority('" + Permissions.FORMAT_RECORDS_WRITE + "')")
     @PutMapping(value = "/{id}")
     @Transactional
-    public Format save(@ApiParam(value = "Id of the instance", required = true)
+    public Format save(@Parameter(description = "Id of the instance", required = true)
                        @PathVariable("id") String id,
-                       @ApiParam(value = "Single instance", required = true)
+                       @Parameter(description = "Single instance", required = true)
                        @RequestBody Format format) {
         eq(id, format.getId(), () -> new BadArgument("id"));
         Format format1 = store.find(id);
@@ -42,14 +49,14 @@ public class FormatApi {
         return store.create(format);
     }
 
-    @ApiOperation(value = "Gets one instance specified by formatId [Perm.FORMAT_RECORDS_READ]", response = Format.class)
+    @Operation(summary = "Gets one instance specified by formatId [Perm.FORMAT_RECORDS_READ]")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successful response", response = Format.class),
-            @ApiResponse(code = 404, message = "Instance does not exist")})
+            @ApiResponse(responseCode = "200", description = "Successful response", content = @Content(schema = @Schema(implementation = Format.class))),
+            @ApiResponse(responseCode = "404", description = "Instance does not exist")})
     @PreAuthorize("hasAuthority('" + Permissions.FORMAT_RECORDS_READ + "')")
     @GetMapping(value = "/{formatId}")
     @Transactional
-    public Format get(@ApiParam(value = "formatId of the instance", required = true)
+    public Format get(@Parameter(description = "formatId of the instance", required = true)
                       @PathVariable("formatId") Integer id) {
         Format entity = store.findByFormatId((id));
         DomainBaseUtils.notNull(entity, () -> new MissingObject(Format.class, String.valueOf(id)));
@@ -57,7 +64,7 @@ public class FormatApi {
         return entity;
     }
 
-    @Inject
+    @Autowired
     public void setStore(FormatStore store) {
         this.store = store;
     }

@@ -6,10 +6,12 @@ import cz.cas.lib.arclib.domainbase.exception.MissingObject;
 import cz.cas.lib.core.index.solr.IndexedStore;
 import cz.cas.lib.core.store.Transactional;
 import cz.cas.lib.core.util.Utils;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -35,15 +37,14 @@ public interface GeneralApi<T extends DomainObject> extends ReadOnlyApi<T> {
      * @return Single instance (possibly with computed attributes)
      * @throws BadArgument if specified id does not correspond to {@link DomainObject#id}
      */
-    @ApiOperation(value = "Saves an instance", notes = "Returns single instance (possibly with computed attributes)",
-            response = DomainObject.class)
+    @Operation(summary = "Saves an instance", description = "Returns single instance (possibly with computed attributes)")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successful response", response = DomainObject.class),
-            @ApiResponse(code = 400, message = "Specified id does not correspond to the id of the instance")})
+            @ApiResponse(responseCode = "200", description = "Successful response", content = @Content(schema = @Schema(implementation = DomainObject.class))),
+            @ApiResponse(responseCode = "400", description = "Specified id does not correspond to the id of the instance")})
     @RequestMapping(value = "/{id}", method = RequestMethod.PUT)
     @Transactional
-    default T save(@ApiParam(value = "Id of the instance", required = true) @PathVariable("id") String id,
-                   @ApiParam(value = "Single instance", required = true)
+    default T save(@Parameter(description = "Id of the instance", required = true) @PathVariable("id") String id,
+                   @Parameter(description = "Single instance", required = true)
                    @RequestBody T request) {
         Utils.eq(id, request.getId(), () -> new BadArgument("id"));
 
@@ -56,13 +57,13 @@ public interface GeneralApi<T extends DomainObject> extends ReadOnlyApi<T> {
      * @param id Id of the instance
      * @throws MissingObject if specified instance is not found
      */
-    @ApiOperation(value = "Deletes an instance")
+    @Operation(summary = "Deletes an instance")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successful response"),
-            @ApiResponse(code = 404, message = "Instance does not exist")})
+            @ApiResponse(responseCode = "200", description = "Successful response"),
+            @ApiResponse(responseCode = "404", description = "Instance does not exist")})
     @RequestMapping(value = "/{id}", method = RequestMethod.DELETE)
     @Transactional
-    default void delete(@ApiParam(value = "Id of the instance", required = true) @PathVariable("id") String id) {
+    default void delete(@Parameter(description = "Id of the instance", required = true) @PathVariable("id") String id) {
         T entity = getAdapter().find(id);
         Utils.notNull(entity, () -> new MissingObject(getAdapter().getType(), id));
 

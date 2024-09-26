@@ -7,11 +7,12 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.apache.solr.client.solrj.beans.Field;
-import org.springframework.data.solr.core.mapping.Dynamic;
-import org.springframework.data.solr.core.mapping.Indexed;
 
 import java.io.Serializable;
-import java.util.*;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @NoArgsConstructor
 @AllArgsConstructor
@@ -49,8 +50,6 @@ public class IndexedArclibXmlDocument implements Serializable {
      * Fields of AIP XML which has to be indexed.
      */
     @Field("*")
-    @Indexed
-    @Dynamic
     @Getter
     private Map<String, Object> fields = new HashMap<>();
 
@@ -181,44 +180,25 @@ public class IndexedArclibXmlDocument implements Serializable {
     }
 
     private String getSingleStringValue(String field) {
-        List values = (List) fields.get(field);
-        return values == null ? null : (String) (values).get(0);
+        return getSingleValue(field, String.class);
     }
 
     private Boolean getSingleBooleanValue(String field) {
-        List values = (List) fields.get(field);
-        return values == null ? null : (Boolean) (values).get(0);
+        return getSingleValue(field, Boolean.class);
     }
 
     private Integer getSingleIntValue(String field) {
-        List values = (List) fields.get(field);
-        return values == null ? null : (Integer) (values).get(0);
+        return getSingleValue(field, Integer.class);
     }
 
-    private Date getSingleDateValue(String field) {
-        List values = (List) fields.get(field);
-        return values == null ? null : (Date) (values).get(0);
+    private <T> T getSingleValue(String field, Class<T> clazz) {
+        Object value = fields.get(field);
+        if (value == null) {
+            return null;
+        }
+        if (value instanceof List) {
+            return clazz.cast(((List<?>) value).get(0));
+        }
+        return clazz.cast(value);
     }
-
-//    /**
-//     * Adds field with its value to Solr document. If the field already exists values are stored in list.
-//     *
-//     * @param fieldKey
-//     * @param newFieldValue
-//     */
-//    public void addField(SolrInputDocument solrInputDocument, String fieldKey, Object newFieldValue) {
-//        if (solrInputDocument.getFieldNames().contains(fieldKey)) {
-//            Object oldAttrValue = solrInputDocument.get(fieldKey);
-//            if (oldAttrValue instanceof Set)
-//                ((HashSet) oldAttrValue).add(newFieldValue);
-//            else {
-//                Set<Object> fieldValues = new HashSet<>();
-//                fieldValues.add(solrInputDocument.get(fieldKey));
-//                fieldValues.add(newFieldValue);
-//                solr
-//                solrInputDocument.put(fieldKey, fieldValues);
-//            }
-//        } else
-//            fields.put(fieldKey, newFieldValue);
-//    }
 }

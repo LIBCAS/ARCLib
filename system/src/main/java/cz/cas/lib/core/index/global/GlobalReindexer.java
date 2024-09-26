@@ -4,18 +4,15 @@ import cz.cas.lib.core.index.solr.IndexedStore;
 import cz.cas.lib.core.store.Transactional;
 import cz.cas.lib.core.util.Utils;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.solr.core.SolrTemplate;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import javax.inject.Inject;
 import java.util.List;
 
 @Slf4j
 @Service
 public class GlobalReindexer {
     private List<IndexedStore> stores;
-
-    private SolrTemplate template;
 
     /**
      * Reindexes all detected IndexedStores
@@ -47,13 +44,8 @@ public class GlobalReindexer {
                 });
     }
 
-    @Inject
+    @Autowired
     public void setStores(List<IndexedStore> stores) {
         this.stores = stores;
-    }
-
-    @Inject
-    public void setTemplate(SolrTemplate template) {
-        this.template = template;
     }
 }

@@ -21,20 +21,19 @@ import helper.ApiTest;
 import helper.DbTest;
 import helper.TransformerFactoryWorkaroundTest;
 import org.apache.commons.io.IOUtils;
+import org.apache.solr.client.solrj.SolrClient;
+import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrServerException;
+import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.common.SolrInputDocument;
 import org.junit.*;
 import org.junit.runner.RunWith;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.data.solr.core.SolrTemplate;
-import org.springframework.data.solr.core.query.Criteria;
-import org.springframework.data.solr.core.query.SimpleQuery;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import javax.annotation.Resource;
-import javax.inject.Inject;
-import java.io.File;
+
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -64,17 +63,17 @@ public class IndexIntegrationTest extends TransformerFactoryWorkaroundTest imple
 
     @Value("${solr.arclibxml.corename}")
     private String coreName;
-    @Resource(name = "ArclibXmlSolrTemplate")
-    private SolrTemplate solrTemplate;
-    @Inject
+    @Autowired
+    private SolrClient solrClient;
+    @Autowired
     private AipApi api;
-    @Inject
+    @Autowired
     private IndexedArclibXmlStore indexArclibXmlStore;
-    @Inject
+    @Autowired
     private UserStore userStore;
-    @Inject
+    @Autowired
     private ProducerStore producerStore;
-    @Inject
+    @Autowired
     private AipQueryStore aipQueryStore;
 
     /**
@@ -94,13 +93,11 @@ public class IndexIntegrationTest extends TransformerFactoryWorkaroundTest imple
     }
 
     @Before
-    public void beforeTest() throws IOException, SolrServerException, InterruptedException {
-        SimpleQuery query = new SimpleQuery();
-        query.addCriteria(Criteria.where("id"));
-        solrTemplate.delete(coreName, query);
-        solrTemplate.commit(coreName);
+    public void beforeTest() throws IOException, SolrServerException {
+        solrClient.deleteByQuery(coreName, "id:*");
+        solrClient.commit(coreName);
 
-        String arclibXml = IOUtils.toString(new FileInputStream(new File("src/test/resources/arclibXmls/arclibXml.xml")));
+        String arclibXml = IOUtils.toString(new FileInputStream("src/test/resources/arclibXmls/arclibXml.xml"));
 
         producerStore.save(producer);
         userStore.save(user);
@@ -145,10 +142,11 @@ public class IndexIntegrationTest extends TransformerFactoryWorkaroundTest imple
     public void testCreateIndex() throws Exception {
         String arclibXml = new String(Files.readAllBytes(Paths.get("src/test/resources/arclibXmls/arclibXml.xml")), StandardCharsets.UTF_8);
         indexArclibXmlStore.createIndex(new CreateIndexRecordDto(arclibXml.getBytes(), "otherproducer", "", "", null, false, true, true));
-        SimpleQuery q = new SimpleQuery();
-        q.addCriteria(Criteria.where(IndexedArclibXmlDocument.PRODUCER_ID).in("otherproducer").and("type").in("Periodical"));
-        List<IndexedArclibXmlDocument> content = solrTemplate.query(coreName, q, IndexedArclibXmlDocument.class).getContent();
-        assertThat(content, hasSize(1));
+        SolrQuery q = new SolrQuery();
+        q.addFilterQuery(IndexedArclibXmlDocument.PRODUCER_ID + ":otherproducer");
+        q.addFilterQuery("type" + ":Periodical");
+        QueryResponse queryResponse = solrClient.query(coreName, q);
+        assertThat(queryResponse.getBeans(IndexedArclibXmlDocument.class), hasSize(1));
     }
 
     /**
@@ -271,8 +269,8 @@ public class IndexIntegrationTest extends TransformerFactoryWorkaroundTest imple
                 true,
                 IndexedArclibXmlDocument.MAIN_INDEX_TYPE_VALUE,
                 new HashMap<>());
-        solrTemplate.saveDocument(coreName, doc);
-        solrTemplate.commit(coreName);
+        solrClient.add(coreName, doc);
+        solrClient.commit(coreName);
 
         mvc(api).perform(get("/api/aip/list"))
                 .andExpect(status().isOk())

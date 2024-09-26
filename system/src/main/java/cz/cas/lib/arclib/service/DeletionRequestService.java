@@ -14,9 +14,10 @@ import cz.cas.lib.arclib.security.user.UserDetails;
 import cz.cas.lib.arclib.store.AipDeletionRequestStore;
 import cz.cas.lib.core.store.Transactional;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import javax.inject.Inject;
+
 import java.io.IOException;
 import java.time.Instant;
 import java.util.Collection;
@@ -189,27 +190,27 @@ public class DeletionRequestService {
         arclibMailCenter.sendAipDeletionDisacknowledgedNotification(requester.getEmail(), deletionRequest.getAipId(), message, Instant.now());
     }
 
-    @Inject
+    @Autowired
     public void setUserDetails(UserDetails userDetails) {
         this.userDetails = userDetails;
     }
 
-    @Inject
+    @Autowired
     public void setAipDeletionRequestStore(AipDeletionRequestStore aipDeletionRequestStore) {
         this.aipDeletionRequestStore = aipDeletionRequestStore;
     }
 
-    @Inject
+    @Autowired
     public void setArclibMailCenter(ArclibMailCenter arclibMailCenter) {
         this.arclibMailCenter = arclibMailCenter;
     }
 
-    @Inject
+    @Autowired
     public void setBeanMappingService(BeanMappingService beanMappingService) {
         this.beanMappingService = beanMappingService;
     }
 
-    @Inject
+    @Autowired
     public void setAipService(AipService aipService) {
         this.aipService = aipService;
     }

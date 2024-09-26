@@ -4,7 +4,7 @@ package cz.cas.lib.arclib.service.fixity;
 import cz.cas.lib.arclib.domain.HashType;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import org.bouncycastle.util.encoders.Hex;
+import org.springframework.security.crypto.codec.Hex;
 import org.springframework.stereotype.Service;
 
 import java.io.BufferedInputStream;

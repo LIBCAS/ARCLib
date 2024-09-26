@@ -9,10 +9,12 @@ import cz.cas.lib.core.index.dto.Result;
 import cz.cas.lib.core.rest.data.DataAdapter;
 import lombok.Getter;
 import lombok.SneakyThrows;
-import org.springframework.data.solr.core.SolrTemplate;
+import org.apache.solr.client.solrj.SolrClient;
 
-import javax.annotation.PostConstruct;
-import javax.inject.Inject;
+import jakarta.annotation.PostConstruct;
+
+import org.springframework.beans.factory.annotation.Autowired;
+
 import java.util.Collection;
 
 import static cz.cas.lib.core.util.Utils.toDate;
@@ -20,7 +22,7 @@ import static cz.cas.lib.core.util.Utils.toDate;
 @Getter
 public abstract class IndexedNamedStore<T extends NamedObject, Q extends EntityPathBase<T>, U extends IndexedNamedObject>
         extends NamedStore<T, Q> implements IndexedStore<T, U>, DataAdapter<T> {
-    private SolrTemplate template;
+    private SolrClient solrClient;
 
     private Class<U> uType;
 
@@ -66,9 +68,10 @@ public abstract class IndexedNamedStore<T extends NamedObject, Q extends EntityP
         return IndexedStore.super.findAll(params);
     }
 
-    @Inject
-    public void setTemplate(SolrTemplate template) {
-        this.template = template;
+
+    @Autowired
+    public void setSolrClient(SolrClient solrClient) {
+        this.solrClient = solrClient;
     }
 
     @Override

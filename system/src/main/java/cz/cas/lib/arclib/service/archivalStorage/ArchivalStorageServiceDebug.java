@@ -5,10 +5,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import javax.inject.Inject;
+
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -205,7 +206,7 @@ public class ArchivalStorageServiceDebug {
         }
     }
 
-    @Inject
+    @Autowired
     public void setWorkspace(@Value("${arclib.path.workspace}") String workspace, @Value("${archivalStorage.debugLocation}") String debugLocation) throws IOException {
         arcStorageData = Paths.get(workspace).resolve(debugLocation);
         Files.createDirectories(arcStorageData);

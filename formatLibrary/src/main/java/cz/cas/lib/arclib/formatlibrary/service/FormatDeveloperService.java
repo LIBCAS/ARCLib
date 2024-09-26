@@ -2,9 +2,10 @@ package cz.cas.lib.arclib.formatlibrary.service;
 
 import cz.cas.lib.arclib.formatlibrary.domain.FormatDeveloper;
 import cz.cas.lib.arclib.formatlibrary.store.FormatDeveloperStore;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import javax.inject.Inject;
+
 import org.springframework.transaction.annotation.Transactional;
 import java.util.Comparator;
 import java.util.Optional;
@@ -50,7 +51,7 @@ public class FormatDeveloperService {
         return store.save(entity);
     }
 
-    @Inject
+    @Autowired
     public void setStore(FormatDeveloperStore store) {
         this.store = store;
     }

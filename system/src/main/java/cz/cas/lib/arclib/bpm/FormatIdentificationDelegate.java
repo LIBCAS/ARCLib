@@ -21,9 +21,9 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
 import org.camunda.bpm.engine.delegate.DelegateExecution;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import javax.inject.Inject;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
@@ -124,22 +124,22 @@ public class FormatIdentificationDelegate extends ArclibDelegate {
         }
     }
 
-    @Inject
+    @Autowired
     public void setFormatDefinitionService(FormatDefinitionService formatDefinitionService) {
         this.formatDefinitionService = formatDefinitionService;
     }
 
-    @Inject
+    @Autowired
     public void setFormatOccurrenceStore(FormatOccurrenceStore formatOccurrenceStore) {
         this.formatOccurrenceStore = formatOccurrenceStore;
     }
 
-    @Inject
+    @Autowired
     public void setProducerProfileService(ProducerProfileService producerProfileService) {
         this.producerProfileService = producerProfileService;
     }
 
-    @Inject
+    @Autowired
     public void setExternalProcessRunner(ExternalProcessRunner externalProcessRunner) {
         this.externalProcessRunner = externalProcessRunner;
     }

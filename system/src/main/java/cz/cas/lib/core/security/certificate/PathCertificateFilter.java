@@ -6,7 +6,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.web.authentication.preauth.x509.SubjectDnX509PrincipalExtractor;
 import org.springframework.security.web.authentication.preauth.x509.X509PrincipalExtractor;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 import java.security.cert.X509Certificate;
 
 /**
@@ -44,7 +44,7 @@ public class PathCertificateFilter extends PathPreauthFilter {
 
     private X509Certificate extractClientCertificate(HttpServletRequest request) {
         X509Certificate[] certs = (X509Certificate[]) request
-                .getAttribute("javax.servlet.request.X509Certificate");
+                .getAttribute("jakarta.servlet.request.X509Certificate");
 
         if (certs != null && certs.length > 0) {
             if (logger.isDebugEnabled()) {

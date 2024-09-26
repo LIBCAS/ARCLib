@@ -6,9 +6,10 @@ import cz.cas.lib.arclib.service.IngestErrorHandler;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.camunda.bpm.engine.delegate.DelegateExecution;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import javax.inject.Inject;
+
 
 @Slf4j
 @Service
@@ -34,7 +35,7 @@ public class BpmErrorHandlerDelegate extends ArclibDelegate {
         ingestErrorHandler.handleError(getIngestWorkflowExternalId(execution), failureInfo, execution.getProcessInstanceId(), responsiblePerson);
     }
 
-    @Inject
+    @Autowired
     public void setIngestErrorHandler(IngestErrorHandler ingestErrorHandler) {
         this.ingestErrorHandler = ingestErrorHandler;
     }

@@ -14,13 +14,14 @@ import cz.cas.lib.arclib.service.archivalStorage.ArchivalStorageException;
 import cz.cas.lib.arclib.service.archivalStorage.ArchivalStorageService;
 import lombok.extern.slf4j.Slf4j;
 import org.camunda.bpm.engine.RuntimeService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jms.core.JmsTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.util.FileSystemUtils;
 
-import javax.inject.Inject;
+
 
 import static cz.cas.lib.arclib.utils.ArclibUtils.changeFilePrefix;
 import static cz.cas.lib.arclib.utils.ArclibUtils.getIngestWorkflowWorkspacePath;
@@ -125,37 +126,37 @@ public class IngestErrorHandler {
             template.convertAndSend("finish", new JmsDto(iw.getBatch().getId(), userId));
     }
 
-    @Inject
+    @Autowired
     public void setArchivalStorageService(ArchivalStorageService archivalStorageService) {
         this.archivalStorageService = archivalStorageService;
     }
 
-    @Inject
+    @Autowired
     public void setWorkspace(@Value("${arclib.path.workspace}") String workspace) {
         this.workspace = workspace;
     }
 
-    @Inject
+    @Autowired
     public void setIngestWorkflowService(IngestWorkflowService ingestWorkflowService) {
         this.ingestWorkflowService = ingestWorkflowService;
     }
 
-    @Inject
+    @Autowired
     public void setTemplate(JmsTemplate template) {
         this.template = template;
     }
 
-    @Inject
+    @Autowired
     public void setRuntimeService(RuntimeService runtimeService) {
         this.runtimeService = runtimeService;
     }
 
-    @Inject
+    @Autowired
     public void setAipService(AipService aipService) {
         this.aipService = aipService;
     }
 
-    @Inject
+    @Autowired
     public void setTransactionTemplate(TransactionTemplate transactionTemplate) {
         this.transactionTemplate = transactionTemplate;
     }

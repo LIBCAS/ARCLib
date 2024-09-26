@@ -1,13 +1,13 @@
 package cz.cas.lib.arclib.index.solr.entity;
 
 import cz.cas.lib.arclib.domain.HashType;
+import cz.cas.lib.core.index.Indexed;
+import cz.cas.lib.core.index.SolrDocument;
 import cz.cas.lib.core.index.solr.IndexFieldType;
 import cz.cas.lib.core.index.solr.IndexedNamedObject;
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.solr.client.solrj.beans.Field;
-import org.springframework.data.solr.core.mapping.Indexed;
-import org.springframework.data.solr.core.mapping.SolrDocument;
 
 
 @Getter
