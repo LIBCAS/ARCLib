@@ -3,6 +3,7 @@ package cz.cas.lib.arclib.service;
 import cz.cas.lib.arclib.domain.User;
 import cz.cas.lib.arclib.domain.export.ExportConfig;
 import cz.cas.lib.arclib.domain.export.ExportScope;
+import cz.cas.lib.arclib.domain.export.IdentifierExportType;
 import cz.cas.lib.arclib.domain.ingestWorkflow.IngestWorkflow;
 import cz.cas.lib.arclib.domain.packages.Sip;
 import cz.cas.lib.arclib.domainbase.domain.DomainObject;
@@ -31,11 +32,10 @@ import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.lang3.EnumUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -75,18 +75,30 @@ public class AipExportService {
         if (exportScopes.isEmpty())
             return;
 
+        List<IndexedArclibXmlDocument> docsFromIndex = List.of();
+        Set<String> metadataNotFoundIds = Set.of();
+        boolean plainIdExport = exportConfig.getScope().size() == 1 && exportConfig.getScope().get(0) == ExportScope.IDS && exportConfig.getIdExportType() == IdentifierExportType.XML_ID;
+        if (!plainIdExport) {
+            docsFromIndex = findDocsForExport(exportScopes, ids, userDetails);
+            metadataNotFoundIds = SetUtils.difference(new HashSet<>(ids), docsFromIndex.stream().map(IndexedArclibXmlDocument::getId).collect(Collectors.toSet()));
+        }
+
         if (exportScopes.contains(ExportScope.IDS)) {
             if (outputStream instanceof ZipOutputStream) {
                 ((ZipOutputStream) outputStream).putNextEntry(new ZipEntry(ExportScope.IDS.getFsName()));
             }
-            IOUtils.write(String.join(",", ids), outputStream, StandardCharsets.UTF_8);
-            if (exportScopes.size() == 1) {
-                return;
+            Set<String> idsForExport;
+            switch (exportConfig.getIdExportType()) {
+                case XML_ID -> idsForExport = new HashSet<>(ids);
+                case SIP_ID ->
+                        idsForExport = docsFromIndex.stream().map(IndexedArclibXmlDocument::getSipId).collect(Collectors.toSet());
+                case AUTHORIAL_ID ->
+                        idsForExport = docsFromIndex.stream().map(IndexedArclibXmlDocument::getAuthorialId).collect(Collectors.toSet());
+                default ->
+                        throw new IllegalArgumentException("unknown ID export type: " + exportConfig.getIdExportType());
             }
+            IOUtils.write(String.join(",", idsForExport), outputStream, StandardCharsets.UTF_8);
         }
-
-        List<IndexedArclibXmlDocument> docsFromIndex = findDocsForExport(exportScopes, ids, userDetails);
-        Set<String> metadataNotFoundIds = SetUtils.difference(new HashSet<>(ids), docsFromIndex.stream().map(IndexedArclibXmlDocument::getId).collect(Collectors.toSet()));
 
         if (exportScopes.contains(ExportScope.AIP_XML)) {
             ZipOutputStream zipOut = (ZipOutputStream) outputStream;
@@ -162,7 +174,8 @@ public class AipExportService {
 
         try {
             List<IndexedArclibXmlDocument> docsFromIndex = List.of();
-            if (exportConfig.getScope().size() > 1 || !exportConfig.getScope().contains(ExportScope.IDS)) {
+            boolean plainIdExport = exportConfig.getScope().size() == 1 && exportConfig.getScope().get(0) == ExportScope.IDS && exportConfig.getIdExportType() == IdentifierExportType.XML_ID;
+            if (!plainIdExport) {
                 docsFromIndex = findDocsForExport(exportScopes, ids, new UserDetailsImpl(user));
                 Set<String> metadataNotFoundIds = SetUtils.difference(new HashSet<>(ids), docsFromIndex.stream().map(IndexedArclibXmlDocument::getId).collect(Collectors.toSet()));
                 if (!metadataNotFoundIds.isEmpty()) {
@@ -177,7 +190,17 @@ public class AipExportService {
                 Path scopeFolder = exportFolder.resolve(exportScope.getFsName());
                 switch (exportScope) {
                     case IDS:
-                        Files.writeString(exportFolder.resolve(exportScope.getFsName()), String.join(",", ids));
+                        Set<String> idsForExport;
+                        switch (exportConfig.getIdExportType()) {
+                            case XML_ID -> idsForExport = new HashSet<>(ids);
+                            case SIP_ID ->
+                                    idsForExport = docsFromIndex.stream().map(IndexedArclibXmlDocument::getSipId).collect(Collectors.toSet());
+                            case AUTHORIAL_ID ->
+                                    idsForExport = docsFromIndex.stream().map(IndexedArclibXmlDocument::getAuthorialId).collect(Collectors.toSet());
+                            default ->
+                                    throw new IllegalArgumentException("unknown ID export type: " + exportConfig.getIdExportType());
+                        }
+                        Files.writeString(exportFolder.resolve(exportScope.getFsName()), String.join(",", idsForExport));
                         break;
                     case METADATA:
                         List<String> selectedMetadata = exportConfig.getMetadataSelectionNullSafe();

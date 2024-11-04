@@ -10,6 +10,7 @@ import cz.cas.lib.arclib.domain.preservationPlanning.IngestIssueDefinition;
 import cz.cas.lib.arclib.domain.preservationPlanning.IngestIssueDefinitionCode;
 import cz.cas.lib.arclib.domain.preservationPlanning.Tool;
 import cz.cas.lib.arclib.formatlibrary.service.FormatDefinitionService;
+import cz.cas.lib.arclib.formatlibrary.store.DbFormatDefinitionStore;
 import cz.cas.lib.arclib.service.ExternalProcessRunner;
 import cz.cas.lib.arclib.service.IngestIssueService;
 import cz.cas.lib.arclib.store.*;
@@ -44,7 +45,7 @@ public class AntivirusTests extends SrDbTest {
     private ObjectMapper mapper;
     private IngestWorkflow ingestWorkflow;
     private IngestWorkflowStore ingestWorkflowStore;
-    private IndexedFormatDefinitionStore formatDefinitionStore;
+    private DbFormatDefinitionStore formatDefinitionStore;
     private IngestIssueDefinitionStore ingestIssueDefinitionStore;
     private SipStore sipStore;
     private Sip sip;
@@ -68,7 +69,7 @@ public class AntivirusTests extends SrDbTest {
 
         ingestWorkflowStore = new IngestWorkflowStore();
         sequenceStore = new SequenceStore();
-        formatDefinitionStore = new IndexedFormatDefinitionStore();
+        formatDefinitionStore = new DbFormatDefinitionStore();
         ingestIssueDefinitionStore = new IngestIssueDefinitionStore();
         ingestIssueStore = new IngestIssueStore();
         //ingestIssueStore.setTemplate(getTemplate());

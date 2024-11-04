@@ -6,7 +6,7 @@ import java.util.Collection;
 import java.util.List;
 
 public interface FormatDefinitionStore {
-    List<FormatDefinition> findByFormatId(Integer formatId, boolean localDefinition);
+    List<FormatDefinition> findByFormatId(Integer formatId, Boolean localDefinition);
 
     FormatDefinition findPreferredByFormatPuid(String puid);
 

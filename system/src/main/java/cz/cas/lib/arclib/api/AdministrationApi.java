@@ -4,7 +4,6 @@ import cz.cas.lib.arclib.index.solr.ReindexService;
 import cz.cas.lib.arclib.security.authorization.permission.Permissions;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -41,12 +40,5 @@ public class AdministrationApi {
     @RequestMapping(value = "/reindex/format", method = RequestMethod.POST)
     public void reindexFormat() {
         solrReindexService.dropReindexFormat();
-    }
-
-    @Operation(summary = "deletes all old Format definition index records and creates index for all Format definition entities in db [Perm.REINDEX_ELIGIBILITY]")
-    @PreAuthorize("hasAuthority('" + Permissions.REINDEX_ELIGIBILITY + "')")
-    @RequestMapping(value = "/reindex/format_definition", method = RequestMethod.POST)
-    public void reindexFormatDefinition() {
-        solrReindexService.dropReindexFormatDefinition();
     }
 }

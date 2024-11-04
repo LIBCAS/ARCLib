@@ -1,182 +1,155 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<!-- Solr managed schema - automatically generated - DO NOT EDIT -->
+<?xml version="1.0" encoding="UTF-8" ?>
 <schema name="default-config" version="1.6">
-  <uniqueKey>id</uniqueKey>
-    <fieldType name="binary" class="solr.BinaryField"/>
-    <fieldType name="boolean" class="solr.BoolField" sortMissingLast="true"/>
-    <fieldType name="booleans" class="solr.BoolField" sortMissingLast="true" multiValued="true"/>
-    <fieldType name="location" class="solr.LatLonPointSpatialField" docValues="true"/>
-    <fieldType name="location_rpt" class="solr.SpatialRecursivePrefixTreeFieldType" geo="true" maxDistErr="0.001" distErrPct="0.025" distanceUnits="kilometers"/>
-    <fieldType name="pdate" class="solr.DatePointField" docValues="true"/>
-    <fieldType name="pdates" class="solr.DatePointField" docValues="true" multiValued="true"/>
-    <fieldType name="pdouble" class="solr.DoublePointField" docValues="true"/>
-    <fieldType name="pdoubles" class="solr.DoublePointField" docValues="true" multiValued="true"/>
-    <fieldType name="pfloat" class="solr.FloatPointField" docValues="true"/>
-    <fieldType name="pfloats" class="solr.FloatPointField" docValues="true" multiValued="true"/>
-    <fieldType name="pint" class="solr.IntPointField" docValues="true"/>
-    <fieldType name="pints" class="solr.IntPointField" docValues="true" multiValued="true"/>
-    <fieldType name="plong" class="solr.LongPointField" docValues="true"/>
-    <fieldType name="plongs" class="solr.LongPointField" docValues="true" multiValued="true"/>
-    <fieldType name="point" class="solr.PointType" subFieldSuffix="_d" dimension="2"/>
-    <fieldType name="string" class="solr.StrField" sortMissingLast="true" docValues="true"/>
-    <fieldType name="strings" class="solr.StrField" sortMissingLast="true" docValues="true" multiValued="true"/>
-    <fieldType name="text_general" class="solr.TextField" positionIncrementGap="100" multiValued="true">
-        <analyzer type="index">
-            <tokenizer class="solr.StandardTokenizerFactory"/>
-            <filter class="solr.StopFilterFactory" words="stopwords.txt" ignoreCase="true"/>
-            <filter class="solr.LowerCaseFilterFactory"/>
-        </analyzer>
-        <analyzer type="query">
-            <tokenizer class="solr.StandardTokenizerFactory"/>
-            <filter class="solr.StopFilterFactory" words="stopwords.txt" ignoreCase="true"/>
-            <filter class="solr.SynonymGraphFilterFactory" expand="true" ignoreCase="true" synonyms="synonyms.txt"/>
-            <filter class="solr.LowerCaseFilterFactory"/>
-        </analyzer>
-    </fieldType>
-
-  <fieldType name="collated" class="solr.ICUCollationField"
-             locale=""
-             strength="primary"/>
-  <fieldType name="keyword_folding" class="solr.TextField" multiValued="false">
-    <analyzer>
-      <tokenizer class="solr.KeywordTokenizerFactory"/>
-      <filter class="solr.LowerCaseFilterFactory"/>
-      <filter class="solr.ASCIIFoldingFilterFactory"/>
-    </analyzer>
-  </fieldType>
-  <fieldType name="standard_folding" class="solr.TextField" positionIncrementGap="100" multiValued="false">
-    <analyzer type="index">
-      <tokenizer class="solr.WhitespaceTokenizerFactory"/>
-      <filter class="solr.LowerCaseFilterFactory"/>
-      <filter class="solr.ASCIIFoldingFilterFactory"/>
-      <filter class="solr.WordDelimiterGraphFilterFactory" generateWordParts="0" generateNumberParts="0"
-              catenateAll="1"/>
-      <filter class="solr.FlattenGraphFilterFactory"/>
-    </analyzer>
-    <analyzer type="query">
-      <tokenizer class="solr.WhitespaceTokenizerFactory"/>
-      <filter class="solr.LowerCaseFilterFactory"/>
-      <filter class="solr.ASCIIFoldingFilterFactory"/>
-      <filter class="solr.WordDelimiterGraphFilterFactory" generateWordParts="0" generateNumberParts="0"
-              catenateAll="1"/>
-    </analyzer>
-  </fieldType>
-
-  <field name="_root_" type="string" docValues="true" indexed="true" stored="false"/>
-  <field name="_version_" type="plong" indexed="false" stored="false"/>
-  <field name="index_type" type="string"/>
-  <field name="producer_id" type="string"/>
-  <field name="producer_name" type="keyword_folding"/>
-  <copyField source="producer_name" dest="producer_name_s"/>
-  <copyField source="producer_name" dest="producer_name_sort"/>
-  <field name="user_name" type="keyword_folding"/>
-  <copyField source="user_name" dest="user_name_s"/>
-  <copyField source="user_name" dest="user_name_sort"/>
-
-  <field name="aip_state" type="string"/>
-  <field name="debug_mode" type="boolean"/>
-
-  <field name="label" type="keyword_folding"/>
-  <copyField source="label" dest="label_s"/>
-  <field name="type" type="keyword_folding"/>
-  <copyField source="type" dest="type_s"/>
-  <field name="sip_id" type="string"/>
-  <field name="created" type="pdate"/>
-  <field name="updated" type="pdate"/>
-  <field name="id" type="string"/>
-  <field name="authorial_id" type="keyword_folding"/>
-  <copyField source="authorial_id" dest="authorial_id_s"/>
-  <copyField source="authorial_id" dest="authorial_id_sort"/>
-  <field name="sip_version_number" type="pint"/>
-  <field name="sip_version_of" type="string"/>
-  <field name="xml_version_number" type="pint"/>
-  <field name="xml_version_of" type="string"/>
-  <field name="producer_profile" type="string"/>
-  <field name="sip_profile" type="string"/>
-  <field name="validation_profile" type="string"/>
-  <field name="workflow_definition" type="string"/>
-  <field name="latest" type="boolean"/>
-  <field name="latest_data" type="boolean"/>
-
-  <field name="element_name" type="string"/>
-  <field name="element_content" type="standard_folding"/>
-  <field name="element_attribute_names" type="string" multiValued="true"/>
-  <field name="element_attribute_values" type="keyword_folding" multiValued="true"/>
-
-  <field name="extracted_format_file_format" type="keyword_folding"/>
-  <copyField source="extracted_format_file_format" dest="extracted_format_file_format_s"/>
-  <field name="extracted_format_format_registry_key" type="string"/>
-  <field name="extracted_format_format_registry_name" type="string"/>
-  <field name="extracted_format_file_count" type="plong"/>
-  <field name="extracted_format_creating_application_name" type="keyword_folding"/>
-  <copyField source="extracted_format_creating_application_name" dest="extracted_format_creating_application_name_s"/>
-  <field name="extracted_format_creating_application_version" type="keyword_folding"/>
-  <copyField source="extracted_format_creating_application_version"
-             dest="extracted_format_creating_application_version_s"/>
-  <field name="extracted_format_date_created_by_application" type="pdate"/>
-  <field name="extracted_format_preservation_level_value" type="string"/>
-  <field name="extracted_format_scanner_model_serial_no" type="string"/>
-  <field name="extracted_format_size" type="plong"/>
-  <field name="extracted_format_format_version" type="string"/>
-  <field name="identified_format_format_registry_key" type="string"/>
-  <field name="identified_format_format_registry_name" type="string"/>
-  <field name="identified_format_file_count" type="pint"/>
-  <field name="identified_format_creating_application_name" type="keyword_folding"/>
-  <copyField source="identified_format_creating_application_name" dest="identified_format_creating_application_name_s"/>
-  <field name="identified_format_creating_application_version" type="keyword_folding"/>
-  <copyField source="identified_format_creating_application_version"
-             dest="identified_format_creating_application_version_s"/>
-  <field name="identified_format_date_created_by_application" type="pdate"/>
-
-  <field name="dublin_core_id" type="string"/>
-  <field name="dublin_core_value" type="standard_folding"/>
-  <field name="dublin_core_title" type="keyword_folding" multiValued="true"/>
-  <field name="dublin_core_creator" type="keyword_folding" multiValued="true"/>
-  <field name="dublin_core_subject" type="keyword_folding" multiValued="true"/>
-  <field name="dublin_core_description" type="keyword_folding" multiValued="true"/>
-  <field name="dublin_core_publisher" type="keyword_folding" multiValued="true"/>
-  <field name="dublin_core_contributor" type="keyword_folding" multiValued="true"/>
-  <field name="dublin_core_date" type="keyword_folding" multiValued="true"/>
-  <field name="dublin_core_type" type="keyword_folding" multiValued="true"/>
-  <field name="dublin_core_format" type="keyword_folding" multiValued="true"/>
-  <field name="dublin_core_identifier" type="keyword_folding" multiValued="true"/>
-  <field name="dublin_core_source" type="keyword_folding" multiValued="true"/>
-  <field name="dublin_core_language" type="keyword_folding" multiValued="true"/>
-  <field name="dublin_core_relation" type="keyword_folding" multiValued="true"/>
-  <field name="dublin_core_coverage" type="keyword_folding" multiValued="true"/>
-  <field name="dublin_core_rights" type="keyword_folding" multiValued="true"/>
-
-  <field name="img_metadata_date_created" type="pdate"/>
-  <field name="img_metadata_image_producer" type="keyword_folding"/>
-  <copyField source="img_metadata_image_producer"
-             dest="img_metadata_image_producer_s"/>
-  <field name="img_metadata_scanner_model_serial_no" type="string"/>
-  <field name="img_metadata_arc_event_count" type="pint"/>
-
-  <field name="creating_application_creating_application_name" type="keyword_folding"/>
-  <copyField source="creating_application_creating_application_name"
-             dest="creating_application_creating_application_name_s"/>
-  <field name="creating_application_creating_application_version" type="string"/>
-  <field name="creating_application_date_created_by_application" type="pdate"/>
-  <field name="creating_application_event_count" type="pint"/>
-
-  <field name="premis_event_outcome" type="string"/>
-  <field name="premis_event_linking_agent_identifier_type" type="string"/>
-  <field name="premis_event_linking_agent_identifier_value" type="string"/>
-  <field name="premis_event_detail" type="keyword_folding"/>
-  <copyField source="premis_event_detail" dest="premis_event_detail_s"/>
-  <field name="premis_event_type" type="string"/>
-  <field name="premis_event_date_time" type="pdate"/>
-  <field name="premis_event_identifier_type" type="string"/>
-  <field name="premis_event_identifier_value" type="string"/>
-
-  <field name="arc_event_type" type="string"/>
-  <field name="arc_event_agent_name" type="keyword_folding"/>
-  <copyField source="arc_event_agent_name" dest="arc_event_agent_name_s"/>
-  <field name="arc_event_scanner_model_serial_no" type="string"/>
-  <field name="arc_event_date" type="pdate"/>
-  <field name="arc_event_file_count" type="pint"/>
-
-  <dynamicField name="*_s" type="string" indexed="true" stored="true"/>
-  <dynamicField name="*_sort" type="collated" indexed="true" stored="false"/>
+	<uniqueKey>id</uniqueKey>
+	<fieldType name="boolean" class="solr.BoolField" sortMissingLast="true"/>
+	<fieldType name="booleans" class="solr.BoolField" sortMissingLast="true" multiValued="true"/>
+	<fieldType name="pdate" class="solr.DatePointField" docValues="true"/>
+	<fieldType name="pdates" class="solr.DatePointField" docValues="true" multiValued="true"/>
+	<fieldType name="pdouble" class="solr.DoublePointField" docValues="true"/>
+	<fieldType name="pdoubles" class="solr.DoublePointField" docValues="true" multiValued="true"/>
+	<fieldType name="pint" class="solr.IntPointField" docValues="true"/>
+	<fieldType name="pints" class="solr.IntPointField" docValues="true" multiValued="true"/>
+	<fieldType name="plong" class="solr.LongPointField" docValues="true"/>
+	<fieldType name="plongs" class="solr.LongPointField" docValues="true" multiValued="true"/>
+	<fieldType name="string" class="solr.StrField" sortMissingLast="true" docValues="true"/>
+	<fieldType name="strings" class="solr.StrField" sortMissingLast="true" multiValued="true" docValues="true"/>
+	<fieldType name="text_general" class="solr.TextField" positionIncrementGap="100" multiValued="true">
+		<analyzer type="index">
+			<tokenizer class="solr.StandardTokenizerFactory"/>
+			<filter class="solr.StopFilterFactory" ignoreCase="true" words="stopwords.txt"/>
+			<filter class="solr.LowerCaseFilterFactory"/>
+		</analyzer>
+		<analyzer type="query">
+			<tokenizer class="solr.StandardTokenizerFactory"/>
+			<filter class="solr.StopFilterFactory" ignoreCase="true" words="stopwords.txt"/>
+			<filter class="solr.SynonymGraphFilterFactory" synonyms="synonyms.txt" ignoreCase="true" expand="true"/>
+			<filter class="solr.LowerCaseFilterFactory"/>
+		</analyzer>
+	</fieldType>
+	<fieldType name="keyword_folding" class="solr.TextField" multiValued="false">
+		<analyzer>
+			<tokenizer class="solr.KeywordTokenizerFactory"/>
+			<filter class="solr.LowerCaseFilterFactory"/>
+			<filter class="solr.ASCIIFoldingFilterFactory"/>
+		</analyzer>
+	</fieldType>
+	<fieldType name="standard_folding" class="solr.TextField" positionIncrementGap="100" multiValued="false">
+		<analyzer type="index">
+			<tokenizer class="solr.WhitespaceTokenizerFactory"/>
+			<filter class="solr.LowerCaseFilterFactory"/>
+			<filter class="solr.ASCIIFoldingFilterFactory"/>
+			<filter class="solr.WordDelimiterGraphFilterFactory" generateWordParts="0" generateNumberParts="0" catenateAll="1"/>
+			<filter class="solr.FlattenGraphFilterFactory"/>
+		</analyzer>
+		<analyzer type="query">
+			<tokenizer class="solr.WhitespaceTokenizerFactory"/>
+			<filter class="solr.LowerCaseFilterFactory"/>
+			<filter class="solr.ASCIIFoldingFilterFactory"/>
+			<filter class="solr.WordDelimiterGraphFilterFactory" generateWordParts="0" generateNumberParts="0" catenateAll="1"/>
+		</analyzer>
+	</fieldType>
+	<fieldType name="collated" class="solr.ICUCollationField" locale="" strength="primary"/>
+	<field name="_root_" type="string" docValues="true" indexed="true" stored="false"/>
+	<field name="_version_" type="plong" indexed="false" stored="false"/>
+	<field name="index_type" type="string"/>
+	<field name="producer_id" type="string"/>
+	<field name="producer_name" type="keyword_folding"/>
+	<copyField source="producer_name" dest="producer_name_s"/>
+	<copyField source="producer_name" dest="producer_name_sort"/>
+	<field name="user_name" type="keyword_folding"/>
+	<copyField source="user_name" dest="user_name_s"/>
+	<copyField source="user_name" dest="user_name_sort"/>
+	<field name="aip_state" type="string"/>
+	<field name="debug_mode" type="boolean"/>
+	<field name="label" type="keyword_folding"/>
+	<copyField source="label" dest="label_s"/>
+	<field name="type" type="keyword_folding"/>
+	<copyField source="type" dest="type_s"/>
+	<field name="sip_id" type="string"/>
+	<field name="created" type="pdate"/>
+	<field name="updated" type="pdate"/>
+	<field name="id" type="string"/>
+	<field name="authorial_id" type="keyword_folding"/>
+	<copyField source="authorial_id" dest="authorial_id_s"/>
+	<copyField source="authorial_id" dest="authorial_id_sort"/>
+	<field name="sip_version_number" type="pint"/>
+	<field name="sip_version_of" type="string"/>
+	<field name="xml_version_number" type="pint"/>
+	<field name="xml_version_of" type="string"/>
+	<field name="producer_profile" type="string"/>
+	<field name="sip_profile" type="string"/>
+	<field name="validation_profile" type="string"/>
+	<field name="workflow_definition" type="string"/>
+	<field name="latest" type="boolean"/>
+	<field name="latest_data" type="boolean"/>
+	<field name="element_name" type="string"/>
+	<field name="element_content" type="standard_folding"/>
+	<field name="element_attribute_names" type="string" multiValued="true"/>
+	<field name="element_attribute_values" type="keyword_folding" multiValued="true"/>
+	<field name="extracted_format_file_format" type="keyword_folding"/>
+	<copyField source="extracted_format_file_format" dest="extracted_format_file_format_s"/>
+	<field name="extracted_format_format_registry_key" type="string"/>
+	<field name="extracted_format_format_registry_name" type="string"/>
+	<field name="extracted_format_file_count" type="plong"/>
+	<field name="extracted_format_creating_application_name" type="keyword_folding"/>
+	<copyField source="extracted_format_creating_application_name" dest="extracted_format_creating_application_name_s"/>
+	<field name="extracted_format_creating_application_version" type="keyword_folding"/>
+	<copyField source="extracted_format_creating_application_version" dest="extracted_format_creating_application_version_s"/>
+	<field name="extracted_format_date_created_by_application" type="pdate"/>
+	<field name="extracted_format_preservation_level_value" type="string"/>
+	<field name="extracted_format_scanner_model_serial_no" type="string"/>
+	<field name="extracted_format_size" type="plong"/>
+	<field name="extracted_format_format_version" type="string"/>
+	<field name="identified_format_format_registry_key" type="string"/>
+	<field name="identified_format_format_registry_name" type="string"/>
+	<field name="identified_format_file_count" type="pint"/>
+	<field name="identified_format_creating_application_name" type="keyword_folding"/>
+	<copyField source="identified_format_creating_application_name" dest="identified_format_creating_application_name_s"/>
+	<field name="identified_format_creating_application_version" type="keyword_folding"/>
+	<copyField source="identified_format_creating_application_version" dest="identified_format_creating_application_version_s"/>
+	<field name="identified_format_date_created_by_application" type="pdate"/>
+	<field name="dublin_core_id" type="string"/>
+	<field name="dublin_core_value" type="standard_folding"/>
+	<field name="dublin_core_title" type="keyword_folding" multiValued="true"/>
+	<field name="dublin_core_creator" type="keyword_folding" multiValued="true"/>
+	<field name="dublin_core_subject" type="keyword_folding" multiValued="true"/>
+	<field name="dublin_core_description" type="keyword_folding" multiValued="true"/>
+	<field name="dublin_core_publisher" type="keyword_folding" multiValued="true"/>
+	<field name="dublin_core_contributor" type="keyword_folding" multiValued="true"/>
+	<field name="dublin_core_date" type="keyword_folding" multiValued="true"/>
+	<field name="dublin_core_type" type="keyword_folding" multiValued="true"/>
+	<field name="dublin_core_format" type="keyword_folding" multiValued="true"/>
+	<field name="dublin_core_identifier" type="keyword_folding" multiValued="true"/>
+	<field name="dublin_core_source" type="keyword_folding" multiValued="true"/>
+	<field name="dublin_core_language" type="keyword_folding" multiValued="true"/>
+	<field name="dublin_core_relation" type="keyword_folding" multiValued="true"/>
+	<field name="dublin_core_coverage" type="keyword_folding" multiValued="true"/>
+	<field name="dublin_core_rights" type="keyword_folding" multiValued="true"/>
+	<field name="img_metadata_date_created" type="pdate"/>
+	<field name="img_metadata_image_producer" type="keyword_folding"/>
+	<copyField source="img_metadata_image_producer" dest="img_metadata_image_producer_s"/>
+	<field name="img_metadata_scanner_model_serial_no" type="string"/>
+	<field name="img_metadata_arc_event_count" type="pint"/>
+	<field name="creating_application_creating_application_name" type="keyword_folding"/>
+	<copyField source="creating_application_creating_application_name" dest="creating_application_creating_application_name_s"/>
+	<field name="creating_application_creating_application_version" type="string"/>
+	<field name="creating_application_date_created_by_application" type="pdate"/>
+	<field name="creating_application_event_count" type="pint"/>
+	<field name="premis_event_outcome" type="string"/>
+	<field name="premis_event_linking_agent_identifier_type" type="string"/>
+	<field name="premis_event_linking_agent_identifier_value" type="string"/>
+	<field name="premis_event_detail" type="keyword_folding"/>
+	<copyField source="premis_event_detail" dest="premis_event_detail_s"/>
+	<field name="premis_event_type" type="string"/>
+	<field name="premis_event_date_time" type="pdate"/>
+	<field name="premis_event_identifier_type" type="string"/>
+	<field name="premis_event_identifier_value" type="string"/>
+	<field name="arc_event_type" type="string"/>
+	<field name="arc_event_agent_name" type="keyword_folding"/>
+	<copyField source="arc_event_agent_name" dest="arc_event_agent_name_s"/>
+	<field name="arc_event_scanner_model_serial_no" type="string"/>
+	<field name="arc_event_date" type="pdate"/>
+	<field name="arc_event_file_count" type="pint"/>
+	<dynamicField name="*_s" type="string" indexed="true" stored="true"/>
+	<dynamicField name="*_sort" type="collated" indexed="true" stored="false"/>
 </schema>

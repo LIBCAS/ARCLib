@@ -7,6 +7,7 @@ import cz.cas.lib.arclib.domain.preservationPlanning.IngestIssueDefinition;
 import cz.cas.lib.arclib.domain.preservationPlanning.Tool;
 import cz.cas.lib.arclib.formatlibrary.domain.Format;
 import cz.cas.lib.arclib.formatlibrary.domain.FormatDefinition;
+import cz.cas.lib.arclib.formatlibrary.store.DbFormatDefinitionStore;
 import helper.SrDbTest;
 import org.junit.Before;
 import org.junit.Test;
@@ -21,7 +22,7 @@ public class IngestEventStoreTest extends SrDbTest {
     private IngestWorkflowStore ingestWorkflowStore = new IngestWorkflowStore();
     private ToolStore toolStore = new ToolStore();
     private IngestIssueDefinitionStore ingestIssueDefinitionStore = new IngestIssueDefinitionStore();
-    private IndexedFormatDefinitionStore formatDefinitionStore = new IndexedFormatDefinitionStore();
+    private DbFormatDefinitionStore formatDefinitionStore = new DbFormatDefinitionStore();
     private IndexedFormatStore formatStore = new IndexedFormatStore();
 
 

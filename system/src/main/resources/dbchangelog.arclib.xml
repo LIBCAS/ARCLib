@@ -1874,4 +1874,24 @@
             <column name="password" type="nvarchar(255)"/>
         </addColumn>
     </changeSet>
+    <changeSet id="45" author="tomasek">
+        <addColumn tableName="arclib_export_routine">
+            <column name="id_export_type" type="varchar(255)"/>
+        </addColumn>
+    </changeSet>
+    <changeSet id="46" author="tomasek">
+        <createTable tableName="arclib_user_settings">
+            <column name="id" type="varchar(255)">
+                <constraints primaryKey="true" primaryKeyName="arclib_user_settings_pkey" nullable="false"/>
+            </column>
+            <column name="created" type="datetime"/>
+            <column name="updated" type="datetime"/>
+            <column name="deleted" type="datetime"/>
+            <column name="settings" type="text"/>
+            <column name="belongs_to_id" type="varchar(255)">
+                <constraints foreignKeyName="arclib_user_settings_user_fk"
+                             referencedTableName="arclib_user" referencedColumnNames="id"/>
+            </column>
+        </createTable>
+    </changeSet>
 </databaseChangeLog>

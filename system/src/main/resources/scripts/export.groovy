@@ -14,7 +14,7 @@ ExportRoutineService exportRoutineService = spring.getBean(ExportRoutineService.
 TransactionTemplate tt = spring.getBean(TransactionTemplate.class)
 
 ExportRoutine exportRoutine = exportRoutineService.findByAipQueryId(aipQueryId)
-aipQueryService.exportResult(aipQueryId, exportRoutine.getConfig(), false)
+aipQueryService.exportQueryResult(aipQueryId, exportRoutine.getConfig(), false)
 Job job = jobService.find(jobId)
 job.setActive(false)
 tt.execute({ t -> jobService.save(job) })

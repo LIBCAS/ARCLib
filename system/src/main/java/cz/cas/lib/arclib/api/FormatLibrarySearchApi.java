@@ -3,9 +3,9 @@ package cz.cas.lib.arclib.api;
 import cz.cas.lib.arclib.domain.preservationPlanning.FormatOccurrence;
 import cz.cas.lib.arclib.formatlibrary.domain.Format;
 import cz.cas.lib.arclib.formatlibrary.domain.FormatDefinition;
+import cz.cas.lib.arclib.formatlibrary.store.FormatDefinitionStore;
 import cz.cas.lib.arclib.security.authorization.permission.Permissions;
 import cz.cas.lib.arclib.store.FormatOccurrenceStore;
-import cz.cas.lib.arclib.store.IndexedFormatDefinitionStore;
 import cz.cas.lib.arclib.store.IndexedFormatStore;
 import cz.cas.lib.core.index.dto.Params;
 import cz.cas.lib.core.index.dto.Result;
@@ -29,7 +29,7 @@ import java.util.List;
 public class FormatLibrarySearchApi {
 
     private IndexedFormatStore indexedFormatStore;
-    private IndexedFormatDefinitionStore indexedFormatDefinitionStore;
+    private FormatDefinitionStore formatDefinitionStore;
     private FormatOccurrenceStore formatOccurrenceStore;
 
     @Operation(summary = "Gets all instances that respect the selected parameters [Perm.FORMAT_RECORDS_READ]",
@@ -48,10 +48,13 @@ public class FormatLibrarySearchApi {
                     " localDefinition, preferred, internalInformationFilled")
     @ApiResponses({@ApiResponse(responseCode = "200", description = "Successful response", content = @Content(schema = @Schema(implementation = Result.class)))})
     @PreAuthorize("hasAuthority('" + Permissions.FORMAT_RECORDS_READ + "')")
-    @RequestMapping(method = RequestMethod.GET, value = "/format_definition")
-    public Result<FormatDefinition> listFormatDefinitions(@Parameter(description = "Parameters to comply with", required = true)
-                                                          @ModelAttribute Params params) {
-        return indexedFormatDefinitionStore.findAll(params);
+    @RequestMapping(method = RequestMethod.GET, value = "/format/{id}/definition")
+    public Result<FormatDefinition> listFormatDefinitions(
+            @Parameter(description = "Id of the format", required = true)
+            @PathVariable("id") Integer id
+    ) {
+        List<FormatDefinition> defs = formatDefinitionStore.findByFormatId(id, null);
+        return new Result<>(defs, (long) defs.size());
     }
 
     @Operation(summary = "Gets all occurrences of the particular format definition through all producer profiles [Perm.FORMAT_RECORDS_READ]",
@@ -70,8 +73,8 @@ public class FormatLibrarySearchApi {
     }
 
     @Autowired
-    public void setIndexedFormatDefinitionStore(IndexedFormatDefinitionStore indexedFormatDefinitionStore) {
-        this.indexedFormatDefinitionStore = indexedFormatDefinitionStore;
+    public void setFormatDefinitionStore(FormatDefinitionStore formatDefinitionStore) {
+        this.formatDefinitionStore = formatDefinitionStore;
     }
 
     @Autowired

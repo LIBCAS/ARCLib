@@ -9,6 +9,7 @@ import cz.cas.lib.arclib.domainbase.exception.MissingObject;
 import cz.cas.lib.arclib.dto.AipQueryDetailDto;
 import cz.cas.lib.arclib.dto.AipQueryDetailExportRoutineDto;
 import cz.cas.lib.arclib.dto.AipQueryDto;
+import cz.cas.lib.arclib.dto.BucketExportRequestDto;
 import cz.cas.lib.arclib.index.IndexedArclibXmlStore;
 import cz.cas.lib.arclib.index.solr.arclibxml.IndexedArclibXmlDocument;
 import cz.cas.lib.arclib.security.user.UserDetails;
@@ -17,13 +18,12 @@ import cz.cas.lib.arclib.store.ExportRoutineStore;
 import cz.cas.lib.core.index.dto.Params;
 import cz.cas.lib.core.index.dto.Result;
 import cz.cas.lib.core.store.Transactional;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.NonNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
-
-import jakarta.servlet.http.HttpServletResponse;
 import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -83,7 +83,7 @@ public class AipQueryService {
         store.save(new AipQuery(new User(userId), allResults, params, queryName));
     }
 
-    public void downloadResult(@NonNull String queryId, @NonNull ExportConfig exportConfig, HttpServletResponse response) throws IOException {
+    public void downloadQueryResult(@NonNull String queryId, @NonNull ExportConfig exportConfig, HttpServletResponse response) throws IOException {
         Set<String> ids;
         if (queryId.equals(BUCKET_QUERY_API_ID)) {
             ids = favoritesBucketService.findFavoriteIdsOfUser(userDetails.getUser().getId());
@@ -92,6 +92,33 @@ public class AipQueryService {
             notNull(aipQuery, () -> new MissingObject(AipQuery.class, queryId));
             ids = aipQuery.getResult().getItems().stream().map(IndexedArclibXmlDocument::getId).collect(Collectors.toSet());
         }
+        downloadResult(queryId, exportConfig, ids, response);
+    }
+
+    public void downloadBucketResult(@NonNull BucketExportRequestDto reqDto, HttpServletResponse response) throws IOException {
+        Set<String> ids = reqDto.getIds().isEmpty() ?
+                favoritesBucketService.findFavoriteIdsOfUser(userDetails.getUser().getId())
+                : reqDto.getIds();
+        downloadResult("bucket", reqDto.getExportConfig(), ids, response);
+    }
+
+    public Path exportQueryResult(String queryId, ExportConfig exportConfig, boolean async) throws IOException {
+        AipQuery aipQuery = findWithUserInitialized(queryId);
+        notNull(aipQuery, () -> new MissingObject(AipQuery.class, queryId));
+        Set<String> ids = aipQuery.getResult().getItems().stream().map(IndexedArclibXmlDocument::getId).collect(Collectors.toSet());
+        User user = aipQuery.getUser();
+        return aipExportService.initiateExport(ids, exportConfig, async, user);
+    }
+
+    public Path exportBucketResult(BucketExportRequestDto reqDto) throws IOException {
+        Set<String> ids = reqDto.getIds().isEmpty() ?
+                favoritesBucketService.findFavoriteIdsOfUser(userDetails.getUser().getId())
+                : reqDto.getIds();
+        User user = userDetails.getUser();
+        return aipExportService.initiateExport(ids, reqDto.getExportConfig(), true, user);
+    }
+
+    private void downloadResult(@NonNull String queryId, @NonNull ExportConfig exportConfig, @NonNull Set<String> ids, HttpServletResponse response) throws IOException {
         ExportScope firstExportConfig = exportConfig.getScope().iterator().next();
         boolean zipIt = exportConfig.getScope().size() > 1 || firstExportConfig.getContentType() == null;
         String fileName = "aip_query_" + (zipIt ? queryId + ".zip" : firstExportConfig.getFsName());
@@ -100,21 +127,6 @@ public class AipQueryService {
         try (OutputStream os = zipIt ? new ZipOutputStream(response.getOutputStream()) : new BufferedOutputStream(response.getOutputStream())) {
             aipExportService.download(ids, exportConfig, os);
         }
-    }
-
-    public Path exportResult(String queryId, ExportConfig exportConfig, boolean async) throws IOException {
-        Set<String> ids;
-        User user;
-        if (queryId.equals(BUCKET_QUERY_API_ID)) {
-            ids = favoritesBucketService.findFavoriteIdsOfUser(userDetails.getUser().getId());
-            user = userDetails.getUser();
-        } else {
-            AipQuery aipQuery = findWithUserInitialized(queryId);
-            notNull(aipQuery, () -> new MissingObject(AipQuery.class, queryId));
-            ids = aipQuery.getResult().getItems().stream().map(IndexedArclibXmlDocument::getId).collect(Collectors.toSet());
-            user = aipQuery.getUser();
-        }
-        return aipExportService.initiateExport(ids, exportConfig, async, user);
     }
 
     @Transactional

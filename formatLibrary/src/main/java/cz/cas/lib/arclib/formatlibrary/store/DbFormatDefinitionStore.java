@@ -1,5 +1,6 @@
 package cz.cas.lib.arclib.formatlibrary.store;
 
+import com.querydsl.jpa.impl.JPAQuery;
 import cz.cas.lib.arclib.domainbase.store.DatedStore;
 import cz.cas.lib.arclib.formatlibrary.domain.FormatDefinition;
 import cz.cas.lib.arclib.formatlibrary.domain.QFormatDefinition;
@@ -14,12 +15,14 @@ public class DbFormatDefinitionStore
         super(FormatDefinition.class, QFormatDefinition.class);
     }
 
-    public List<FormatDefinition> findByFormatId(Integer formatId, boolean localDefinition) {
-        List<FormatDefinition> fetch = query().select(qObject())
+    public List<FormatDefinition> findByFormatId(Integer formatId, Boolean localDefinition) {
+        JPAQuery<FormatDefinition> query = query().select(qObject())
                 .where(qObject().format.formatId.eq(formatId))
-                .where(qObject().localDefinition.eq(localDefinition))
-                .orderBy(qObject().created.desc())
-                .fetch();
+                .orderBy(qObject().created.desc());
+        if (localDefinition != null) {
+            query.where(qObject().localDefinition.eq(localDefinition));
+        }
+        List<FormatDefinition> fetch = query.fetch();
         detachAll();
         return fetch;
     }

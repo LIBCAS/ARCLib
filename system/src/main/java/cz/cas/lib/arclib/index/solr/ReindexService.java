@@ -39,7 +39,6 @@ public class ReindexService {
     private UserStore userStore;
     private IndexedFormatStore formatStore;
     private IngestIssueStore ingestIssueStore;
-    private IndexedFormatDefinitionStore formatDefinitionStore;
     private IngestWorkflowService ingestWorkflowService;
     private SolrArclibXmlStore indexedArclibXmlStore;
     private ArchivalStorageService archivalStorageService;
@@ -62,15 +61,9 @@ public class ReindexService {
         formatStore.dropReindex();
     }
 
-    @Async
-    public void dropReindexFormatDefinition() {
-        formatDefinitionStore.dropReindex();
-    }
-
     public void dropReindexManagedSync() {
         dropReindexAll();
         dropReindexFormat();
-        dropReindexFormatDefinition();
     }
 
     @Async
@@ -171,11 +164,6 @@ public class ReindexService {
     @Autowired
     public void setIngestIssueStore(IngestIssueStore ingestIssueStore) {
         this.ingestIssueStore = ingestIssueStore;
-    }
-
-    @Autowired
-    public void setFormatDefinitionStore(IndexedFormatDefinitionStore formatDefinitionStore) {
-        this.formatDefinitionStore = formatDefinitionStore;
     }
 
     @Autowired

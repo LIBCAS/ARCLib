@@ -2,13 +2,11 @@ package cz.cas.lib.arclib.domain.export;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import cz.cas.lib.arclib.domainbase.util.ArrayJsonConverter;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.NotEmpty;
 import lombok.Getter;
 import lombok.Setter;
 
-import jakarta.persistence.Convert;
-import jakarta.persistence.Embeddable;
-import jakarta.persistence.Embedded;
-import jakarta.validation.constraints.NotEmpty;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -20,6 +18,9 @@ public class ExportConfig {
     @Convert(converter = ExportScopeConverter.class)
     @NotEmpty
     private List<ExportScope> scope = new ArrayList<>();
+
+    @Enumerated(EnumType.STRING)
+    private IdentifierExportType idExportType = IdentifierExportType.XML_ID;
 
     @Embedded
     private DataReduction dataReduction;

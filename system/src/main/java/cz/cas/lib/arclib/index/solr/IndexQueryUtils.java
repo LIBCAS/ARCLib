@@ -57,29 +57,12 @@ public class IndexQueryUtils {
      * @return Solr query
      */
 
-    public static String inQuery(IndexField indexedField, Set<?> values) {
+    public static String inQuery(IndexField indexedField, Set<String> values) {
         if (values.isEmpty())
             return "(-*:*)";
         if (indexedField.getKeywordField() == null)
             throw new UnsupportedSearchParameterException("equality check not supported for field: " + indexedField.getFieldName());
-        String result = indexedField.getKeywordField() + ":(" + extractValues(values) + ")";
-        return result;
-    }
-
-    private static String extractValues(Collection<?> values) {
-        StringBuilder valuesStr = new StringBuilder();
-        boolean first = true;
-        for (Object value : values) {
-            if (!first) {
-                valuesStr.append(" ");
-            }
-            if (value instanceof Collection) {
-                valuesStr.append(extractValues((Collection<?>) value));
-            } else {
-                valuesStr.append(value);
-            }
-        }
-        return valuesStr.toString();
+        return indexedField.getKeywordField() + ":(" + String.join(" ", values) + ")";
     }
 
     /**
@@ -93,12 +76,11 @@ public class IndexQueryUtils {
      * @param values       {@link Set} of invalid values
      * @return Solr query
      */
-    public static String notInQuery(IndexField indexedField, Set<?> values) {
-        String join = values.stream().map(o -> "\"" + o + "\"").collect(Collectors.joining(" "));
+    public static String notInQuery(IndexField indexedField, Set<String> values) {
         if (!values.isEmpty()) {
             if (indexedField.getKeywordField() == null)
                 throw new UnsupportedSearchParameterException("equality check not supported for field: " + indexedField.getFieldName());
-            return "(*:* -" + indexedField.getKeywordField() + ":(" + join + "))";
+            return "(*:* -" + indexedField.getKeywordField() + ":(" + String.join(" ", values) + "))";
         }
         return "(*:*)";
     }
@@ -352,7 +334,7 @@ public class IndexQueryUtils {
             case IN:
                 return inQuery(field, asSet(value.split(",")));
             case NEQ:
-                return notInQuery(field, asSet(value));
+                return notInQuery(field, asSet(value.split(",")));
             case STARTWITH:
                 return prefixQuery(field, value);
             case ENDWITH:

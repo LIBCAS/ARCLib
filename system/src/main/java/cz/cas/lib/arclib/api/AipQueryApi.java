@@ -21,7 +21,6 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
-
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
@@ -110,20 +109,20 @@ public class AipQueryApi {
     @Operation(summary = "Starts download of requested data to client PC. [Perm.EXPORT_FILES]")
     @RequestMapping(value = "/{id}/download", method = RequestMethod.POST)
     @PreAuthorize("hasAuthority('" + Permissions.EXPORT_FILES + "')")
-    public void downloadData(@Parameter(description = "Id of the saved query OR 'bucket' to download data of users bucket", required = true)
+    public void downloadData(@Parameter(description = "Id of the saved query", required = true)
                              @PathVariable("id") String id,
                              @Parameter(description = "Export config", required = true) @RequestBody @Valid ExportConfig exportConfig,
                              HttpServletResponse response) throws IOException {
-        aipQueryService.downloadResult(id, exportConfig, response);
+        aipQueryService.downloadQueryResult(id, exportConfig, response);
     }
 
     @Operation(summary = "Starts export of requested data to client workspace. [Perm.EXPORT_FILES]")
     @RequestMapping(value = "/{id}/export", method = RequestMethod.POST, produces = APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAuthority('" + Permissions.EXPORT_FILES + "')")
-    public String exportData(@Parameter(description = "Id of the saved query OR 'bucket' to export data of users bucket", required = true)
+    public String exportData(@Parameter(description = "Id of the saved query", required = true)
                              @PathVariable("id") String id,
                              @Parameter(description = "Export config", required = true) @RequestBody @Valid ExportConfig exportConfig) throws IOException {
-        return aipQueryService.exportResult(id, exportConfig, true).toString();
+        return aipQueryService.exportQueryResult(id, exportConfig, true).toString();
     }
 
     @Autowired
