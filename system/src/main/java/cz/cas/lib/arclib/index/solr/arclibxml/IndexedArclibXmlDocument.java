@@ -3,20 +3,20 @@ package cz.cas.lib.arclib.index.solr.arclibxml;
 import cz.cas.lib.arclib.domain.ingestWorkflow.IngestWorkflow;
 import cz.cas.lib.arclib.domain.packages.AuthorialPackage;
 import cz.cas.lib.arclib.index.solr.IndexQueryUtils;
+import cz.cas.lib.arclib.service.tableexport.ExportableTable;
+import cz.cas.lib.arclib.service.tableexport.TableDataType;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.apache.solr.client.solrj.beans.Field;
 
 import java.io.Serializable;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @NoArgsConstructor
 @AllArgsConstructor
-public class IndexedArclibXmlDocument implements Serializable {
+public class IndexedArclibXmlDocument implements Serializable, ExportableTable {
 
     //names of fields in SOLR required for application logic
     public static final String PRODUCER_ID = "producer_id";
@@ -191,6 +191,10 @@ public class IndexedArclibXmlDocument implements Serializable {
         return getSingleValue(field, Integer.class);
     }
 
+    private Date getSingleDateValue(String field) {
+        return getSingleValue(field, Date.class);
+    }
+
     private <T> T getSingleValue(String field, Class<T> clazz) {
         Object value = fields.get(field);
         if (value == null) {
@@ -200,5 +204,31 @@ public class IndexedArclibXmlDocument implements Serializable {
             return clazz.cast(((List<?>) value).get(0));
         }
         return clazz.cast(value);
+    }
+
+    @Override
+    public Object getExportTableValue(String col) {
+        return switch (col) {
+            case "updated" -> getSingleDateValue("updated");
+            case "label" -> getSingleStringValue("label");
+            case AUTHORIAL_ID -> getAuthorialId();
+            case SIP_ID -> getSipId();
+            case XML_VERSION_NUMBER -> getXmlVersionNumber();
+            case AIP_STATE -> getAipState();
+            default -> null;
+        };
+    }
+
+    public static List<TableDataType> getExportTableConfig(List<String> columns) {
+        return columns.stream().map(IndexedArclibXmlDocument::getExportTableConfig).collect(Collectors.toList());
+    }
+
+    private static TableDataType getExportTableConfig(String col) {
+        return switch (col) {
+            case SIP_ID -> TableDataType.OTHER;
+            case "label", AUTHORIAL_ID, XML_VERSION_NUMBER, AIP_STATE -> TableDataType.STRING_AUTO_SIZE;
+            case "updated" -> TableDataType.DATE_TIME;
+            default -> throw new UnsupportedOperationException("unsupported export column: " + col);
+        };
     }
 }

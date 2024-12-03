@@ -15,6 +15,8 @@ import cz.cas.lib.arclib.service.AipService;
 import cz.cas.lib.arclib.service.archivalStorage.ArchivalStorageException;
 import cz.cas.lib.arclib.service.archivalStorage.ArchivalStoragePipe;
 import cz.cas.lib.arclib.service.archivalStorage.ArchivalStorageService;
+import cz.cas.lib.arclib.service.tableexport.TableExportType;
+import cz.cas.lib.arclib.service.tableexport.TableExporter;
 import cz.cas.lib.arclib.utils.ArclibUtils;
 import cz.cas.lib.core.index.dto.Filter;
 import cz.cas.lib.core.index.dto.FilterOperation;
@@ -27,7 +29,6 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
-
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.Getter;
@@ -44,6 +45,10 @@ import org.xml.sax.SAXException;
 import javax.xml.parsers.ParserConfigurationException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.UncheckedIOException;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import static cz.cas.lib.arclib.utils.ArclibUtils.hasRole;
 import static cz.cas.lib.core.util.Utils.addPrefilter;
@@ -61,6 +66,7 @@ public class AipApi extends ArchivalStoragePipe {
     private int keepAliveUpdateTimeout;
     private ArchivalStorageService archivalStorageService;
     private AipQueryService aipQueryService;
+    private TableExporter tableExporter;
 
     @Operation(summary = "Gets partially filled ARCLib XML index records. The result of query as well as the query itself is saved if the queryName param is filled. [Perm.AIP_RECORDS_READ]",
             description = "If the calling user is not Roles.SUPER_ADMIN, only the respective records of the users producer are returned." +
@@ -93,6 +99,46 @@ public class AipApi extends ArchivalStoragePipe {
             aipQueryService.saveAipQuery(userDetails.getId(), params, queryName);
         }
         return uiPageResult;
+    }
+
+    @Operation(summary = "Exports partially filled ARCLib XML index records.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Successful response")})
+    @PreAuthorize("hasAuthority('" + Permissions.AIP_RECORDS_READ + "')")
+    @RequestMapping(value = "/list/export", method = RequestMethod.GET)
+    public void export(
+            @Parameter(description = "Parameters to comply with", required = true) @ModelAttribute Params params,
+            @Parameter(description = "Ignore pagination - export all", required = true) @RequestParam("ignorePagination") boolean ignorePagination,
+            @Parameter(description = "Export format", required = true) @RequestParam("format") TableExportType format,
+            @Parameter(description = "Export name", required = true) @RequestParam("name") String name,
+            @Parameter(description = "Ordered columns to export", required = true) @RequestParam("columns") List<String> columns,
+            @Parameter(description = "Ordered values of first row (header)", required = true) @RequestParam("header") List<String> header,
+            HttpServletResponse response) {
+        if (!hasRole(userDetails, Permissions.SUPER_ADMIN_PRIVILEGE)) {
+            addPrefilter(params, new Filter(IndexedArclibXmlDocument.PRODUCER_ID, FilterOperation.EQ, userDetails.getProducerId(), null));
+        }
+        if (!hasRole(userDetails, Permissions.LOGICAL_FILE_RENEW)) {
+            addPrefilter(params, new Filter(IndexedArclibXmlDocument.AIP_STATE, FilterOperation.NEQ, IndexedAipState.REMOVED.toString(), null));
+        }
+        if (!(hasRole(userDetails, Permissions.ADMIN_PRIVILEGE) || hasRole(userDetails, Permissions.SUPER_ADMIN_PRIVILEGE))) {
+            addPrefilter(params, new Filter(IndexedArclibXmlDocument.AIP_STATE, FilterOperation.NEQ, IndexedAipState.DELETED.toString(), null));
+        }
+        Result<IndexedArclibXmlDocument> result = ignorePagination ? indexArclibXmlStore.findAllIgnorePagination(params) : indexArclibXmlStore.findAll(params);
+
+        List<List<Object>> table = result.getItems().stream().map(e -> e.getExportTableValues(columns)).collect(Collectors.toList());
+
+        try (OutputStream out = response.getOutputStream()) {
+            switch (format) {
+                case XLSX:
+                    tableExporter.exportXlsx(name, header, IndexedArclibXmlDocument.getExportTableConfig(columns), table, true, out);
+                    break;
+                case CSV:
+                    tableExporter.exportCsv(name, header, table, out);
+                    break;
+            }
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
     }
 
     @Operation(summary = "Gets all main fields of ARCLib XML index record together with corresponding IW entity containing SIPs folder structure. [Perm.AIP_RECORDS_READ]",
@@ -292,5 +338,10 @@ public class AipApi extends ArchivalStoragePipe {
     @Autowired
     public void setAipQueryService(AipQueryService aipQueryService) {
         this.aipQueryService = aipQueryService;
+    }
+
+    @Autowired
+    public void setTableExporter(TableExporter tableExporter) {
+        this.tableExporter = tableExporter;
     }
 }

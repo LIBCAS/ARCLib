@@ -24,6 +24,7 @@ public class ClamAntivirus extends Antivirus {
 
     private static final String PATH_TO_INFECTED_FILE_REGEX = "(.+): .+ FOUND";
     public static final String ANTIVIRUS_NAME = AntivirusType.CLAMAV.toString();
+    private static final Pattern SHORT_TOOL_VERSION_PATTERN = Pattern.compile(".*(ClamAV [\\d,\\.]+).*");
 
     /**
      * command to be executed
@@ -82,14 +83,26 @@ public class ClamAntivirus extends Antivirus {
         }
     }
 
+    @Override
     public String getToolName() {
         return ANTIVIRUS_NAME;
     }
 
+    //e.g. 'CLAMAV version: [ClamAV 0.100.2/25043/Tue Oct 16 23:06:18 2018]'
+    @Override
     public String getToolVersion() {
         Pair<Integer, List<String>> result = externalProcessRunner.executeProcessCustomResultHandle(false, cmd[0], "-V");
         if (result.getLeft() != 0)
             throw new IllegalStateException("CLAMAV version CMD has failed: " + result.getRight());
         return "" + result.getRight();
+    }
+
+    //e.g. 'CLAMAV version: ClamAV 0.100.2'
+    @Override
+    public String getShortToolVersion() {
+        String longToolVersion = getToolVersion();
+        Matcher matcher = SHORT_TOOL_VERSION_PATTERN.matcher(longToolVersion);
+        boolean matches = matcher.matches();
+        return matches ? matcher.group(1) : longToolVersion;
     }
 }

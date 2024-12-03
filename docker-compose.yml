@@ -17,7 +17,7 @@ services:
     deploy:
       resources:
         limits:
-          memory: 2g
+          memory: 4g
     environment:
       SERVER_PORT: "8080"
       JAVA_TOOL_OPTIONS: "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005 -Xverify:none"

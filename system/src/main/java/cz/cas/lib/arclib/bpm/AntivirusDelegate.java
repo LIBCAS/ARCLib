@@ -77,18 +77,14 @@ public class AntivirusDelegate extends ArclibDelegate {
                     throw new ConfigParserException(cmdExpr, cmdNode.toString(), "Antivirus executable, with full path if not in $PATH variable, with switches");
                 Map<String, String> list = objectMapper.convertValue(cmdNode, Map.class);
                 String[] cmd = list.values().toArray(new String[0]);
-                antivirusToBeUsed = new ClamAntivirus(externalProcessRunner,cmd);
+                antivirusToBeUsed = new ClamAntivirus(externalProcessRunner, cmd);
                 break;
             default:
                 throw new ConfigParserException(ANTIVIRUS_TOOL_EXPR + "/" + antivirusToolCounter + AntivirusDelegate.ANTIVIRUS_TYPE,
                         "not supported", AntivirusType.class);
         }
-        //e.g. 'CLAMAV version: [ClamAV 0.100.2/25043/Tue Oct 16 23:06:18 2018]'
-        String fullToolVersion = antivirusToBeUsed.getToolVersion();
-        //e.g. 'CLAMAV version: ClamAV 0.100.2'
-        String shortToolVersion = fullToolVersion.substring(1, fullToolVersion.indexOf("/"));
 
-        Tool toolEntity = toolService.createNewToolVersionIfNeeded(antivirusToBeUsed.getToolName(), shortToolVersion, IngestToolFunction.virus_check);
+        Tool toolEntity = toolService.createNewToolVersionIfNeeded(antivirusToBeUsed.getToolName(), antivirusToBeUsed.getShortToolVersion(), IngestToolFunction.virus_check);
         antivirusToBeUsed.inject(formatDefinitionService, ingestIssueService, toolEntity, ingestIssueDefinitionStore, quarantinePath, infectedSipAction, getFormatIdentificationResult(ex));
         return antivirusToBeUsed;
     }

@@ -3,14 +3,18 @@ package cz.cas.lib.arclib.domain.ingestWorkflow;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import cz.cas.lib.arclib.domain.preservationPlanning.Tool;
 import cz.cas.lib.arclib.domainbase.domain.DatedObject;
+import cz.cas.lib.arclib.service.tableexport.ExportableTable;
+import cz.cas.lib.arclib.service.tableexport.TableDataType;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.BatchSize;
 
-import jakarta.persistence.*;
-import jakarta.validation.constraints.NotNull;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Getter
 @Setter
@@ -20,7 +24,7 @@ import jakarta.validation.constraints.NotNull;
 @NoArgsConstructor
 @Inheritance(strategy = InheritanceType.TABLE_PER_CLASS)
 @Table(name = "arclib_ingest_event")
-public class IngestEvent extends DatedObject {
+public class IngestEvent extends DatedObject implements ExportableTable {
     /**
      * related ingest workflow
      */
@@ -56,4 +60,29 @@ public class IngestEvent extends DatedObject {
      */
     @Column(length = 10485760)
     private String description;
+
+    @Override
+    public Object getExportTableValue(String col) {
+        return switch (col) {
+            case "created" -> created;
+            case "tool" -> tool == null ? null : tool.getName();
+            case "toolFunction" -> tool == null ? null : tool.getToolFunction();
+            case "description" -> description;
+            case "success" -> success;
+            default -> null;
+        };
+    }
+
+    public static List<TableDataType> getExportTableConfig(List<String> columns) {
+        return columns.stream().map(IngestEvent::getExportTableConfig).collect(Collectors.toList());
+    }
+
+    private static TableDataType getExportTableConfig(String col) {
+        return switch (col) {
+            case "description", "success" -> TableDataType.OTHER;
+            case "created" -> TableDataType.DATE_TIME;
+            case "tool", "toolFunction" -> TableDataType.STRING_AUTO_SIZE;
+            default -> throw new UnsupportedOperationException("unsupported export column: " + col);
+        };
+    }
 }

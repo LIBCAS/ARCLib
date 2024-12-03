@@ -28,10 +28,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static cz.cas.lib.arclib.index.solr.IndexQueryUtils.*;
@@ -165,6 +162,22 @@ public interface IndexedStore<T extends DomainObject, U extends IndexedDomainObj
         result.setItems(sorted);
         result.setCount(queryResponse.getResults().getNumFound());
         return result;
+    }
+
+    default Result<T> findAllIgnorePagination(Params passedParams) {
+        int page = 0;
+        Params params = passedParams.copy();
+        params.setPageSize(solrMaxRows);
+        Result<T> allDocsResult = new Result<>(new LinkedList<>(), 0L);
+        Result<T> allDocsSubResult;
+        do {
+            params.setPage(page);
+            allDocsSubResult = findAll(params);
+            allDocsResult.setCount(allDocsResult.getCount() + allDocsSubResult.getItems().size());
+            allDocsResult.getItems().addAll(allDocsSubResult.getItems());
+            page++;
+        } while (allDocsSubResult.getItems().size() == solrMaxRows);
+        return allDocsResult;
     }
 
     /**

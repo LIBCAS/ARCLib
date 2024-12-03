@@ -4,23 +4,31 @@ import cz.cas.lib.arclib.domain.FavoritesBucket;
 import cz.cas.lib.arclib.domain.User;
 import cz.cas.lib.arclib.index.solr.arclibxml.IndexedArclibXmlDocument;
 import cz.cas.lib.arclib.index.solr.arclibxml.SolrArclibXmlStore;
+import cz.cas.lib.arclib.service.tableexport.TableExportType;
+import cz.cas.lib.arclib.service.tableexport.TableExporter;
 import cz.cas.lib.arclib.store.FavoritesBucketStore;
 import cz.cas.lib.core.index.dto.Filter;
 import cz.cas.lib.core.index.dto.FilterOperation;
 import cz.cas.lib.core.index.dto.Params;
 import cz.cas.lib.core.index.dto.Result;
 import cz.cas.lib.core.store.Transactional;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.UncheckedIOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 public class FavoritesBucketService {
     private FavoritesBucketStore store;
     private SolrArclibXmlStore arclibXmlIndexStore;
+    private TableExporter tableExporter;
 
     public FavoritesBucket find(String id) {
         return store.find(id);
@@ -55,6 +63,34 @@ public class FavoritesBucketService {
         }
     }
 
+    public void exportFavorites(String userId, Integer page, Integer pageSize, boolean ignorePagination, String name, List<String> columns, List<String> header, TableExportType format, HttpServletResponse response) {
+        FavoritesBucket bucket = store.findFavoritesBucketOfUser(userId);
+        List<IndexedArclibXmlDocument> data = new ArrayList<>();
+        if (bucket != null) {
+            Params params = new Params();
+            params.setFilter(List.of(new Filter("id", FilterOperation.IN, String.join(",", bucket.getFavoriteIds()), List.of())));
+            params.setPageSize(pageSize);
+            params.setPage(page);
+            Result<IndexedArclibXmlDocument> all = ignorePagination ? arclibXmlIndexStore.findAllIgnorePagination(params) : arclibXmlIndexStore.findAll(params);
+            data = all.getItems();
+        }
+        List<List<Object>> table = data.stream().map(e -> e.getExportTableValues(columns)).collect(Collectors.toList());
+
+        try (OutputStream out = response.getOutputStream()) {
+            switch (format) {
+                case XLSX:
+                    tableExporter.exportXlsx(name, header, IndexedArclibXmlDocument.getExportTableConfig(columns), table, true, out);
+                    break;
+                case CSV:
+                    tableExporter.exportCsv(name, header, table, out);
+                    break;
+            }
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
+
     @Autowired
     public void setArclibXmlIndexStore(SolrArclibXmlStore arclibXmlIndexStore) {
         this.arclibXmlIndexStore = arclibXmlIndexStore;
@@ -63,5 +99,10 @@ public class FavoritesBucketService {
     @Autowired
     public void setStore(FavoritesBucketStore store) {
         this.store = store;
+    }
+
+    @Autowired
+    public void setTableExporter(TableExporter tableExporter) {
+        this.tableExporter = tableExporter;
     }
 }

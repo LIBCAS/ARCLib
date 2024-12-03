@@ -1,22 +1,29 @@
 package cz.cas.lib.arclib.service;
 
 import cz.cas.lib.arclib.domain.Batch;
+import cz.cas.lib.arclib.domain.ingestWorkflow.IngestWorkflow;
 import cz.cas.lib.arclib.domainbase.exception.MissingObject;
 import cz.cas.lib.arclib.dto.BatchDetailDto;
 import cz.cas.lib.arclib.dto.BatchDetailIngestWorkflowDto;
 import cz.cas.lib.arclib.dto.BatchDto;
+import cz.cas.lib.arclib.service.tableexport.TableExportType;
+import cz.cas.lib.arclib.service.tableexport.TableExporter;
 import cz.cas.lib.arclib.store.BatchStore;
 import cz.cas.lib.core.index.dto.Params;
 import cz.cas.lib.core.index.dto.Result;
 import cz.cas.lib.core.rest.data.DelegateAdapter;
 import cz.cas.lib.core.store.Transactional;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.UncheckedIOException;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static cz.cas.lib.core.util.Utils.notNull;
 
@@ -27,6 +34,7 @@ public class BatchService implements DelegateAdapter<Batch> {
     @Getter
     private BatchStore delegate;
     private BeanMappingService beanMappingService;
+    private TableExporter tableExporter;
 
 
     @Transactional
@@ -52,6 +60,47 @@ public class BatchService implements DelegateAdapter<Batch> {
         result.setItems(allAsDtos);
         result.setCount(all.getCount());
         return result;
+    }
+
+    public void exportBatchDtos(Params params, boolean ignorePagination, String name, List<String> columns, List<String> header, TableExportType format, HttpServletResponse response) {
+        Result<Batch> all = ignorePagination ? delegate.findAllIgnorePagination(params) : findAll(params);
+        List<BatchDto> allAsDtos = beanMappingService.mapTo(all.getItems(), BatchDto.class);
+
+        List<List<Object>> table = allAsDtos.stream().map(e -> e.getExportTableValues(columns)).collect(Collectors.toList());
+
+        try (OutputStream out = response.getOutputStream()) {
+            switch (format) {
+                case XLSX:
+                    tableExporter.exportXlsx(name, header, BatchDto.getExportTableConfig(columns), table, true, out);
+                    break;
+                case CSV:
+                    tableExporter.exportCsv(name, header, table, out);
+                    break;
+            }
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
+    public void exportIngestWorkflows(String id, String name, List<String> columns, List<String> header, TableExportType format, HttpServletResponse response) {
+        Batch batch = delegate.findWithIngestWorkflowsFilled(id);
+        notNull(batch, () -> new MissingObject(Batch.class, id));
+
+        List<IngestWorkflow> iws = batch.getIngestWorkflows();
+        List<List<Object>> table = iws.stream().map(e -> e.getExportTableValues(columns)).collect(Collectors.toList());
+
+        try (OutputStream out = response.getOutputStream()) {
+            switch (format) {
+                case XLSX:
+                    tableExporter.exportXlsx(name, header, IngestWorkflow.getExportTableConfig(columns), table, true, out);
+                    break;
+                case CSV:
+                    tableExporter.exportCsv(name, header, table, out);
+                    break;
+            }
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
     }
 
     public List<Batch> findAllDeployed() {
@@ -92,5 +141,10 @@ public class BatchService implements DelegateAdapter<Batch> {
     @Autowired
     public void setDelegate(BatchStore delegate) {
         this.delegate = delegate;
+    }
+
+    @Autowired
+    public void setTableExporter(TableExporter tableExporter) {
+        this.tableExporter = tableExporter;
     }
 }

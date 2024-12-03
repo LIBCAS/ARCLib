@@ -3,9 +3,11 @@ package cz.cas.lib.arclib.api;
 import cz.cas.lib.arclib.dto.IncidentCancellationDto;
 import cz.cas.lib.arclib.dto.IncidentInfoDto;
 import cz.cas.lib.arclib.dto.IncidentSolutionDto;
+import cz.cas.lib.arclib.report.ExportFormat;
 import cz.cas.lib.arclib.security.authorization.permission.Permissions;
 import cz.cas.lib.arclib.service.incident.IncidentService;
 import cz.cas.lib.arclib.service.incident.IncidentSortField;
+import cz.cas.lib.arclib.service.tableexport.TableExportType;
 import cz.cas.lib.core.index.dto.Order;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -15,6 +17,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -23,6 +26,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.List;
 
 @ConditionalOnProperty(prefix = "bpm", name = "enabled", havingValue = "true")
 @RestController
@@ -45,6 +49,22 @@ public class IncidentApi {
     ) {
         sort = sort == null ? IncidentSortField.TIMESTAMP : sort;
         return incidentService.getIncidentsOfBatch(batchId, sort, order);
+    }
+
+    @Operation(summary = "Exports incidents of batch into file. [Perm.INCIDENT_RECORDS_READ]")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Successful response")})
+    @PreAuthorize("hasAuthority('" + Permissions.INCIDENT_RECORDS_READ + "')")
+    @RequestMapping(value = "/batch/{id}/export", method = RequestMethod.GET)
+    public void exportIncidents(
+            @Parameter(description = "ID of the batch", required = true) @PathVariable("id") String batchId,
+            @Parameter(description = "Export format", required = true) @RequestParam("format") TableExportType format,
+            @Parameter(description = "Export name", required = true) @RequestParam("name") String name,
+            @Parameter(description = "Ordered columns to export", required = true) @RequestParam("columns") List<String> columns,
+            @Parameter(description = "Ordered values of first row (header)", required = true) @RequestParam("header") List<String> header,
+            HttpServletResponse response
+    ) {
+        incidentService.exportBatchIncidents(batchId, name, columns, header, format, response);
     }
 
     @Operation(summary = "Solves incidents by changing config and executing jobs again. [Perm.INCIDENT_RECORDS_WRITE]")

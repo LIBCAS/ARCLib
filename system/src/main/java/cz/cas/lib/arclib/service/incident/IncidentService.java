@@ -13,7 +13,10 @@ import cz.cas.lib.arclib.service.BatchService;
 import cz.cas.lib.arclib.service.IngestErrorHandler;
 import cz.cas.lib.arclib.service.SolveIncidentDto;
 import cz.cas.lib.arclib.service.UserService;
+import cz.cas.lib.arclib.service.tableexport.TableExportType;
+import cz.cas.lib.arclib.service.tableexport.TableExporter;
 import cz.cas.lib.core.index.dto.Order;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.camunda.bpm.engine.ManagementService;
@@ -27,6 +30,9 @@ import org.springframework.jms.core.JmsTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
 
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.UncheckedIOException;
 import java.text.Collator;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -49,6 +55,7 @@ public class IncidentService {
     private TransactionTemplate transactionTemplate;
     @Getter
     private IngestErrorHandler ingestErrorHandler;
+    private TableExporter tableExporter;
 
     /**
      * Gets incidents of active processes instances of a batch.
@@ -77,9 +84,9 @@ public class IncidentService {
                     String stackTrace = managementService.getJobExceptionStacktrace(incident.getConfiguration());
 
                     Map<String, Object> variables = runtimeService.getVariables(incident.getExecutionId());
-            String responsiblePersonId = (String) variables.get(BpmConstants.ProcessVariables.responsiblePerson);
-            User responsiblePerson = userService.find(responsiblePersonId);
-            incidents.add(
+                    String responsiblePersonId = (String) variables.get(BpmConstants.ProcessVariables.responsiblePerson);
+                    User responsiblePerson = userService.find(responsiblePersonId);
+                    incidents.add(
                             new IncidentInfoDto(
                                     incident.getId(),
                                     incident.getIncidentTimestamp().toInstant(),
@@ -119,6 +126,24 @@ public class IncidentService {
         if (order == Order.DESC)
             return Lists.reverse(incidents);
         return incidents;
+    }
+
+    public void exportBatchIncidents(String batchId, String name, List<String> columns, List<String> header, TableExportType format, HttpServletResponse response) {
+        List<IncidentInfoDto> incidents = getIncidentsOfBatch(batchId, IncidentSortField.TIMESTAMP, Order.DESC);
+        List<List<Object>> table = incidents.stream().map(e -> e.getExportTableValues(columns)).collect(Collectors.toList());
+
+        try (OutputStream out = response.getOutputStream()) {
+            switch (format) {
+                case XLSX:
+                    tableExporter.exportXlsx(name, header, IncidentInfoDto.getExportTableConfig(columns), table, true, out);
+                    break;
+                case CSV:
+                    tableExporter.exportCsv(name, header, table, out);
+                    break;
+            }
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
     }
 
     /**
@@ -235,9 +260,14 @@ public class IncidentService {
     public void setBatchService(BatchService batchService) {
         this.batchService = batchService;
     }
-    
+
     @Autowired
     public void setTransactionTemplate(TransactionTemplate transactionTemplate) {
         this.transactionTemplate = transactionTemplate;
+    }
+
+    @Autowired
+    public void setTableExporter(TableExporter tableExporter) {
+        this.tableExporter = tableExporter;
     }
 }

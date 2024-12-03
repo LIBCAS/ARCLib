@@ -7,10 +7,12 @@ import cz.cas.lib.arclib.dto.BatchDetailDto;
 import cz.cas.lib.arclib.dto.BatchDto;
 import cz.cas.lib.arclib.dto.JmsDto;
 import cz.cas.lib.arclib.exception.BadRequestException;
+import cz.cas.lib.arclib.report.ExportFormat;
 import cz.cas.lib.arclib.security.authorization.permission.Permissions;
 import cz.cas.lib.arclib.security.user.UserDetails;
 import cz.cas.lib.arclib.service.BatchService;
 import cz.cas.lib.arclib.service.CoordinatorService;
+import cz.cas.lib.arclib.service.tableexport.TableExportType;
 import cz.cas.lib.core.index.dto.Filter;
 import cz.cas.lib.core.index.dto.FilterOperation;
 import cz.cas.lib.core.index.dto.Params;
@@ -22,13 +24,14 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
-
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.List;
 
 import static cz.cas.lib.arclib.utils.ArclibUtils.hasRole;
 import static cz.cas.lib.core.util.Utils.addPrefilter;
@@ -144,6 +147,41 @@ public class BatchApi {
             addPrefilter(params, new Filter("producerId", FilterOperation.EQ, userDetails.getProducerId(), null));
         }
         return batchService.listBatchDtos(params);
+    }
+
+    @Operation(summary = "Exports DTOs of batches that respect the selected parameters. [Perm.BATCH_PROCESSING_READ]")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Successful response")})
+    @PreAuthorize("hasAuthority('" + Permissions.BATCH_PROCESSING_READ + "')")
+    @RequestMapping(value = "/list_dtos/export", method = RequestMethod.GET)
+    public void exportDtos(@Parameter(description = "Parameters to comply with", required = true)
+                           @ModelAttribute Params params,
+                           @Parameter(description = "Ignore pagination - export all", required = true) @RequestParam("ignorePagination") boolean ignorePagination,
+                           @Parameter(description = "Export format", required = true) @RequestParam("format") TableExportType format,
+                           @Parameter(description = "Export name", required = true) @RequestParam("name") String name,
+                           @Parameter(description = "Ordered columns to export", required = true) @RequestParam("columns") List<String> columns,
+                           @Parameter(description = "Ordered values of first row (header)", required = true) @RequestParam("header") List<String> header,
+                           HttpServletResponse response) {
+        if (!hasRole(userDetails, Permissions.SUPER_ADMIN_PRIVILEGE)) {
+            addPrefilter(params, new Filter("producerId", FilterOperation.EQ, userDetails.getProducerId(), null));
+        }
+        batchService.exportBatchDtos(params, ignorePagination, name, columns, header, format, response);
+    }
+
+    @Operation(summary = "Exports ingest workflows of batch into file. [Perm.BATCH_PROCESSING_READ]")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Successful response")})
+    @PreAuthorize("hasAuthority('" + Permissions.BATCH_PROCESSING_READ + "')")
+    @RequestMapping(value = "/{id}/ingest_workflow/export", method = RequestMethod.GET)
+    public void exportIngestWorkflows(
+            @Parameter(description = "ID of the batch", required = true) @PathVariable("id") String id,
+            @Parameter(description = "Export format", required = true) @RequestParam("format") TableExportType format,
+            @Parameter(description = "Export name", required = true) @RequestParam("name") String name,
+            @Parameter(description = "Ordered columns to export", required = true) @RequestParam("columns") List<String> columns,
+            @Parameter(description = "Ordered values of first row (header)", required = true) @RequestParam("header") List<String> header,
+            HttpServletResponse response
+    ) {
+        batchService.exportIngestWorkflows(id, name, columns, header, format, response);
     }
 
     @Operation(summary = "Gets batch by id. [Perm.BATCH_PROCESSING_READ]")

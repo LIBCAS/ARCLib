@@ -16,6 +16,8 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.config.Customizer;
+import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -37,7 +39,6 @@ import static cz.cas.lib.core.util.Utils.asArray;
 @EnableWebSecurity
 public class SecurityConfiguration {
 
-    private AuthenticationManager authenticationManager;
     private JwtTokenProvider tokenProvider;
     private AuditLogger auditLogger;
     private String authQuery;
@@ -47,9 +48,14 @@ public class SecurityConfiguration {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        AuthenticationManagerBuilder authManagerBuilder = http.getSharedObject(AuthenticationManagerBuilder.class);
+        authManagerBuilder.authenticationProvider(authenticationProvider);
+        authManagerBuilder.authenticationProvider(tokenProvider);
+        authManagerBuilder.parentAuthenticationManager(null);
+        AuthenticationManager authManager = authManagerBuilder.build();
+
         HttpSecurity httpSecurity = http
-                .authenticationProvider(authenticationProvider)
-                .authenticationProvider(tokenProvider)
+                .authenticationManager(authManager)
                 .securityMatchers(c -> c.requestMatchers(urlPatterns()))
                 .sessionManagement(c -> c.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .exceptionHandling(c -> c.accessDeniedHandler(accessDeniedHandler()))
@@ -60,7 +66,7 @@ public class SecurityConfiguration {
                 .authorizeHttpRequests(c -> c.anyRequest().permitAll())
                 .csrf(AbstractHttpConfigurer::disable);
 
-        Filter[] filters = primarySchemeFilters();
+        Filter[] filters = primarySchemeFilters(authManager);
         for (Filter filter : filters) {
             httpSecurity = httpSecurity.addFilterBefore(filter, AnonymousAuthenticationFilter.class);
         }
@@ -76,15 +82,9 @@ public class SecurityConfiguration {
     }
 
 
-    protected Filter[] primarySchemeFilters() throws Exception {
+    protected Filter[] primarySchemeFilters(AuthenticationManager authenticationManager) throws Exception {
         PathBasicAuthFilter filter = new PathBasicAuthFilter(authenticationManager, auditLogger, authQuery);
         return asArray(filter);
-    }
-
-    @Autowired
-    @Lazy
-    public void setAuthenticationManager(AuthenticationManager authenticationManager) {
-        this.authenticationManager = authenticationManager;
     }
 
     @Bean
