@@ -31,7 +31,7 @@
         <jjwt.version>0.12.3</jjwt.version>
         <tika.version>2.9.0</tika.version>
         <spotbugs.version>4.8.0</spotbugs.version>
-        <jasper.version>6.20.6</jasper.version>
+        <jasper.version>7.0.1</jasper.version>
 
         <lucene.version>9.8.0</lucene.version>
 

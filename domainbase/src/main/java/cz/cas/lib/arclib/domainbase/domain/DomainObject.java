@@ -1,11 +1,11 @@
 package cz.cas.lib.arclib.domainbase.domain;
 
+import jakarta.persistence.Id;
+import jakarta.persistence.MappedSuperclass;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 
-import jakarta.persistence.Id;
-import jakarta.persistence.MappedSuperclass;
 import java.util.UUID;
 
 /**

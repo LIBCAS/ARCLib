@@ -1,9 +1,8 @@
 package cz.cas.lib.arclib.domainbase.domain;
 
+import jakarta.persistence.MappedSuperclass;
 import lombok.Getter;
 import lombok.Setter;
-
-import jakarta.persistence.MappedSuperclass;
 
 @Getter
 @Setter
