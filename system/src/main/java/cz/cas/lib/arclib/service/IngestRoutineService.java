@@ -1,5 +1,6 @@
 package cz.cas.lib.arclib.service;
 
+import cz.cas.lib.arclib.domain.Batch;
 import cz.cas.lib.arclib.domain.IngestRoutine;
 import cz.cas.lib.arclib.domain.User;
 import cz.cas.lib.arclib.domain.profiles.ProducerProfile;
@@ -8,11 +9,13 @@ import cz.cas.lib.arclib.domainbase.exception.MissingAttribute;
 import cz.cas.lib.arclib.domainbase.exception.MissingObject;
 import cz.cas.lib.arclib.dto.IngestRoutineDto;
 import cz.cas.lib.arclib.exception.ForbiddenException;
+import cz.cas.lib.arclib.exception.ReingestInProgressException;
 import cz.cas.lib.arclib.security.authorization.permission.Permissions;
 import cz.cas.lib.arclib.security.user.UserDetails;
 import cz.cas.lib.arclib.store.IngestRoutineStore;
 import cz.cas.lib.arclib.store.ProducerProfileStore;
 import cz.cas.lib.arclib.utils.ArclibUtils;
+import cz.cas.lib.core.scheduling.JobRunner;
 import cz.cas.lib.core.scheduling.job.Job;
 import cz.cas.lib.core.scheduling.job.JobService;
 import cz.cas.lib.core.script.ScriptType;
@@ -27,9 +30,8 @@ import org.springframework.util.StreamUtils;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.charset.Charset;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import static cz.cas.lib.core.util.Utils.*;
 
@@ -43,6 +45,14 @@ public class IngestRoutineService {
     private BeanMappingService beanMappingService;
     private UserDetails userDetails;
     private Resource batchStartScript;
+    private JobRunner jobRunner;
+
+    public void run(String id) {
+        IngestRoutine routine = store.find(id);
+        notNull(routine, () -> new MissingObject(IngestRoutine.class, id));
+        eq(routine.isReingest(), true, () -> new BadArgument("Routine is not related to reingest"));
+        jobRunner.run(routine.getJob());
+    }
 
     /**
      * Saves the instance of ingest routine to database. Furthermore it creates a job that performs the
@@ -96,6 +106,22 @@ public class IngestRoutineService {
         jobService.delete(entity.getJob());
     }
 
+    public void deleteReingestRoutines() throws ReingestInProgressException {
+        List<IngestRoutine> routines = store.getReingestRoutines();
+
+        Set<Batch> processingBatches = routines.stream().flatMap(r -> r.getCurrentlyProcessingBatches().stream()).collect(Collectors.toSet());
+        if (!processingBatches.isEmpty()) {
+            throw new ReingestInProgressException("can't delete reingest routines since there are some unfinished batches: " + processingBatches);
+        }
+        for (IngestRoutine r : routines) {
+            delete(r.getId());
+        }
+    }
+
+    public List<IngestRoutine> getReingestRoutines() {
+        return store.getReingestRoutines();
+    }
+
     @Transactional
     public Collection<IngestRoutineDto> listIngestRoutineDtos() {
         Collection<IngestRoutine> all = this.findFilteredByProducer();
@@ -110,20 +136,22 @@ public class IngestRoutineService {
     private void createOrUpdateIngestRoutineJob(IngestRoutine ingestRoutine) {
         log.debug("Scheduling ingest routine job for ingest routine: " + ingestRoutine.getId());
 
-        ProducerProfile producerProfile = ingestRoutine.getProducerProfile();
-        notNull(producerProfile, () -> new MissingAttribute(IngestRoutine.class, ingestRoutine.getId(), "producerProfile"));
+        notNull(ingestRoutine.getProducerProfile(), () -> new MissingAttribute(IngestRoutine.class, ingestRoutine.getId(), "producerProfile"));
 
-        producerProfile = producerProfileStore.find(producerProfile.getId());
+        ProducerProfile producerProfile = producerProfileStore.find(ingestRoutine.getProducerProfile().getId());
         notNull(producerProfile, () -> new MissingObject(ProducerProfile.class, ingestRoutine.getProducerProfile().getId()));
 
-        String transferAreaPath = ingestRoutine.getTransferAreaPath();
-        notNull(transferAreaPath, () -> new MissingAttribute(IngestRoutine.class, ingestRoutine.getId(), "transferAreaPath"));
+        notNull(producerProfile.getProducer(), () -> new MissingAttribute(ProducerProfile.class, producerProfile.getId(), "producer"));
 
-        String workflowConfig = ingestRoutine.getWorkflowConfig();
-        notNull(workflowConfig, () -> new MissingAttribute(IngestRoutine.class, ingestRoutine.getId(), "workflowConfig"));
+        if (!ingestRoutine.isReingest()) {
+            notNull(ingestRoutine.getTransferAreaPath(), () -> new MissingAttribute(IngestRoutine.class, ingestRoutine.getId(), "transferAreaPath"));
 
-        User creator = ingestRoutine.getCreator();
-        notNull(creator, () -> new MissingAttribute(IngestRoutine.class, ingestRoutine.getId(), "creator"));
+            notNull(ingestRoutine.getWorkflowConfig(), () -> new MissingAttribute(IngestRoutine.class, ingestRoutine.getId(), "workflowConfig"));
+            if (ingestRoutine.getWorkflowConfig().isEmpty())
+                throw new BadArgument("Workflow config is empty. Try to use '{}'");
+        }
+
+        notNull(ingestRoutine.getCreator(), () -> new MissingAttribute(IngestRoutine.class, ingestRoutine.getId(), "creator"));
 
         Job job = ingestRoutine.getJob();
         job.setScriptType(ScriptType.GROOVY);
@@ -136,10 +164,6 @@ public class IngestRoutineService {
         }
 
         Map<String, String> jobParams = new HashMap<>();
-        jobParams.put("creatorId", creator.getId());
-        jobParams.put("externalId", producerProfile.getExternalId());
-        jobParams.put("transferAreaPath", transferAreaPath);
-        jobParams.put("workflowConfig", workflowConfig);
         jobParams.put("routineId", ingestRoutine.getId());
         job.setParams(jobParams);
 
@@ -188,5 +212,10 @@ public class IngestRoutineService {
     @Autowired
     public void setBatchStartScript(@Value("${arclib.script.ingestRoutineBatchStart}") Resource batchStartScript) {
         this.batchStartScript = batchStartScript;
+    }
+
+    @Autowired
+    public void setJobRunner(JobRunner jobRunner) {
+        this.jobRunner = jobRunner;
     }
 }

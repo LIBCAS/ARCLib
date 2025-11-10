@@ -6,13 +6,14 @@ import cz.cas.lib.arclib.domain.ingestWorkflow.IngestEvent;
 import cz.cas.lib.arclib.domain.ingestWorkflow.IngestWorkflow;
 import cz.cas.lib.arclib.domain.preservationPlanning.Tool;
 import cz.cas.lib.arclib.domain.profiles.ProducerProfile;
-import cz.cas.lib.arclib.exception.bpm.ConfigParserException;
+import cz.cas.lib.arclib.domain.profiles.SipProfile;
 import cz.cas.lib.arclib.exception.bpm.IncidentException;
 import cz.cas.lib.arclib.service.arclibxml.ArclibXmlValidator;
 import cz.cas.lib.arclib.service.arclibxml.ArclibXmlXsltExtractor;
 import cz.cas.lib.arclib.service.arclibxml.systemWideValidation.SystemWideValidationMissingNodesBpmHandler;
 import cz.cas.lib.arclib.service.arclibxml.systemWideValidation.SystemWideValidationNodeConfig;
 import cz.cas.lib.arclib.store.ProducerProfileStore;
+import cz.cas.lib.arclib.store.SipProfileStore;
 import cz.cas.lib.arclib.utils.ArclibUtils;
 import cz.cas.lib.arclib.utils.NamespaceChangingVisitor;
 import lombok.Getter;
@@ -28,7 +29,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.xml.sax.SAXException;
-
 
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.TransformerException;
@@ -56,6 +56,7 @@ public class ArclibXmlExtractorDelegate extends ArclibDelegate {
     private ArclibXmlValidator validator;
     private Map<String, String> uris;
     private SystemWideValidationMissingNodesBpmHandler systemWideValidationHandler;
+    private SipProfileStore sipProfileStore;
 
     @Override
     public void executeArclibDelegate(DelegateExecution execution) throws TransformerException, IOException, ParserConfigurationException, SAXException, DocumentException, XPathExpressionException, IncidentException {
@@ -67,12 +68,20 @@ public class ArclibXmlExtractorDelegate extends ArclibDelegate {
         JsonNode configRoot = getConfigRoot(execution);
         String sipProfileExternalId;
         JsonNode sipProfileConfigEntry = configRoot.at("/" + SIP_PROFILE_CONFIG_ENTRY);
+        ProducerProfile producerProfile = producerProfileStore.findByExternalId(getProducerProfileExternalId(execution));
         if (sipProfileConfigEntry.isMissingNode()) {
-            String producerProfileExternalId = getProducerProfileExternalId(execution);
-            ProducerProfile producerProfile = producerProfileStore.findByExternalId(producerProfileExternalId);
             sipProfileExternalId = producerProfile.getSipProfile().getExternalId();
         } else {
             sipProfileExternalId = sipProfileConfigEntry.textValue();
+            boolean overriddenProfile = producerProfile.getSipProfile() == null ||
+                    !sipProfileExternalId.equals(producerProfile.getSipProfile().getExternalId());
+            if (!isInDebugMode(execution) && overriddenProfile) {
+                SipProfile sp = sipProfileStore.findByExternalId(sipProfileExternalId);
+                if (sp.isEditable()) {
+                    sp.setEditable(false);
+                    sipProfileStore.save(sp);
+                }
+            }
         }
 
         String uglyPrintedExtractedMetadata = arclibXmlXsltExtractor.extractMetadata(sipProfileExternalId, execution.getVariables());
@@ -132,5 +141,10 @@ public class ArclibXmlExtractorDelegate extends ArclibDelegate {
     @Autowired
     public void setSystemWideValidationHandler(SystemWideValidationMissingNodesBpmHandler systemWideValidationHandler) {
         this.systemWideValidationHandler = systemWideValidationHandler;
+    }
+
+    @Autowired
+    public void setSipProfileStore(SipProfileStore sipProfileStore) {
+        this.sipProfileStore = sipProfileStore;
     }
 }

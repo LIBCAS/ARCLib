@@ -147,6 +147,7 @@ public class StorageSuccessVerifierDelegate extends ArclibDelegate {
         Instant NOW = Instant.now();
         ingestWorkflow.setProcessingState(IngestWorkflowState.PERSISTED);
         ingestWorkflow.setLatestVersion(true);
+        ingestWorkflow.setFinalConfig(getLatestConfig(execution));
         ingestWorkflow.setEnded(NOW);
         Long idleTimeSum = getLongVariable(execution, BpmConstants.ProcessVariables.idleTime);
         ingestWorkflow.setProcessingTime((NOW.toEpochMilli() - ingestWorkflow.getCreated().toEpochMilli() - idleTimeSum) / 1000);
@@ -233,7 +234,7 @@ public class StorageSuccessVerifierDelegate extends ArclibDelegate {
 
         //delete SIP from transfer area or change prefix of batch
         Batch workflowBatch = ingestWorkflow.getBatch();
-        if (deleteSipFromTransferArea) {
+        if (deleteSipFromTransferArea || (workflowBatch.getIngestRoutine() != null && workflowBatch.getIngestRoutine().isReingest())) {
             // automatic processing
             if (workflowBatch.getIngestRoutine() != null && workflowBatch.getIngestRoutine().isAuto()) {
                 Files.deleteIfExists(getSipZipTransferAreaPathPrefixed(ingestWorkflow, AutoIngestFilePrefix.PROCESSING).toAbsolutePath());

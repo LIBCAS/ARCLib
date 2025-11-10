@@ -10,14 +10,14 @@ import cz.cas.lib.arclib.service.UserService;
 import cz.cas.lib.core.mail.MailCenter;
 import cz.cas.lib.core.util.Utils;
 import freemarker.template.TemplateException;
+import jakarta.mail.MessagingException;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 
-
-import jakarta.mail.MessagingException;
 import java.io.File;
 import java.io.IOException;
 import java.time.Instant;
@@ -224,6 +224,14 @@ public class ArclibMailCenter extends MailCenter implements FormatLibraryNotifie
         String msg = "Name: " + newVersion.getName() + "\nPrevious version: " + (oldVersion == null ? "no previous version" : oldVersion.getVersion()) + "\nNew version: " + newVersion.getVersion();
         recipients.forEach(user -> sendNotificationInternal(user.getEmail(), newVersion.getId(), msg, Instant.now(), "templates/en/newToolVersionNotification.ftl"));
         log.debug("Sent notification mail about new tool version detected and created to mail addresses " +
+                Arrays.toString(recipients.stream().map(User::getEmail).toArray()) + ", message: " + msg + ".");
+    }
+
+    public void sendReingestJobFailedNotification(Exception ex) {
+        String msg = ExceptionUtils.getStackTrace(ex);
+        Collection<User> recipients = assignedRoleService.getUsersWithPermission(Permissions.SUPER_ADMIN_PRIVILEGE);
+        recipients.forEach(user -> sendNotificationInternal(user.getEmail(), null, msg, Instant.now(), "templates/en/reingestJobFailedNotification.ftl"));
+        log.debug("Sent notification mail about reingest job run failure to mail addresses " +
                 Arrays.toString(recipients.stream().map(User::getEmail).toArray()) + ", message: " + msg + ".");
     }
 

@@ -9,10 +9,12 @@ import cz.cas.lib.arclib.domainbase.exception.ForbiddenOperation;
 import cz.cas.lib.arclib.dto.AipBulkDeletionCreateDto;
 import cz.cas.lib.arclib.dto.AipBulkDeletionDto;
 import cz.cas.lib.arclib.exception.AipStateChangeException;
+import cz.cas.lib.arclib.exception.ReingestInProgressException;
 import cz.cas.lib.arclib.index.solr.arclibxml.IndexedAipState;
 import cz.cas.lib.arclib.security.authorization.permission.Permissions;
 import cz.cas.lib.arclib.security.user.UserDetails;
 import cz.cas.lib.arclib.store.AipBulkDeletionStore;
+import cz.cas.lib.arclib.store.ReingestStore;
 import cz.cas.lib.arclib.store.SipStore;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.mutable.MutableInt;
@@ -21,7 +23,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.util.ObjectUtils;
 
-import javax.inject.Inject;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
@@ -43,10 +44,14 @@ public class AipBulkDeletionService {
     private UserDetails userDetails;
     private AipBulkDeletionStore store;
     private BeanMappingService beanMappingService;
+    private ReingestStore reingestStore;
 
-    public void bulkDelete(AipBulkDeletionCreateDto request) throws AipStateChangeException, IOException {
+    public void bulkDelete(AipBulkDeletionCreateDto request) throws ReingestInProgressException {
         if (ObjectUtils.isEmpty(request.getAipIds())) {
             return;
+        }
+        if (reingestStore.getCurrent() != null) {
+            throw new ReingestInProgressException("bulk deletion not allowed when reingest is running");
         }
         Set<String> aipIds = Arrays.stream(request.getAipIds().split(",")).map(s -> s.trim()).collect(Collectors.toSet());
 
@@ -158,5 +163,10 @@ public class AipBulkDeletionService {
     @Autowired
     public void setUserDetails(UserDetails userDetails) {
         this.userDetails = userDetails;
+    }
+
+    @Autowired
+    public void setReingestStore(ReingestStore reingestStore) {
+        this.reingestStore = reingestStore;
     }
 }

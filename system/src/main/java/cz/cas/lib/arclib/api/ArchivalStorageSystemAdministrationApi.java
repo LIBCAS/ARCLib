@@ -12,10 +12,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @Tag(name = "administration of the Archival Storage system",
@@ -62,6 +59,27 @@ public class ArchivalStorageSystemAdministrationApi extends ArchivalStoragePipe 
             @Parameter(description = "all") @RequestParam(value = "all", defaultValue = "false") boolean all,
             HttpServletResponse response, HttpServletRequest request) {
         passToArchivalStorage(response, request, "/administration/cleanup?all=" + all, HttpMethod.POST, "clean up the storage, " + (all ? "including" : "without") + " workspace and processing packages", AccessTokenType.ADMIN);
+    }
+
+    @Operation(summary = "Switches primary storage.",
+            description = "In order to succeed, all storage queues must be empty.")
+    @PostMapping("/config/storage/{id}/primary")
+    public void switchPrimaryStorage(
+            HttpServletResponse response, HttpServletRequest request,
+            @Parameter(description = "ID of new primary storage") @PathVariable(value = "id") String id) {
+        passToArchivalStorage(response, request, "/administration/config/storage/" + id + "/primary", HttpMethod.POST, "switch primary storage to " + id, AccessTokenType.ADMIN);
+    }
+
+    @Operation(summary = "Sets system to read-only mode")
+    @PostMapping("/config/read_only")
+    public void setReadOnly(HttpServletResponse response, HttpServletRequest request) {
+        passToArchivalStorage(response, request, "/administration/config/read_only", HttpMethod.POST, "set readonly mode", AccessTokenType.ADMIN);
+    }
+
+    @Operation(summary = "Sets system to read-write mode")
+    @PostMapping("/config/read_write")
+    public void setReadWrite(HttpServletResponse response, HttpServletRequest request) {
+        passToArchivalStorage(response, request, "/administration/config/read_write", HttpMethod.POST, "set readwrite mode", AccessTokenType.ADMIN);
     }
 
 }

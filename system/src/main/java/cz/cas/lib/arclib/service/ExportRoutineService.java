@@ -25,7 +25,6 @@ import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StreamUtils;
 
-
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.charset.Charset;
@@ -103,10 +102,13 @@ public class ExportRoutineService {
         jobParams.put("aipQueryId", aipQuery.getId());
         jobParams.put("jobId", job.getId());
         job.setParams(jobParams);
-
         jobService.save(job);
-
         exportRoutine.setJob(job);
+
+        if (oldExportRoutine != null && oldExportRoutine.getJob() != null) {
+            jobService.delete(oldExportRoutine.getJob());
+        }
+
         return store.save(exportRoutine);
     }
 
@@ -161,7 +163,7 @@ public class ExportRoutineService {
         store.delete(entity);
 
         log.debug("Canceling export routine job for export routine: " + id + ".");
-        //TODO jobService.delete(entity.getJob());
+        jobService.delete(entity.getJob());
     }
 
 

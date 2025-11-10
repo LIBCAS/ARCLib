@@ -3,6 +3,7 @@ package cz.cas.lib.arclib.api;
 import cz.cas.lib.arclib.domain.profiles.ProducerProfile;
 import cz.cas.lib.arclib.domainbase.exception.BadArgument;
 import cz.cas.lib.arclib.dto.ProducerProfileDto;
+import cz.cas.lib.arclib.exception.ForbiddenException;
 import cz.cas.lib.arclib.security.authorization.permission.Permissions;
 import cz.cas.lib.arclib.service.ProducerProfileService;
 import cz.cas.lib.core.index.dto.Params;
@@ -40,6 +41,10 @@ public class ProducerProfileApi {
     public ProducerProfile save(@Parameter(description = "Id of the instance", required = true) @PathVariable("id") String id,
                                 @Parameter(description = "Single instance", required = true) @RequestBody @Valid ProducerProfile producerProfile) {
         eq(id, producerProfile.getId(), () -> new BadArgument("id"));
+        ProducerProfile entity = service.find(id);
+        if (entity.isReingest()) {
+            throw new ForbiddenException("reingest profiles can't be updated");
+        }
         return service.save(producerProfile);
     }
 
@@ -52,6 +57,10 @@ public class ProducerProfileApi {
     @PreAuthorize("hasAuthority('" + Permissions.PRODUCER_PROFILE_RECORDS_WRITE + "')")
     @RequestMapping(value = "/{id}", method = RequestMethod.DELETE)
     public void delete(@Parameter(description = "Id of the instance", required = true) @PathVariable("id") String id) {
+        ProducerProfile entity = service.find(id);
+        if (entity.isReingest()) {
+            throw new ForbiddenException("reingest profiles are deleted when terminating reingest");
+        }
         service.delete(id);
     }
 

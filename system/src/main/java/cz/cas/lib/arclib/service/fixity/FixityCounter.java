@@ -93,4 +93,8 @@ public abstract class FixityCounter {
         log.trace("digests matches: " + matches);
         return matches;
     }
+
+    public String getDigestInHex(InputStream stream) throws IOException {
+        return bytesToHexString(computeDigest(stream));
+    }
 }

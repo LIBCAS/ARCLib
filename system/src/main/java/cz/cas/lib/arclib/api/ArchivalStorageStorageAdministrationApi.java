@@ -49,21 +49,30 @@ public class ArchivalStorageStorageAdministrationApi extends ArchivalStoragePipe
         passToArchivalStorage(response, request, "/administration/storage/" + id, HttpMethod.GET, "retrieve data of storage with id: " + id, AccessTokenType.ADMIN);
     }
 
-    @Operation(summary = "[Perm.STORAGE_ADMINISTRATION_WRITE]")
+    @Operation(summary = "attaches now storage [Perm.STORAGE_ADMINISTRATION_WRITE]")
     //todo swagger required body
     @PreAuthorize("hasAuthority('" + Permissions.STORAGE_ADMINISTRATION_WRITE + "')")
     @RequestMapping(method = RequestMethod.POST)
-    public void attachStorage(HttpServletResponse response, HttpServletRequest request) {
+    public void attachNewStorage(HttpServletResponse response, HttpServletRequest request) {
         passToArchivalStorage(response, request, "/administration/storage", HttpMethod.POST, "attach new storage", AccessTokenType.ADMIN);
     }
 
-    @Operation(summary = "[Perm.STORAGE_ADMINISTRATION_WRITE]")
+    @Operation(summary = "Attaches existing detached logical storage [Perm.STORAGE_ADMINISTRATION_WRITE]")
+    //todo swagger required body
     @PreAuthorize("hasAuthority('" + Permissions.STORAGE_ADMINISTRATION_WRITE + "')")
-    @RequestMapping(value = "/sync/{id}", method = RequestMethod.POST)
-    public void continueSync(
-            @Parameter(description = "id of the synchronization status entity", required = true) @PathVariable("id") String id,
-            HttpServletResponse response, HttpServletRequest request) {
-        passToArchivalStorage(response, request, "/administration/storage/sync/" + id, HttpMethod.POST, "continue with synchronization with id: " + id + " of storage", AccessTokenType.ADMIN);
+    @RequestMapping(value = "/{id}/attach",method = RequestMethod.POST)
+    public void attachExistingStorage(
+            @Parameter(description = "id of the logical storage", required = true) @PathVariable("id") String id, HttpServletResponse response, HttpServletRequest request) {
+        passToArchivalStorage(response, request, "/administration/storage/"+id+"/attach", HttpMethod.POST, "attach existing logical storage", AccessTokenType.ADMIN);
+    }
+
+    @Operation(summary = "Detaches logical storage [Perm.STORAGE_ADMINISTRATION_WRITE]")
+    //todo swagger required body
+    @PreAuthorize("hasAuthority('" + Permissions.STORAGE_ADMINISTRATION_WRITE + "')")
+    @RequestMapping(value = "/{id}/detach",method = RequestMethod.POST)
+    public void detachStorage(
+            @Parameter(description = "id of the logical storage", required = true) @PathVariable("id") String id, HttpServletResponse response, HttpServletRequest request) {
+        passToArchivalStorage(response, request, "/administration/storage/"+id+"/detach", HttpMethod.POST, "detach logical storage", AccessTokenType.ADMIN);
     }
 
     @Operation(summary = "[Perm.STORAGE_ADMINISTRATION_READ]")

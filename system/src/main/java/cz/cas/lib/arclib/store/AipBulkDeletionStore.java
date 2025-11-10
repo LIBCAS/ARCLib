@@ -4,9 +4,9 @@ import cz.cas.lib.arclib.domain.packages.AipBulkDeletion;
 import cz.cas.lib.arclib.domain.packages.AipBulkDeletionState;
 import cz.cas.lib.arclib.domain.packages.QAipBulkDeletion;
 import cz.cas.lib.arclib.domainbase.store.DatedStore;
+import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Repository;
 
-import jakarta.transaction.Transactional;
 import java.util.List;
 
 @Repository
@@ -35,5 +35,13 @@ public class AipBulkDeletionStore extends DatedStore<AipBulkDeletion, QAipBulkDe
 
         detachAll();
         return fetch;
+    }
+
+    public boolean isAnyRunning() {
+        QAipBulkDeletion q = qObject();
+        return query()
+                .select(q)
+                .where(q.state.eq(AipBulkDeletionState.RUNNING))
+                .fetchCount() > 0;
     }
 }

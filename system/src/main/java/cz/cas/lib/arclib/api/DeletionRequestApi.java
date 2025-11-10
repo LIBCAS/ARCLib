@@ -1,6 +1,7 @@
 package cz.cas.lib.arclib.api;
 
 import cz.cas.lib.arclib.dto.AipDeletionRequestDto;
+import cz.cas.lib.arclib.exception.ReingestInProgressException;
 import cz.cas.lib.arclib.security.authorization.permission.Permissions;
 import cz.cas.lib.arclib.security.user.UserDetails;
 import cz.cas.lib.arclib.service.DeletionRequestService;
@@ -12,7 +13,6 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
-
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -45,7 +45,7 @@ public class DeletionRequestApi {
             @Parameter(description = "AIP id", required = true)
             @PathVariable("aipId") String aipId) {
         checkUUID(aipId);
-        deletionRequestService.createDeletionRequest(aipId,userDetails.getId());
+        deletionRequestService.createDeletionRequest(aipId, userDetails.getId());
     }
 
     @Operation(summary = "Reverts deletion request made by the same user. [Perm.DELETION_REQUESTS_WRITE]")
@@ -81,7 +81,7 @@ public class DeletionRequestApi {
     @RequestMapping(value = "/{id}/acknowledge", method = RequestMethod.POST)
     public void acknowledgeDeletion(
             @Parameter(description = "Deletion request id", required = true)
-            @PathVariable("id") String deletionRequestId) {
+            @PathVariable("id") String deletionRequestId) throws ReingestInProgressException {
         deletionRequestService.acknowledgeDeletion(deletionRequestId);
     }
 

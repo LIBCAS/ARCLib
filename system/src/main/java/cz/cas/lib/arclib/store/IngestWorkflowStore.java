@@ -3,14 +3,18 @@ package cz.cas.lib.arclib.store;
 import cz.cas.lib.arclib.domain.ingestWorkflow.IngestWorkflow;
 import cz.cas.lib.arclib.domain.ingestWorkflow.IngestWorkflowState;
 import cz.cas.lib.arclib.domain.ingestWorkflow.QIngestWorkflow;
-import cz.cas.lib.core.sequence.Generator;
 import cz.cas.lib.arclib.domainbase.store.DatedStore;
+import cz.cas.lib.core.sequence.Generator;
 import lombok.Getter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
-
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Collectors;
+
+import static java.util.Collections.emptyList;
 
 @Repository
 public class IngestWorkflowStore extends DatedStore<IngestWorkflow, QIngestWorkflow> {
@@ -85,6 +89,25 @@ public class IngestWorkflowStore extends DatedStore<IngestWorkflow, QIngestWorkf
 
         detachAll();
         return workflows;
+    }
+
+    public List<IngestWorkflow> findAllInListByExternalIds(List<String> ids) {
+        QIngestWorkflow qObject = qObject();
+        if (ids.isEmpty()) {
+            return emptyList();
+        }
+
+        List<IngestWorkflow> list = query().select(qObject).where(qObject.externalId.in(ids)).fetch();
+
+        detachAll();
+
+        Map<String, IngestWorkflow> map = list.parallelStream()
+                .collect(Collectors.toMap(IngestWorkflow::getExternalId, o -> o));
+
+        return ids.stream()
+                .map(map::get)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
     }
 
     @Autowired

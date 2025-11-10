@@ -15,7 +15,6 @@ import lombok.NonNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
-
 import java.util.List;
 
 @Repository
@@ -99,6 +98,13 @@ public class ProducerProfileStore extends IndexedNamedStore<ProducerProfile, QPr
 
         indexObject.setDebuggingModeActive(obj.isDebuggingModeActive());
         return indexObject;
+    }
+
+    public List<ProducerProfile> getReingestProducerProfiles() {
+        QProducerProfile qP = qObject();
+        List<ProducerProfile> profiles = query().select(qP).where(qP.reingest.isTrue()).fetch();
+        detachAll();
+        return profiles;
     }
 
     @Autowired

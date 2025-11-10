@@ -1,6 +1,5 @@
 package cz.cas.lib.arclib.store;
 
-import cz.cas.lib.arclib.domain.Batch;
 import cz.cas.lib.arclib.domain.IngestRoutine;
 import cz.cas.lib.arclib.domain.QBatch;
 import cz.cas.lib.arclib.domain.QIngestRoutine;
@@ -12,7 +11,23 @@ import java.util.List;
 @Repository
 public class IngestRoutineStore extends NamedStore<IngestRoutine, QIngestRoutine> {
 
-    public IngestRoutineStore() { super(IngestRoutine.class, QIngestRoutine.class); }
+    public IngestRoutineStore() {
+        super(IngestRoutine.class, QIngestRoutine.class);
+    }
+
+    public List<IngestRoutine> getReingestRoutines() {
+        QBatch qBatch = QBatch.batch;
+        QIngestRoutine qR = qObject();
+        List<IngestRoutine> ingestRoutinesFound = query()
+                .select(qR)
+                .where(qR.deleted.isNull())
+                .where(qR.reingest.isTrue())
+                .leftJoin(qR.currentlyProcessingBatches, qBatch)
+                .fetchJoin()
+                .fetch();
+        detachAll();
+        return ingestRoutinesFound;
+    }
 
     public List<IngestRoutine> findByProducerId(String producerId) {
         QIngestRoutine ingestRoutine = qObject();

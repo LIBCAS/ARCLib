@@ -25,7 +25,7 @@ spring:
       write-dates-as-timestamps: false
   liquibase:
     enabled: true
-#    enabled: false
+    #    enabled: false
     changeLog: classpath:/dbchangelog.arclib.xml
   mail:
     host: changeme
@@ -59,6 +59,11 @@ camunda:
       enabled: false
       db-reporter-activate: false
 arclib:
+  reingest:
+    transferAreaKeepFreeMb: 3000
+    workspaceKeepFreeMb: 3000
+    sharedStorage: true
+    exportCron: "0 * * ? * *"
   externalProcess:
     timeout:
       sigterm: 7200
@@ -84,6 +89,7 @@ arclib:
     formatsRevisionNotification: classpath:scripts/formatsRevisionNotification.groovy
     reportNotification: classpath:scripts/reportNotification.groovy
     bpmDefUndeploy: classpath:scripts/bpmDefUndeploy.groovy
+    reingestExport: classpath:scripts/reingestExport.groovy
   cron:
     bpmDefUndeploy: "0 0 23 ? * SUN"
   deleteSipFromTransferArea: true
@@ -151,7 +157,8 @@ formatLibrary:
   formatDetailListUrl: https://www.nationalarchives.gov.uk/PRONOM/Format/proFormatDetailListAction.aspx
   formatListUrl: https://www.nationalarchives.gov.uk/PRONOM/Format/proFormatListAction.aspx
 logging:
-  path: ../logs
+  file:
+    path: ../logs
   level:
     org.apache.solr: WARN
     org.hibernate: WARN

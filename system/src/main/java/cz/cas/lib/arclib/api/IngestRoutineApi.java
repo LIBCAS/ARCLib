@@ -3,6 +3,7 @@ package cz.cas.lib.arclib.api;
 import cz.cas.lib.arclib.domain.IngestRoutine;
 import cz.cas.lib.arclib.domainbase.exception.BadArgument;
 import cz.cas.lib.arclib.dto.IngestRoutineDto;
+import cz.cas.lib.arclib.exception.ForbiddenException;
 import cz.cas.lib.arclib.security.authorization.permission.Permissions;
 import cz.cas.lib.arclib.service.IngestRoutineService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -40,6 +41,10 @@ public class IngestRoutineApi {
     public IngestRoutine save(@Parameter(description = "Id of the instance", required = true) @PathVariable("id") String id,
                               @Parameter(description = "Single instance", required = true) @RequestBody IngestRoutine ingestRoutine) {
         eq(id, ingestRoutine.getId(), () -> new BadArgument("id"));
+        IngestRoutine entity = service.find(id);
+        if (entity.isReingest()) {
+            throw new ForbiddenException("reingest routines can't be updated");
+        }
         return service.save(ingestRoutine);
     }
 
@@ -60,6 +65,10 @@ public class IngestRoutineApi {
     @PreAuthorize("hasAuthority('" + Permissions.INGEST_ROUTINE_RECORDS_WRITE + "')")
     @DeleteMapping(value = "/{id}")
     public void delete(@Parameter(description = "Id of the instance", required = true) @PathVariable("id") String id) {
+        IngestRoutine entity = service.find(id);
+        if (entity.isReingest()) {
+            throw new ForbiddenException("reingest profiles are deleted when terminating reingest");
+        }
         service.delete(id);
     }
 
@@ -69,6 +78,18 @@ public class IngestRoutineApi {
     @GetMapping(value = "/list_dtos")
     public Collection<IngestRoutineDto> listDtos() {
         return service.listIngestRoutineDtos();
+    }
+
+    @Operation(summary = "Runs reingest routine [Perm.REINGEST_ELIGIBILITY]")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Successful response", content = @Content(schema = @Schema(implementation = IngestRoutine.class))),
+            @ApiResponse(responseCode = "400", description = "Specified id does not correspond to the id of the instance"),
+            @ApiResponse(responseCode = "403", description = "Property 'reingest' is false")
+    })
+    @PreAuthorize("hasAuthority('" + Permissions.REINGEST_ELIGIBILITY + "')")
+    @PostMapping(value = "/{id}/run")
+    public void run(@Parameter(description = "Id of the instance", required = true) @PathVariable("id") String id) {
+        service.run(id);
     }
 
     @Autowired

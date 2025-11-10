@@ -80,6 +80,9 @@ public class IngestWorkflow extends DatedObject implements ExportableTable {
 
     /**
      * Dávka
+     *
+     * @implNote might be null when the object (IW) represents XML update from editor
+     * @implNote XML update from editor is not allowed in debug mode thus null batch also implies no debug mode
      */
     @JsonIgnore
     @ManyToOne
@@ -123,6 +126,9 @@ public class IngestWorkflow extends DatedObject implements ExportableTable {
 
     @Column(length = 10485760)
     private String initialConfig;
+
+    @Column(length = 10485760)
+    private String finalConfig;
 
     /**
      * processing time in seconds

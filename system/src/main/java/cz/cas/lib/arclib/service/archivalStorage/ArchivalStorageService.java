@@ -5,6 +5,13 @@ import cz.cas.lib.arclib.domain.Hash;
 import cz.cas.lib.arclib.domain.export.DataReduction;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
+import org.apache.hc.client5.http.classic.HttpClient;
+import org.apache.hc.client5.http.config.ConnectionConfig;
+import org.apache.hc.client5.http.config.RequestConfig;
+import org.apache.hc.client5.http.impl.classic.HttpClientBuilder;
+import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManager;
+import org.apache.hc.core5.http.io.SocketConfig;
+import org.apache.hc.core5.util.Timeout;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
@@ -24,7 +31,6 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
@@ -42,14 +48,32 @@ public class ArchivalStorageService {
     private String readKeypair;
     private String readWriteKeypair;
     private ObjectMapper objectMapper;
-    private final HttpComponentsClientHttpRequestFactory f = new HttpComponentsClientHttpRequestFactory();
+    private final HttpComponentsClientHttpRequestFactory f;
     private final RestTemplate restTemplate = new RestTemplate();
 
     public ArchivalStorageService() {
-        f.setBufferRequestBody(false);
+        ConnectionConfig connectionConfig = ConnectionConfig.custom()
+                .setConnectTimeout(Timeout.DISABLED)
+                .build();
+        SocketConfig socketConfig = SocketConfig.custom()
+                .setSoTimeout(Timeout.DISABLED)
+                .build();
+        RequestConfig requestConfig = RequestConfig.custom()
+                .setConnectionRequestTimeout(Timeout.DISABLED)
+                .build();
+
+        PoolingHttpClientConnectionManager connectionManager = new PoolingHttpClientConnectionManager();
+        connectionManager.setDefaultSocketConfig(socketConfig);
+        connectionManager.setDefaultConnectionConfig(connectionConfig);
+
+        HttpClient httpClient = HttpClientBuilder.create()
+                .setConnectionManager(connectionManager)
+                .setDefaultRequestConfig(requestConfig)
+                .build();
+        f = new HttpComponentsClientHttpRequestFactory(httpClient);
+
 
         SimpleClientHttpRequestFactory f2 = new SimpleClientHttpRequestFactory();
-        f2.setBufferRequestBody(false);
         restTemplate.setRequestFactory(f2);
     }
 
@@ -91,6 +115,24 @@ public class ArchivalStorageService {
             } catch (Exception e) {
                 throw new ArchivalStorageException(e);
             }
+        }
+    }
+
+    /**
+     * Return data (zip part) of specified AIP without rezipping the data thus keeping original checksum
+     *
+     * @param aipId id of the AIP package to export
+     * @return response stream from the archival storage (zip)
+     * @throws ArchivalStorageException in case of any connection error or response with status code other than 2xx
+     */
+    public InputStream exportAipData(String aipId) throws ArchivalStorageException {
+        log.debug("Exporting AIP data of AIP " + aipId);
+        try {
+            ClientHttpRequest request = f.createRequest(toUri(baseEndpoint + "/storage/" + aipId + "/data"), HttpMethod.GET);
+            request.getHeaders().add("Authorization", "Basic " + readWriteKeypair);
+            return executeRequestVerifySuccess(request);
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
         }
     }
 

@@ -3,17 +3,16 @@ package cz.cas.lib.arclib.domain.profiles;
 import cz.cas.lib.arclib.domain.Producer;
 import cz.cas.lib.arclib.domain.ingestWorkflow.WorkflowDefinition;
 import cz.cas.lib.arclib.domainbase.domain.NamedObject;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import org.hibernate.annotations.BatchSize;
-
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotNull;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import org.hibernate.annotations.BatchSize;
 
 /**
  * Profil dodávateľa
@@ -27,8 +26,8 @@ import jakarta.validation.constraints.NotNull;
 @NoArgsConstructor
 public class ProducerProfile extends NamedObject {
 
-    public ProducerProfile(String id){
-        this.id=id;
+    public ProducerProfile(String id) {
+        this.id = id;
     }
 
     /**
@@ -47,14 +46,12 @@ public class ProducerProfile extends NamedObject {
      * Validačný profil
      */
     @ManyToOne
-    @NotNull
     private ValidationProfile validationProfile;
 
     /**
      * SIP profil
      */
     @ManyToOne
-    @NotNull
     private SipProfile sipProfile;
 
     /**
@@ -74,4 +71,9 @@ public class ProducerProfile extends NamedObject {
      * Aktivovaný režim ladenia profilu dodávateľa
      */
     private boolean debuggingModeActive;
+
+    /**
+     * Tento profil byl vytvořen automaticky za účelem reingestu
+     */
+    private boolean reingest;
 }

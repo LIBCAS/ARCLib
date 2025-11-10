@@ -1894,4 +1894,85 @@
             </column>
         </createTable>
     </changeSet>
+    <changeSet id="47" author="tomasek">
+        <sql>
+            -- SUPER_ADMIN
+            INSERT INTO arclib_role_permission (arclib_role_id, perm) VALUES ('b7a43ad5-883f-4741-948b-08678fa38604',
+            'REINGEST_ELIGIBILITY');
+        </sql>
+        <addColumn tableName="arclib_ingest_workflow">
+            <column name="final_config" type="nclob"/>
+        </addColumn>
+        <addColumn tableName="arclib_producer_profile">
+            <column name="reingest" type="boolean" value="false"/>
+        </addColumn>
+    </changeSet>
+    <changeSet id="48" author="tomasek">
+        <createTable tableName="arclib_reingest">
+            <column name="id" type="varchar(255)">
+                <constraints primaryKey="true" primaryKeyName="arclib_reingest_pkey" nullable="false"/>
+            </column>
+            <column name="created" type="datetime"/>
+            <column name="updated" type="datetime"/>
+            <column name="deleted" type="datetime"/>
+            <column name="next_offset" type="int"/>
+            <column name="size" type="int"/>
+            <column name="state" type="varchar(255)"/>
+            <column name="exporter_job_id" type="varchar(255)">
+                <constraints foreignKeyName="arclib_reingest_job_fk"
+                             referencedTableName="uas_job" referencedColumnNames="id"/>
+            </column>
+        </createTable>
+        <createTable tableName="arclib_reingest_item">
+            <column name="id" type="varchar(255)">
+                <constraints primaryKey="true" primaryKeyName="arclib_reingest_item_pkey" nullable="false"/>
+            </column>
+            <column name="reingest_id" type="varchar(255)">
+                <constraints foreignKeyName="arclib_reingest_item_reingest_fk"
+                             referencedTableName="arclib_reingest" referencedColumnNames="id"/>
+            </column>
+            <column name="ingest_workflow_id" type="varchar(255)">
+                <constraints foreignKeyName="arclib_reingest_item_ingest_iw_fk"
+                             referencedTableName="arclib_ingest_workflow" referencedColumnNames="id"/>
+            </column>
+            <column name="producer_profile_id" type="varchar(255)">
+                <constraints foreignKeyName="arclib_reingest_item_ingest_producer_profile_fk"
+                             referencedTableName="arclib_producer_profile" referencedColumnNames="id"/>
+            </column>
+            <column name="config_md5" type="varchar(255)"/>
+        </createTable>
+        <addColumn tableName="arclib_ingest_routine">
+            <column name="reingest" type="boolean" value="false"/>
+        </addColumn>
+        <sql>
+            UPDATE uas_job SET script =
+            'package scripts
+
+            import cz.cas.lib.arclib.service.CoordinatorService
+
+            CoordinatorService coordinatorService = spring.getBean(CoordinatorService.class);
+            coordinatorService.processBatchOfSips(routineId);'
+            WHERE name = 'Ingest routine';
+        </sql>
+        <delete tableName="uas_job_params">
+            <where>key IN ('transferAreaPath','creatorId','workflowConfig','externalId')</where>
+        </delete>
+        <dropNotNullConstraint tableName="arclib_producer_profile" columnName="sip_profile_id"/>
+        <dropNotNullConstraint tableName="arclib_producer_profile" columnName="validation_profile_id"/>
+        <sql>
+            UPDATE arclib_ingest_workflow aiw
+            SET final_config = varConfig.text_
+            FROM act_hi_varinst varId
+            INNER JOIN act_hi_varinst varConfig ON varid.proc_inst_id_ = varConfig.proc_inst_id_
+            WHERE aiw.external_id = varId.text_
+            AND varid.name_ = 'ingestWorkflowExternalId'
+            AND varConfig.name_ = 'latestConfig'
+            AND aiw.processing_state = 'PERSISTED';
+        </sql>
+    </changeSet>
+    <changeSet id="49" author="tomasek">
+        <createIndex tableName="arclib_ingest_workflow" indexName="idx_arclib_ingest_workflow_external_id">
+            <column name="external_id"/>
+        </createIndex>
+    </changeSet>
 </databaseChangeLog>

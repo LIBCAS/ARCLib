@@ -7,10 +7,7 @@ import cz.cas.lib.arclib.domain.ingestWorkflow.WorkflowDefinition;
 import cz.cas.lib.arclib.domain.profiles.ProducerProfile;
 import cz.cas.lib.arclib.domain.profiles.SipProfile;
 import cz.cas.lib.arclib.domain.profiles.ValidationProfile;
-import cz.cas.lib.arclib.domainbase.exception.BadArgument;
-import cz.cas.lib.arclib.domainbase.exception.ForbiddenObject;
-import cz.cas.lib.arclib.domainbase.exception.ForbiddenOperation;
-import cz.cas.lib.arclib.domainbase.exception.MissingObject;
+import cz.cas.lib.arclib.domainbase.exception.*;
 import cz.cas.lib.arclib.dto.ProducerProfileDto;
 import cz.cas.lib.arclib.security.authorization.permission.Permissions;
 import cz.cas.lib.arclib.security.user.UserDetails;
@@ -24,7 +21,6 @@ import cz.cas.lib.core.store.Transactional;
 import lombok.Getter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
 
 import java.util.Collection;
 import java.util.List;
@@ -94,11 +90,13 @@ public class ProducerProfileService implements DelegateAdapter<ProducerProfile> 
             throw new ForbiddenObject(ProducerProfile.class, producerProfile.getId());
         }
 
+        notNull(producerProfile.getSipProfile(), () -> new MissingAttribute(ProducerProfile.class, "sipProfile"));
         SipProfile sipProfileFound = sipProfileStore.find(producerProfile.getSipProfile().getId());
         notNull(sipProfileFound, () -> new MissingObject(SipProfile.class, producerProfile.getSipProfile().getId()));
         notNull(sipProfileFound.getProducer(), () -> new MissingObject(SipProfile.class, "SIP profile of Producer Profile does not have producer"));
         eq(sipProfileFound.getProducer(), producerProfile.getProducer(), () -> new BadArgument("Producer of SIP Profile is different than Producer of ProducerProfile"));
 
+        notNull(producerProfile.getValidationProfile(), () -> new MissingAttribute(ProducerProfile.class, "validationProfile"));
         ValidationProfile validationProfileFound = validationProfileStore.find(producerProfile.getValidationProfile().getId());
         notNull(validationProfileFound, () -> new MissingObject(ValidationProfile.class, producerProfile.getValidationProfile().getId()));
         notNull(validationProfileFound.getProducer(), () -> new MissingObject(ValidationProfile.class, "Validation profile of Producer Profile does not have producer"));
@@ -115,10 +113,10 @@ public class ProducerProfileService implements DelegateAdapter<ProducerProfile> 
             ProducerProfile preUpdateProducerProfile = delegate.find(producerProfile.getId());
             if (preUpdateProducerProfile != null) {
                 eq(preUpdateProducerProfile.getSipProfile().getId(), producerProfile.getSipProfile().getId(),
-                   () -> new ForbiddenOperation("Cannot change SIP profile of Producer Profile because NEW/PROCESSING/PROCESSED Ingest Workflow related to Producer Profile exits (IW:" + workflowsRelatedToProducerProfile.get(0) + ")")
+                        () -> new ForbiddenOperation("Cannot change SIP profile of Producer Profile because NEW/PROCESSING/PROCESSED Ingest Workflow related to Producer Profile exits (IW:" + workflowsRelatedToProducerProfile.get(0) + ")")
                 );
                 eq(preUpdateProducerProfile.getValidationProfile().getId(), producerProfile.getValidationProfile().getId(),
-                   () -> new ForbiddenOperation("Cannot change Validation profile of Producer Profile because NEW/PROCESSING/PROCESSED Ingest Workflow related to Producer Profile exits (IW:" + workflowsRelatedToProducerProfile.get(0) + ")")
+                        () -> new ForbiddenOperation("Cannot change Validation profile of Producer Profile because NEW/PROCESSING/PROCESSED Ingest Workflow related to Producer Profile exits (IW:" + workflowsRelatedToProducerProfile.get(0) + ")")
                 );
             }
         }
@@ -176,6 +174,13 @@ public class ProducerProfileService implements DelegateAdapter<ProducerProfile> 
 
     public ProducerProfile findWithDeletedFilteringOff(String id) {
         return delegate.findWithDeletedFilteringOff(id);
+    }
+
+    public void deleteReindexProfiles() {
+        List<ProducerProfile> profiles = delegate.getReingestProducerProfiles();
+        for (ProducerProfile profile : profiles) {
+            delegate.delete(profile);
+        }
     }
 
     @Autowired

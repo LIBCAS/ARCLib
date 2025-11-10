@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import cz.cas.lib.arclib.domain.profiles.ProducerProfile;
 import cz.cas.lib.arclib.domainbase.domain.NamedObject;
 import cz.cas.lib.core.scheduling.job.Job;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -12,7 +13,6 @@ import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Fetch;
 import org.hibernate.annotations.FetchMode;
 
-import jakarta.persistence.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -71,4 +71,8 @@ public class IngestRoutine extends NamedObject {
      */
     private boolean auto;
 
+    /**
+     * Tato rutina byla vytvořena za účelem reingestu
+     */
+    private boolean reingest;
 }

@@ -4,8 +4,10 @@ import com.fasterxml.jackson.databind.JsonNode;
 import cz.cas.lib.arclib.domain.IngestToolFunction;
 import cz.cas.lib.arclib.domain.ingestWorkflow.IngestEvent;
 import cz.cas.lib.arclib.domain.profiles.ProducerProfile;
+import cz.cas.lib.arclib.domain.profiles.ValidationProfile;
 import cz.cas.lib.arclib.service.validator.Validator;
 import cz.cas.lib.arclib.store.ProducerProfileStore;
+import cz.cas.lib.arclib.store.ValidationProfileStore;
 import cz.cas.lib.arclib.utils.ArclibUtils;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -33,6 +35,7 @@ public class ValidatorDelegate extends ArclibDelegate {
 
     protected Validator service;
     private ProducerProfileStore producerProfileStore;
+    private ValidationProfileStore validationProfileStore;
 
 
     /**
@@ -47,12 +50,20 @@ public class ValidatorDelegate extends ArclibDelegate {
         JsonNode configRoot = getConfigRoot(execution);
         String validationProfileExternalId;
         JsonNode validationProfileConfigEntry = configRoot.at("/" + VALIDATION_PROFILE_CONFIG_ENTRY);
+        ProducerProfile producerProfile = producerProfileStore.findByExternalId(getProducerProfileExternalId(execution));
         if (validationProfileConfigEntry.isMissingNode()) {
-            String producerProfileExternalId = getProducerProfileExternalId(execution);
-            ProducerProfile producerProfile = producerProfileStore.findByExternalId(producerProfileExternalId);
             validationProfileExternalId = producerProfile.getValidationProfile().getExternalId();
         } else {
             validationProfileExternalId = validationProfileConfigEntry.textValue();
+            boolean overriddenProfile = producerProfile.getValidationProfile() == null ||
+                    !validationProfileExternalId.equals(producerProfile.getValidationProfile().getExternalId());
+            if (!isInDebugMode(execution) && overriddenProfile) {
+                ValidationProfile vp = validationProfileStore.findByExternalId(validationProfileExternalId);
+                if (vp.isEditable()) {
+                    vp.setEditable(false);
+                    validationProfileStore.save(vp);
+                }
+            }
         }
 
         String externalId = getStringVariable(execution, BpmConstants.ProcessVariables.ingestWorkflowExternalId);
@@ -85,5 +96,10 @@ public class ValidatorDelegate extends ArclibDelegate {
     @Autowired
     public void setService(Validator service) {
         this.service = service;
+    }
+
+    @Autowired
+    public void setValidationProfileStore(ValidationProfileStore validationProfileStore) {
+        this.validationProfileStore = validationProfileStore;
     }
 }

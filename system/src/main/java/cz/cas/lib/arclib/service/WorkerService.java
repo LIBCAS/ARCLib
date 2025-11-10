@@ -1,5 +1,8 @@
 package cz.cas.lib.arclib.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import cz.cas.lib.arclib.domain.*;
 import cz.cas.lib.arclib.domain.ingestWorkflow.IngestWorkflow;
 import cz.cas.lib.arclib.domain.ingestWorkflow.IngestWorkflowFailureInfo;
@@ -18,9 +21,13 @@ import cz.cas.lib.arclib.dto.JmsDto;
 import cz.cas.lib.arclib.dto.SipCopyInWorkspaceDto;
 import cz.cas.lib.arclib.exception.AuthorialPackageLockedException;
 import cz.cas.lib.arclib.exception.InvalidChecksumException;
+import cz.cas.lib.arclib.exception.ReingestInProgressException;
 import cz.cas.lib.arclib.service.fixity.FixityCounterFacade;
 import cz.cas.lib.arclib.store.AuthorialPackageStore;
+import cz.cas.lib.arclib.store.ReingestStore;
+import cz.cas.lib.arclib.store.SipProfileStore;
 import cz.cas.lib.arclib.store.SipStore;
+import cz.cas.lib.arclib.utils.JsonUtils;
 import cz.cas.lib.arclib.utils.XmlUtils;
 import cz.cas.lib.arclib.utils.ZipUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -45,10 +52,13 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.Instant;
 import java.util.*;
 
+import static cz.cas.lib.arclib.bpm.ArclibXmlExtractorDelegate.SIP_PROFILE_CONFIG_ENTRY;
 import static cz.cas.lib.arclib.bpm.BpmConstants.*;
+import static cz.cas.lib.arclib.service.ExportInfoFileService.EXPORT_INFO_FILE_NAME;
 import static cz.cas.lib.arclib.utils.ArclibUtils.*;
 import static cz.cas.lib.core.util.Utils.*;
 
@@ -69,6 +79,9 @@ public class WorkerService {
     private TransactionTemplate transactionTemplate;
     private ExportInfoFileService exportInfoFileService;
     private FixityCounterFacade fixityCounterFacade;
+    private ReingestStore reingestStore;
+    private SipProfileStore sipProfileStore;
+    private ObjectMapper objectMapper;
 
     private int aipSavedCheckAttempts;
     private String aipSavedCheckAttemptsInterval;
@@ -120,6 +133,8 @@ public class WorkerService {
                     log.info("State of ingest workflow with external id " + externalId + " changed to PROCESSING.");
                 } catch (IOException e) {
                     throw new UncheckedIOException(e);
+                } catch (ReingestInProgressException e) {
+                    throw new RuntimeException(e);
                 }
                 return null;
             });
@@ -151,16 +166,21 @@ public class WorkerService {
      * @throws MissingObject if incident can't be found by id
      */
     @JmsListener(destination = "incident")
-    public void solveIncident(SolveIncidentDto incidentDto) {
+    public void solveIncident(SolveIncidentDto incidentDto) throws JsonProcessingException {
         log.info("Trying to solve incident with ID " + incidentDto.getIncidentId() + " using config " + incidentDto.getConfig() + ".");
         Incident i = runtimeService
                 .createIncidentQuery()
                 .incidentId(incidentDto.getIncidentId())
                 .singleResult();
         notNull(i, (() -> new MissingObject(Incident.class, incidentDto.getIncidentId())));
+
         String configUsedWhenIncidentOccurred = (String) runtimeService.getVariable(i.getProcessInstanceId(), ProcessVariables.latestConfig);
+        JsonNode oldCfg = objectMapper.readTree(configUsedWhenIncidentOccurred);
+        JsonNode newCfg = objectMapper.readTree(incidentDto.getConfig());
+        String mergedCfg = objectMapper.writeValueAsString(JsonUtils.merge(oldCfg, newCfg));
+
         runtimeService.setVariable(i.getProcessInstanceId(), toIncidentConfigVariableName(i.getId()), configUsedWhenIncidentOccurred);
-        runtimeService.setVariable(i.getProcessInstanceId(), ProcessVariables.latestConfig, incidentDto.getConfig());
+        runtimeService.setVariable(i.getProcessInstanceId(), ProcessVariables.latestConfig, mergedCfg);
         managementService.setJobRetries(i.getConfiguration(), 1);
     }
 
@@ -175,13 +195,20 @@ public class WorkerService {
      * @param userId         id of the user that triggered the ingest workflow processing
      * @throws IOException SIP package does not exist in temporary area or in workspace
      */
-    private void processIngestWorkflow(IngestWorkflow ingestWorkflow, String userId) throws IOException {
+    private void processIngestWorkflow(IngestWorkflow ingestWorkflow, String userId) throws IOException, ReingestInProgressException {
         log.debug("Start of processing of ingest workflow:" + ingestWorkflow.getId() + " of user:" + userId);
         Batch batch = ingestWorkflow.getBatch();
 
         ProducerProfile producerProfile = batch.getProducerProfile();
         notNull(producerProfile, () -> new IllegalArgumentException("null producer profile of batch ID " + batch.getId()));
-        SipProfile sipProfile = producerProfile.getSipProfile();
+
+        SipProfile sipProfile;
+        if (ingestWorkflow.getProducerProfile().isReingest()) {
+            JsonNode configRoot = objectMapper.readTree(ingestWorkflow.getInitialConfig());
+            sipProfile = sipProfileStore.findByExternalId(configRoot.at("/" + SIP_PROFILE_CONFIG_ENTRY).textValue());
+        } else {
+            sipProfile = producerProfile.getSipProfile();
+        }
         notNull(sipProfile, () -> new IllegalArgumentException("null sip profile of producer profile with external id " + producerProfile.getExternalId()));
 
         Path pathToSip = ingestWorkflow.getBatch().getIngestRoutine() != null && ingestWorkflow.getBatch().getIngestRoutine().isAuto()
@@ -200,21 +227,21 @@ public class WorkerService {
             if (existingAuthorialPackage == null) {
                 throw new MissingObject(AuthorialPackage.class, providedAuthorialPackageUuid);
             }
-            extractedAuthorialId = extractAuthorialId(ingestWorkflow, sipFolderWorkspacePath, producerProfile.getSipProfile(), false);
+            extractedAuthorialId = extractAuthorialId(ingestWorkflow, sipFolderWorkspacePath, sipProfile, false);
             if (extractedAuthorialId == null) {
                 extractedAuthorialId = existingAuthorialPackage.getAuthorialId();
             } else {
                 AuthorialPackage authorialPackageWithExtractedId = authorialPackageStore.findByAuthorialIdAndProducerId(extractedAuthorialId, producerProfile.getProducer().getId());
                 if (authorialPackageWithExtractedId != null && !authorialPackageWithExtractedId.equals(existingAuthorialPackage)) {
                     throw new ConflictException("tried to link incoming SIP with authorial package: " + providedAuthorialPackageUuid +
-                            "while updating its authorial ID to the extracted ID: " + extractedAuthorialId + " but there already is another" +
-                            "authorial package with that authorial ID: " + authorialPackageWithExtractedId.getId());
+                            " while updating its authorial ID to the extracted ID: " + extractedAuthorialId + " but there already is another" +
+                            " authorial package with that authorial ID: " + authorialPackageWithExtractedId.getId());
                 }
             }
-            createSipAndAuthorialPackages(ingestWorkflow, userId, existingAuthorialPackage.getAuthorialId(), false);
+            createSipAndAuthorialPackages(ingestWorkflow, userId, existingAuthorialPackage.getAuthorialId());
         } else {
-            extractedAuthorialId = extractAuthorialId(ingestWorkflow, sipFolderWorkspacePath, producerProfile.getSipProfile(), true);
-            createSipAndAuthorialPackages(ingestWorkflow, userId, extractedAuthorialId, true);
+            extractedAuthorialId = extractAuthorialId(ingestWorkflow, sipFolderWorkspacePath, sipProfile, true);
+            createSipAndAuthorialPackages(ingestWorkflow, userId, extractedAuthorialId);
         }
 
         Map<String, Object> initVars = new HashMap<>();
@@ -254,24 +281,22 @@ public class WorkerService {
      * level of versioning. In case the extracted authorial id in combination with the producer profile id matches an existing
      * authorial package in database, the versioning is triggered, otherwise new authorial package is created:
      * <p>
-     * a) The xml versioning is performed if: <i>xmlVersioningAllowed=true</i> AND the SIP with the highest version number from the SIPs belonging
-     * the authorial package has the same checksum as the checksum of the incoming SIP.
+     * a) The xml versioning is performed if the SIP with the highest version number from the SIPs belonging
+     * the authorial package has the same checksum as the checksum of the SIP in transfer area.
      * <p>
      * b) The sip versioning is performed if: <i>xmlVersioningAllowed=false</i> OR the SIP with the highest version number from the SIPs belonging
      * the authorial package has a different checksum as the checksum of the incoming SIP.
      *
-     * @param ingestWorkflow       ingest workflow
-     * @param userId               id of related user
-     * @param linkingAuthorialId   new authorial ID extracted from SIP metadata or existing authorial id of related package (extracted from SIP metadata or provided)
-     * @param xmlVersioningAllowed flag indicating whether XML versioning is allowed
+     * @param ingestWorkflow     ingest workflow
+     * @param userId             id of related user
+     * @param linkingAuthorialId new authorial ID extracted from SIP metadata or existing authorial id of related package (extracted from SIP metadata or provided)
      * @throws AuthorialPackageLockedException if the authorial package is locked
      */
-    private void createSipAndAuthorialPackages(IngestWorkflow ingestWorkflow, String userId, String linkingAuthorialId, boolean xmlVersioningAllowed) throws IOException {
+    private void createSipAndAuthorialPackages(IngestWorkflow ingestWorkflow, String userId, String linkingAuthorialId) throws IOException, ReingestInProgressException {
         ProducerProfile producerProfile = ingestWorkflow.getBatch().getProducerProfile();
 
         AuthorialPackage authorialPackage = authorialPackageStore.findByAuthorialIdAndProducerId(linkingAuthorialId, producerProfile.getProducer().getId());
         if (authorialPackage != null) {
-            aipService.activateLock(authorialPackage.getId(), false, userId);
 
             List<IngestWorkflow> workflowsByAuthorialPackageId = ingestWorkflowService.findByAuthorialPackageId(authorialPackage.getId());
             Optional<Sip> highestVersionNumberPersistedSip = workflowsByAuthorialPackageId.stream()
@@ -280,33 +305,41 @@ public class WorkerService {
                     .distinct()
                     .max(Comparator.comparing(Sip::getVersionNumber));
 
-            if (highestVersionNumberPersistedSip.isPresent()) {
-                Optional<IngestWorkflow> highestVersionNumberIngestWorkflow = workflowsByAuthorialPackageId.stream()
-                        .filter(i -> i.getSip().getId().equals(highestVersionNumberPersistedSip.get().getId()))
-                        .filter(i -> i.getProcessingState().equals(IngestWorkflowState.PERSISTED))
-                        .filter(i -> i.getDeleted() == null)
-                        .max(Comparator.comparing(IngestWorkflow::getXmlVersionNumber));
-                ingestWorkflow.setRelatedWorkflow(highestVersionNumberIngestWorkflow.get());
-
-                boolean creatingDebugVersionOfProperIngest = producerProfile.isDebuggingModeActive() && !ingestWorkflow.getRelatedWorkflow().wasIngestedInDebugMode();
-                boolean creatingProperVersionOfDebugIngest = !producerProfile.isDebuggingModeActive() && ingestWorkflow.getRelatedWorkflow().wasIngestedInDebugMode();
-                if (creatingDebugVersionOfProperIngest || creatingProperVersionOfDebugIngest) {
-                    throw new IllegalArgumentException("Can't continue with ingest of authorial package: " + authorialPackage.getAuthorialId() + " with debug mode set to: " + producerProfile.isDebuggingModeActive() + " because this package was already ingested before with debug mode set to: " + ingestWorkflow.getRelatedWorkflow().getBatch().isDebuggingModeActive() + " and resulted in AIP: " + ingestWorkflow.getRelatedWorkflow().getSip().getId()
-                            + ". Debug and proper ingests can't mix. There are three options how to solve this problem:" +
-                            " 1) change the debuggingModeActive property of the related producer profile: " + producerProfile.getExternalId() +
-                            " 2) if the previous ingest was done in debug mode, use FORGET feature, or ask administrator to do so" +
-                            " 3) edit the authorial id element of the package that has to be ingested to different value than current: " + authorialPackage.getAuthorialId()
-                    );
-                }
-
-                if (xmlVersioningAllowed && highestVersionNumberPersistedSip.get().getHashes().stream()
-                        .anyMatch(hash -> hash.getHashValue().equals(ingestWorkflow.getHash().getHashValue()))) {
-                    xmlVersioning(ingestWorkflow, highestVersionNumberPersistedSip.get(), highestVersionNumberIngestWorkflow.get());
-                } else {
-                    sipVersioning(ingestWorkflow, authorialPackage, highestVersionNumberPersistedSip.get());
-                }
-            } else {
+            if (highestVersionNumberPersistedSip.isEmpty()) {
+                aipService.activateLock(authorialPackage.getId(), false, userId);
                 noVersioning(authorialPackage, ingestWorkflow);
+                return;
+            }
+
+            if (!ingestWorkflow.getBatch().getProducerProfile().isReingest() && reingestStore.getCurrent() != null) {
+                //forbid versioning of other ingests than reingest, if reingest is running
+                throw new ReingestInProgressException("versioning is not allowed while reingest is running");
+            }
+
+            aipService.activateLock(authorialPackage.getId(), false, userId);
+            Optional<IngestWorkflow> highestVersionNumberIngestWorkflow = workflowsByAuthorialPackageId.stream()
+                    .filter(i -> i.getSip().getId().equals(highestVersionNumberPersistedSip.get().getId()))
+                    .filter(i -> i.getProcessingState().equals(IngestWorkflowState.PERSISTED))
+                    .filter(i -> i.getDeleted() == null)
+                    .max(Comparator.comparing(IngestWorkflow::getXmlVersionNumber));
+            ingestWorkflow.setRelatedWorkflow(highestVersionNumberIngestWorkflow.get());
+
+            boolean creatingDebugVersionOfProperIngest = producerProfile.isDebuggingModeActive() && !ingestWorkflow.getRelatedWorkflow().wasIngestedInDebugMode();
+            boolean creatingProperVersionOfDebugIngest = !producerProfile.isDebuggingModeActive() && ingestWorkflow.getRelatedWorkflow().wasIngestedInDebugMode();
+            if (creatingDebugVersionOfProperIngest || creatingProperVersionOfDebugIngest) {
+                throw new IllegalArgumentException("Can't continue with ingest of authorial package: " + authorialPackage.getAuthorialId() + " with debug mode set to: " + producerProfile.isDebuggingModeActive() + " because this package was already ingested before with debug mode set to: " + !producerProfile.isDebuggingModeActive() + " and resulted in AIP: " + ingestWorkflow.getRelatedWorkflow().getSip().getId()
+                        + ". Debug and proper ingests can't mix. There are three options how to solve this problem:" +
+                        " 1) change the debuggingModeActive property of the related producer profile: " + producerProfile.getExternalId() +
+                        " 2) if the previous ingest was done in debug mode, use FORGET feature, or ask administrator to do so" +
+                        " 3) edit the authorial id element of the package that has to be ingested to different value than current: " + authorialPackage.getAuthorialId()
+                );
+            }
+
+            if (highestVersionNumberPersistedSip.get().getHashes().stream()
+                    .anyMatch(hash -> hash.getHashValue().equals(ingestWorkflow.getHash().getHashValue()))) {
+                xmlVersioning(ingestWorkflow, highestVersionNumberPersistedSip.get(), highestVersionNumberIngestWorkflow.get());
+            } else {
+                sipVersioning(ingestWorkflow, authorialPackage, highestVersionNumberPersistedSip.get());
             }
         } else {
             authorialPackage = new AuthorialPackage();
@@ -437,20 +470,32 @@ public class WorkerService {
                     ingestWorkflow.getFileName()), ingestWorkflow);
             log.debug("Zip archive with SIP content for ingest workflow external id " + ingestWorkflow.getExternalId() + " has been copied to workspace at path " + destinationSipZipPath + ".");
         } catch (IOException e) {
-            throw new GeneralException("Unable to find SIP at path: " + sourceSipFilePath.toAbsolutePath().toString() + " or access the destination path: " + destinationSipZipPath.toAbsolutePath().toString(), e);
+            throw new GeneralException("Unable to find SIP at path: " + sourceSipFilePath.toAbsolutePath() + " or access the destination path: " + destinationSipZipPath.toAbsolutePath(), e);
         }
 
         //unzip the zip content in workspace
         String rootFolderName = ZipUtils.unzipSip(destinationSipZipPath, destinationIngestWorkflowPath, ingestWorkflow.getExternalId());
 
+        SipCopyInWorkspaceDto sipTransferResultDto = new SipCopyInWorkspaceDto();
+        sipTransferResultDto.setRootFolderName(rootFolderName);
         Map<String, String> parsedInfoFile = new HashMap<>();
-        Path arclibExportInfoFile = destinationIngestWorkflowPath.resolve(rootFolderName).resolve(ExportInfoFileService.EXPORT_INFO_FILE_NAME);
+
+        //export info file might be filled within the SIP ZIP (which implies no XML versioning since hash of that SIP != hash of the AIP data [because of that added file])
+        Path arclibExportInfoFile = destinationIngestWorkflowPath.resolve(rootFolderName).resolve(EXPORT_INFO_FILE_NAME);
         if (arclibExportInfoFile.toFile().isFile()) {
             parsedInfoFile = exportInfoFileService.parse(arclibExportInfoFile);
             arclibExportInfoFile.toFile().delete();
         }
 
-        return new SipCopyInWorkspaceDto(rootFolderName, parsedInfoFile);
+        //reingest uses linkage file outside of the SIP ZIP so that XML versioning is allowed
+        if (ingestWorkflow.getProducerProfile().isReingest()) {
+            Path reingestExportInfo = Paths.get(ingestWorkflow.getBatch().getTransferAreaPath(), ingestWorkflow.getFileName() + "." + EXPORT_INFO_FILE_NAME);
+            parsedInfoFile = exportInfoFileService.parse(reingestExportInfo);
+        }
+
+        sipTransferResultDto.setExportInfo(parsedInfoFile);
+
+        return sipTransferResultDto;
     }
 
     /**
@@ -556,7 +601,7 @@ public class WorkerService {
 
     @Autowired
     public void setaipSavedCheckAttempts(@Value("${arclib.aipSavedCheckAttempts}")
-                                                 int aipSavedCheckAttempts) {
+                                         int aipSavedCheckAttempts) {
         this.aipSavedCheckAttempts = aipSavedCheckAttempts;
     }
 
@@ -593,5 +638,20 @@ public class WorkerService {
     @Autowired
     public void setFixityCounterFacade(FixityCounterFacade fixityCounterFacade) {
         this.fixityCounterFacade = fixityCounterFacade;
+    }
+
+    @Autowired
+    public void setReingestStore(ReingestStore reingestStore) {
+        this.reingestStore = reingestStore;
+    }
+
+    @Autowired
+    public void setSipProfileStore(SipProfileStore sipProfileStore) {
+        this.sipProfileStore = sipProfileStore;
+    }
+
+    @Autowired
+    public void setObjectMapper(ObjectMapper objectMapper) {
+        this.objectMapper = objectMapper;
     }
 }

@@ -7,16 +7,17 @@ import cz.cas.lib.arclib.domainbase.exception.MissingObject;
 import cz.cas.lib.arclib.dto.AipDeletionRequestDto;
 import cz.cas.lib.arclib.exception.AipStateChangeException;
 import cz.cas.lib.arclib.exception.ForbiddenException;
+import cz.cas.lib.arclib.exception.ReingestInProgressException;
 import cz.cas.lib.arclib.index.solr.arclibxml.IndexedAipState;
 import cz.cas.lib.arclib.mail.ArclibMailCenter;
 import cz.cas.lib.arclib.security.authorization.permission.Permissions;
 import cz.cas.lib.arclib.security.user.UserDetails;
 import cz.cas.lib.arclib.store.AipDeletionRequestStore;
+import cz.cas.lib.arclib.store.ReingestStore;
 import cz.cas.lib.core.store.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
 
 import java.io.IOException;
 import java.time.Instant;
@@ -36,6 +37,7 @@ public class DeletionRequestService {
     private ArclibMailCenter arclibMailCenter;
     private BeanMappingService beanMappingService;
     private AipService aipService;
+    private ReingestStore reingestStore;
 
     /**
      * Create request for deletion for AIP.
@@ -117,7 +119,7 @@ public class DeletionRequestService {
      * @param deletionRequestId id of the deletion request to acknowledge
      */
     @Transactional
-    public void acknowledgeDeletion(String deletionRequestId) {
+    public void acknowledgeDeletion(String deletionRequestId) throws ReingestInProgressException {
         AipDeletionRequest deletionRequest = aipDeletionRequestStore.find(deletionRequestId);
         notNull(deletionRequest, () -> new MissingObject(AipDeletionRequest.class, deletionRequestId));
 
@@ -142,6 +144,9 @@ public class DeletionRequestService {
                     + deletionRequest.getId() + ".");
 
         } else if (confirmer2 == null) {
+            if (reingestStore.getCurrent() != null) {
+                throw new ReingestInProgressException("deletion not allowed when reingest is running");
+            }
             deletionRequest.setConfirmer2(new User(userDetails.getId()));
             deletionRequest.setDeleted(Instant.now());
             aipDeletionRequestStore.save(deletionRequest);
@@ -213,5 +218,10 @@ public class DeletionRequestService {
     @Autowired
     public void setAipService(AipService aipService) {
         this.aipService = aipService;
+    }
+
+    @Autowired
+    public void setReingestStore(ReingestStore reingestStore) {
+        this.reingestStore = reingestStore;
     }
 }

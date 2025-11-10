@@ -3,7 +3,9 @@ package cz.cas.lib.arclib.bpm;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import cz.cas.lib.arclib.domain.Hash;
+import cz.cas.lib.arclib.domain.VersioningLevel;
 import cz.cas.lib.arclib.domain.ingestWorkflow.IngestEvent;
+import cz.cas.lib.arclib.domain.ingestWorkflow.IngestWorkflow;
 import cz.cas.lib.arclib.domain.packages.Sip;
 import cz.cas.lib.arclib.exception.bpm.ConfigParserException;
 import cz.cas.lib.arclib.service.archivalStorage.ArchivalStorageException;
@@ -55,10 +57,13 @@ public class SipMergerDelegate extends ArclibDelegate {
 
     @Override
     public void executeArclibDelegate(DelegateExecution execution) throws TransformerException, IOException, ParserConfigurationException, SAXException, DocumentException, ArchivalStorageException, ConfigParserException {
-        String sipId = getStringVariable(execution, BpmConstants.ProcessVariables.sipId);
-        Sip sip = sipStore.find(sipId);
-        Sip previousVersionSip = sip.getPreviousVersionSip();
-        if (previousVersionSip != null) {
+
+        IngestWorkflow iw = ingestWorkflowService.findByExternalId(getIngestWorkflowExternalId(execution));
+
+        if (iw.getVersioningLevel() == VersioningLevel.SIP_PACKAGE_VERSIONING) {
+            String sipId = getStringVariable(execution, BpmConstants.ProcessVariables.sipId);
+            Sip sip = sipStore.find(sipId);
+            Sip previousVersionSip = sip.getPreviousVersionSip();
             Path sipUnpackedInWorkspace = getSipFolderWorkspacePath(execution);
             Path previousVersionAipUnpackedInWorkspace = sipUnpackedInWorkspace.resolveSibling("previous_version");
             if (previousVersionAipUnpackedInWorkspace.toFile().exists()) {
@@ -167,10 +172,10 @@ public class SipMergerDelegate extends ArclibDelegate {
             Files.move(mergedZipInWorkspace, sipZipInWorkspace, StandardCopyOption.REPLACE_EXISTING);
             FileUtils.deleteDirectory(previousVersionAipUnpackedInWorkspace.toFile());
         } else {
-            log.info("there is no previous version of this ({}) SIP, nothing to merge, finishing with no action", sip.getId());
+            log.info("SIP merger supported only for SIP versioning, which is not case of ingest workflow {}, finishing with no action", iw.getExternalId());
         }
 
-        ingestEventStore.save(new IngestEvent(ingestWorkflowService.findByExternalId(getIngestWorkflowExternalId(execution)), toolService.getByNameAndVersion(getToolName(), getToolVersion()), true, null));
+        ingestEventStore.save(new IngestEvent(iw, toolService.getByNameAndVersion(getToolName(), getToolVersion()), true, null));
     }
 
     private static class MoveSpec {

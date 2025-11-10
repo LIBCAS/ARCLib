@@ -2,7 +2,7 @@ package cz.cas.lib.arclib.api;
 
 import cz.cas.lib.arclib.dto.AipBulkDeletionCreateDto;
 import cz.cas.lib.arclib.dto.AipBulkDeletionDto;
-import cz.cas.lib.arclib.exception.AipStateChangeException;
+import cz.cas.lib.arclib.exception.ReingestInProgressException;
 import cz.cas.lib.arclib.security.authorization.permission.Permissions;
 import cz.cas.lib.arclib.service.AipBulkDeletionService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -21,8 +21,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
-import javax.inject.Inject;
-import java.io.IOException;
 import java.util.Collection;
 
 @RestController
@@ -39,7 +37,7 @@ public class AipBulkDeletionApi {
             @ApiResponse(responseCode = "200", description = "Successful response")})
     @PreAuthorize("hasAuthority('" + Permissions.AIP_BULK_DELETIONS_WRITE + "')")
     @RequestMapping(method = RequestMethod.POST)
-    public void bulkDelete(@Parameter(description = "Single instance", required = true) @RequestBody AipBulkDeletionCreateDto request) throws IOException, AipStateChangeException {
+    public void bulkDelete(@Parameter(description = "Single instance", required = true) @RequestBody AipBulkDeletionCreateDto request) throws ReingestInProgressException {
         service.bulkDelete(request);
     }
 

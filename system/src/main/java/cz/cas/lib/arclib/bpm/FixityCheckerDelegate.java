@@ -14,12 +14,12 @@ import cz.cas.lib.arclib.service.fixity.CommonChecksumFilesChecker;
 import cz.cas.lib.arclib.service.fixity.FixityCheckMethod;
 import cz.cas.lib.arclib.service.fixity.MetsFixityChecker;
 import cz.cas.lib.arclib.store.ProducerProfileStore;
+import cz.cas.lib.arclib.store.SipProfileStore;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.camunda.bpm.engine.delegate.DelegateExecution;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
 
 import java.io.File;
 import java.io.IOException;
@@ -47,6 +47,7 @@ public class FixityCheckerDelegate extends ArclibDelegate {
     private BagitFixityChecker bagitFixityVerifier;
     private CommonChecksumFilesChecker commonChecksumFilesChecker;
     private SipProfileService sipProfileService;
+    private SipProfileStore sipProfileStore;
     private ProducerProfileStore producerProfileStore;
     @Getter
     private String toolName = "ARCLib_" + IngestToolFunction.fixity_check;
@@ -83,20 +84,24 @@ public class FixityCheckerDelegate extends ArclibDelegate {
         for (FixityCheckMethod requestedCheckMethod : requestedCheckMethods) {
             switch (requestedCheckMethod) {
                 case METS:
-                    String sipProfileExternalId;
+                    SipProfile sipProfile;
                     JsonNode sipProfileConfigEntry = config.at("/" + SIP_PROFILE_CONFIG_ENTRY);
+                    ProducerProfile producerProfile = producerProfileStore.findByExternalId(getProducerProfileExternalId(execution));
                     if (sipProfileConfigEntry.isMissingNode()) {
-                        String producerProfileExternalId = getProducerProfileExternalId(execution);
-                        ProducerProfile producerProfile = producerProfileStore.findByExternalId(producerProfileExternalId);
-                        sipProfileExternalId = producerProfile.getSipProfile().getExternalId();
+                        sipProfile = sipProfileService.findByExternalId(producerProfile.getSipProfile().getExternalId());
                     } else {
-                        sipProfileExternalId = sipProfileConfigEntry.textValue();
+                        String sipProfileExternalId = sipProfileConfigEntry.textValue();
+                        sipProfile = sipProfileService.findByExternalId(sipProfileExternalId);
+                        if (sipProfile.isEditable() &&
+                                !isInDebugMode(execution)) {
+                            sipProfile.setEditable(false);
+                            sipProfileStore.save(sipProfile);
+                        }
                     }
-                    SipProfile sipProfile = sipProfileService.findByExternalId(sipProfileExternalId);
                     String sipMetadataPathRegex = sipProfile.getSipMetadataPathRegex();
                     List<File> matchingFiles = listFilesMatchingRegex(new File(sipFolderWorkspacePath.toAbsolutePath().toString()), sipMetadataPathRegex, true);
 
-                    if (matchingFiles.size() == 0)
+                    if (matchingFiles.isEmpty())
                         throw new GeneralException(String.format("File with metadata for ingest workflow with external id %s does not exist at path given by regex: %s", ingestWorkflowExternalId, sipMetadataPathRegex));
 
                     if (matchingFiles.size() > 1)
@@ -147,5 +152,10 @@ public class FixityCheckerDelegate extends ArclibDelegate {
     @Autowired
     public void setProducerProfileStore(ProducerProfileStore producerProfileStore) {
         this.producerProfileStore = producerProfileStore;
+    }
+
+    @Autowired
+    public void setSipProfileStore(SipProfileStore sipProfileStore) {
+        this.sipProfileStore = sipProfileStore;
     }
 }

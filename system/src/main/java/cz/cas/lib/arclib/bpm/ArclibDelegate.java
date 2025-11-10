@@ -210,7 +210,7 @@ public abstract class ArclibDelegate implements VariableMapper, IngestTool, Java
      * @param execution delegate execution containing BPM variables
      * @return latest JSON config
      */
-    private String getLatestConfig(DelegateExecution execution) {
+    public String getLatestConfig(DelegateExecution execution) {
         return getStringVariable(execution, BpmConstants.ProcessVariables.latestConfig);
     }
 

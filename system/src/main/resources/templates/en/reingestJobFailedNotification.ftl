@@ -1,6 +1,6 @@
 <p>Hello,</p>
 
-<p>in ${createdDate} at ${createdTime} an inaccessibility of storage was found.</p>
+<p>in ${createdDate} at ${createdTime} the reingest job run has failed.</p>
 <p>${result}</p>
 
 <p>

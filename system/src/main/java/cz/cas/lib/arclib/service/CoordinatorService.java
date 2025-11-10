@@ -4,12 +4,13 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
-import cz.cas.lib.arclib.bpm.ArclibXmlExtractorDelegate;
 import cz.cas.lib.arclib.bpm.BpmConstants;
-import cz.cas.lib.arclib.bpm.ValidatorDelegate;
 import cz.cas.lib.arclib.domain.*;
 import cz.cas.lib.arclib.domain.ingestWorkflow.*;
 import cz.cas.lib.arclib.domain.profiles.ProducerProfile;
+import cz.cas.lib.arclib.domain.profiles.SipProfile;
+import cz.cas.lib.arclib.domain.profiles.ValidationProfile;
+import cz.cas.lib.arclib.domain.reingest.Reingest;
 import cz.cas.lib.arclib.domainbase.exception.BadArgument;
 import cz.cas.lib.arclib.domainbase.exception.ForbiddenOperation;
 import cz.cas.lib.arclib.domainbase.exception.GeneralException;
@@ -18,8 +19,7 @@ import cz.cas.lib.arclib.dto.JmsDto;
 import cz.cas.lib.arclib.mail.ArclibMailCenter;
 import cz.cas.lib.arclib.security.authorization.permission.Permissions;
 import cz.cas.lib.arclib.security.user.UserDetails;
-import cz.cas.lib.arclib.store.HashStore;
-import cz.cas.lib.arclib.store.IngestRoutineStore;
+import cz.cas.lib.arclib.store.*;
 import cz.cas.lib.arclib.utils.ArclibUtils;
 import cz.cas.lib.arclib.utils.JsonUtils;
 import cz.cas.lib.core.store.Transactional;
@@ -34,11 +34,7 @@ import org.springframework.jms.core.JmsTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
 
-
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -49,6 +45,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static cz.cas.lib.arclib.bpm.ArclibXmlExtractorDelegate.SIP_PROFILE_CONFIG_ENTRY;
+import static cz.cas.lib.arclib.bpm.ValidatorDelegate.VALIDATION_PROFILE_CONFIG_ENTRY;
 import static cz.cas.lib.arclib.domain.AutoIngestFilePrefix.fileNameIsNotPrefixed;
 import static cz.cas.lib.arclib.utils.ArclibUtils.*;
 import static cz.cas.lib.core.util.Utils.*;
@@ -72,6 +70,12 @@ public class CoordinatorService {
     private RuntimeService runtimeService;
     private TransactionTemplate transactionTemplate;
     private IngestRoutineStore ingestRoutineStore;
+    private ProducerProfileStore producerProfileStore;
+    private FileLocationResolver fileLocationResolver;
+    private ReingestStore reingestStore;
+    private ObjectMapper objectMapper;
+    private ValidationProfileStore validationProfileStore;
+    private SipProfileStore sipProfileStore;
 
     /**
      * Processes one SIP package:
@@ -131,12 +135,13 @@ public class CoordinatorService {
         ingestWorkflow.setProcessingState(IngestWorkflowState.NEW);
         ingestWorkflow.setHash(hash);
         ingestWorkflow.setFileName(fileName);
-        String computedWorkflowConfig = computeIngestWorkflowConfig(batchWorkflowConfig, producerProfile);
+        String computedWorkflowConfig = computeIngestWorkflowConfig(batchWorkflowConfig, producerProfile, producerProfile.getSipProfile(), producerProfile.getValidationProfile());
         ingestWorkflow.setInitialConfig(computedWorkflowConfig);
         String batchId = transactionTemplate.execute(s -> {
             hashStore.save(hash);
             ingestWorkflowService.save(ingestWorkflow);
-            return prepareBatch(asList(ingestWorkflow), producerProfile, batchWorkflowConfig, computedWorkflowConfig, fullTransferAreaPath, userDetails.getId(), null).getId();
+            return prepareBatch(asList(ingestWorkflow), producerProfile, producerProfile.getSipProfile(), producerProfile.getValidationProfile(),
+                    batchWorkflowConfig, computedWorkflowConfig, fullTransferAreaPath, userDetails.getId(), null).getId();
         });
         log.debug("Sending a message to Worker to process ingest workflow with external id " + ingestWorkflow.getExternalId() + ".");
         template.convertAndSend("worker", new JmsDto(ingestWorkflow.getExternalId(), userDetails.getId()));
@@ -147,67 +152,76 @@ public class CoordinatorService {
      * Creates and runs a batch of ingest workflow processes. A single instance of ingest workflow is created
      * for each SIP located in the respective transfer area.
      *
-     * @param externalId          external id of producer profile
-     * @param batchWorkflowConfig JSON configuration of ingest workflow on the batch level
-     * @param transferAreaPath    custom transfer area path for the given batch (overrides the transfer area path of producer)
-     * @param userId              id of the user
-     * @param routineId           id of the ingest routine
+     * @param routineId id of the ingest routine
      * @return id of the created batch or 'null' if no batch has been created
      */
-    public String processBatchOfSips(String externalId, String batchWorkflowConfig, String transferAreaPath, String userId, String routineId) throws IOException {
+    public void processBatchOfSips(String routineId) {
+
         IngestRoutine ingestRoutine = ingestRoutineStore.findWithBatchesFilled(routineId);
+        ProducerProfile producerProfile = producerProfileStore.find(ingestRoutine.getProducerProfile().getId());
+        String assignedUserId = ingestRoutine.getCreator() != null ? ingestRoutine.getCreator().getId() : userDetails.getId();
+        Producer producer = producerProfile.getProducer();
 
         if (!ingestRoutine.isAuto() && !ingestRoutine.getCurrentlyProcessingBatches().isEmpty()) {
-            log.debug("Skipping job of ingest routine: {} because there is still batch with id: {} processing", routineId, ingestRoutine.getCurrentlyProcessingBatches().get(0));
-            return null;
+            log.debug("Skipping job of ingest routine: {} because there is still batch with id: {} processing", ingestRoutine.getId(), ingestRoutine.getCurrentlyProcessingBatches().get(0));
+            return;
         }
 
-        log.trace("Processing of a batch of SIP packages has been triggered, routine id: {}", routineId);
+        log.trace("Processing of a batch of SIP packages has been triggered, routine id: {}", ingestRoutine.getId());
+        List<IngestWorkflow> allIngestWorkflows = new ArrayList<>();
 
-        if (batchWorkflowConfig.isEmpty()) throw new BadArgument("Workflow config is empty. Try to use '{}'");
+        transactionTemplate.executeWithoutResult(s -> {
 
-        ProducerProfile producerProfile = producerProfileService.findByExternalId(externalId);
-        notNull(producerProfile, () -> new MissingObject(ProducerProfile.class, externalId));
-        Producer producer = producerProfile.getProducer();
-        notNull(producer, () -> new IllegalArgumentException("null producer in the producer profile with external id " + producerProfile.getExternalId()));
+            if (!ingestRoutine.isReingest()) {
+                String routineConfig = ingestRoutine.getWorkflowConfig();
+                Path fullTransferAreaPath = computeTransferAreaPath(ingestRoutine.getTransferAreaPath(), producer);
+                if (!fullTransferAreaPath.toFile().exists()) {
+                    log.error("There is no folder on the path: {} ", fullTransferAreaPath);
+                    return;
+                }
+                createBatchesAndIngestWorkflows(assignedUserId, producerProfile, producerProfile.getSipProfile(), producerProfile.getValidationProfile(), ingestRoutine, routineConfig, fullTransferAreaPath, allIngestWorkflows);
+            } else {
+                Reingest reingest = reingestStore.getCurrent();
+                Path reingestFolder = fileLocationResolver.getReingestProducerProfileFolder(reingest, producerProfile);
+                for (File uniqueWorkflowFolder : reingestFolder.toFile().listFiles()) {
+                    String configMd5 = uniqueWorkflowFolder.getName();
+                    List<IngestWorkflow> ingestWorkflowsOfTheBatch = new ArrayList<>();
 
-        String mergedWorkflowConfig = computeIngestWorkflowConfig(batchWorkflowConfig, producerProfile);
+                    if (fileLocationResolver.getReingestWorkflowConfigSkipFile(reingest, producerProfile, configMd5).toFile().exists()) {
+                        continue;
+                    }
 
-        Path fullTransferAreaPath = computeTransferAreaPath(transferAreaPath, producer);
-        File transferArea = new File(fullTransferAreaPath.toString());
-        if (!transferArea.exists()) {
-            log.error("There is no folder on the path: {} ", fullTransferAreaPath.toString());
-            return null;
-        }
-
-        String assignedUserId = userId == null ? userDetails.getId() : userId;
-        List<IngestWorkflow> ingestWorkflows = new ArrayList<>();
-        String batchId = transactionTemplate.execute(s -> {
-            ingestWorkflows.addAll(scanTransferArea(transferArea, mergedWorkflowConfig, ingestRoutine.isAuto()));
-            if (ingestWorkflows.isEmpty()) {
-                return null;
+                    Path configPath = fileLocationResolver.getReingestWorkflowConfigFile(reingest, producerProfile, configMd5);
+                    JsonNode batchConfig;
+                    String batchConfigString;
+                    try {
+                        batchConfig = objectMapper.readTree(Files.readString(configPath));
+                        JsonNode newCfgNode = objectMapper.readTree("{\"continueOnDuplicateSip\":true}");
+                        batchConfig = JsonUtils.merge(batchConfig, newCfgNode);
+                        batchConfigString = objectMapper.writeValueAsString(batchConfig);
+                    } catch (IOException e) {
+                        throw new UncheckedIOException(e);
+                    }
+                    ValidationProfile validationProfile = validationProfileStore.findByExternalId(batchConfig.at("/" + VALIDATION_PROFILE_CONFIG_ENTRY).textValue());
+                    SipProfile sipProfile = sipProfileStore.findByExternalId(batchConfig.at("/" + SIP_PROFILE_CONFIG_ENTRY).textValue());
+                    createBatchesAndIngestWorkflows(assignedUserId, producerProfile, sipProfile, validationProfile, ingestRoutine, batchConfigString, uniqueWorkflowFolder.toPath(), ingestWorkflowsOfTheBatch);
+                    allIngestWorkflows.addAll(ingestWorkflowsOfTheBatch);
+                }
             }
-
-            log.debug("Merged workflow config to be used: {}", mergedWorkflowConfig);
-            Batch batch = prepareBatch(ingestWorkflows, producerProfile, batchWorkflowConfig, mergedWorkflowConfig, fullTransferAreaPath, assignedUserId, ingestRoutine);
-            ingestRoutine.getCurrentlyProcessingBatches().add(batch);
 
             // prefixing with PROCESSING_<file_name>
             if (ingestRoutine.isAuto()) {
-                ingestWorkflows.forEach(w -> {
+                allIngestWorkflows.forEach(w -> {
                     log.debug("Prefixing file:'" + w.getFileName() + "' with:'" + AutoIngestFilePrefix.PROCESSING.getPrefix() + "'.");
                     changeFilePrefix(AutoIngestFilePrefix.NONE, AutoIngestFilePrefix.PROCESSING, w);
                 });
             }
-            return batch.getId();
         });
 
-        ingestWorkflows.forEach(ingestWorkflow -> {
+        allIngestWorkflows.forEach(ingestWorkflow -> {
             log.debug("Sending a message to Worker to process ingest workflow with external id " + ingestWorkflow.getExternalId() + ".");
             template.convertAndSend("worker", new JmsDto(ingestWorkflow.getExternalId(), assignedUserId));
         });
-
-        return batchId;
     }
 
     /**
@@ -363,6 +377,31 @@ public class CoordinatorService {
         return true;
     }
 
+    private void createBatchesAndIngestWorkflows(String userId,
+                                                 ProducerProfile producerProfile,
+                                                 SipProfile sipProfile,
+                                                 ValidationProfile validationProfile,
+                                                 IngestRoutine ingestRoutine,
+                                                 String routineConfig,
+                                                 Path fullTransferAreaPath,
+                                                 List<IngestWorkflow> ingestWorkflows) {
+        String mergedWorkflowConfig;
+        try {
+            mergedWorkflowConfig = computeIngestWorkflowConfig(routineConfig, producerProfile, sipProfile, validationProfile);
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+
+        ingestWorkflows.addAll(scanTransferArea(fullTransferAreaPath, mergedWorkflowConfig, ingestRoutine.isAuto()));
+        if (ingestWorkflows.isEmpty()) {
+            return;
+        }
+
+        log.debug("Merged workflow config to be used: {}", mergedWorkflowConfig);
+        Batch batch = prepareBatch(ingestWorkflows, producerProfile, sipProfile, validationProfile, routineConfig, mergedWorkflowConfig, fullTransferAreaPath, userId, ingestRoutine);
+        ingestRoutine.getCurrentlyProcessingBatches().add(batch);
+    }
+
     /**
      * For each file with a name ending with '.zip' located in the folder:
      * 1. Creates an instance of ingest workflow.
@@ -373,10 +412,10 @@ public class CoordinatorService {
      * @param folder folder containing files to be processed
      * @return list of created ingest workflows
      */
-    private List<IngestWorkflow> scanTransferArea(File folder, String initialIngestWorkflowConfig, boolean automaticProcessing) {
-        log.trace("Scanning transfer area at path " + folder.toPath().toString() + " for SIP packages.");
+    private List<IngestWorkflow> scanTransferArea(Path folder, String initialIngestWorkflowConfig, boolean automaticProcessing) {
+        log.trace("Scanning transfer area at path " + folder.toString() + " for SIP packages.");
         List<IngestWorkflow> ingestWorkflows = Arrays
-                .stream(folder.listFiles())
+                .stream(folder.toFile().listFiles())
                 .filter(f -> {
                     String fileName = f.toPath().getFileName().toString().toLowerCase();
                     return automaticProcessing
@@ -404,7 +443,7 @@ public class CoordinatorService {
                 })
                 .collect(Collectors.toList());
         if (ingestWorkflows.size() > 0) {
-            log.info("Processing of a batch of {} SIP packages at path {} has been triggered.", ingestWorkflows.size(), folder.toPath().toString());
+            log.info("Processing of a batch of {} SIP packages at path {} has been triggered.", ingestWorkflows.size(), folder);
         }
         return ingestWorkflows;
     }
@@ -425,6 +464,7 @@ public class CoordinatorService {
      * @return created batch
      */
     private Batch prepareBatch(List<IngestWorkflow> ingestWorkflows, ProducerProfile producerProfile,
+                               SipProfile sipProfile, ValidationProfile validationProfile,
                                String batchWorkflowConfig, String computedWorkflowConfig, Path transferAreaPath, String userId, IngestRoutine ingestRoutine) {
         WorkflowDefinition workflowDefinition = producerProfile.getWorkflowDefinition();
         notNull(workflowDefinition, () -> new IllegalArgumentException("null workflowDefinition of producer profile with id " + producerProfile.getId()));
@@ -434,8 +474,8 @@ public class CoordinatorService {
 
         Batch batch = new Batch(ingestWorkflows, BatchState.PROCESSING, producerProfile, batchWorkflowConfig,
                 computedWorkflowConfig, transferAreaPath.toString(), producerProfile.isDebuggingModeActive(),
-                true, false, producerProfile.getValidationProfile(),
-                producerProfile.getSipProfile(), producerProfile.getWorkflowDefinition(), ingestRoutine);
+                true, false, validationProfile,
+                sipProfile, producerProfile.getWorkflowDefinition(), ingestRoutine);
 
         try {
             String bpmnString = ArclibUtils.prepareBpmnDefinitionForDeployment(bpmnDefinition, batch.getId());
@@ -511,17 +551,17 @@ public class CoordinatorService {
      * @param producerProfile   producer profile
      * @return computed ingest config
      */
-    private String computeIngestWorkflowConfig(String batchIngestConfig, ProducerProfile producerProfile) throws IOException {
+    private String computeIngestWorkflowConfig(String batchIngestConfig, ProducerProfile producerProfile, SipProfile sipProfile, ValidationProfile validationProfile) throws IOException {
         ObjectMapper mapper = new ObjectMapper();
 
         String producerIngestConfig = producerProfile.getWorkflowConfig();
         if (producerIngestConfig == null || producerIngestConfig.isBlank())
             producerIngestConfig = "{}";
         JsonNode ingestConfig = mapper.readTree(producerIngestConfig);
-        ((ObjectNode) ingestConfig).set(ArclibXmlExtractorDelegate.SIP_PROFILE_CONFIG_ENTRY, new TextNode(producerProfile.getSipProfile().getExternalId()));
-        ((ObjectNode) ingestConfig).set(ValidatorDelegate.VALIDATION_PROFILE_CONFIG_ENTRY, new TextNode(producerProfile.getValidationProfile().getExternalId()));
+        ((ObjectNode) ingestConfig).set(SIP_PROFILE_CONFIG_ENTRY, new TextNode(sipProfile.getExternalId()));
+        ((ObjectNode) ingestConfig).set(VALIDATION_PROFILE_CONFIG_ENTRY, new TextNode(validationProfile.getExternalId()));
 
-        log.trace("Producer ingest workflow config: " + ingestConfig.toString());
+        log.trace("Producer ingest workflow config: " + ingestConfig);
 
         if (batchIngestConfig != null) {
             log.trace("Batch ingest workflow config: " + batchIngestConfig);
@@ -607,5 +647,40 @@ public class CoordinatorService {
     @Autowired
     public void setIngestRoutineStore(IngestRoutineStore ingestRoutineStore) {
         this.ingestRoutineStore = ingestRoutineStore;
+    }
+
+    @Autowired
+    public void setProducerProfileStore(ProducerProfileStore producerProfileStore) {
+        this.producerProfileStore = producerProfileStore;
+    }
+
+    @Autowired
+    public void setFileLocationResolver(FileLocationResolver fileLocationResolver) {
+        this.fileLocationResolver = fileLocationResolver;
+    }
+
+    @Autowired
+    public ReingestStore setReingestStore() {
+        return reingestStore;
+    }
+
+    @Autowired
+    public void setObjectMapper(ObjectMapper objectMapper) {
+        this.objectMapper = objectMapper;
+    }
+
+    @Autowired
+    public void setValidationProfileStore(ValidationProfileStore validationProfileStore) {
+        this.validationProfileStore = validationProfileStore;
+    }
+
+    @Autowired
+    public void setSipProfileStore(SipProfileStore sipProfileStore) {
+        this.sipProfileStore = sipProfileStore;
+    }
+
+    @Autowired
+    public void setReingestStore(ReingestStore reingestStore) {
+        this.reingestStore = reingestStore;
     }
 }
